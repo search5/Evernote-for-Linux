@@ -27,7 +27,7 @@
             "dist/cpp/en-search-engine-shared-native/util/ense_reco_resource_parser.cpp",
             "dist/cpp/en-search-engine-shared-native/util/enml_parser.cpp",
             "dist/cpp/en-search-engine-shared-native/util/tinyxml2.cpp",
-            "/home/jiho/.virtualenvs/evernote/lib/node_modules/node-gyp/src/win_delay_load_hook.cc"
+            "../node-gyp/src/win_delay_load_hook.cc"
         ],
         "link_settings": {
             "libraries": [

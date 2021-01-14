@@ -61,7 +61,7 @@ if ! [ -f "$BUILD_DIR/app-unpacked/package-lock.json" ]; then
   sed -i 's/"Evernote"/"evernote-client"/' "$BUILD_DIR/app-unpacked/package.json"
 
   # Remove existing node_modules
-  #rm -rf "$BUILD_DIR/app-unpacked/node_modules"
+  rm -rf "$BUILD_DIR/app-unpacked/node_modules"
 
   # Configure build settings
   # See https://www.electronjs.org/docs/tutorial/using-native-node-modules
@@ -72,30 +72,30 @@ if ! [ -f "$BUILD_DIR/app-unpacked/package-lock.json" ]; then
   export npm_config_runtime=electron
   export npm_config_build_from_source=true
 
-  # HOME=~/.electron-gyp npm install --registry http://localhost:4873 --prefix "$BUILD_DIR/app-unpacked"
+  HOME=~/.electron-gyp npm install --registry http://localhost:4873 --prefix "$BUILD_DIR/app-unpacked"
 fi
 
 # Create Electron package
-# if ! [ -d "$BUILD_DIR/app-linux-$BUILD_ARCH" ]; then
-#   electron-packager "$BUILD_DIR/app-unpacked" app \
-#     --platform linux \
-#     --arch "$BUILD_ARCH" \
-#     --out "$BUILD_DIR" \
-#     --electron-version $ELECTRON_VERSION \
-#     --executable-name evernote-client
-# fi
+if ! [ -d "$BUILD_DIR/app-linux-$BUILD_ARCH" ]; then
+  electron-packager "$BUILD_DIR/app-unpacked" app \
+    --platform linux \
+    --arch "$BUILD_ARCH" \
+    --out "$BUILD_DIR" \
+    --electron-version $ELECTRON_VERSION \
+    --executable-name evernote-client
+fi
 
-# if ! [ -f "$BUILD_DIR/app-unpacked/resources/static" ]; then
-#   cp -r "$BUILD_DIR/app-bundle/resources/static" "$BUILD_DIR/app-linux-$BUILD_ARCH/resources"
-#   find "$BUILD_DIR/app-linux-$BUILD_ARCH/resources/static" -type d -exec chmod 755 {} \;
-# fi
+if ! [ -f "$BUILD_DIR/app-unpacked/resources/static" ]; then
+  cp -r "$BUILD_DIR/app-bundle/resources/static" "$BUILD_DIR/app-linux-$BUILD_ARCH/resources"
+  find "$BUILD_DIR/app-linux-$BUILD_ARCH/resources/static" -type d -exec chmod 755 {} \;
+fi
 
-# if ! [ -f "out/evernote-client_${EVERNOTE_VERSION}_$PACKAGE_ARCH.deb" ]; then
-#   # Create Debian package
-#   electron-installer-debian \
-#     --src "$BUILD_DIR/app-linux-$BUILD_ARCH" \
-#     --dest out \
-#     --arch "$PACKAGE_ARCH" \
-#     --options.productName Evernote \
-#     --options.icon "$BUILD_DIR/app-linux-$BUILD_ARCH/resources/static/linux/icons/icon.png"
-# fi
+if ! [ -f "out/evernote-client_${EVERNOTE_VERSION}_$PACKAGE_ARCH.deb" ]; then
+  # Create Debian package
+  electron-installer-debian \
+    --src "$BUILD_DIR/app-linux-$BUILD_ARCH" \
+    --dest out \
+    --arch "$PACKAGE_ARCH" \
+    --options.productName Evernote \
+    --options.icon "$BUILD_DIR/app-linux-$BUILD_ARCH/resources/static/linux/icons/icon.png"
+fi
