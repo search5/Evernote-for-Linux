@@ -10,11 +10,12 @@
 
 Download the system package.
 ```bash
-apt-get install libsecret-1-dev libclucene-dev build-essential 7z
+apt-get install libsecret-1-dev libclucene-dev build-essential 7z libuv1-dev
 ```
 
 Private NPM Registry setup
 ```bash
+npm install -g node-gyp node-pre-gyp
 npm install verdaccio
 ```
 
@@ -39,6 +40,8 @@ cd Evernote-for-Linux/build_helper
 Please note that the private NPM Registry URL may vary depending on the setting (the value used here is the default value).
 
 Packages to be registered in the private registry need to go into a separate directory and only issue the npm publish command.
+
+There are two types of en-data-model: evernote_modules/en-data-model and evernote_modules/en-graph-types/node_modules/en-data-model, each with completely different versions and content. Therefore, these two modules must be registered separately with the private NPM.
 
 ### Evernote Build
 
