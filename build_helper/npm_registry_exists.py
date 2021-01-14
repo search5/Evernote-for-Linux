@@ -2,11 +2,14 @@ import glob
 import os.path
 import requests
 
-files = glob.glob("*")
+files = glob.glob("../build-x64/app-unpacked/node_modules/*")
 
 private_registry = []
 
-for item in files:
+for entry in files:
+    item_pos = entry.rfind("/") + 1
+    item = entry[item_pos:]
+    
     if os.path.isfile(item):
         continue
     

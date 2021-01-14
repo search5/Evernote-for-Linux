@@ -35,8 +35,8 @@ en-conduit-plugin-in-app-purchasing
 en-conduit-plugin-maestro
 en-conduit-plugin-monetization
 en-conduit-plugin-note-import
+en-conduit-plugin-notification-scheduler
 en-conduit-plugin-nsvc-authz-token
-en-conduit-plugin-scheduler
 en-conduit-plugin-search
 en-conduit-plugin-support-ticket
 en-conduit-schema

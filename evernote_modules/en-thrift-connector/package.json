@@ -1,0 +1,42 @@
+{
+  "name": "en-thrift-connector",
+  "version": "1.26.7",
+  "publishConfig": {
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+  },
+  "description": "New API to Thrift API translation layer",
+  "main": "dist/index",
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@types/chai-as-promised": "^7.1.1",
+    "@types/js-base64": "^3.0.0",
+    "@types/node": "^10.12.2",
+    "@types/sinon": "^7.0.11",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "conduit-storage": "1.26.7",
+    "sinon": "^7.3.2",
+    "sinon-chai": "^3.3.0",
+    "ts-sinon": "^1.0.21"
+  },
+  "dependencies": {
+    "conduit-core": "1.26.7",
+    "conduit-nap": "1.26.7",
+    "conduit-utils": "1.26.7",
+    "conduit-view-types": "1.26.7",
+    "en-data-model": "1.26.7",
+    "en-graph-types": "0.12.1",
+    "en-nsync-connector": "1.26.7",
+    "en-thrift-internal": "2.7.7",
+    "eventsource": "^1.0.7",
+    "evernote-thrift": "1.4.2",
+    "graphql-tag": "^2.10.1",
+    "js-base64": "^3.5.2",
+    "simply-immutable": "^2.1.1"
+  },
+  "peerDependencies": {
+    "graphql": "^14.0.2"
+  }
+}

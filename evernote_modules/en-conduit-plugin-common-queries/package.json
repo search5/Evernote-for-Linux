@@ -1,0 +1,23 @@
+{
+  "name": "en-conduit-plugin-common-queries",
+  "version": "1.26.7",
+  "publishConfig": {
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+  },
+  "description": "Conduit plugin providing common custom queries",
+  "main": "dist/index",
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "conduit-core": "1.26.7",
+    "conduit-storage": "1.26.7",
+    "conduit-utils": "1.26.7",
+    "conduit-view-types": "1.26.7",
+    "en-data-model": "1.26.7",
+    "en-thrift-connector": "1.26.7"
+  },
+  "peerDependencies": {
+    "graphql": "^14.0.2"
+  }
+}

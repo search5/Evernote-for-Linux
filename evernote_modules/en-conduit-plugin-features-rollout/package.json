@@ -1,0 +1,26 @@
+{
+  "name": "en-conduit-plugin-features-rollout",
+  "version": "1.26.7",
+  "publishConfig": {
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+  },
+  "description": "Conduit plugin for gradual feature rollout.",
+  "main": "dist/index",
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@types/chai": "^4.2.13",
+    "@types/chai-as-promised": "^7.1.1",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1"
+  },
+  "dependencies": {
+    "conduit-core": "1.26.7",
+    "conduit-utils": "1.26.7",
+    "conduit-view-types": "1.26.7"
+  },
+  "peerDependencies": {
+    "graphql": "^14.0.2"
+  }
+}

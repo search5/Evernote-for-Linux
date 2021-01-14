@@ -1,0 +1,15 @@
+{
+  "name": "conduit-view-types",
+  "version": "1.26.7",
+  "publishConfig": {
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+  },
+  "description": "Shared types between conduit-core and conduit-view",
+  "main": "dist/index",
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "conduit-utils": "1.26.7"
+  }
+}

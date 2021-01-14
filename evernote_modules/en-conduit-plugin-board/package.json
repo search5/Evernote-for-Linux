@@ -1,0 +1,30 @@
+{
+  "name": "en-conduit-plugin-board",
+  "version": "1.26.7",
+  "publishConfig": {
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+  },
+  "description": "Plugin for the evernote (Dash)Board service",
+  "main": "dist/index",
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "conduit-core": "1.26.7",
+    "conduit-storage": "1.26.7",
+    "conduit-utils": "1.26.7",
+    "en-data-model": "1.26.7",
+    "en-nsync-connector": "1.26.7"
+  },
+  "peerDependencies": {
+    "graphql": "^14.0.2",
+    "graphql-tag": "^2.10.1"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "sinon": "^7.3.2",
+    "sinon-chai": "^3.3.0",
+    "ts-sinon": "^1.0.21"
+  }
+}
