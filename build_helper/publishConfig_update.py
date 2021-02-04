@@ -2,6 +2,7 @@
 import click
 import glob
 import json
+import os
 
 
 @click.command()
@@ -17,8 +18,12 @@ def main(registry):
         # private url registry set
         package_json["publishConfig"] = {"registry": registry}
 
-        json.dump(package_json, open("{0}/package.json".format(entry), "w"), indent=4)
+        json.dump(package_json, open("{0}/package.json".format(entry), "w"), indent=2)
 
+        os.chdir(entry)
+        os.system("npm publish")
+        os.chdir("..")
+        # print(os.getcwd())
 
 if __name__ == "__main__":
     main()

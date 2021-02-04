@@ -1,8 +1,8 @@
 {
   "name": "en-data-model",
-  "version": "2.5.0",
+  "version": "1.27.2",
   "publishConfig": {
-    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+    "registry": "http://localhost:4873"
   },
   "description": "Node types, schemas, and mutators for Evernote-secific domain logic.",
   "main": "dist/index",
@@ -14,9 +14,9 @@
     "chai": "^4.2.0"
   },
   "dependencies": {
-    "conduit-core": "1.26.7",
-    "conduit-storage": "1.26.7",
-    "conduit-utils": "1.26.7",
-    "conduit-view-types": "1.26.7"
+    "conduit-core": "1.27.2",
+    "conduit-storage": "1.27.2",
+    "conduit-utils": "1.27.2",
+    "conduit-view-types": "1.27.2"
   }
 }

@@ -1,8 +1,8 @@
 {
   "name": "en-thrift-connector",
-  "version": "1.26.7",
+  "version": "1.27.2",
   "publishConfig": {
-    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+    "registry": "http://localhost:4873"
   },
   "description": "New API to Thrift API translation layer",
   "main": "dist/index",
@@ -16,22 +16,22 @@
     "@types/sinon": "^7.0.11",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
-    "conduit-storage": "1.26.7",
+    "conduit-storage": "1.27.2",
     "sinon": "^7.3.2",
     "sinon-chai": "^3.3.0",
     "ts-sinon": "^1.0.21"
   },
   "dependencies": {
-    "conduit-core": "1.26.7",
-    "conduit-nap": "1.26.7",
-    "conduit-utils": "1.26.7",
-    "conduit-view-types": "1.26.7",
-    "en-data-model": "1.26.7",
+    "conduit-core": "1.27.2",
+    "conduit-nap": "1.27.2",
+    "conduit-utils": "1.27.2",
+    "conduit-view-types": "1.27.2",
+    "en-data-model": "1.27.2",
     "en-graph-types": "0.12.1",
-    "en-nsync-connector": "1.26.7",
-    "en-thrift-internal": "2.7.7",
+    "en-nsync-connector": "1.27.2",
+    "en-thrift-internal": "2.7.10",
     "eventsource": "^1.0.7",
-    "evernote-thrift": "1.4.2",
+    "evernote-thrift": "1.4.3",
     "graphql-tag": "^2.10.1",
     "js-base64": "^3.5.2",
     "simply-immutable": "^2.1.1"

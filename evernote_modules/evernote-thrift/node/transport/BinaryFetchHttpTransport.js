@@ -57,8 +57,14 @@ BinaryFetchHttpTransport.prototype.flush = function(callback) {
             new Exceptions.NetworkException(`Fetch response to arrayBuffer error ${JSON.stringify(err)} `, this.url)));
         });
       } else {
+        const headers = {};
+        for(let entry of response.headers.entries()) {
+          if (Array.isArray(entry) && entry.length && entry.length === 2) {
+            headers[entry[0]] = entry[1];
+          }
+        }
         callback(new Exceptions.TransportException('Non 200 http response',
-          new Exceptions.HTTPException('Non 200 http response', this.url, response.status)));
+          new Exceptions.HTTPException('Non 200 http response', this.url, response.status, headers)));
       }
     }
   }).catch(err => {

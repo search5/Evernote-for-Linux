@@ -66,7 +66,7 @@ BinaryHttpTransport.prototype.flush = function(callback) {
       self.log(msg);
       if (callback) {
         callback(new Exceptions.TransportException(msg,
-            new Exceptions.HTTPException('', url, res.statusCode)));
+            new Exceptions.HTTPException('', url, res.statusCode, res.headers)));
         return;
       }
     }

@@ -1,8 +1,8 @@
 {
   "name": "electron-local-notifications",
-  "version": "1.26.7",
+  "version": "1.27.2",
   "publishConfig": {
-    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+    "registry": "http://localhost:4873"
   },
   "description": "Electron module for scheduling and showing local notification",
   "main": "dist/index",
@@ -19,6 +19,6 @@
     "electron": "^11.1.1"
   },
   "dependencies": {
-    "conduit-utils": "1.26.7"
+    "conduit-utils": "1.27.2"
   }
 }

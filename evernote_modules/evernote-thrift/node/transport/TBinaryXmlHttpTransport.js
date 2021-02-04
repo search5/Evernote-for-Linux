@@ -48,9 +48,18 @@ BinaryHttpTransport.prototype.flush = function(callback) {
       if (xhr.status === 200) {
         callback(null, new MemBuffer(xhr.response));
       } else {
+        const rawHeaders = xhr.getAllResponseHeaders();
+        const rawHeadersArr = rawHeaders.trim().split(/[\r\n]+/);
+        const headers = {};
+        rawHeadersArr.forEach(function (line) {
+          var parts = line.split(': ');
+          var header = parts.shift();
+          var value = parts.join(': ');
+          headers[header] = value;
+        });
         callback(new Exceptions.TransportException(
           'Non 200 http response',
-          new Exceptions.HTTPException('Non 200 http response', url, xhr.status)));
+          new Exceptions.HTTPException('Non 200 http response', url, xhr.status, headers)));
       }
     }
   };

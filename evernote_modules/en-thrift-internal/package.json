@@ -1,9 +1,9 @@
 {
   "name": "en-thrift-internal",
   "publishConfig": {
-    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+    "registry": "http://localhost:4873"
   },
-  "version": "2.7.7",
+  "version": "2.7.10",
   "description": "Evernote internal generated JavaScript files",
   "main": "index.js",
   "types": "index.d.ts",

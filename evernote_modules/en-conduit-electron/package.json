@@ -1,8 +1,8 @@
 {
   "name": "en-conduit-electron",
-  "version": "1.26.7",
+  "version": "1.27.2",
   "publishConfig": {
-    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+    "registry": "http://localhost:4873"
   },
   "description": "Conduit main process bridge for Electron",
   "main": "dist/index",
@@ -25,12 +25,12 @@
     "bunyan": "^1.8.12",
     "bunyan-prettystream": "^0.1.3",
     "bunyan-rotating-file-stream": "^1.6.3",
-    "conduit-storage": "1.26.7",
-    "conduit-utils": "1.26.7",
-    "conduit-view": "1.26.7",
-    "conduit-view-types": "1.26.7",
-    "en-conduit-electron-shared": "1.26.7",
-    "en-thrift-connector": "1.26.7",
+    "conduit-storage": "1.27.2",
+    "conduit-utils": "1.27.2",
+    "conduit-view": "1.27.2",
+    "conduit-view-types": "1.27.2",
+    "en-conduit-electron-shared": "1.27.2",
+    "en-thrift-connector": "1.27.2",
     "fs-extra": "^7.0.1",
     "keytar": "^6.0.1",
     "sanitize-filename": "^1.6.3"

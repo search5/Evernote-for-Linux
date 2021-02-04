@@ -1,8 +1,8 @@
 {
   "name": "en-nsync-connector",
-  "version": "1.26.7",
+  "version": "1.27.2",
   "publishConfig": {
-    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+    "registry": "http://localhost:4873"
   },
   "description": "New API to NSync API translation layer",
   "main": "dist/index",
@@ -20,11 +20,11 @@
     "ts-sinon": "^1.0.21"
   },
   "dependencies": {
-    "conduit-core": "1.26.7",
-    "conduit-storage": "1.26.7",
-    "conduit-utils": "1.26.7",
-    "conduit-view-types": "1.26.7",
-    "en-data-model": "1.26.7",
+    "conduit-core": "1.27.2",
+    "conduit-storage": "1.27.2",
+    "conduit-utils": "1.27.2",
+    "conduit-view-types": "1.27.2",
+    "en-data-model": "1.27.2",
     "long": "^4.0.0",
     "simply-immutable": "^2.1.1"
   }

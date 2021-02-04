@@ -1,25 +1,25 @@
 {
-    "name": "clucene",
-    "description": "A CLucene native library for Node.js, for advanced information retrieval.",
-    "main": "dist/index",
-    "version": "10.0.0",
-    "publishConfig": {
-        "registry": "http://localhost:4873"
-    },
-    "engines": {
-        "node": ">= 10.12.0"
-    },
-    "files": [
-        "dist",
-        "binding.gyp"
-    ],
-    "devDependencies": {
-        "@types/node": "^12.12.11",
-        "nan": "^2.14.0"
-    },
-    "dependencies": {
-        "en-search-engine-shared": "^10.0.0",
-        "node-addon-api": "*",
-	"node-gyp": "*"
-    }
+  "name": "clucene",
+  "description": "A CLucene native library for Node.js, for advanced information retrieval.",
+  "main": "dist/index",
+  "version": "10.0.0",
+  "publishConfig": {
+    "registry": "http://localhost:4873"
+  },
+  "engines": {
+    "node": ">= 10.12.0"
+  },
+  "files": [
+    "dist",
+    "binding.gyp"
+  ],
+  "devDependencies": {
+    "@types/node": "^12.12.11",
+    "nan": "^2.14.0"
+  },
+  "dependencies": {
+    "en-search-engine-shared": "^10.0.0",
+    "node-addon-api": "*",
+    "node-gyp": "*"
+  }
 }

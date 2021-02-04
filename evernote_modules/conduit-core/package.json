@@ -1,8 +1,8 @@
 {
   "name": "conduit-core",
-  "version": "1.26.7",
+  "version": "1.27.2",
   "publishConfig": {
-    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+    "registry": "http://localhost:4873"
   },
   "description": "Core Conduit module",
   "main": "dist/index",
@@ -23,9 +23,9 @@
     "ts-sinon": "^1.0.21"
   },
   "dependencies": {
-    "conduit-storage": "1.26.7",
-    "conduit-utils": "1.26.7",
-    "conduit-view-types": "1.26.7",
+    "conduit-storage": "1.27.2",
+    "conduit-utils": "1.27.2",
+    "conduit-view-types": "1.27.2",
     "dataloader": "^1.4.0",
     "en-graph-types": "0.12.1",
     "graphql": "^14.0.2",

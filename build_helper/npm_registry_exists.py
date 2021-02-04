@@ -22,5 +22,5 @@ for entry in files:
     if r.status_code == 404:
         private_registry.append("{}\n".format(item))
 
-print(private_registry)
+# print(private_registry)
 open("output_log.txt", "w").writelines(private_registry)

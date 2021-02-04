@@ -2,7 +2,7 @@
 set -e
 
 ELECTRON_VERSION=11.1.1
-EVERNOTE_VERSION=10.6.9-win-ddl-ga-2254
+EVERNOTE_VERSION=10.7.6-win-ddl-ga-2321
 EVERNOTE_BINARY=evernote.exe
 BUILD_ARCH=${1:-x64}
 PACKAGE_ARCH=${2:-amd64}
@@ -16,7 +16,7 @@ check-command() {
   fi
 }
 
-commands=(node npm 7z convert fakeroot dpkg g++ make)
+commands=(node npm 7z fakeroot dpkg g++ make)
 
 # Check for required commands
 for command in "${commands[@]}"; do

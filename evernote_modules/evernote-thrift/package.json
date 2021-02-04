@@ -1,10 +1,10 @@
 {
   "name": "evernote-thrift",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "The forked version of thrift we use at Evernote.",
   "main": "node/index.js",
   "publishConfig": {
-    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+    "registry": "http://localhost:4873"
   },
   "author": "Evernote",
   "license": "UNLICENSED",

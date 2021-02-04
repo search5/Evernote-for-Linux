@@ -1,8 +1,8 @@
 {
   "name": "en-conduit-plugin-event-recording",
-  "version": "1.26.7",
+  "version": "1.27.2",
   "publishConfig": {
-    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+    "registry": "http://localhost:4873"
   },
   "description": "Plugin for collecting metrics via conduit",
   "main": "dist/index",
@@ -10,9 +10,9 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-core": "1.26.7",
-    "conduit-utils": "1.26.7",
-    "conduit-view-types": "1.26.7",
+    "conduit-core": "1.27.2",
+    "conduit-utils": "1.27.2",
+    "conduit-view-types": "1.27.2",
     "crypto-js": "^3.1.9-1",
     "snakecase-keys": "^3.1.0"
   },
