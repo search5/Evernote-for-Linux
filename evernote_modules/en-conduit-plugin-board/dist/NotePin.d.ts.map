@@ -1,0 +1,1 @@
+{"version":3,"file":"NotePin.d.ts","sourceRoot":"","sources":["../src/NotePin.ts"],"names":[],"mappings":"AAGA,OAAO,EAAE,cAAc,EAAc,MAAM,cAAc,CAAC;AAG1D,OAAO,EAAkB,cAAc,EAAE,iBAAiB,EAAiB,MAAM,SAAS,CAAC;AAQ3F,UAAU,cAAc;IACtB,OAAO,EAAE,OAAO,CAAC;IACjB,MAAM,EAAE,MAAM,CAAC;CAChB;AAED,eAAO,MAAM,uBAAuB;;;;;;;;;;;;uBAeU,SAAS;;uBAA2C,QAAQ,cAAc,CAAC;CA4CxH,CAAC"}

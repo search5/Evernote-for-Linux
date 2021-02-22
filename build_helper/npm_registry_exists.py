@@ -1,6 +1,7 @@
 import glob
 import os.path
 import requests
+import shutil
 
 files = glob.glob("../build-x64/app-unpacked/node_modules/*")
 
@@ -14,13 +15,18 @@ for entry in files:
         continue
     
     if item.startswith("@"):
+        if item.startswith("@evernote"):
+            continue
+        shutil.rmtree(entry)
         continue
     
     r = requests.head("https://registry.npmjs.org/{}".format(item))
     print("{} Processing... {}".format(item, r.status_code))
 
-    if r.status_code == 404:
-        private_registry.append("{}\n".format(item))
+    if r.status_code != 404:
+        shutil.rmtree(entry)
+        #print('삭제함', entry)
+        #pass
 
 # print(private_registry)
-open("output_log.txt", "w").writelines(private_registry)
+#open("output_log.txt", "w").writelines(private_registry)

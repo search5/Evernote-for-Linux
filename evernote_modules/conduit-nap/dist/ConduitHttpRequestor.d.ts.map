@@ -1,0 +1,1 @@
+{"version":3,"file":"ConduitHttpRequestor.d.ts","sourceRoot":"","sources":["../src/ConduitHttpRequestor.ts"],"names":[],"mappings":"AAKA,OAAO,EAAE,aAAa,EAAgB,MAAM,oBAAoB,CAAC;AACjE,OAAO,EAAgB,SAAS,EAAE,iBAAiB,EAAE,MAAM,oBAAoB,CAAC;AAIhF,qBAAa,oBAAqB,SAAQ,SAAS;IAErC,OAAO,CAAC,aAAa;gBAAb,aAAa,EAAE,aAAa;IAGnC,GAAG,CAAC,CAAC,EAAE,QAAQ,EAAE,iBAAiB,GAAG,OAAO,CAAC,CAAC,CAAC;CA0D7D"}

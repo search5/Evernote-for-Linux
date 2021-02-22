@@ -1,0 +1,1 @@
+{"version":3,"file":"TaskUserSettingsConverter.d.ts","sourceRoot":"","sources":["../../src/Converters/TaskUserSettingsConverter.ts"],"names":[],"mappings":"AAAA;;GAEG;AAEH,OAAO,EAAE,cAAc,EAAE,MAAM,cAAc,CAAC;AAI9C,OAAO,EAAkC,UAAU,EAAE,MAAM,oBAAoB,CAAC;AAEhF,OAAO,EAAE,gBAAgB,EAAE,MAAM,iCAAiC,CAAC;AAGnE,eAAO,MAAM,+BAA+B,EAAE,cAAc,CAAC,UAAU,CAAC,gBAAgB,EAAE,gBAAgB,CAmDzG,CAAC"}

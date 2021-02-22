@@ -1,0 +1,1 @@
+{"version":3,"file":"MaestroProps.d.ts","sourceRoot":"","sources":["../../src/client-event-collector-destination/MaestroProps.ts"],"names":[],"mappings":"AAAA;;GAEG;AAEH,UAAU,WAAW;IACnB,eAAe,EAAE,MAAM,CAAC;IACxB,mBAAmB,EAAE,MAAM,CAAC;CAC7B;AACD,MAAM,WAAW,YAAY;IAC3B,gBAAgB,CAAC,EAAE,WAAW,EAAE,CAAC;IACjC,CAAC,CAAC,EAAE,MAAM,GAAG,GAAG,CAAC;CAClB"}

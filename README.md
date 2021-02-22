@@ -10,7 +10,7 @@
 
 Download the system package.
 ```bash
-apt-get install libsecret-1-dev libclucene-dev build-essential 7z libuv1-dev
+apt-get install libsecret-1-dev libclucene-dev build-essential p7zip-full libuv1-dev
 ```
 
 Private NPM Registry setup

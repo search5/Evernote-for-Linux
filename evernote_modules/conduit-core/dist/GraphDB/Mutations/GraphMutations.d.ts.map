@@ -1,0 +1,1 @@
+{"version":3,"file":"GraphMutations.d.ts","sourceRoot":"","sources":["../../../src/GraphDB/Mutations/GraphMutations.ts"],"names":[],"mappings":"AAAA;;GAEG;AAKH,OAAO,EAAE,cAAc,EAAE,MAAM,iBAAiB,CAAC;AAGjD,MAAM,WAAW,0BAA0B;IACzC,QAAQ,CAAC,EAAE,MAAM,CAAC;IAClB,aAAa,CAAC,EAAE,MAAM,CAAC;IACvB,OAAO,CAAC,EAAE,MAAM,CAAC;IACjB,IAAI,CAAC,EAAE,OAAO,CAAC;CAChB;AAuJD,wBAAgB,gBAAgB;;WA6C/B"}

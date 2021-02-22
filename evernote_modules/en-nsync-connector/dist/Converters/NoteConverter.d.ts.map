@@ -1,0 +1,1 @@
+{"version":3,"file":"NoteConverter.d.ts","sourceRoot":"","sources":["../../src/Converters/NoteConverter.ts"],"names":[],"mappings":"AAAA;;GAEG;AAEH,OAAO,EAAE,cAAc,EAAE,MAAM,cAAc,CAAC;AAE9C,OAAO,EAAmB,IAAI,EAAE,MAAM,eAAe,CAAC;AAEtD,OAAO,EAAe,UAAU,EAAE,MAAM,eAAe,CAAC;AAKxD,eAAO,MAAM,mBAAmB,EAAE,cAAc,CAAC,UAAU,CAAC,IAAI,EAAE,IAAI,EAAE,GAAG,CA+G1E,CAAC"}

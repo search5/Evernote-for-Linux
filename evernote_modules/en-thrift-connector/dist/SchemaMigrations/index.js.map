@@ -1,0 +1,1 @@
+{"version":3,"file":"index.js","sourceRoot":"","sources":["../../src/SchemaMigrations/index.ts"],"names":[],"mappings":";AAAA;;GAEG;;;AAEH,2DAAgE;AAChE,IAAI,qBAAqB,GAAG,KAAK,CAAC;AAClC,SAAgB,wBAAwB;IACtC,IAAI,CAAC,qBAAqB,EAAE;QAC1B,6CAAyB,EAAE,CAAC;QAC5B,qBAAqB,GAAG,IAAI,CAAC;KAC9B;AACH,CAAC;AALD,4DAKC"}

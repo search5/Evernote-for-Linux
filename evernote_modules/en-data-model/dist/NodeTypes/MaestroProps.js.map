@@ -1,0 +1,1 @@
+{"version":3,"file":"MaestroProps.js","sourceRoot":"","sources":["../../src/NodeTypes/MaestroProps.ts"],"names":[],"mappings":";AAAA;;GAEG;;;AAEH,qDAAqG;AAGrG,wDAAqD;AAExC,QAAA,mBAAmB,GAAuB;IACrD,IAAI,EAAE,iCAAe,CAAC,YAAY;IAClC,UAAU,EAAE,4BAAU,CAAC,MAAM;IAC7B,MAAM,EAAE;QACN,SAAS,EAAE,QAAQ;KACpB;CACF,CAAC"}

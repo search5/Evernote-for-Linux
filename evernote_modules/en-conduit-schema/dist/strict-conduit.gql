@@ -1,0 +1,4830 @@
+schema {
+  query: RootQueryType
+  mutation: RootMutationType
+}
+
+enum AccessStatus {
+  OPEN
+  MEMBER
+}
+
+type AccountLimits {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  Limits: AccountLimitsLimits!
+  Counts: AccountLimitsCounts!
+  noteAndNotebookSharesAllowance: Float!
+  userNoteRatio: Float
+  userNotebookRatio: Float
+  userLinkedNotebookRatio: Float
+  userTagRatio: Float
+  userSavedSearchesRatio: Float
+  userDeviceRatio: Float
+  userWorkspaceRatio: Float
+  userUploadedRatio: Float
+  userNoteAndNotebookSharesSentRatio: Float
+}
+
+type AccountLimitsCounts {
+  userNoteCount: Int!
+  userNotebookCount: Int!
+  userLinkedNotebookCount: Int!
+  userTagCount: Int!
+  userSavedSearchesCount: Int!
+  userDeviceCount: Int!
+  userWorkspaceCount: Int!
+  userUploadedAmount: Float!
+  userNoteAndNotebookSharesSentCount: Int!
+}
+
+type AccountLimitsLimits {
+  userMailLimitDaily: Int!
+  noteSizeMax: Float!
+  resourceSizeMax: Float!
+  userLinkedNotebookMax: Int!
+  uploadLimit: Float!
+  userNoteCountMax: Int!
+  userNotebookCountMax: Int!
+  userTagCountMax: Int!
+  noteTagCountMax: Int!
+  userSavedSearchesMax: Int!
+  noteResourceCountMax: Int!
+  userDeviceLimit: Int!
+  userAdvertisedDeviceLimit: Int!
+  userWorkspaceCountMax: Int!
+}
+
+enum AdaptiveDownsyncTypeEnum {
+  NONE
+  FULL_DOWNSYNC_SMALL_ACCOUNT
+  FULL_DOWNSYNC_LARGE_ACCOUNT
+  LIMITED_DOWNSYNC
+}
+
+type AllTagsHierarchy {
+  id: String!
+  parents: [String!]!
+  indentationLevel: Float!
+  label: String!
+  refsCount: Float!
+  isBusiness: Boolean!
+  isPersonal: Boolean!
+  isShared: Boolean!
+}
+
+type Attachment {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  mime: String!
+  width: Float!
+  height: Float!
+  filename: String!
+  isActive: Boolean!
+  data: BlobWithoutContent!
+  recognition: Blob!
+  alternateData: Blob!
+  applicationDataKeys: [String!]!
+  Attributes: AttachmentAttributes!
+  parent: Note
+}
+
+type AttachmentAttributes {
+  sourceURL: String
+  timestamp: Float
+  Location: AttachmentAttributesLocation!
+  cameraMake: String
+  cameraModel: String
+  clientWillIndex: Boolean!
+}
+
+type AttachmentAttributesLocation {
+  latitude: Float
+  longitude: Float
+  altitude: Float
+}
+
+input AttachmentFilter {
+  field: AttachmentFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum AttachmentFilterField {
+  label
+  parent
+  isActive
+  id
+  mime
+  width
+  height
+  filename
+  data_localChangeTimestamp
+  data_hash
+  data_size
+  data_url
+  recognition_localChangeTimestamp
+  recognition_hash
+  recognition_size
+  recognition_url
+  alternateData_localChangeTimestamp
+  alternateData_hash
+  alternateData_size
+  alternateData_url
+  applicationDataKeys
+  Attributes_sourceURL
+  Attributes_timestamp
+  Attributes_Location_latitude
+  Attributes_Location_longitude
+  Attributes_Location_altitude
+  Attributes_cameraMake
+  Attributes_cameraModel
+  Attributes_clientWillIndex
+}
+
+type AttachmentGetApplicationDataEntryResult {
+  value: String
+}
+
+input AttachmentImportInfo {
+  path: String!
+  takeFileOwnership: Boolean
+  filename: String!
+  mime: String!
+  applicationData: Map_string!
+  placeholderHash: String
+}
+
+type AttachmentListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [Attachment!]!
+}
+
+type AttachmentsInNoteResultFields {
+  id: String!
+  type: String!
+  unindexed: Attachment!
+  parent: Note!
+  isActive: Boolean!
+  label: String!
+}
+
+type AttachmentsInNoteResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [AttachmentsInNoteResultFields!]!
+}
+
+input AttachmentSort {
+  field: AttachmentSortField!
+  order: IndexOrderType
+}
+
+enum AttachmentSortField {
+  label
+  parent
+  isActive
+  id
+  mime
+  width
+  height
+  filename
+  data_localChangeTimestamp
+  data_hash
+  data_size
+  data_url
+  recognition_localChangeTimestamp
+  recognition_hash
+  recognition_size
+  recognition_url
+  alternateData_localChangeTimestamp
+  alternateData_hash
+  alternateData_size
+  alternateData_url
+  applicationDataKeys
+  Attributes_sourceURL
+  Attributes_timestamp
+  Attributes_Location_latitude
+  Attributes_Location_longitude
+  Attributes_Location_altitude
+  Attributes_cameraMake
+  Attributes_cameraModel
+  Attributes_clientWillIndex
+}
+
+type AuthRemoteHost {
+  remoteHost: String!
+}
+
+type AuthState {
+  authState: AuthStateEnum!
+}
+
+enum AuthStateEnum {
+  NoAuth
+  NeedTwoFactor
+  NeedSSO
+  Expired
+  BadAuthToken
+  UserChanged
+  Authorized
+  ClientNotSupported
+  SessionRevoked
+}
+
+type AutoMutatorRes {
+  success: Boolean!
+  result: String
+}
+
+type AuxSchema {
+  id: String!
+  jsonStr: String
+}
+
+type Blob {
+  localChangeTimestamp: Float!
+  hash: String!
+  size: Float!
+  url: String
+  content: String
+}
+
+type BlobWithoutContent {
+  localChangeTimestamp: Float!
+  hash: String!
+  size: Float!
+  url: String
+}
+
+type Board {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  boardType: BoardBoardType!
+  headerBG: FileWithoutContent!
+  headerBGMime: String
+  headerBGFileName: String
+  headerBGPreviousUpload: FileWithoutContent!
+  headerBGPreviousUploadMime: String
+  headerBGPreviousUploadFileName: String
+  desktop: BoardDesktop!
+  mobile: BoardMobile!
+  freeTrialExpiration: Float
+  created: Float!
+  updated: Float!
+  tasksVersion: Float
+  calendarVersion: Float
+  children: [Widget!]!
+  childrenCount: Int!
+  isSupported: Boolean!
+  platformWidgets(platform: BoardPlatformWidgetsPlatform!, reverseOrder: Boolean, pageInfo: PageInfo): BoardPlatformWidgetsResults!
+}
+
+enum BoardBoardType {
+  Home
+}
+
+input BoardBootstrapFeatureArgs {
+  calendar: Int
+  tasks: Int
+}
+
+type BoardBootstrapResult {
+  success: Boolean!
+  result: String!
+}
+
+enum BoardCreateHome_platform {
+  Mobile
+  Desktop
+}
+
+enum BoardCreateHome_serviceLevel {
+  BASIC
+  PLUS
+  PREMIUM
+  BUSINESS
+}
+
+type BoardDesktop {
+  layout: BoardDesktopLayout!
+}
+
+enum BoardDesktopLayout {
+  ThreeColumnFlex
+}
+
+input BoardFilter {
+  field: BoardFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum BoardFilterField {
+  created
+  isSupported
+  id
+  boardType
+  headerBG_localChangeTimestamp
+  headerBG_hash
+  headerBG_size
+  headerBG_url
+  headerBG_id
+  headerBG_format
+  headerBG_version
+  headerBG_path
+  headerBGMime
+  headerBGFileName
+  headerBGPreviousUpload_localChangeTimestamp
+  headerBGPreviousUpload_hash
+  headerBGPreviousUpload_size
+  headerBGPreviousUpload_url
+  headerBGPreviousUpload_id
+  headerBGPreviousUpload_format
+  headerBGPreviousUpload_version
+  headerBGPreviousUpload_path
+  headerBGPreviousUploadMime
+  headerBGPreviousUploadFileName
+  desktop_layout
+  mobile_layout
+  freeTrialExpiration
+  updated
+  tasksVersion
+  calendarVersion
+  label
+}
+
+type BoardListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [Board!]!
+}
+
+type BoardMobile {
+  layout: BoardMobileLayout!
+}
+
+enum BoardMobileLayout {
+  SingleColumnStack
+}
+
+enum BoardPlatformWidgetsPlatform {
+  mobile
+  desktop
+}
+
+type BoardPlatformWidgetsResultFields {
+  id: String!
+  type: String!
+  unindexed: Widget!
+  parent: Board!
+  created: Float!
+  widgetType: PlatformWidgetsWidgetType!
+}
+
+type BoardPlatformWidgetsResults {
+  count: Int!
+  list: [BoardPlatformWidgetsResultFields!]!
+}
+
+input BoardSort {
+  field: BoardSortField!
+  order: IndexOrderType
+}
+
+enum BoardSortField {
+  created
+  isSupported
+  id
+  boardType
+  headerBG_localChangeTimestamp
+  headerBG_hash
+  headerBG_size
+  headerBG_url
+  headerBG_id
+  headerBG_format
+  headerBG_version
+  headerBG_path
+  headerBGMime
+  headerBGFileName
+  headerBGPreviousUpload_localChangeTimestamp
+  headerBGPreviousUpload_hash
+  headerBGPreviousUpload_size
+  headerBGPreviousUpload_url
+  headerBGPreviousUpload_id
+  headerBGPreviousUpload_format
+  headerBGPreviousUpload_version
+  headerBGPreviousUpload_path
+  headerBGPreviousUploadMime
+  headerBGPreviousUploadFileName
+  desktop_layout
+  mobile_layout
+  freeTrialExpiration
+  updated
+  tasksVersion
+  calendarVersion
+  label
+}
+
+"""Scan Business Card Info"""
+type BusinessCardInfo {
+  """Business card emails"""
+  emails: [String]
+
+  """Business card name."""
+  name: [String]
+
+  """Business card title."""
+  title: [String]
+
+  """Business card company."""
+  company: [String]
+
+  """Business card adress."""
+  addresses: [String]
+
+  """Business card phone."""
+  phones: [String]
+
+  """Business card web url."""
+  urls: [String]
+
+  """Business card twitter."""
+  twitter: [String]
+
+  """Business card skype."""
+  skype: [String]
+
+  """Business card mobiles."""
+  mobile: [String]
+
+  """Business card the rest of urls."""
+  otherUrls: [String]
+}
+
+type CEDataForTemplates {
+  noteGuid: String
+  shard: String!
+  authToken: String!
+  userId: Float!
+}
+
+enum clientPlatform {
+  ANDROID
+  IOS
+  MAC
+}
+
+enum ClientType {
+  MAC
+  WINDOWS
+  IOS
+  ANDROID
+  WEB
+  CLIPPER
+  ION
+  BORON
+}
+
+enum CommEngineEventType {
+  SHOW
+  DISMISS
+  TRACK
+  ERROREVENT
+}
+
+type CommEngineResponseSchema {
+  messages: [InAppMessage]
+  messageRequestGuid: String
+  config: Config
+}
+
+input CommEvent {
+  timeOccurred: Float!
+  messageKey: String!
+  label: String
+  type: CommEngineEventType
+}
+
+type Config {
+  cooldownPeriodMillis: Int
+}
+
+type ContentConflictsInWidgetResultFields {
+  id: String!
+  type: String!
+  unindexed: WidgetContentConflict!
+  parent: Widget!
+  updated: Float!
+  content_hash: String!
+}
+
+type ContentConflictsInWidgetResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [ContentConflictsInWidgetResultFields!]!
+}
+
+type CrossPromotionInfo {
+  usesEvernoteWindows: Boolean!
+  usesEvernoteMac: Boolean!
+  usesEvernoteIOS: Boolean!
+  usesEvernoteAndroid: Boolean!
+  usesWebClipper: Boolean!
+  usesClearly: Boolean!
+  usesFoodIOS: Boolean!
+  usesFoodAndroid: Boolean!
+  usesPenultimateIOS: Boolean!
+  usesSkitchWindows: Boolean!
+  usesSkitchMac: Boolean!
+  usesSkitchIOS: Boolean!
+  usesSkitchAndroid: Boolean!
+  usesEvernoteSalesforce: Boolean!
+}
+
+type DashboardsData {
+  businessShard: String!
+}
+
+type DataForQualtrics {
+  userId: Float!
+}
+
+type DebugNodeSchema {
+  jsonStr: String
+}
+
+type DebugSyncContextSchema {
+  id: String!
+  userID: Int
+}
+
+enum DescendentTasksStatus {
+  open
+  completed
+}
+
+input EntityRef {
+  id: String!
+  type: String!
+}
+
+type Error {
+  errorKey: String
+  errorType: String
+  id: String!
+  marked: Boolean!
+  message: String!
+  mutationName: String!
+  mutationID: String!
+  mutationArgsJson: String!
+}
+
+enum FeatureRolloutClientType {
+  mobile
+  desktop
+}
+
+type FeatureRolloutDataResult {
+  siwg: FeatureRolloutDataResultSiwg!
+  siwa: FeatureRolloutDataResultSiwa!
+}
+
+enum FeatureRolloutDataResultSiwa {
+  NAP
+  Legacy
+}
+
+enum FeatureRolloutDataResultSiwg {
+  NAP
+  Legacy
+}
+
+type FileWithoutContent {
+  localChangeTimestamp: Float!
+  hash: String!
+  size: Float!
+  url: String
+  id: String
+  format: String
+  version: Float
+  path: String
+}
+
+type FolderCommandPolicy {
+  canCreateFolder: Boolean!
+  canCreateNote: Boolean!
+  canEditLabel: Boolean!
+  canExpunge: Boolean!
+  canLeave: Boolean!
+  canMakeDefault: Boolean!
+  canMove: Boolean!
+  canSetDefaultPrivilege: Boolean!
+  canShare: Boolean!
+  canStack: Boolean!
+  canStore: Boolean!
+  canUpdateDescription: Boolean!
+  canUpdateType: Boolean!
+}
+
+type ForceDownsyncResult {
+  success: Boolean!
+  mutationCount: Float!
+}
+
+type GenericMutationResult {
+  success: Boolean!
+}
+
+type GetMaestroProps {
+  props: String
+}
+
+type GetMaestroServiceState {
+  serviceState: String
+}
+
+type GetTaskUserSettingsResult {
+  id: String!
+  type: String!
+  defaultTaskNoteId: String
+  defaultTaskNoteLabel: String
+  defaultReminder: Boolean
+  defaultRemindersOffsets: [Float!]
+  pinDefaultTaskNote: Boolean
+}
+
+"""Credential information needed to make GAPI requests."""
+type GoogleAuthCredential {
+  """OAuth 2.0 access token generated by Google Services."""
+  accessToken: String!
+
+  """The version of OAuth by which this credential abides."""
+  oAuthVersion: Float!
+
+  """Google Services for which these credentials are authorized to access."""
+  services: [GoogleScopesEnum]
+
+  """
+  Google Services scopes indicating specific permissions that these credentials may access.
+  """
+  scopeUris: [String]
+
+  """
+  The time, in milliseconds since epoch, after which a new Google API Credential should be retrieved.
+  """
+  refreshAfter: Float
+
+  """
+  The time, in milliseconds since epoch, after which this Google API Credential will expire.
+  """
+  expiresAfter: Float!
+}
+
+"""
+Metadata identifying a file resource managed and hosted by Google Drive.
+"""
+type GoogleDriveFile {
+  """The unique identifier for this file. Corresponds to Google File.id"""
+  id: String
+
+  """The name of the file. Corresponds to Google File.name"""
+  label: String
+
+  """
+  A short description of the file. Corresponds to Google File.description
+  """
+  description: String
+
+  """
+  The last time the file was modified by anyone (RFC 3339 date-time). Corresponds to File.modifiedTime
+  """
+  modifiedTime: String
+
+  """The MIME type of the file. Corresponds to File.mimeType"""
+  mimeType: String
+
+  """
+  A link for downloading the content of the file in a browser. Corresponds to File.webContentLink
+  """
+  binaryUri: String
+
+  """
+  A link for opening the file in a relevant Google editor or viewer in a browser. Corresponds to File.webViewLink
+  """
+  viewerUri: String
+
+  """The size of the file's content in bytes. Corresponds to File.size"""
+  fileSize: Float
+
+  """
+  A short-lived link to the file's thumbnail, if available. Typically lasts on
+  the order of hours. Corresponds to File.thumbnailLink
+  """
+  thumbnailLink: String
+
+  """
+  The full file extension extracted from the name field. May contain multiple
+  concatenated extensions. Corresponds to File.fullFileExtension
+  """
+  fullFileExtension: String
+}
+
+"""Google Drive File metadata and information about the response."""
+type GoogleDriveResponse {
+  """Reason for the response provided by Google Drive API"""
+  reason: String
+
+  """A short message explaining the repsonse."""
+  message: String
+
+  """Resource ID for the Google Drive File."""
+  fileId: String
+
+  """
+  Metadata describing a singular Google Drive File. If the statusCode is not 200, then this entry may be undefined.
+  """
+  data: GoogleDriveFile
+}
+
+"""
+Recognized Google authorization scopes for use in Google Services API.
+"""
+enum GoogleScopesEnum {
+  """Scope for Google Drive API access."""
+  DRIVE
+
+  """Scope for Google Calendar API access."""
+  CALENDAR
+
+  """Scope for Google Contacts API access."""
+  CONTACTS
+}
+
+type HasPendingMutationsResult {
+  result: Boolean!
+  largestTimestamp: Float!
+}
+
+type HomeBoardsResultFields {
+  id: String!
+  type: String!
+  unindexed: Board!
+  created: Float!
+}
+
+type HomeBoardsResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [HomeBoardsResultFields!]!
+}
+
+type ImmediateNotesDownsyncResult {
+  success: Boolean!
+  needsSync: Boolean!
+}
+
+type InAppMessage {
+  key: String
+  priority: Int
+  content: MessageContent
+  messageContent: MessageContent
+  placement: Int
+  offline: Boolean
+  expires: Float
+}
+
+input IndexMatch {
+  string: String
+  int: Float
+  boolean: Boolean
+  node: EntityRef
+}
+
+enum IndexOrderType {
+  ASC
+  DESC
+}
+
+input IndexRange {
+  string: String
+  int: Float
+}
+
+type Invitation {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  created: Float
+  snippet: String!
+  invitationType: InvitationInvitationType!
+  sharer: Profile
+  owner: Profile
+}
+
+input InvitationFilter {
+  field: InvitationFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum InvitationFilterField {
+  created
+  label
+  id
+  snippet
+  invitationType
+}
+
+enum InvitationInvitationType {
+  UNKNOWN
+  NOTE
+  NOTEBOOK
+}
+
+type InvitationListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [Invitation!]!
+}
+
+enum InvitationsForMeOrderBy {
+  created
+  label
+}
+
+type InvitationsForMeResultFields {
+  id: String!
+  type: String!
+  unindexed: Invitation!
+}
+
+type InvitationsForMeResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [InvitationsForMeResultFields!]!
+}
+
+input InvitationSort {
+  field: InvitationSortField!
+  order: IndexOrderType
+}
+
+enum InvitationSortField {
+  created
+  label
+  id
+  snippet
+  invitationType
+}
+
+enum Layout {
+  EMBED
+  NATIVEEMBED
+  WEB
+  IPHONE
+  ANDROID
+  IPAD
+  WP7
+  APP
+  MICRO
+  OAUTHMICRO
+  SMALL
+  MOBILE
+  WEBEMBED
+  MAC
+}
+
+enum LayoutStyle {
+  LIST
+  BOARD
+}
+
+type LoginInfo {
+  loginStatus: LoginInfoLoginStatus!
+  pendingInvites: [Int!]!
+  businessUserType: LoginInfoBusinessUserType!
+  facadeEnabled: Boolean!
+  napMigrationState: LoginInfoNapMigrationState!
+  signedUsernameOrEmail: String
+}
+
+enum LoginInfoBusinessUserType {
+  UNKNOWN
+  PERSONAL_ONLY
+  LEGACY
+  BUSINESS_ONLY
+}
+
+enum LoginInfoLoginStatus {
+  UNKNOWN
+  INVALID_FORMAT
+  NOT_FOUND
+  INVITE_PENDING
+  PASSWORD_RESET
+  PASSWORD
+  SSO
+}
+
+enum LoginInfoNapMigrationState {
+  UNKNOWN
+  LEGACY
+  MIGRATE_ON_LOGIN
+  MIGRATED
+  MIGRATION_FAILED
+  MIGRATED_NAP_ONLY
+  NOT_FOUND
+}
+
+type LoginResult {
+  state: AuthStateEnum!
+  secondFactorDeliveryHint: String
+  usernameOrEmail: String
+  secondFactorTempToken: String
+}
+
+type LogoutResult {
+  success: Boolean!
+  napAddress: String
+  currentUserID: String
+}
+
+input LogRequestProperty {
+  name: String!
+  value: String!
+}
+
+enum MaestroClientType {
+  ION
+  NEUTRON
+  BORON
+}
+
+input MaestroOverridingArmIds {
+  experimentName: String!
+  experimentArmName: String!
+}
+
+enum MaestroPlatform {
+  PLATFORM_UNKNOWN
+  PLATFORM_ANDROID
+  PLATFORM_IOS
+  PLATFORM_LINUX
+  PLATFORM_MAC
+  PLATFORM_WINDOWS
+}
+
+type MaestroProps {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  jsonValue: String!
+}
+
+enum MaestroRequestingEnvironment {
+  LOCALHOST
+  PREPROD
+  STAGE
+  PRODUCTION
+  ETNC
+}
+
+"""An object mapping from string to string"""
+scalar Map_string
+
+enum MarketingEmailType {
+  DESKTOP_UPSELL
+  CLIPPER_UPSELL
+  MOBILE_UPSELL
+}
+
+type Membership {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  privilege: MembershipPrivilege!
+  recipientType: MembershipRecipientType!
+  recipientIsMe: Boolean!
+  created: Float!
+  updated: Float!
+  sharer: Profile
+  owner: Profile
+  recipient: Profile
+  parent: NoteOrNotebookOrWorkspace
+  hasAccepted: Boolean
+}
+
+input MembershipFilter {
+  field: MembershipFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum MembershipFilterField {
+  created
+  label
+  recipientIsMe
+  parent
+  id
+  privilege
+  recipientType
+  updated
+}
+
+type MembershipListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [Membership!]!
+}
+
+enum MembershipPrivilege {
+  READ
+  EDIT
+  MANAGE
+}
+
+enum MembershipRecipientType {
+  USER
+  IDENTITY
+  EMAIL
+  BUSINESS
+}
+
+enum MembershipsForMeInParentOrderBy {
+  created
+  label
+}
+
+type MembershipsForMeInParentResultFields {
+  id: String!
+  type: String!
+  unindexed: Membership!
+  parent: NoteOrNotebookOrWorkspace!
+  label: String!
+}
+
+type MembershipsForMeInParentResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [MembershipsForMeInParentResultFields!]!
+}
+
+enum MembershipsForMeOrderBy {
+  created
+  label
+}
+
+type MembershipsForMeResultFields {
+  id: String!
+  type: String!
+  unindexed: Membership!
+  label: String!
+}
+
+type MembershipsForMeResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [MembershipsForMeResultFields!]!
+}
+
+enum MembershipsInParentOrderBy {
+  created
+  label
+}
+
+type MembershipsInParentResultFields {
+  id: String!
+  type: String!
+  unindexed: Membership!
+  parent: NoteOrNotebookOrWorkspace!
+  label: String!
+}
+
+type MembershipsInParentResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [MembershipsInParentResultFields!]!
+}
+
+input MembershipSort {
+  field: MembershipSortField!
+  order: IndexOrderType
+}
+
+enum MembershipSortField {
+  created
+  label
+  recipientIsMe
+  parent
+  id
+  privilege
+  recipientType
+  updated
+}
+
+enum MembershipUpdatePrivilege_privilege {
+  READ
+  EDIT
+  MANAGE
+}
+
+type Message {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  created: Float!
+  reshareMessage: Boolean!
+  creator: String!
+  hasAttachments: Boolean!
+  supportedForWorkChat: Boolean!
+  notes: [Note!]!
+  notesCount: Int!
+  notebooks: [Notebook!]!
+  notebooksCount: Int!
+  thread: Thread
+}
+
+type MessageContent {
+  templateUri: String
+  contentVariablesJson: String
+}
+
+input MessageFilter {
+  field: MessageFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum MessageFilterField {
+  thread
+  created
+  supportedForWorkChat
+  id
+  reshareMessage
+  creator
+  hasAttachments
+  label
+}
+
+type MessageListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [Message!]!
+}
+
+type MessagesInThreadResultFields {
+  id: String!
+  type: String!
+  unindexed: Message!
+  thread: Thread!
+  created: Float!
+}
+
+type MessagesInThreadResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [MessagesInThreadResultFields!]!
+}
+
+input MessageSort {
+  field: MessageSortField!
+  order: IndexOrderType
+}
+
+enum MessageSortField {
+  thread
+  created
+  supportedForWorkChat
+  id
+  reshareMessage
+  creator
+  hasAttachments
+  label
+}
+
+enum MonetizationClientType {
+  ION
+  NEUTRON_IOS
+  NEUTRON_ANDROID
+  BORON_MAC
+  BORON_WIN
+}
+
+type MutationTracker {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  updated: Float!
+}
+
+type Note {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  isMetadata: Boolean!
+  isUntitled: Boolean!
+  created: Float!
+  updated: Float!
+  deleted: Float
+  isExternal: Boolean!
+  content: Blob!
+  thumbnailUrl: String
+  shareUrlPlaceholder: String!
+  contentDownloaded: Boolean
+  Attributes: NoteAttributes!
+  noteResourceCountMax: Float
+  uploadLimit: Float
+  resourceSizeMax: Float
+  noteSizeMax: Float
+  uploaded: Float
+
+  """NOTE: has to fetch from the service on demand if not in cache"""
+  snippet: String
+
+  """NOTE: has to fetch from the service on demand if not in cache"""
+  shareUrl: String
+  attachments: [Attachment!]!
+  attachmentsCount: Int!
+  inactiveAttachments: [Attachment!]!
+  inactiveAttachmentsCount: Int!
+  memberships: [Membership!]!
+  membershipsCount: Int!
+  creator: Profile
+  lastEditor: Profile
+  tags: [Tag!]!
+  tagsCount: Int!
+  shortcut: Shortcut
+  noteContentInfo: NoteContentInfo
+  tasks: [Task!]!
+  tasksCount: Int!
+  parent: NotebookOrWorkspace
+  sourceNote: Note
+  contentHandler: [Widget!]!
+  contentHandlerCount: Int!
+  taskUserSettingsForDefaultNote: TaskUserSettings
+  inTrash: Boolean!
+  hasReminder: Boolean!
+  reminderIsDone: Boolean!
+  hasSource: Boolean!
+  workspace: String
+  stack: String
+  inBusinessAccount: Boolean!
+  hasTask: Boolean!
+  childAttachments(isActive: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): NoteChildAttachmentsResults!
+  allMemberships(orderBy: NoteAllMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NoteAllMembershipsResults!
+  ownMemberships(orderBy: NoteOwnMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NoteOwnMembershipsResults!
+  conflictBackups(inTrash: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): NoteConflictBackupsResults!
+  descendentTasks(status: Status, reverseOrder: Boolean, pageInfo: PageInfo): NoteDescendentTasksResults!
+  CommandPolicy: NoteCommandPolicy!
+  shareCount: Float!
+  taskGroups: [TaskGroupResult]
+}
+
+enum NoteAllMembershipsOrderBy {
+  created
+  label
+}
+
+type NoteAllMembershipsResultFields {
+  id: String!
+  type: String!
+  unindexed: Membership!
+  parent: NoteOrNotebookOrWorkspace!
+  label: String!
+}
+
+type NoteAllMembershipsResults {
+  count: Int!
+  list: [NoteAllMembershipsResultFields!]!
+}
+
+type NoteAttributes {
+  subjectDate: Float
+  contentClass: String
+  Location: NoteAttributesLocation!
+  Reminder: NoteAttributesReminder!
+  Share: NoteAttributesShare!
+  Editor: NoteAttributesEditor!
+  Source: NoteAttributesSource!
+}
+
+type NoteAttributesEditor {
+  author: String
+  lastEditedBy: String
+}
+
+type NoteAttributesLocation {
+  latitude: Float
+  longitude: Float
+  altitude: Float
+  placeName: String
+}
+
+type NoteAttributesReminder {
+  reminderOrder: Float
+  reminderDoneTime: Float
+  reminderTime: Float
+}
+
+type NoteAttributesShare {
+  shareDate: Float
+  sharedWithBusiness: Boolean
+}
+
+type NoteAttributesSource {
+  source: String
+  sourceURL: String
+  sourceApplication: String
+}
+
+type Notebook {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  created: Float!
+  updated: Float!
+  isPublished: Boolean!
+  inWorkspace: Boolean!
+  isExternal: Boolean!
+  reminderNotifyEmail: Boolean!
+  reminderNotifyInApp: Boolean!
+  markedForOffline: Boolean!
+  contentDownloaded: Boolean
+  isPartialNotebook: Boolean!
+  displayColor: Int
+  noteDisplayOrder: [String!]
+  memberships: [Membership!]!
+  membershipsCount: Int!
+  children: [Note!]!
+  childrenCount: Int!
+  childrenInTrash: [Note!]!
+  childrenInTrashCount: Int!
+  creator: Profile
+  shortcut: Shortcut
+  parent: Workspace
+  stack: Stack
+  userForDefaultNotebook: User
+  userForUserNotebook: User
+  allMemberships(orderBy: NotebookAllMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NotebookAllMembershipsResults!
+  ownMemberships(orderBy: NotebookOwnMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NotebookOwnMembershipsResults!
+  childNotes(inTrash: Boolean, orderBy: NotebookChildNotesOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NotebookChildNotesResults!
+  reminderNotes(doneReminders: Boolean, reminderTimeRange: NotebookReminderNotesReminderTimeRange, reverseOrder: Boolean, pageInfo: PageInfo): NotebookReminderNotesResults!
+  lastUpdated: Float!
+  lastEditor: Profile
+  CommandPolicy: FolderCommandPolicy!
+  shareCount: Float!
+}
+
+enum NotebookAllMembershipsOrderBy {
+  created
+  label
+}
+
+type NotebookAllMembershipsResultFields {
+  id: String!
+  type: String!
+  unindexed: Membership!
+  parent: NoteOrNotebookOrWorkspace!
+  label: String!
+}
+
+type NotebookAllMembershipsResults {
+  count: Int!
+  list: [NotebookAllMembershipsResultFields!]!
+}
+
+enum NotebookChildNotesOrderBy {
+  label
+  created
+  updated
+}
+
+type NotebookChildNotesResultFields {
+  id: String!
+  type: String!
+  unindexed: Note!
+  parent: NotebookOrWorkspace
+  inTrash: Boolean!
+  label: String!
+  updated: Float!
+  created: Float!
+  hasReminder: Boolean!
+}
+
+type NotebookChildNotesResults {
+  count: Int!
+  list: [NotebookChildNotesResultFields!]!
+}
+
+input NotebookFilter {
+  field: NotebookFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum NotebookFilterField {
+  creator
+  label
+  created
+  updated
+  stack
+  parent
+  childrenCount
+  markedForOffline
+  contentDownloaded
+  hasStack
+  id
+  isPublished
+  inWorkspace
+  isExternal
+  reminderNotifyEmail
+  reminderNotifyInApp
+  isPartialNotebook
+}
+
+enum NotebookInvite_privilege {
+  READ
+  EDIT
+  MANAGE
+}
+
+type NotebookListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [Notebook!]!
+}
+
+union NotebookOrWorkspace = Notebook | Workspace
+
+enum NotebookOwnMembershipsOrderBy {
+  created
+  label
+}
+
+type NotebookOwnMembershipsResultFields {
+  id: String!
+  type: String!
+  unindexed: Membership!
+  parent: NoteOrNotebookOrWorkspace!
+  label: String!
+}
+
+type NotebookOwnMembershipsResults {
+  count: Int!
+  list: [NotebookOwnMembershipsResultFields!]!
+}
+
+input NotebookReminderNotesReminderTimeRange {
+  min: Float
+  max: Float
+}
+
+type NotebookReminderNotesResultFields {
+  id: String!
+  type: String!
+  unindexed: Note!
+  reminderIsDone: Boolean!
+  reminderTime: Float
+  reminderOrder: Float
+  reminderDoneTime: Float
+  created: Float!
+  updated: Float!
+  label: String!
+  parent: NotebookOrWorkspace
+}
+
+type NotebookReminderNotesResults {
+  count: Int!
+  list: [NotebookReminderNotesResultFields!]!
+}
+
+type NotebooksInStackResultFields {
+  id: String!
+  type: String!
+  unindexed: Notebook!
+  stack: Stack
+  label: String!
+  childrenCount: Int!
+}
+
+type NotebooksInStackResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NotebooksInStackResultFields!]!
+}
+
+type NotebooksInWorkspaceResultFields {
+  id: String!
+  type: String!
+  unindexed: Notebook!
+  parent: Workspace
+  label: String!
+  childrenCount: Int!
+}
+
+type NotebooksInWorkspaceResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NotebooksInWorkspaceResultFields!]!
+}
+
+type NotebooksMarkedForOfflineResultFields {
+  id: String!
+  type: String!
+  unindexed: Notebook!
+  contentDownloaded: Boolean
+  childrenCount: Int!
+}
+
+type NotebooksMarkedForOfflineResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NotebooksMarkedForOfflineResultFields!]!
+}
+
+enum NotebooksOrderBy {
+  label
+  updated
+}
+
+input NotebookSort {
+  field: NotebookSortField!
+  order: IndexOrderType
+}
+
+enum NotebookSortField {
+  creator
+  label
+  created
+  updated
+  stack
+  parent
+  childrenCount
+  markedForOffline
+  contentDownloaded
+  hasStack
+  id
+  isPublished
+  inWorkspace
+  isExternal
+  reminderNotifyEmail
+  reminderNotifyInApp
+  isPartialNotebook
+}
+
+type NotebooksParentsResultFields {
+  id: String!
+  type: String!
+  unindexed: Notebook!
+  parent: Workspace
+  childrenCount: Int!
+}
+
+type NotebooksParentsResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NotebooksParentsResultFields!]!
+}
+
+type NotebooksResultFields {
+  id: String!
+  type: String!
+  unindexed: Notebook!
+  label: String!
+  childrenCount: Int!
+}
+
+type NotebooksResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NotebooksResultFields!]!
+}
+
+type NotebooksStacksResultFields {
+  id: String!
+  type: String!
+  unindexed: Notebook!
+  stack: Stack
+  childrenCount: Int!
+}
+
+type NotebooksStacksResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NotebooksStacksResultFields!]!
+}
+
+type NotebooksWithoutStackResultFields {
+  id: String!
+  type: String!
+  unindexed: Notebook!
+  label: String!
+  childrenCount: Int!
+}
+
+type NotebooksWithoutStackResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NotebooksWithoutStackResultFields!]!
+}
+
+type NoteCheckForUpdatesResult {
+  didUpdate: Boolean!
+  isOffline: Boolean!
+}
+
+type NoteChildAttachmentsResultFields {
+  id: String!
+  type: String!
+  unindexed: Attachment!
+  parent: Note!
+  isActive: Boolean!
+  label: String!
+}
+
+type NoteChildAttachmentsResults {
+  count: Int!
+  list: [NoteChildAttachmentsResultFields!]!
+}
+
+type NoteCommandPolicy {
+  canDuplicate: Boolean!
+  canEditContent: Boolean!
+  canEditLabel: Boolean!
+  canEmail: Boolean!
+  canExpunge: Boolean!
+  canMove: Boolean!
+  canMoveToTrash: Boolean!
+  canRestoreFromTrash: Boolean!
+  canSeeVersionHistory: Boolean!
+  canShare: Boolean!
+  canSharePublicly: Boolean!
+  canTag: Boolean!
+  canCreateTag: Boolean!
+  canUpdateMetadata: Boolean!
+}
+
+type NoteConflictBackupsResultFields {
+  id: String!
+  type: String!
+  unindexed: Note!
+  sourceNote: Note
+  inTrash: Boolean!
+  created: Float!
+  label: String!
+}
+
+type NoteConflictBackupsResults {
+  count: Int!
+  list: [NoteConflictBackupsResultFields!]!
+}
+
+type NoteConflictsResultFields {
+  id: String!
+  type: String!
+  unindexed: Note!
+  sourceNote: Note
+  inTrash: Boolean!
+  created: Float!
+  label: String!
+}
+
+type NoteConflictsResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NoteConflictsResultFields!]!
+}
+
+type NoteContentInfo {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  taskGroups: [String!]
+  created: Float!
+  updated: Float!
+  sourceOfChange: String
+  parent: Note
+}
+
+input NoteContentInfoFilter {
+  field: NoteContentInfoFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum NoteContentInfoFilterField {
+  parent
+  id
+  taskGroups
+  created
+  updated
+  sourceOfChange
+  label
+}
+
+type NoteContentInfoListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NoteContentInfo!]!
+}
+
+input NoteContentInfoSort {
+  field: NoteContentInfoSortField!
+  order: IndexOrderType
+}
+
+enum NoteContentInfoSortField {
+  parent
+  id
+  taskGroups
+  created
+  updated
+  sourceOfChange
+  label
+}
+
+type NoteDescendentTasksResultFields {
+  id: String!
+  type: String!
+  unindexed: Task!
+  parent: Note
+  sortWeight: String!
+  status: DescendentTasksStatus!
+  taskGroupNoteLevelID: String!
+}
+
+type NoteDescendentTasksResults {
+  count: Int!
+  list: [NoteDescendentTasksResultFields!]!
+}
+
+input NoteFilter {
+  field: NoteFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum NoteFilterField {
+  created
+  updated
+  label
+  reminderOrder
+  reminderTime
+  reminderDoneTime
+  source
+  sourceNote
+  parent
+  inTrash
+  hasReminder
+  reminderIsDone
+  hasSource
+  workspace
+  stack
+  inBusinessAccount
+  hasTask
+  id
+  isMetadata
+  isUntitled
+  deleted
+  isExternal
+  content_localChangeTimestamp
+  content_hash
+  content_size
+  content_url
+  thumbnailUrl
+  shareUrlPlaceholder
+  contentDownloaded
+  Attributes_subjectDate
+  Attributes_contentClass
+  Attributes_Location_latitude
+  Attributes_Location_longitude
+  Attributes_Location_altitude
+  Attributes_Location_placeName
+  Attributes_Reminder_reminderOrder
+  Attributes_Reminder_reminderDoneTime
+  Attributes_Reminder_reminderTime
+  Attributes_Share_shareDate
+  Attributes_Share_sharedWithBusiness
+  Attributes_Editor_author
+  Attributes_Editor_lastEditedBy
+  Attributes_Source_source
+  Attributes_Source_sourceURL
+  Attributes_Source_sourceApplication
+  noteResourceCountMax
+  uploadLimit
+  resourceSizeMax
+  noteSizeMax
+  uploaded
+}
+
+type NoteGetApplicationDataEntryResult {
+  value: String
+}
+
+type NoteImportResult {
+  noteID: String!
+  attachmentHashes: [String!]!
+}
+
+enum NoteInvite_privilege {
+  READ
+  EDIT
+  MANAGE
+}
+
+type NoteListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [Note!]!
+}
+
+type Notelock {
+  lockHolderId: String
+  lockRenewBy: Float
+  viewerIds: [String!]!
+  viewIdleExpiration: Float
+  currentTime: Float
+  isNoteStale: Boolean!
+}
+
+type NotelockOrNull {
+  lockHolderId: String
+  lockRenewBy: Float
+  viewerIds: [String!]!
+  viewIdleExpiration: Float
+  currentTime: Float
+  isNoteStale: Boolean!
+}
+
+union NoteOrNotebook = Note | Notebook
+
+union NoteOrNotebookOrSavedSearchOrStackOrTagOrWorkspace = Note | Notebook | SavedSearch | Stack | Tag | Workspace
+
+union NoteOrNotebookOrWorkspace = Note | Notebook | Workspace
+
+enum NoteOwnMembershipsOrderBy {
+  created
+  label
+}
+
+type NoteOwnMembershipsResultFields {
+  id: String!
+  type: String!
+  unindexed: Membership!
+  parent: NoteOrNotebookOrWorkspace!
+  label: String!
+}
+
+type NoteOwnMembershipsResults {
+  count: Int!
+  list: [NoteOwnMembershipsResultFields!]!
+}
+
+type NotePinResult {
+  success: Boolean!
+  result: String!
+}
+
+enum NotesInParentOrderBy {
+  label
+  created
+  updated
+}
+
+type NotesInParentResultFields {
+  id: String!
+  type: String!
+  unindexed: Note!
+  parent: NotebookOrWorkspace
+  inTrash: Boolean!
+  label: String!
+  updated: Float!
+  created: Float!
+  hasReminder: Boolean!
+}
+
+type NotesInParentResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NotesInParentResultFields!]!
+}
+
+type NotesInStackResultFields {
+  id: String!
+  type: String!
+  unindexed: Note!
+  stack: Stack
+  label: String!
+  updated: Float!
+  created: Float!
+  parent: NotebookOrWorkspace
+  hasReminder: Boolean!
+}
+
+type NotesInStackResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NotesInStackResultFields!]!
+}
+
+enum NotesInTrashOrderBy {
+  label
+  created
+  updated
+}
+
+type NotesInTrashResultFields {
+  id: String!
+  type: String!
+  unindexed: Note!
+  label: String!
+  updated: Float!
+  created: Float!
+  hasReminder: Boolean!
+}
+
+type NotesInTrashResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NotesInTrashResultFields!]!
+}
+
+type NotesInWorkspaceResultFields {
+  id: String!
+  type: String!
+  unindexed: Note!
+  workspace: Workspace
+  updated: Float!
+  created: Float!
+  label: String!
+  parent: NotebookOrWorkspace
+  hasReminder: Boolean!
+}
+
+type NotesInWorkspaceResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NotesInWorkspaceResultFields!]!
+}
+
+enum NotesNotInTrashOrderBy {
+  label
+  created
+  updated
+}
+
+type NotesNotInTrashResultFields {
+  id: String!
+  type: String!
+  unindexed: Note!
+  label: String!
+  updated: Float!
+  created: Float!
+  hasReminder: Boolean!
+}
+
+type NotesNotInTrashResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NotesNotInTrashResultFields!]!
+}
+
+input NoteSort {
+  field: NoteSortField!
+  order: IndexOrderType
+}
+
+enum NoteSortField {
+  created
+  updated
+  label
+  reminderOrder
+  reminderTime
+  reminderDoneTime
+  source
+  sourceNote
+  parent
+  inTrash
+  hasReminder
+  reminderIsDone
+  hasSource
+  workspace
+  stack
+  inBusinessAccount
+  hasTask
+  id
+  isMetadata
+  isUntitled
+  deleted
+  isExternal
+  content_localChangeTimestamp
+  content_hash
+  content_size
+  content_url
+  thumbnailUrl
+  shareUrlPlaceholder
+  contentDownloaded
+  Attributes_subjectDate
+  Attributes_contentClass
+  Attributes_Location_latitude
+  Attributes_Location_longitude
+  Attributes_Location_altitude
+  Attributes_Location_placeName
+  Attributes_Reminder_reminderOrder
+  Attributes_Reminder_reminderDoneTime
+  Attributes_Reminder_reminderTime
+  Attributes_Share_shareDate
+  Attributes_Share_sharedWithBusiness
+  Attributes_Editor_author
+  Attributes_Editor_lastEditedBy
+  Attributes_Source_source
+  Attributes_Source_sourceURL
+  Attributes_Source_sourceApplication
+  noteResourceCountMax
+  uploadLimit
+  resourceSizeMax
+  noteSizeMax
+  uploaded
+}
+
+type NotesParentsResultFields {
+  id: String!
+  type: String!
+  unindexed: Note!
+  parent: NotebookOrWorkspace
+}
+
+type NotesParentsResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NotesParentsResultFields!]!
+}
+
+input NotesWithRemindersReminderTimeRange {
+  min: Float
+  max: Float
+}
+
+type NotesWithRemindersResultFields {
+  id: String!
+  type: String!
+  unindexed: Note!
+  reminderIsDone: Boolean!
+  reminderTime: Float
+  reminderOrder: Float
+  reminderDoneTime: Float
+  created: Float!
+  updated: Float!
+  label: String!
+  parent: NotebookOrWorkspace
+}
+
+type NotesWithRemindersResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NotesWithRemindersResultFields!]!
+}
+
+type NotesWithSourceResultFields {
+  id: String!
+  type: String!
+  unindexed: Note!
+  source: String
+  created: Float!
+  label: String!
+}
+
+type NotesWithSourceResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NotesWithSourceResultFields!]!
+}
+
+type NsvcAuthzToken {
+  token: String
+  expiresAt: Float
+}
+
+type NSyncStatusResult {
+  enabled: Boolean!
+  offline: Boolean!
+  nextAttempt: Float!
+  lastConnection: Float!
+}
+
+enum OAuthProvider {
+  GOOGLE
+  FACEBOOK
+}
+
+input PageInfo {
+  startKey: String
+  startIndex: Int
+  pageSize: Int!
+}
+
+type PaywallState {
+  state: String!
+}
+
+type PinnedContent {
+  pinID: String!
+  uri: String
+  label: String
+  entity: NoteOrNotebook
+  created: Float
+  updated: Float
+  sortIndex: Float!
+}
+
+enum PlatformWidgetsWidgetType {
+  Clipped
+  Notebooks
+  Notes
+  OnboardingChecklist
+  Pinned
+  ScratchPad
+  Shortcuts
+  Tags
+  Calendar
+  Tasks
+}
+
+type PreferenceGetWorkChatActiveResult {
+  isActive: Boolean!
+}
+
+enum privilegeLevel {
+  READ_NOTEBOOK
+  MODIFY_NOTEBOOK_PLUS_ACTIVITY
+  READ_NOTEBOOK_PLUS_ACTIVITY
+  GROUP
+  FULL_ACCESS
+}
+
+type Profile {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  email: String!
+  photoLastUpdated: Float
+  photoUrl: String!
+  name: String!
+  username: String!
+  rootID: String!
+  isSameBusiness: Boolean!
+  isBlocked: Boolean
+  isConnected: Boolean!
+  status: ProfileStatus
+  relatedIdentities: [Profile!]!
+  relatedIdentitiesCount: Int!
+  parent: Profile
+  isRootProfile: Boolean!
+}
+
+input ProfileFilter {
+  field: ProfileFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum ProfileFilterField {
+  label
+  username
+  isSameBusiness
+  isRootProfile
+  id
+  email
+  photoLastUpdated
+  photoUrl
+  name
+  rootID
+  isBlocked
+  isConnected
+  status
+}
+
+type ProfileListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [Profile!]!
+}
+
+input ProfileSort {
+  field: ProfileSortField!
+  order: IndexOrderType
+}
+
+enum ProfileSortField {
+  label
+  username
+  isSameBusiness
+  isRootProfile
+  id
+  email
+  photoLastUpdated
+  photoUrl
+  name
+  rootID
+  isBlocked
+  isConnected
+  status
+}
+
+type ProfilesResultFields {
+  id: String!
+  type: String!
+  unindexed: Profile!
+  label: String!
+  username: String!
+  isSameBusiness: Boolean!
+}
+
+type ProfilesResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [ProfilesResultFields!]!
+}
+
+enum ProfileStatus {
+  ACTIVE
+  INACTIVE
+}
+
+type Promotion {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  optedOut: Boolean!
+  shownCount: Float!
+  timeLastShown: Float!
+}
+
+input PromotionFilter {
+  field: PromotionFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum PromotionFilterField {
+  shownCount
+  id
+  optedOut
+  timeLastShown
+  label
+}
+
+type PromotionListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [Promotion!]!
+}
+
+input PromotionSort {
+  field: PromotionSortField!
+  order: IndexOrderType
+}
+
+enum PromotionSortField {
+  shownCount
+  id
+  optedOut
+  timeLastShown
+  label
+}
+
+type PromotionsResultFields {
+  id: String!
+  type: String!
+  unindexed: Promotion!
+  shownCount: Float!
+}
+
+type PromotionsResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [PromotionsResultFields!]!
+}
+
+enum Provider {
+  GOOGLE
+  FACEBOOK
+}
+
+input PublishedNotebookFilter {
+  field: PublishedNotebooksFilterField!
+  search: String!
+}
+
+type PublishedNotebookList {
+  id: String!
+  label: String!
+  description: String!
+  workspaceID: String
+  created: Float!
+  updated: Float!
+  accessStatus: AccessStatus!
+  membersCount: Float!
+  memberships: [String!]!
+  ownerID: String
+  notesCount: Float!
+}
+
+enum PublishedNotebooksFilterField {
+  label
+  description
+}
+
+input PublishedNotebookSort {
+  field: PublishedNotebooksSortField!
+  order: IndexOrderType
+}
+
+enum PublishedNotebooksSortField {
+  label
+  created
+  updated
+  accessStatus
+}
+
+type Reminder {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  reminderDate: Float
+  reminderDateUIOption: ReminderReminderDateUIOption!
+  timeZone: String
+  created: Float!
+  updated: Float!
+  dueDateOffset: Float
+  noteLevelID: String!
+  sourceOfChange: String
+  status: ReminderStatus
+  scheduledNotification: ScheduledNotification
+  source: Task
+}
+
+enum ReminderCreate_reminderDateUIOption {
+  date_time
+  date_only
+  relative_to_due
+}
+
+input ReminderFilter {
+  field: ReminderFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum ReminderFilterField {
+  source
+  reminderDate
+  updated
+  id
+  reminderDateUIOption
+  timeZone
+  created
+  dueDateOffset
+  noteLevelID
+  sourceOfChange
+  status
+  label
+}
+
+input ReminderInput {
+  noteLevelID: String!
+  reminderDate: Float
+  reminderDateUIOption: String
+  timeZone: String
+  dueDateOffset: Float
+}
+
+type ReminderListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [Reminder!]!
+}
+
+enum ReminderReminderDateUIOption {
+  date_time
+  date_only
+  relative_to_due
+}
+
+input ReminderSort {
+  field: ReminderSortField!
+  order: IndexOrderType
+}
+
+enum ReminderSortField {
+  source
+  reminderDate
+  updated
+  id
+  reminderDateUIOption
+  timeZone
+  created
+  dueDateOffset
+  noteLevelID
+  sourceOfChange
+  status
+  label
+}
+
+input RemindersReminderTimeRange {
+  min: Float
+  max: Float
+}
+
+type RemindersResultFields {
+  id: String!
+  type: String!
+  unindexed: Reminder!
+  reminderDate: Float
+  source: Task!
+  updated: Float!
+}
+
+type RemindersResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [RemindersResultFields!]!
+}
+
+enum ReminderStatus {
+  active
+  muted
+}
+
+enum ReminderUpdate_reminderDateUIOption {
+  date_time
+  date_only
+  relative_to_due
+}
+
+type RootMutationType {
+  CancelImmediateNotesDownsync: GenericMutationResult!
+  ClearGraph(clearAuth: Boolean): GenericMutationResult!
+  DimensionSet(name: String!, value: String!): GenericMutationResult!
+  EventsFlush: GenericMutationResult!
+  EventsRecord(propertiesJsonStr: String!, selectiveDestinations: String): GenericMutationResult!
+  ExceptionRecord(message: String!, fatal: Boolean, callstack: String): GenericMutationResult!
+  ForceDownsync(wait: Boolean!, flushMutations: Boolean, waitForRoundtrip: Boolean, retry: Float): ForceDownsyncResult!
+  ImmediateNotesDownsync(wait: Boolean, maxNotes: Int, notesPerFetch: Int, maxTime: Int): ImmediateNotesDownsyncResult!
+  MetricsRecord(propertiesJsonStr: String!, selectiveDestinations: String): GenericMutationResult!
+  NewCurrentUser: GenericMutationResult!
+  PauseSync: GenericMutationResult!
+  RemoveUser(userID: String!, keepData: Boolean!): GenericMutationResult!
+  SendLogRequest(selectedObjectID: String, selectTime: Float, exitTime: Float, selectedObjectType: String, autoSelected: Boolean, userQuery: String, noteRank: Int, eventType: SearchLogEventTypeProperty, searchLogInfo: SearchLogInfoProperty, properties: [LogRequestProperty], sensitiveProperties: [LogRequestProperty]): GenericMutationResult!
+  SetCurrentUser(userID: String!): GenericMutationResult!
+  StartSync: GenericMutationResult!
+  SyncMessages(guid: String, knownMessages: [String!], locale: String, commEngineJsVersion: Int, nativeClientVersion: Int, uiLanguage: String, supportedPlacements: [SupportedPlacement], events: [CommEvent], clientType: ClientType): CommEngineResponseSchema
+  attachmentSetApplicationDataEntry(id: String!, key: String!, value: String): GenericMutationResult!
+  attachmentSetFileName(attachmentID: String!, fileName: String!): AutoMutatorRes
+  boardBootstrap(parent: EntityRef, features: BoardBootstrapFeatureArgs): BoardBootstrapResult
+  boardCreateHome(serviceLevel: BoardCreateHome_serviceLevel!, resetLayout: Boolean, platform: BoardCreateHome_platform, features: [String!], featureVersions: [Float!]): AutoMutatorRes
+  boardCustomize(widgetMutations: [WidgetCustomizeInput]): GenericMutationResult!
+  boardDeleteHeaderBG(board: String!): AutoMutatorRes
+  boardDeletePreviousHeaderBG(board: String!): AutoMutatorRes
+  boardStartFreeTrial(board: String!, durationInDays: Float): AutoMutatorRes
+  clearNSyncBackoff: Boolean!
+  clientLogin(serviceHost: String!, externalServiceHost: String, email: String!, password: String, allowFacadeAsPersonal: Boolean): LoginResult
+  clientLoginWithCookies(serviceHost: String!, userSlot: Int): LoginResult
+  clientLoginWithOAuth(serviceHost: String!, externalServiceHost: String, tokenPayload: String!, serviceProvider: ServiceProvider!): LoginResult
+  clientLoginWithSSO(serviceHost: String!, externalServiceHost: String, email: String!, ssoLoginToken: String!): LoginResult
+  clientLoginWithServiceToken(serviceHost: String!, externalServiceHost: String, token: String, userSlot: Float, allowFacadeAsPersonal: Boolean): LoginResult
+  clientLoginWithTwoFactor(serviceHost: String!, externalServiceHost: String, oneTimeCode: String!, secondFactorTempToken: String!): LoginResult
+  clientLogout(reason: String!, nextUserID: String, all: Boolean, keepData: Boolean): LogoutResult!
+  clientMultiLoginWithSplitTokens(serviceHost: String!, externalServiceHost: String, token1: String!, token2: String): LoginResult
+  createAndroidPrePurchaseTransactionID(sku: String!, extend: Boolean): String
+  createDeviceSync: PaywallState
+  errorClearList(markedValue: Boolean): GenericMutationResult!
+  errorMark(id: String!): GenericMutationResult!
+  errorMarkList: GenericMutationResult!
+  errorRemove(id: String!): GenericMutationResult!
+  errorUnmark(id: String!): GenericMutationResult!
+  errorUnmarkList: GenericMutationResult!
+
+  """fill the support ticket"""
+  fileSupportTicket(subject: String!, body: String!, logUri: String, applicationVersion: String, carrierInfo: String, osInfo: String, connectionInfo: String, contactEmail: String, deviceInfo: String, tags: [String!]): SupportTicketResult
+  inNoteTaskApplyChanges(noteID: String!, taskGroupList: [TaskGroupInput], loadedTaskGroupList: [TaskGroupInput], sourceOfChange: String): GenericMutationResult!
+  invitationAccept(invitation: String!): AutoMutatorRes
+  membershipDelete(membership: String!): AutoMutatorRes
+  membershipUpdatePrivilege(membership: String!, privilege: MembershipUpdatePrivilege_privilege!): AutoMutatorRes
+  messageSendToThread(thread: String!, content: String!): AutoMutatorRes
+  newUserSignUp(serviceHost: String!, email: String!, password: String!): LoginResult
+  newUserSignUpWithOAuth(serviceHost: String!, tokenPayload: String!, oAuthProvider: OAuthProvider!): LoginResult
+  noteCheckForUpdates(id: String!, fetchContent: Boolean): NoteCheckForUpdatesResult!
+  noteClearReminder(note: String!): AutoMutatorRes
+  noteCopy(note: String!, container: String!, label: String): AutoMutatorRes
+  noteCreate(untitledNoteLabel: String!, noteContent: String, container: String, label: String, tags: [String!], created: Float, updated: Float, subjectDate: Float, contentClass: String, latitude: Float, longitude: Float, altitude: Float, placeName: String, reminderTime: Float, reminderDoneTime: Float, reminderOrder: Float, author: String, source: String, sourceUrl: String, sourceApplication: String, attachmentHashes: [String!], applicationData: Map_string): AutoMutatorRes
+  noteDelete(note: String!): AutoMutatorRes
+  noteExpunge(note: String!): AutoMutatorRes
+  noteImport(noteContent: String!, untitledNoteLabel: String!, tags: [String!], container: String, label: String, created: Float, updated: Float, subjectDate: Float, contentClass: String, latitude: Float, longitude: Float, altitude: Float, placeName: String, reminderTime: Float, reminderDoneTime: Float, reminderOrder: Float, author: String, source: String, sourceUrl: String, sourceApplication: String, applicationData: Map_string, attachments: [AttachmentImportInfo!], tasksData: TasksExportData): NoteImportResult
+  noteInvite(note: String!, privilege: NoteInvite_privilege!, emails: [String!], userIDs: [String!], profileIDs: [String!], message: String): AutoMutatorRes
+  noteMove(note: String!, targetContainer: String!): AutoMutatorRes
+  notePin(note: String!, widget: String): NotePinResult
+  noteRestore(note: String!): AutoMutatorRes
+  noteSendByEmail(note: String!, toEmails: [String!], ccEmails: [String!], subject: String, message: String): AutoMutatorRes
+  noteSetApplicationDataEntry(id: String!, key: String!, value: String): GenericMutationResult!
+  noteSetAuthor(note: String!, author: String!): AutoMutatorRes
+  noteSetContent(note: String!, noteContent: String!, nextActiveAttachments: [String!], nextTaskGroups: [String!], prevNoteHash: String, isInternalUpdate: Boolean): AutoMutatorRes
+  noteSetContentClass(note: String!, contentClass: String): AutoMutatorRes
+  noteSetCreated(note: String!, created: Float!): AutoMutatorRes
+  noteSetLabel(note: String!, untitledNoteLabel: String!, label: String): AutoMutatorRes
+  noteSetLocation(note: String!, latitude: Float!, longitude: Float!, altitude: Float!): AutoMutatorRes
+  noteSetPlaceName(note: String!, placeName: String!): AutoMutatorRes
+  noteSetReminder(note: String!, reminderTime: Float, eventLabel: String): AutoMutatorRes
+  noteSetReminderDone(note: String!, reminderDoneTime: Float!): AutoMutatorRes
+  noteSetReminderOrder(note: String!, reminderOrder: Float!): AutoMutatorRes
+  noteSetSharePublic(note: String!, enable: Boolean!): AutoMutatorRes
+  noteSetSource(note: String!, source: String!): AutoMutatorRes
+  noteSetSourceApplication(note: String!, application: String!): AutoMutatorRes
+  noteSetSourceUrl(note: String!, url: String!): AutoMutatorRes
+  noteSetSubjectDate(note: String!, date: Float!): AutoMutatorRes
+  noteUnlinkConflictBackup(note: String!, conflictNote: String!): AutoMutatorRes
+  noteUnpin(note: String, notes: [String!]): AutoMutatorRes
+  notebookAcceptInvite(notebook: String!): AutoMutatorRes
+  notebookChangeEmailReminderSetting(notebook: String!, emailReminder: Boolean!): AutoMutatorRes
+  notebookChangeInAppReminderSetting(notebook: String!, inAppReminder: Boolean!): AutoMutatorRes
+  notebookCreate(label: String!, container: String): AutoMutatorRes
+  notebookDelete(notebook: String!): AutoMutatorRes
+  notebookInvite(notebook: String!, privilege: NotebookInvite_privilege!, emails: [String!], userIDs: [String!], profileIDs: [String!], message: String): AutoMutatorRes
+  notebookJoin(notebook: String!): GenericMutationResult!
+  notebookLeave(notebook: String!): AutoMutatorRes
+  notebookMoveToWorkspace(notebook: String!, workspace: String!): AutoMutatorRes
+  notebookPublish(notebook: String!, description: String!, recommended: Boolean, privilegeLevel: privilegeLevel!): GenericMutationResult!
+  notebookRemoveFromWorkspace(notebook: String!, workspace: String): AutoMutatorRes
+  notebookRename(notebook: String!, label: String!): AutoMutatorRes
+  notebookSetAsDefault(notebook: String!): AutoMutatorRes
+  notebookSetDisplayColor(notebook: String!, displayColor: Int!): AutoMutatorRes
+  notebookSetNoteDisplayOrder(notebook: String!, noteDisplayOrder: [String!]!): AutoMutatorRes
+  notebookToggleAvailableOffline(id: String!, setOffline: Boolean!, clearData: Boolean): GenericMutationResult!
+  notelockAcquire(noteID: String!): NotelockOrNull
+  notelockRelease(noteID: String!): Notelock!
+  notesExpunge(notes: [String!]!): AutoMutatorRes
+  notifyAppleTransactionFailure(layout: String, currency: String, price: String, productId: String, receiptData: String, transactionId: String): String
+  preferencesSetWorkChatActive(isActive: Boolean!): GenericMutationResult!
+  profileUpdateBlockStatus(profile: String!, blockStatus: Boolean!): AutoMutatorRes
+  promotionMarkShown(promotion: String!): AutoMutatorRes
+  promotionOptOut(promotion: String!): AutoMutatorRes
+  recordSession: SyncStateRecordSessionResult!
+  reminderCreate(source: String!, reminderDate: Float, timeZone: String, reminderDateUIOption: ReminderCreate_reminderDateUIOption, dueDateOffset: Float, noteLevelID: String, sourceOfChange: String): AutoMutatorRes
+  reminderDelete(reminder: String!): AutoMutatorRes
+  reminderUpdate(reminder: String!, reminderDateUIOption: ReminderUpdate_reminderDateUIOption!, reminderDate: Float, timeZone: String, dueDateOffset: Float, sourceOfChange: String): AutoMutatorRes
+  saveNAPAuthInfo(serviceHost: String!, serviceToken: String!, accessToken: String!, refreshToken: String!, napAuthUrl: String!, napClientId: String!, napRedirectUri: String!): LoginResult
+  savedSearchCreate(label: String!, query: String!, eventLabel: String): AutoMutatorRes
+  savedSearchDelete(search: String!, eventLabel: String): AutoMutatorRes
+  savedSearchSetLabel(search: String!, label: String!): AutoMutatorRes
+  savedSearchSetQuery(search: String!, query: String!): AutoMutatorRes
+  sendAppleReceiptOnly(layout: String, receiptData: String!): String
+  sendMarketingEmail(marketingEmailType: MarketingEmailType!): GenericMutationResult!
+  sendVerificationEmail: GenericMutationResult!
+  sessionToken: String!
+  shortcutCreate(source: String!, sortOrder: String!, eventLabel: String): AutoMutatorRes
+  shortcutRemove(shortcut: String!, eventLabel: String): AutoMutatorRes
+  shortcutSetSortOrder(shortcut: String!, sortOrder: String!): AutoMutatorRes
+  stackAddNotebook(stack: String!, notebook: String!, eventLabel: String): AutoMutatorRes
+  stackCreate(name: String!, notebook: String!, eventLabel: String): AutoMutatorRes
+  stackDelete(stack: String!, eventLabel: String): AutoMutatorRes
+  stackRemoveNotebook(notebook: String!, stack: String, eventLabel: String): AutoMutatorRes
+  stackRename(stack: String!, name: String!): AutoMutatorRes
+  systemSettingsClear: GenericMutationResult!
+  systemSettingsRemove(key: String!): GenericMutationResult!
+  systemSettingsSetBoolean(key: String!, value: Boolean!): GenericMutationResult!
+  systemSettingsSetInt(key: String!, value: Int!): GenericMutationResult!
+  systemSettingsSetNumber(key: String!, value: Float!): GenericMutationResult!
+  systemSettingsSetString(key: String!, value: String!): GenericMutationResult!
+  tagAddChildTag(parent: String!, child: String!): AutoMutatorRes
+  tagAddNote(tag: String!, note: String!, eventLabel: String): AutoMutatorRes
+  tagCreate(name: String!, note: String, creationEventLabel: String, tagAddNoteEventLabel: String): AutoMutatorRes
+  tagDelete(tag: String!, removeChildren: Boolean, eventLabel: String): AutoMutatorRes
+  tagRemoveNote(tag: String!, note: String!, eventLabel: String): AutoMutatorRes
+  tagRemoveParent(tag: String!): AutoMutatorRes
+  tagSetName(tag: String!, name: String!, eventLabel: String): AutoMutatorRes
+  targetUrlCreate(url: String!, utm_source: String!, utm_medium: String!, host: String, two_factor_token: String, url_params: String): String!
+  targetUrlCreateWithOAuth(serviceHost: String!, tokenPayload: String!, serviceProvider: String!, url: String!, utm_source: String!, utm_medium: String!, urlParams: String): String!
+  taskCreate(container: String!, label: String!, taskGroupNoteLevelID: String!, dueDate: Float, timeZone: String, dueDateUIOption: TaskCreate_dueDateUIOption, flag: Boolean, sortWeight: String, status: String, noteLevelID: String, sourceOfChange: String): AutoMutatorRes
+  taskDelete(task: String!): AutoMutatorRes
+  taskGroupCreateDefaultTaskNoteUpsert(defaultTaskNoteLabel: String!, pinDefaultTaskNote: Boolean): TaskGroupCreateDefaultTaskNoteUpsertResult!
+  taskGroupDelete(noteID: String!, taskGroupNoteLevelID: String!): AutoMutatorRes
+  taskGroupUpsertInNoteContentInfo(taskGroupNoteLevelIDs: [String!]!, noteID: String, sourceOfChange: String): AutoMutatorRes
+  taskMove(task: String!, destTaskGroupNoteLevelID: String!, destNoteID: String!, destNoteOwnerID: Float, sourceOfChange: String): AutoMutatorRes
+  taskUpdate(task: String!, label: String, dueDate: Float, timeZone: String, dueDateUIOption: TaskUpdate_dueDateUIOption, flag: Boolean, sortWeight: String, status: TaskUpdate_status, sourceOfChange: String, taskGroupNoteLevelID: String): AutoMutatorRes
+  taskUserSettingsSetDefaultTaskNote(noteID: String!, pinDefaultTaskNote: Boolean): AutoMutatorRes
+  taskUserSettingsUpsert(defaultReminder: Boolean, defaultRemindersOffsets: [Float!]): AutoMutatorRes
+  testError(grpcErrorCode: Float, httpErrorCode: Float): AutoMutatorRes
+  testOverrideNewEntityServiceKillSwitch(disable: Boolean!): Boolean!
+  threadCreate(message: String!, participants: [String!], emails: [String!]): AutoMutatorRes
+  threadDelete(thread: String!): AutoMutatorRes
+  threadUpdateReadStatus(thread: String!): AutoMutatorRes
+  threadValidateRecipients(participants: [String!], emails: [String!]): AutoMutatorRes
+  twoFactorAuthSendCode(serviceHost: String!, token: String!, sendToBackupPhone: Boolean!, textMsgTemplate: String!, useVoice: Boolean!): String!
+  userAssociateWithOpenID(provider: Provider, tokenPayload: String!): GenericMutationResult!
+  userSetReminderSetting(setting: UserSetReminderSetting_setting!): AutoMutatorRes
+  userSettingsClear(userID: String): GenericMutationResult!
+  userSettingsRemove(key: String!, userID: String): GenericMutationResult!
+  userSettingsSetBoolean(key: String!, value: Boolean!, userID: String): GenericMutationResult!
+  userSettingsSetInt(key: String!, value: Int!, userID: String): GenericMutationResult!
+  userSettingsSetNumber(key: String!, value: Float!, userID: String): GenericMutationResult!
+  userSettingsSetString(key: String!, value: String!, userID: String): GenericMutationResult!
+  verifyAndroidPostPurchase(developerPayload: String!, offer: String!, sku: String!, signedData: String!, signature: String!): String
+  verifyApplePostPurchase(currency: String!, offer: String!, price: String!, productId: String!, receiptData: String!, transactionId: String!, layout: String, extend: Boolean, receiptOnly: String, transactionState: String, verifyReceiptOnly: String, version: Int): String
+  widgetCustomize(widget: String!, isEnabled: Boolean, desktopSortWeight: String, desktopWidth: Float, mobileSortWeight: String, noteToUnpin: String, noteToPin: String): AutoMutatorRes
+  widgetResolveConflict(conflict: String!, conflictHash: String!): AutoMutatorRes
+  widgetScratchPadSetContent(widget: String!, scratchPadContent: String!, previousContentHash: String): AutoMutatorRes
+  widgetSetSelectedTab(widget: String!, tabToSelect: WidgetSetSelectedTab_tabToSelect!): AutoMutatorRes
+  workspaceChangePinnedContentPosition(workspace: String!, contentNodeID: String!, index: Int!): AutoMutatorRes
+  workspaceCreate(label: String!, type: WorkspaceCreate_type!, description: String, defaultRole: WorkspaceCreate_defaultRole): AutoMutatorRes
+  workspaceInvite(workspace: String!, users: [String!]!, privilege: WorkspaceInvite_privilege!): AutoMutatorRes
+  workspaceJoin(workspace: String!): AutoMutatorRes
+  workspaceLeave(workspace: String!): AutoMutatorRes
+  workspacePinnedContentsUpdate(workspace: String!, noteIDsToAdd: [String!], noteIDsToRemove: [String!], nbIDsToAdd: [String!], nbIDsToRemove: [String!]): AutoMutatorRes
+  workspaceRequestAccess(workspace: String!): AutoMutatorRes
+  workspaceSetLayoutStyle(workspace: String!, layoutStyle: WorkspaceSetLayoutStyle_layoutStyle!): AutoMutatorRes
+  workspaceSetNoteDisplayOrder(workspace: String!, noteDisplayOrder: [String!]!): AutoMutatorRes
+  workspaceSetNotebookDisplayOrder(workspace: String!, notebookDisplayOrder: [String!]!): AutoMutatorRes
+  workspaceSetViewed(workspace: String!): AutoMutatorRes
+  workspaceUpdate(workspace: String!, label: String, description: String, type: WorkspaceUpdate_type, defaultRole: WorkspaceUpdate_defaultRole): AutoMutatorRes
+}
+
+type RootQueryType {
+  AccountLimits(id: String!): AccountLimits
+  AllTagsWithHierarchy(filters: [TagHierarchyFilter], sorts: [TagHierarchySort]): [AllTagsHierarchy!]!
+  Attachment(id: String!): Attachment
+  AttachmentsInNote(note: String, isActive: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): AttachmentsInNoteResults!
+  AuxData(id: String!): AuxSchema
+  Board(id: String!): Board
+  CEDataForTemplates(noteID: String): CEDataForTemplates!
+  ContentConflictsInWidget(widget: String, reverseOrder: Boolean, pageInfo: PageInfo): ContentConflictsInWidgetResults!
+  CrossPromotionsInfo: CrossPromotionInfo
+  DashboardsData: DashboardsData!
+  DataForQualtrics: DataForQualtrics!
+  HasPendingMutations: HasPendingMutationsResult!
+  HomeBoards(reverseOrder: Boolean, pageInfo: PageInfo): HomeBoardsResults!
+  Invitation(id: String!): Invitation
+  InvitationsForMe(orderBy: InvitationsForMeOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): InvitationsForMeResults!
+  MaestroProps(id: String!): MaestroProps
+  Membership(id: String!): Membership
+  MembershipsForMe(orderBy: MembershipsForMeOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): MembershipsForMeResults!
+  MembershipsForMeInParent(parent: EntityRef, orderBy: MembershipsForMeInParentOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): MembershipsForMeInParentResults!
+  MembershipsInParent(parent: EntityRef, orderBy: MembershipsInParentOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): MembershipsInParentResults!
+  Message(id: String!): Message
+  MessagesInThread(thread: String, reverseOrder: Boolean, pageInfo: PageInfo): MessagesInThreadResults!
+  MutationTracker(id: String!): MutationTracker
+  Note(id: String!): Note
+  NoteConflicts(note: String, inTrash: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): NoteConflictsResults!
+  NoteContentInfo(id: String!): NoteContentInfo
+  Notebook(id: String!): Notebook
+  Notebooks(orderBy: NotebooksOrderBy, reverseOrder: Boolean, pageInfo: PageInfo): NotebooksResults!
+  NotebooksInStack(stack: String, reverseOrder: Boolean, pageInfo: PageInfo): NotebooksInStackResults!
+  NotebooksInWorkspace(workspace: String, reverseOrder: Boolean, pageInfo: PageInfo): NotebooksInWorkspaceResults!
+  NotebooksMarkedForOffline(reverseOrder: Boolean, pageInfo: PageInfo): NotebooksMarkedForOfflineResults!
+  NotebooksParents(reverseOrder: Boolean, pageInfo: PageInfo): NotebooksParentsResults!
+  NotebooksStacks(reverseOrder: Boolean, pageInfo: PageInfo): NotebooksStacksResults!
+  NotebooksWithoutStack(reverseOrder: Boolean, pageInfo: PageInfo): NotebooksWithoutStackResults!
+  NotesInParent(parent: EntityRef, inTrash: Boolean, orderBy: NotesInParentOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NotesInParentResults!
+  NotesInStack(stack: String, reverseOrder: Boolean, pageInfo: PageInfo): NotesInStackResults!
+  NotesInTrash(orderBy: NotesInTrashOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NotesInTrashResults!
+  NotesInWorkspace(workspace: String, reverseOrder: Boolean, pageInfo: PageInfo): NotesInWorkspaceResults!
+  NotesNotInTrash(orderBy: NotesNotInTrashOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NotesNotInTrashResults!
+  NotesParents(reverseOrder: Boolean, pageInfo: PageInfo): NotesParentsResults!
+  NotesWithReminders(parent: EntityRef, doneReminders: Boolean, reminderTimeRange: NotesWithRemindersReminderTimeRange, reverseOrder: Boolean, pageInfo: PageInfo): NotesWithRemindersResults!
+  NotesWithSource(source: String, reverseOrder: Boolean, pageInfo: PageInfo): NotesWithSourceResults!
+  NsvcAuthzToken(tokenType: String): NsvcAuthzToken
+  Profile(id: String!): Profile
+  Profiles(reverseOrder: Boolean, pageInfo: PageInfo): ProfilesResults!
+  Promotion(id: String!): Promotion
+  Promotions(reverseOrder: Boolean, pageInfo: PageInfo): PromotionsResults!
+  PublishedNotebookList(limit: Float, filters: [PublishedNotebookFilter], sort: PublishedNotebookSort): [PublishedNotebookList]
+  Reminder(id: String!): Reminder
+  Reminders(reminderTimeRange: RemindersReminderTimeRange, reverseOrder: Boolean, pageInfo: PageInfo): RemindersResults!
+  SavedSearch(id: String!): SavedSearch
+  SavedSearches(reverseOrder: Boolean, pageInfo: PageInfo): SavedSearchesResults!
+  ScheduledNotification(id: String!): ScheduledNotification
+  ScheduledNotifications(reverseOrder: Boolean, pageInfo: PageInfo): ScheduledNotificationsResults!
+  Search(searchStr: String, offset: Int, maxNotes: Int, order: Int): SearchSchema
+  SearchEx(query: SearchExQuery, queryContext: SearchExQueryContext, param: SearchExParam!, custom: SearchExCustom): SearchExSchema
+  SharedWithMe(sort: SharedWithMeSort): SharedWithMeResult
+  Shortcut(id: String!): Shortcut
+  Shortcuts(reverseOrder: Boolean, pageInfo: PageInfo): ShortcutsResults!
+
+  """Get Gradual Release Feature Flag"""
+  SignInMethod(serviceHost: String!, featureRolloutClientType: FeatureRolloutClientType!): FeatureRolloutDataResult
+  Stack(id: String!): Stack
+  StackedNotebookList(sort: StackedNotebookSort): StackedNotebookList!
+  Stacks(reverseOrder: Boolean, pageInfo: PageInfo): StacksResults!
+  Suggest(searchStr: String, filters: [String!], maxResults: Int, searchExecuted: Boolean, locale: String): SuggestSchema
+  SyncState(precision: Int): SyncState!
+  Tag(id: String!): Tag
+  Tags(parent: String, orderBy: TagsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TagsResults!
+  TagsAllowed(id: String!, filters: [TagInContextFilter], sorts: [TagsInContextSort]): TagsAllowed!
+  Task(id: String!): Task
+  TaskNotesNotInTrash(orderBy: TaskNotesNotInTrashOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TaskNotesNotInTrashResults!
+  TaskUserSettings(id: String!): TaskUserSettings
+  TasksInNote(parent: String, status: Status, reverseOrder: Boolean, pageInfo: PageInfo): TasksInNoteResults!
+  Thread(id: String!): Thread
+  Threads(reverseOrder: Boolean, pageInfo: PageInfo): ThreadsResults!
+  User(id: String!): User
+  Widget(id: String!): Widget
+  WidgetContentConflict(id: String!): WidgetContentConflict
+  WidgetsInBoard(board: String, platform: WidgetsInBoardPlatform!, reverseOrder: Boolean, pageInfo: PageInfo): WidgetsInBoardResults!
+  Workspace(id: String!): Workspace
+  WorkspaceDirectory(includedWorkspaceGuids: [String!], limit: Float, filters: [WorkspaceDirectoryFilter], sorts: [WorkspaceDirectorySort]): [Workspace]
+  Workspaces(reverseOrder: Boolean, pageInfo: PageInfo): WorkspacesResults!
+  attachmentGetApplicationDataEntry(id: String!, key: String!): AttachmentGetApplicationDataEntryResult!
+  authRemoteHost: AuthRemoteHost
+  clientAuthState: AuthState
+  currentUserID: String
+  debugNode(id: String!, type: String!): DebugNodeSchema
+  debugSyncContext(syncContext: String!): DebugSyncContextSchema
+  errorGet(id: String!): Error
+  errorGetList(markedValue: Boolean): [Error]!
+  evernoteNoteLink(note: String!): String!
+  getBillableProducts(clientPlatform: clientPlatform!, forceFetch: Boolean): String
+
+  """Retrieves credentials that will include a GAPI access token."""
+  getGoogleAuthCredential(service: String!): GoogleAuthCredential
+
+  """
+  Retrieves response metadata for file resources hosted and managed by Google Drive.
+  """
+  getGoogleDriveFiles(resourceIds: [String!]!): [GoogleDriveResponse]!
+  getLoginInfo(serviceHost: String!, externalServiceHost: String, usernameOrEmail: String, tokenPayload: String, clientName: String!): LoginInfo
+  getMaestroServiceState(clientType: Float!): GetMaestroServiceState
+  getPaywallState(clientType: MonetizationClientType!): PaywallState
+  getSubscriptionInfo: String
+
+  """Getting the TaskUserSetting for the current user."""
+  getTaskUserSettings: GetTaskUserSettingsResult
+  me: User
+  noteGetApplicationDataEntry(id: String!, key: String!): NoteGetApplicationDataEntryResult!
+  noteHistoryUrl(note: String!, layout: Layout!): String!
+  notelockStatus(noteID: String!): Notelock!
+  nsyncStatus: NSyncStatusResult!
+  preferenceGetWorkChatActive: PreferenceGetWorkChatActiveResult!
+
+  """Scan data from business card's image"""
+  processCardImage(imageUri: String!, locale: String, imageType: String): BusinessCardInfo
+  systemSettingsGetBoolean(key: String!): Boolean
+  systemSettingsGetInt(key: String!): Int
+  systemSettingsGetNumber(key: String!): Float
+  systemSettingsGetString(key: String!): String
+  twoFactorAuthMaskedPhoneNumbers(serviceHost: String!, token: String!): TwoFactorAuthMaskedPhoneNumbers!
+  userGetTsdEligibility(numSessionsLast7Days: Int, numSessionsLast30Days: Int, numDaysActiveLast7Days: Int, numDaysActiveLast30Days: Int): TierSelectionDisplayResult!
+  userInfoList: [UserInfo!]!
+  userSettingsGetBoolean(key: String!, userID: String): Boolean
+  userSettingsGetInt(key: String!, userID: String): Int
+  userSettingsGetNumber(key: String!, userID: String): Float
+  userSettingsGetString(key: String!, userID: String): String
+  webNoteLink(note: String!): String!
+  workspacePublicList(includeDiscoverableWorkspaces: Boolean, includeOpenWorkspaces: Boolean): workspacePublicList
+}
+
+type SavedSearch {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  query: String!
+  shortcut: Shortcut
+}
+
+type SavedSearchesResultFields {
+  id: String!
+  type: String!
+  unindexed: SavedSearch!
+  label: String!
+}
+
+type SavedSearchesResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [SavedSearchesResultFields!]!
+}
+
+input SavedSearchFilter {
+  field: SavedSearchFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum SavedSearchFilterField {
+  label
+  id
+  query
+}
+
+type SavedSearchListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [SavedSearch!]!
+}
+
+input SavedSearchSort {
+  field: SavedSearchSortField!
+  order: IndexOrderType
+}
+
+enum SavedSearchSortField {
+  label
+  id
+  query
+}
+
+type ScheduledNotification {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  dataSourceUpdatedAt: Float!
+  schedulingUpdatedAt: Float!
+  scheduledNotificationType: ScheduledNotificationScheduledNotificationType!
+  created: Float!
+  updated: Float!
+  mute: Boolean!
+  dataSource: Task
+  scheduling: Reminder
+}
+
+input ScheduledNotificationFilter {
+  field: ScheduledNotificationFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum ScheduledNotificationFilterField {
+  id
+  dataSourceUpdatedAt
+  schedulingUpdatedAt
+  scheduledNotificationType
+  created
+  updated
+  mute
+  label
+}
+
+type ScheduledNotificationListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [ScheduledNotification!]!
+}
+
+enum ScheduledNotificationScheduledNotificationType {
+  TaskReminder
+}
+
+input ScheduledNotificationSort {
+  field: ScheduledNotificationSortField!
+  order: IndexOrderType
+}
+
+enum ScheduledNotificationSortField {
+  id
+  dataSourceUpdatedAt
+  schedulingUpdatedAt
+  scheduledNotificationType
+  created
+  updated
+  mute
+  label
+}
+
+type ScheduledNotificationsResultFields {
+  id: String!
+  type: String!
+  unindexed: ScheduledNotification!
+}
+
+type ScheduledNotificationsResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [ScheduledNotificationsResultFields!]!
+}
+
+type SearchExBaseResult {
+  type: SearchExResultType!
+  id: String
+  label: String
+  score: Float
+  searchFilter: String
+  highlight: SearchExHighlight
+}
+
+input SearchExCustom {
+  debug: String
+  abTest: String
+}
+
+type SearchExCustomResult {
+  debug: String
+  abTest: String
+}
+
+type SearchExHighlight {
+  terms: [String!]
+}
+
+enum SearchExLocalSearchMode {
+  AUTO
+  STRICT
+}
+
+input SearchExLocation {
+  latitude: Float!
+  longitude: Float!
+  altitude: Float
+}
+
+type SearchExMeta {
+  searchLogInfo: SearchLogInfo
+}
+
+type SearchExNote {
+  type: SearchExResultType!
+  id: String
+  label: String
+  score: Float
+  searchFilter: String
+  highlight: SearchExHighlight
+  created: Float
+  updated: Float
+  snippet: String
+}
+
+input SearchExParam {
+  resultSpec: [SearchExResultSpec!]!
+  processingSpec: SearchExProcessingSpec
+}
+
+input SearchExProcessingSpec {
+  fullBooleanSearch: Boolean
+  localSearchMode: SearchExLocalSearchMode
+}
+
+input SearchExQuery {
+  searchStr: String
+}
+
+input SearchExQueryContext {
+  text: String
+  url: String
+  noteID: String
+  location: SearchExLocation
+  locale: String
+  timeZone: String
+}
+
+union SearchExResult = SearchExNote | SearchExBaseResult
+
+type SearchExResultGroup {
+  type: SearchExResultType!
+  totalResultCount: Int!
+  startIndex: Int!
+  results: [SearchExResult!]!
+  highlight: SearchExHighlight
+}
+
+input SearchExResultSpec {
+  type: SearchExResultType!
+  textSearchField: SearchExTextField
+  startIndex: Int
+  maxResults: Int
+  sort: SearchExSortOrder
+  ascending: Boolean
+}
+
+enum SearchExResultType {
+  HISTORY
+  TEXT
+  NOTE
+  NOTEBOOK
+  WORKSPACE
+  TAG
+  AUTHOR
+  CONTAINS
+  MESSAGE
+}
+
+type SearchExSchema {
+  results: [SearchExResultGroup!]!
+  meta: SearchExMeta
+  custom: SearchExCustomResult
+}
+
+enum SearchExSortOrder {
+  CREATED
+  UPDATED
+  RELEVANCE
+  TITLE
+  REMINDER_ORDER
+  REMINDER_TIME
+  REMINDER_DONE_TIME
+}
+
+enum SearchExTextField {
+  ALL
+  NAME
+}
+
+enum SearchLogEventTypeProperty {
+  SEARCH_CLICK
+  EXIT
+  SUGGEST_CLICK
+  NOTE_VIEW
+}
+
+type SearchLogInfo {
+  searchStr: String
+  searchGuid: String
+}
+
+input SearchLogInfoProperty {
+  searchStr: String
+  searchGuid: String
+}
+
+type SearchResult {
+  noteID: String
+  containerID: String
+  score: Float
+  label: String
+  updated: Float
+}
+
+type SearchSchema {
+  results: [SearchResult!]!
+  resultCount: Int!
+  startIndex: Int!
+  searchLogInfo: SearchLogInfo
+}
+
+enum ServiceProvider {
+  GOOGLE
+  FACEBOOK
+}
+
+enum SharedWithMeField {
+  created
+  label
+}
+
+type SharedWithMeResult {
+  memberships: [Membership!]
+  invitations: [Invitation!]
+}
+
+input SharedWithMeSort {
+  field: SharedWithMeField
+  order: IndexOrderType
+}
+
+type Shortcut {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  sortOrder: String!
+  source: NoteOrNotebookOrSavedSearchOrStackOrTagOrWorkspace
+}
+
+input ShortcutFilter {
+  field: ShortcutFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum ShortcutFilterField {
+  sortOrder
+  label
+  source
+  id
+}
+
+type ShortcutListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [Shortcut!]!
+}
+
+input ShortcutSort {
+  field: ShortcutSortField!
+  order: IndexOrderType
+}
+
+enum ShortcutSortField {
+  sortOrder
+  label
+  source
+  id
+}
+
+type ShortcutsResultFields {
+  id: String!
+  type: String!
+  unindexed: Shortcut!
+  sortOrder: String!
+  label: String!
+  source: NoteOrNotebookOrSavedSearchOrStackOrTagOrWorkspace
+}
+
+type ShortcutsResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [ShortcutsResultFields!]!
+}
+
+type Stack {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  notebooks: [Notebook!]!
+  notebooksCount: Int!
+  shortcut: Shortcut
+  descendentNotes(reverseOrder: Boolean, pageInfo: PageInfo): StackDescendentNotesResults!
+  childNotebooks(reverseOrder: Boolean, pageInfo: PageInfo): StackChildNotebooksResults!
+}
+
+type StackChildNotebooksResultFields {
+  id: String!
+  type: String!
+  unindexed: Notebook!
+  stack: Stack
+  label: String!
+  childrenCount: Int!
+}
+
+type StackChildNotebooksResults {
+  count: Int!
+  list: [StackChildNotebooksResultFields!]!
+}
+
+type StackDescendentNotesResultFields {
+  id: String!
+  type: String!
+  unindexed: Note!
+  stack: Stack
+  label: String!
+  updated: Float!
+  created: Float!
+  parent: NotebookOrWorkspace
+  hasReminder: Boolean!
+}
+
+type StackDescendentNotesResults {
+  count: Int!
+  list: [StackDescendentNotesResultFields!]!
+}
+
+type StackedNotebookList {
+  count: Float!
+  list: [StackedNotebookListResult!]!
+}
+
+union StackedNotebookListResult = Stack | Notebook
+
+input StackedNotebookSort {
+  field: StackedNotebookSortField!
+  order: IndexOrderType
+}
+
+enum StackedNotebookSortField {
+  label
+  created
+  updated
+}
+
+input StackFilter {
+  field: StackFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum StackFilterField {
+  label
+  id
+}
+
+type StackListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [Stack!]!
+}
+
+input StackSort {
+  field: StackSortField!
+  order: IndexOrderType
+}
+
+enum StackSortField {
+  label
+  id
+}
+
+type StacksResultFields {
+  id: String!
+  type: String!
+  unindexed: Stack!
+  label: String!
+}
+
+type StacksResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [StacksResultFields!]!
+}
+
+enum Status {
+  open
+  completed
+}
+
+type SuggestResult {
+  displayValue: String
+  objectGuid: String
+  score: Float
+  type: String
+  searchFilter: String
+}
+
+type SuggestSchema {
+  results: [SuggestResult!]!
+  searchLogInfo: SearchLogInfo
+}
+
+enum SupportedPlacement {
+  FULLSCREEN
+  BANNER
+  CARD
+}
+
+type SupportTicketResult {
+  success: Boolean!
+}
+
+enum SyncProgressTypeEnum {
+  NONE
+  INITIAL_DOWNSYNC
+  DB_MIGRATION
+  INCREMENTAL_SYNC
+  IMMEDIATE_NOTE_SYNC
+  REINDEXING
+}
+
+type SyncState {
+  progressPercent: Float!
+  backgroundProgressPercent: Float!
+  contentFetchSyncProgressPercent: Float!
+  paused: Boolean!
+  nsyncEnabled: Boolean!
+  lastSyncTime: Float!
+  adaptiveDownsyncType: AdaptiveDownsyncTypeEnum!
+  syncProgressType: SyncProgressTypeEnum!
+}
+
+type SyncStateRecordSessionResult {
+  latestSessionBlock: Float!
+}
+
+type Tag {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  shortcut: Shortcut
+  children: [Tag!]!
+  childrenCount: Int!
+  refs: [Note!]!
+  refsCount: Int!
+  refsInTrash: [Note!]!
+  refsInTrashCount: Int!
+  parent: Tag
+  childTags(orderBy: TagChildTagsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TagChildTagsResults!
+}
+
+enum TagChildTagsOrderBy {
+  label
+  refsCount
+}
+
+type TagChildTagsResultFields {
+  id: String!
+  type: String!
+  unindexed: Tag!
+  label: String!
+  refsCount: Int!
+  syncContext: String!
+}
+
+type TagChildTagsResults {
+  count: Int!
+  list: [TagChildTagsResultFields!]!
+}
+
+input TagFilter {
+  field: TagFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum TagFilterField {
+  label
+  parent
+  refsCount
+  syncContext
+  id
+}
+
+input TagHierarchyFilter {
+  field: TagHierarchyFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum TagHierarchyFilterField {
+  label
+  isBusiness
+  isPersonal
+  isShared
+  rootID
+}
+
+input TagHierarchySort {
+  field: TagHierarchySortField!
+  order: IndexOrderType
+}
+
+enum TagHierarchySortField {
+  label
+  refsCount
+}
+
+input TagInContextFilter {
+  field: TagsAllowedField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+type TagListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [Tag!]!
+}
+
+type TagsAllowed {
+  count: Float!
+  indexUsed: [String!]!
+  list: [TagsAllowedListResults!]!
+}
+
+enum TagsAllowedField {
+  refsCount
+  label
+}
+
+type TagsAllowedListResults {
+  id: String!
+  label: String!
+  refsCount: Float
+}
+
+input TagsInContextSort {
+  field: TagsAllowedField!
+  order: IndexOrderType
+}
+
+enum TagsOrderBy {
+  label
+  refsCount
+}
+
+input TagSort {
+  field: TagSortField!
+  order: IndexOrderType
+}
+
+enum TagSortField {
+  label
+  parent
+  refsCount
+  syncContext
+  id
+}
+
+type TagsResultFields {
+  id: String!
+  type: String!
+  unindexed: Tag!
+  label: String!
+  refsCount: Int!
+  syncContext: String!
+}
+
+type TagsResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [TagsResultFields!]!
+}
+
+type Task {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  created: Float!
+  updated: Float!
+  dueDate: Float
+  dueDateUIOption: TaskDueDateUIOption
+  timeZone: String
+  status: TaskStatus!
+  inNote: Boolean!
+  flag: Boolean!
+  sortWeight: String!
+  noteLevelID: String!
+  statusUpdated: Float
+  taskGroupNoteLevelID: String!
+  sourceOfChange: String
+  reminders: [Reminder!]!
+  remindersCount: Int!
+  creator: Profile
+  lastEditor: Profile
+  parent: Note
+}
+
+enum TaskCreate_dueDateUIOption {
+  date_time
+  date_only
+}
+
+input TaskCreateSchema {
+  label: String!
+  taskGroupNoteLevelID: String!
+  dueDate: Float
+  timeZone: String
+  dueDateUIOption: String
+  flag: Boolean
+  sortWeight: String
+  noteLevelID: String
+  status: String
+  sourceOfChange: String!
+}
+
+enum TaskDueDateUIOption {
+  date_time
+  date_only
+}
+
+input TaskFilter {
+  field: TaskFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum TaskFilterField {
+  parent
+  label
+  sortWeight
+  status
+  taskGroupNoteLevelID
+  id
+  created
+  updated
+  dueDate
+  dueDateUIOption
+  timeZone
+  inNote
+  flag
+  noteLevelID
+  statusUpdated
+  sourceOfChange
+}
+
+type TaskGroupCreateDefaultTaskNoteUpsertResult {
+  success: Boolean!
+  result: TaskGroupCreateDefaultTaskNoteUpsertResultResult!
+}
+
+type TaskGroupCreateDefaultTaskNoteUpsertResultResult {
+  taskGroupID: String!
+  defaultTaskNoteID: String!
+}
+
+input TaskGroupInput {
+  noteLevelID: String!
+  sortWeight: String!
+  children: [TaskInput]
+}
+
+type TaskGroupResult {
+  noteLevelID: String!
+  sortWeight: String!
+  sourceOfChange: String
+  tasks: [Task!]
+}
+
+input TaskInput {
+  noteLevelID: String!
+  status: String!
+  label: String!
+  localChangeTimestamp: Float
+  dueDate: Float
+  dueDateUIOption: String
+  timeZone: String!
+  flag: Boolean
+  sortWeight: String!
+  reminders: [ReminderInput]
+}
+
+type TaskListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [Task!]!
+}
+
+enum TaskNotesNotInTrashOrderBy {
+  label
+  created
+  updated
+}
+
+type TaskNotesNotInTrashResultFields {
+  id: String!
+  type: String!
+  unindexed: Note!
+  label: String!
+  updated: Float!
+  created: Float!
+}
+
+type TaskNotesNotInTrashResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [TaskNotesNotInTrashResultFields!]!
+}
+
+input TasksExportData {
+  tasks: [TaskCreateSchema!]
+  taskGroupNoteLevelIDs: [String]
+}
+
+type TasksInNoteResultFields {
+  id: String!
+  type: String!
+  unindexed: Task!
+  parent: Note
+  sortWeight: String!
+  status: TasksInNoteStatus!
+  taskGroupNoteLevelID: String!
+}
+
+type TasksInNoteResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [TasksInNoteResultFields!]!
+}
+
+enum TasksInNoteStatus {
+  open
+  completed
+}
+
+input TaskSort {
+  field: TaskSortField!
+  order: IndexOrderType
+}
+
+enum TaskSortField {
+  parent
+  label
+  sortWeight
+  status
+  taskGroupNoteLevelID
+  id
+  created
+  updated
+  dueDate
+  dueDateUIOption
+  timeZone
+  inNote
+  flag
+  noteLevelID
+  statusUpdated
+  sourceOfChange
+}
+
+enum TaskStatus {
+  open
+  completed
+}
+
+enum TaskUpdate_dueDateUIOption {
+  date_time
+  date_only
+}
+
+enum TaskUpdate_status {
+  open
+  completed
+}
+
+type TaskUserSettings {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  created: Float!
+  updated: Float!
+  defaultReminder: Boolean
+  defaultRemindersOffsets: [Float!]
+  pinDefaultTaskNote: Boolean
+  defaultTaskNote: Note
+}
+
+input TaskUserSettingsFilter {
+  field: TaskUserSettingsFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum TaskUserSettingsFilterField {
+  label
+  id
+  created
+  updated
+  defaultReminder
+  defaultRemindersOffsets
+  pinDefaultTaskNote
+}
+
+type TaskUserSettingsListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [TaskUserSettings!]!
+}
+
+input TaskUserSettingsSort {
+  field: TaskUserSettingsSortField!
+  order: IndexOrderType
+}
+
+enum TaskUserSettingsSortField {
+  label
+  id
+  created
+  updated
+  defaultReminder
+  defaultRemindersOffsets
+  pinDefaultTaskNote
+}
+
+type Thread {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  snippet: String!
+  lastMessageSentAt: Float!
+  groupThread: Boolean!
+  maxMessageID: String
+  maxReadMessageID: String
+  maxDeletedMessageID: String
+  messages: [Message!]!
+  messagesCount: Int!
+  participants: [Profile!]!
+  participantsCount: Int!
+  childMessages(reverseOrder: Boolean, pageInfo: PageInfo): ThreadChildMessagesResults!
+}
+
+type ThreadChildMessagesResultFields {
+  id: String!
+  type: String!
+  unindexed: Message!
+  thread: Thread!
+  created: Float!
+}
+
+type ThreadChildMessagesResults {
+  count: Int!
+  list: [ThreadChildMessagesResultFields!]!
+}
+
+input ThreadFilter {
+  field: ThreadFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum ThreadFilterField {
+  lastMessageSentAt
+  id
+  snippet
+  groupThread
+  maxMessageID
+  maxReadMessageID
+  maxDeletedMessageID
+  label
+}
+
+type ThreadListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [Thread!]!
+}
+
+input ThreadSort {
+  field: ThreadSortField!
+  order: IndexOrderType
+}
+
+enum ThreadSortField {
+  lastMessageSentAt
+  id
+  snippet
+  groupThread
+  maxMessageID
+  maxReadMessageID
+  maxDeletedMessageID
+  label
+}
+
+type ThreadsResultFields {
+  id: String!
+  type: String!
+  unindexed: Thread!
+  lastMessageSentAt: Float!
+}
+
+type ThreadsResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [ThreadsResultFields!]!
+}
+
+type TierSelectionDisplayResult {
+  shouldShowTsd: Boolean!
+  tsdType: TierSelectionDisplayResultTsdType
+  tsdVariation: TierSelectionDisplayResultTsdVariation
+}
+
+enum TierSelectionDisplayResultTsdType {
+  REGULAR_TSD
+  TARGETED_UPSELL
+}
+
+enum TierSelectionDisplayResultTsdVariation {
+  DIALOG_VAR1
+  FULLSCREEN1BUTTON_DISMISS
+  FULLSCREEN1BUTTON_NODISMISS
+  FULLSCREEN1BUTTON_TIERPATH
+  FULLSCREEN1BUTTON_VAR2
+  FULLSCREEN3BUTTONS_DEFAULT
+  FULLSCREEN3BUTTONS_DISMISS
+  FULLSCREEN3BUTTONS_NODISMISS
+  FULLSCREEN3BUTTONS_BEFOREFLE
+  MODAL_DEFAULT
+  NOTIFICATION_ASPIRATIONAL
+  NOTIFICATION_STORAGE
+  SHEET_ASPIRATIONAL
+  SHEET_STORAGE
+  BANNER_LEARNMORE
+  BANNER_UPGRADE
+  FULLSCREEN_SINGLESDAY
+  FULLSCREEN_DISCOUNT
+  FULLSCREEN_NEWYEAR
+  TEST_UNSUPPORTED
+}
+
+type TwoFactorAuthMaskedPhoneNumbers {
+  primary: String
+  secondary: String
+}
+
+type User {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  isVaultUser: Boolean!
+  username: String!
+  email: String!
+  name: String
+  timezone: String
+  privilege: UserPrivilege!
+  serviceLevel: UserServiceLevel!
+  created: Float!
+  updated: Float!
+  deleted: Float
+  active: Boolean!
+  photoUrl: String!
+  photoLastUpdated: Float
+  businessUserRole: UserBusinessUserRole!
+  businessName: String
+  Accounting: UserAccounting!
+  Attributes: UserAttributes!
+  canEmptyTrash: Boolean!
+  subscriptionInfo: UserSubscriptionInfo!
+  showChoiceScreen: Boolean!
+  accountLimits: AccountLimits
+  maestroProps: MaestroProps
+  profile: Profile
+  defaultNotebook: Notebook
+  userNotebook: Notebook
+}
+
+type UserAccounting {
+  uploadLimit: Float
+  uploadLimitEnd: Float
+  uploadLimitNextMonth: Float
+  premiumServiceStatus: UserAccountingPremiumServiceStatus!
+  premiumOrderNumber: String
+  premiumCommerceService: String
+  premiumServiceStart: Float
+  premiumServiceSKU: String
+  lastSuccessfulCharge: Float
+  lastFailedCharge: Float
+  lastFailedChargeReason: String
+  nextPaymentDue: Float
+  premiumLockUntil: Float
+  updated: Float
+  premiumSubscriptionNumber: String
+  lastRequestedCharge: Float
+  currency: String
+  unitPrice: Float
+  businessId: Float
+  businessName: String
+  businessRole: UserAccountingBusinessRole!
+  unitDiscount: Float
+  nextChargeDate: Float
+  availablePoints: Float
+  backupPaymentInfo: UserAccountingBackupPaymentInfo!
+}
+
+type UserAccountingBackupPaymentInfo {
+  premiumCommerceService: String
+  premiumServiceSKU: String
+  currency: String
+  unitPrice: Float
+  paymentMethodId: Float
+  orderNumber: String
+}
+
+enum UserAccountingBusinessRole {
+  ADMIN
+  NORMAL
+}
+
+enum UserAccountingPremiumServiceStatus {
+  NONE
+  PENDING
+  ACTIVE
+  FAILED
+  CANCELLATION_PENDING
+  CANCELED
+}
+
+type UserAttributes {
+  preferredLanguage: String
+  emailAddressLastConfirmed: Float
+  passwordUpdated: Float
+  incomingEmailAddress: String
+  reminderEmail: UserAttributesReminderEmail!
+}
+
+enum UserAttributesReminderEmail {
+  DO_NOT_SEND
+  SEND_DAILY_EMAIL
+}
+
+enum UserBusinessUserRole {
+  ADMIN
+  NORMAL
+}
+
+type UserInfo {
+  userID: String!
+  username: String!
+  email: String!
+  fullName: String!
+  businessName: String!
+  photoUrl: String!
+}
+
+enum UserPrivilege {
+  NORMAL
+  PREMIUM
+  VIP
+  MANAGER
+  SUPPORT
+  ADMIN
+}
+
+enum UserServiceLevel {
+  BASIC
+  PLUS
+  PREMIUM
+  BUSINESS
+}
+
+enum UserSetReminderSetting_setting {
+  DO_NOT_SEND
+  SEND_DAILY_EMAIL
+}
+
+type UserSubscriptionInfo {
+  updatedTime: Float
+  isSubscribed: Boolean!
+  subscriptionRecurring: Boolean!
+  subscriptionExpirationDate: Float
+  subscriptionPending: Boolean!
+  subscriptionCancellationPending: Boolean!
+  serviceLevelsEligibleForPurchase: [String!]!
+  currentSku: String
+  validUntil: Float
+  itunesReceiptRequested: Boolean!
+}
+
+type Widget {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  boardType: WidgetBoardType!
+  isEnabled: Boolean!
+  widgetType: WidgetWidgetType!
+  mobile: WidgetMobile!
+  desktop: WidgetDesktop!
+  selectedTab: WidgetSelectedTab
+  content: WidgetContent!
+  created: Float!
+  updated: Float!
+  contentProvider: Note
+  conflicts: [WidgetContentConflict!]!
+  conflictsCount: Int!
+  parent: Board
+  isSupported: Boolean!
+  contentConflicts(reverseOrder: Boolean, pageInfo: PageInfo): WidgetContentConflictsResults!
+}
+
+enum WidgetBoardType {
+  Home
+}
+
+type WidgetContent {
+  localChangeTimestamp: Float!
+  hash: String!
+  size: Float!
+  url: String
+  id: String
+  format: String
+  version: Float
+  path: String
+  content: String!
+}
+
+type WidgetContentConflict {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  content: WidgetContentConflictContent!
+  created: Float!
+  updated: Float!
+  parent: Widget
+}
+
+type WidgetContentConflictContent {
+  localChangeTimestamp: Float!
+  hash: String!
+  size: Float!
+  url: String
+  id: String
+  format: String
+  version: Float
+  path: String
+  content: String!
+}
+
+input WidgetContentConflictFilter {
+  field: WidgetContentConflictFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum WidgetContentConflictFilterField {
+  parent
+  content_hash
+  updated
+  id
+  content_localChangeTimestamp
+  content_size
+  content_url
+  content_id
+  content_format
+  content_version
+  content_path
+  content_content
+  created
+  label
+}
+
+type WidgetContentConflictListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [WidgetContentConflict!]!
+}
+
+input WidgetContentConflictSort {
+  field: WidgetContentConflictSortField!
+  order: IndexOrderType
+}
+
+enum WidgetContentConflictSortField {
+  parent
+  content_hash
+  updated
+  id
+  content_localChangeTimestamp
+  content_size
+  content_url
+  content_id
+  content_format
+  content_version
+  content_path
+  content_content
+  created
+  label
+}
+
+type WidgetContentConflictsResultFields {
+  id: String!
+  type: String!
+  unindexed: WidgetContentConflict!
+  parent: Widget!
+  updated: Float!
+  content_hash: String!
+}
+
+type WidgetContentConflictsResults {
+  count: Int!
+  list: [WidgetContentConflictsResultFields!]!
+}
+
+input WidgetCustomizeInput {
+  widget: String!
+  desktopSortWeight: String
+  desktopWidth: Float
+  mobileSortWeight: String
+  isEnabled: Boolean
+  noteToPin: String
+  noteToUnpin: String
+}
+
+type WidgetDesktop {
+  panelKey: String
+  sortWeight: String!
+  width: Float!
+  height: Float!
+}
+
+input WidgetFilter {
+  field: WidgetFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum WidgetFilterField {
+  parent
+  mobile_sortWeight
+  desktop_sortWeight
+  created
+  widgetType
+  isSupportedV2
+  id
+  boardType
+  isEnabled
+  mobile_panelKey
+  mobile_width
+  mobile_height
+  desktop_panelKey
+  desktop_width
+  desktop_height
+  selectedTab
+  content_localChangeTimestamp
+  content_hash
+  content_size
+  content_url
+  content_id
+  content_format
+  content_version
+  content_path
+  content_content
+  updated
+  label
+}
+
+type WidgetListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [Widget!]!
+}
+
+type WidgetMobile {
+  panelKey: String
+  sortWeight: String!
+  width: Float!
+  height: Float!
+}
+
+enum WidgetSelectedTab {
+  Recent
+  Suggested
+  WebClips
+  Emails
+  Images
+  Audio
+  Documents
+}
+
+enum WidgetSetSelectedTab_tabToSelect {
+  Recent
+  Suggested
+  WebClips
+  Emails
+  Images
+  Audio
+  Documents
+}
+
+enum WidgetsInBoardPlatform {
+  mobile
+  desktop
+}
+
+type WidgetsInBoardResultFields {
+  id: String!
+  type: String!
+  unindexed: Widget!
+  parent: Board!
+  created: Float!
+  widgetType: WidgetsInBoardWidgetType!
+}
+
+type WidgetsInBoardResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [WidgetsInBoardResultFields!]!
+}
+
+enum WidgetsInBoardWidgetType {
+  Clipped
+  Notebooks
+  Notes
+  OnboardingChecklist
+  Pinned
+  ScratchPad
+  Shortcuts
+  Tags
+  Calendar
+  Tasks
+}
+
+input WidgetSort {
+  field: WidgetSortField!
+  order: IndexOrderType
+}
+
+enum WidgetSortField {
+  parent
+  mobile_sortWeight
+  desktop_sortWeight
+  created
+  widgetType
+  isSupportedV2
+  id
+  boardType
+  isEnabled
+  mobile_panelKey
+  mobile_width
+  mobile_height
+  desktop_panelKey
+  desktop_width
+  desktop_height
+  selectedTab
+  content_localChangeTimestamp
+  content_hash
+  content_size
+  content_url
+  content_id
+  content_format
+  content_version
+  content_path
+  content_content
+  updated
+  label
+}
+
+enum WidgetWidgetType {
+  Clipped
+  Notebooks
+  Notes
+  OnboardingChecklist
+  Pinned
+  ScratchPad
+  Shortcuts
+  Tags
+  Calendar
+  Tasks
+}
+
+type Workspace {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  description: String!
+  workspaceType: WorkspaceWorkspaceType!
+  created: Float!
+  updated: Float!
+  viewed: Boolean!
+  defaultRole: WorkspaceDefaultRole
+  isSample: Boolean!
+  notesCount: Float!
+  notebooksCount: Float!
+  accessStatus: WorkspaceAccessStatus!
+  layoutStyle: LayoutStyle
+  notebookDisplayOrder: [String!]
+  noteDisplayOrder: [String!]
+  memberships: [Membership!]!
+  membershipsCount: Int!
+  children: [NoteOrNotebook!]!
+  childrenCount: Int!
+  childrenInTrash: [Note!]!
+  childrenInTrashCount: Int!
+  shortcut: Shortcut
+  manager: Profile
+  allMemberships(orderBy: WorkspaceAllMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceAllMembershipsResults!
+  ownMemberships(orderBy: WorkspaceOwnMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceOwnMembershipsResults!
+  childNotes(inTrash: Boolean, orderBy: WorkspaceChildNotesOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceChildNotesResults!
+  reminderNotes(doneReminders: Boolean, reminderTimeRange: WorkspaceReminderNotesReminderTimeRange, reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceReminderNotesResults!
+  descendentNotes(reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceDescendentNotesResults!
+  childNotebooks(reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceChildNotebooksResults!
+  lastUpdated: Float!
+  lastEditor: Profile
+  CommandPolicy: FolderCommandPolicy!
+  shareCount: Float!
+  pinnedContents: [PinnedContent!]!
+}
+
+enum WorkspaceAccessStatus {
+  OPEN
+  DISCOVERABLE
+  PENDING
+  MEMBER
+}
+
+enum WorkspaceAllMembershipsOrderBy {
+  created
+  label
+}
+
+type WorkspaceAllMembershipsResultFields {
+  id: String!
+  type: String!
+  unindexed: Membership!
+  parent: NoteOrNotebookOrWorkspace!
+  label: String!
+}
+
+type WorkspaceAllMembershipsResults {
+  count: Int!
+  list: [WorkspaceAllMembershipsResultFields!]!
+}
+
+type WorkspaceChildNotebooksResultFields {
+  id: String!
+  type: String!
+  unindexed: Notebook!
+  parent: Workspace
+  label: String!
+  childrenCount: Int!
+}
+
+type WorkspaceChildNotebooksResults {
+  count: Int!
+  list: [WorkspaceChildNotebooksResultFields!]!
+}
+
+enum WorkspaceChildNotesOrderBy {
+  label
+  created
+  updated
+}
+
+type WorkspaceChildNotesResultFields {
+  id: String!
+  type: String!
+  unindexed: Note!
+  parent: NotebookOrWorkspace
+  inTrash: Boolean!
+  label: String!
+  updated: Float!
+  created: Float!
+  hasReminder: Boolean!
+}
+
+type WorkspaceChildNotesResults {
+  count: Int!
+  list: [WorkspaceChildNotesResultFields!]!
+}
+
+enum WorkspaceCreate_defaultRole {
+  READ
+  EDIT
+  MANAGE
+}
+
+enum WorkspaceCreate_type {
+  INVITE_ONLY
+  DISCOVERABLE
+  OPEN
+}
+
+enum WorkspaceDefaultRole {
+  READ
+  EDIT
+  MANAGE
+}
+
+type WorkspaceDescendentNotesResultFields {
+  id: String!
+  type: String!
+  unindexed: Note!
+  workspace: Workspace
+  updated: Float!
+  created: Float!
+  label: String!
+  parent: NotebookOrWorkspace
+  hasReminder: Boolean!
+}
+
+type WorkspaceDescendentNotesResults {
+  count: Int!
+  list: [WorkspaceDescendentNotesResultFields!]!
+}
+
+input WorkspaceDirectoryFilter {
+  field: WorkspaceDirectoryFilterField!
+  search: String!
+}
+
+enum WorkspaceDirectoryFilterField {
+  label
+  description
+}
+
+input WorkspaceDirectorySort {
+  field: WorkspaceDirectorySortField!
+  order: IndexOrderType
+}
+
+enum WorkspaceDirectorySortField {
+  label
+  created
+  updated
+  memberCount
+  accessStatus
+}
+
+input WorkspaceFilter {
+  field: WorkspaceFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum WorkspaceFilterField {
+  label
+  id
+  description
+  workspaceType
+  created
+  updated
+  viewed
+  defaultRole
+  isSample
+  notesCount
+  notebooksCount
+  accessStatus
+}
+
+enum WorkspaceInvite_privilege {
+  READ
+  EDIT
+  MANAGE
+}
+
+type WorkspaceListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [Workspace!]!
+}
+
+enum WorkspaceOwnMembershipsOrderBy {
+  created
+  label
+}
+
+type WorkspaceOwnMembershipsResultFields {
+  id: String!
+  type: String!
+  unindexed: Membership!
+  parent: NoteOrNotebookOrWorkspace!
+  label: String!
+}
+
+type WorkspaceOwnMembershipsResults {
+  count: Int!
+  list: [WorkspaceOwnMembershipsResultFields!]!
+}
+
+type workspacePublicList {
+  workspaces: [WorkspaceResult!]!
+}
+
+input WorkspaceReminderNotesReminderTimeRange {
+  min: Float
+  max: Float
+}
+
+type WorkspaceReminderNotesResultFields {
+  id: String!
+  type: String!
+  unindexed: Note!
+  reminderIsDone: Boolean!
+  reminderTime: Float
+  reminderOrder: Float
+  reminderDoneTime: Float
+  created: Float!
+  updated: Float!
+  label: String!
+  parent: NotebookOrWorkspace
+}
+
+type WorkspaceReminderNotesResults {
+  count: Int!
+  list: [WorkspaceReminderNotesResultFields!]!
+}
+
+type WorkspaceResult {
+  id: String!
+  label: String!
+  description: String
+  type: Int!
+  contact: String
+  created: Float!
+  updated: Float!
+}
+
+enum WorkspaceSetLayoutStyle_layoutStyle {
+  LIST
+  BOARD
+}
+
+input WorkspaceSort {
+  field: WorkspaceSortField!
+  order: IndexOrderType
+}
+
+enum WorkspaceSortField {
+  label
+  id
+  description
+  workspaceType
+  created
+  updated
+  viewed
+  defaultRole
+  isSample
+  notesCount
+  notebooksCount
+  accessStatus
+}
+
+type WorkspacesResultFields {
+  id: String!
+  type: String!
+  unindexed: Workspace!
+  label: String!
+}
+
+type WorkspacesResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [WorkspacesResultFields!]!
+}
+
+enum WorkspaceUpdate_defaultRole {
+  READ
+  EDIT
+  MANAGE
+}
+
+enum WorkspaceUpdate_type {
+  INVITE_ONLY
+  DISCOVERABLE
+  OPEN
+}
+
+enum WorkspaceWorkspaceType {
+  INVITE_ONLY
+  DISCOVERABLE
+  OPEN
+}

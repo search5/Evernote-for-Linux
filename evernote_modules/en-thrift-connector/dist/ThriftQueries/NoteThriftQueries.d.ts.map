@@ -1,0 +1,1 @@
+{"version":3,"file":"NoteThriftQueries.d.ts","sourceRoot":"","sources":["../../src/ThriftQueries/NoteThriftQueries.ts"],"names":[],"mappings":"AAAA;;GAEG;AAEH,OAAO,EAAE,aAAa,EAAmH,MAAM,cAAc,CAAC;AAG9J,OAAO,EAAE,sBAAsB,EAAE,MAAM,oBAAoB,CAAC;AAU5D,OAAO,EAAE,mBAAmB,EAAE,MAAM,WAAW,CAAC;AAGhD,wBAAgB,eAAe,CAAC,UAAU,EAAE,mBAAmB,EAAE,GAAG,EAAE,aAAa,EAAE,sBAAsB,EAAE,sBAAsB,QAqFlI"}

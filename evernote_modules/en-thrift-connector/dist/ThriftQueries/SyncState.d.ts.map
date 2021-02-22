@@ -1,0 +1,1 @@
+{"version":3,"file":"SyncState.d.ts","sourceRoot":"","sources":["../../src/ThriftQueries/SyncState.ts"],"names":[],"mappings":"AAAA;;GAEG;AAEH,OAAO,EAAE,aAAa,EAAwE,MAAM,cAAc,CAAC;AAOnH,OAAO,EAAE,mBAAmB,EAAE,MAAM,WAAW,CAAC;AAkBhD,wBAAgB,oBAAoB,CAAC,UAAU,EAAE,mBAAmB,EAAE,GAAG,EAAE,aAAa,QAoCvF;AA2BD,wBAAgB,mBAAmB,CAAC,GAAG,EAAE,aAAa,QAwFrD"}

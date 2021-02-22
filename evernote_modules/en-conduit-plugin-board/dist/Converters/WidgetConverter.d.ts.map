@@ -1,0 +1,1 @@
+{"version":3,"file":"WidgetConverter.d.ts","sourceRoot":"","sources":["../../src/Converters/WidgetConverter.ts"],"names":[],"mappings":"AAAA;;GAEG;AAEH,OAAO,EAAE,cAAc,EAAE,MAAM,cAAc,CAAC;AAG9C,OAAO,EAAkC,UAAU,EAA6B,MAAM,oBAAoB,CAAC;AAG3G,OAAO,EAAE,MAAM,EAAE,MAAM,uBAAuB,CAAC;AAE/C,eAAO,MAAM,aAAa,EAAE,cAAc,CAAC,UAAU,CAAC,MAAM,EAAE,MAAM,CAuEnE,CAAC"}
