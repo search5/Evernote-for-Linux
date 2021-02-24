@@ -50,7 +50,7 @@ async function getNoteTaskGroups(noteID, context) {
             };
         });
     }
-    if (taskGroupOutputs) {
+    if (taskGroupOutputs && note.outputs.tasks) {
         const taskIDs = Object.values(note.outputs.tasks).map(edge => edge.dstID);
         const tasks = await context.db.batchGetNodes(context, TaskConstants_1.TaskEntityTypes.Task, taskIDs);
         taskGroupOutputs.forEach(taskGroup => {
@@ -62,8 +62,10 @@ async function getNoteTaskGroups(noteID, context) {
     return taskGroupOutputs;
 }
 async function resolveTasksForTaskGroup(nodeRef, _, context, info) {
-    return await conduit_utils_1.allSettled(nodeRef.tasks.map(async (taskID) => {
-        return await conduit_core_1.resolveNode({ type: TaskConstants_1.TaskEntityTypes.Task, id: taskID }, context, info);
-    }));
+    if (nodeRef && nodeRef.tasks) {
+        return await conduit_utils_1.allSettled(nodeRef.tasks.map(async (taskID) => {
+            return await conduit_core_1.resolveNode({ type: TaskConstants_1.TaskEntityTypes.Task, id: taskID }, context, info);
+        }));
+    }
 }
 //# sourceMappingURL=TaskGroupResolver.js.map

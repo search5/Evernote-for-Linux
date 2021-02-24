@@ -76,9 +76,6 @@ async function processSyncUpdates(trc, converterParams, syncContext, dataConvert
             const nodeID = dataConverter.convertGuidFromService(guid);
             const node = await converterParams.graphTransaction.getNode(trc, null, { id: nodeID, type: dataConverter.nodeType });
             if (node && node.version <= expungeVersion) {
-                if (dataConverter.preExpungeEntity) {
-                    await dataConverter.preExpungeEntity(trc, converterParams, syncContext, nodeID);
-                }
                 await converterParams.graphTransaction.deleteNode(trc, syncContext, {
                     id: nodeID,
                     type: dataConverter.nodeType,
@@ -123,15 +120,17 @@ async function convertSyncChunk(trc, params, chunk, lastUpdateCount) {
                 await processSyncUpdates(trc, converterParams, params.syncContext, ShortcutConverter_1.ShortcutConverter, null, expungeVersion, [pref]);
                 delete chunk.preferences;
             }
-            const { partialNbsToAdd, partialNbsToRemove } = await LinkedNotebookHelpers_1.processLinkedNotebooksForPartialNotebooks(trc, graphTransaction, params.syncEngine.businessId, chunk.linkedNotebooks, chunk.expungedLinkedNotebooks);
+            let expungedLinkedNbs = await LinkedNotebookHelpers_1.getExpungedLinkedNotebooks(trc, graphTransaction, chunk.notebooks) || [];
+            expungedLinkedNbs = chunk.expungedLinkedNotebooks ? chunk.expungedLinkedNotebooks.concat(expungedLinkedNbs) : expungedLinkedNbs;
+            const { partialNbsToAdd, partialNbsToRemove } = await LinkedNotebookHelpers_1.processLinkedNotebooksForPartialNotebooks(trc, graphTransaction, params.syncEngine.businessId, chunk.linkedNotebooks, expungedLinkedNbs);
             if (partialNbsToAdd) {
                 chunk.notebooks = chunk.notebooks ? chunk.notebooks.concat(partialNbsToAdd) : partialNbsToAdd;
             }
             if (partialNbsToRemove) {
                 chunk.expungedNotebooks = chunk.expungedNotebooks ? chunk.expungedNotebooks.concat(partialNbsToRemove) : partialNbsToRemove;
             }
-            if (chunk.expungedLinkedNotebooks) {
-                const removeProcess = chunk.expungedLinkedNotebooks.map(async (expungedLinkedNB) => {
+            if (expungedLinkedNbs) {
+                const removeProcess = expungedLinkedNbs.map(async (expungedLinkedNB) => {
                     const syncContext = LinkedNotebookSync_1.linkedNotebookSyncContext(expungedLinkedNB);
                     const metadata = await graphTransaction.getSyncContextMetadata(trc, null, syncContext);
                     if (metadata && metadata.sharedNotebookGlobalID) {

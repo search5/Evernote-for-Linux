@@ -1,6 +1,6 @@
 {
   "name": "en-conduit-plugin-notification-scheduler",
-  "version": "1.27.2",
+  "version": "1.28.5",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -10,10 +10,10 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-core": "1.27.2",
-    "conduit-storage": "1.27.2",
-    "conduit-utils": "1.27.2",
-    "en-conduit-plugin-task": "1.27.2"
+    "conduit-core": "1.28.5",
+    "conduit-storage": "1.28.5",
+    "conduit-utils": "1.28.5",
+    "en-conduit-plugin-task": "1.28.5"
   },
   "devDependencies": {
     "@types/chai": "^4.2.13",

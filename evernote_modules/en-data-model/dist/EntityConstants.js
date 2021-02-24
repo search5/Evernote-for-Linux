@@ -7,6 +7,7 @@ exports.InternalEntityTypes = exports.CoreEntityTypes = void 0;
 exports.CoreEntityTypes = {
     AccountLimits: 'AccountLimits',
     Attachment: 'Attachment',
+    BetaFeature: 'BetaFeature',
     Invitation: 'Invitation',
     MaestroProps: 'MaestroProps',
     Membership: 'Membership',

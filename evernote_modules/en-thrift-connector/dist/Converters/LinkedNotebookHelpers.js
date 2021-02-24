@@ -22,13 +22,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateStackToServiceForPartialNb = exports.expungeLinkedNotebooksOnService = exports.removePartialNotebook = exports.processLinkedNotebooksForPartialNotebooks = exports.convertPartialNbGuidToSharedNbGuid = void 0;
+exports.updateStackToServiceForPartialNb = exports.expungeLinkedNotebooksOnService = exports.removePartialNotebook = exports.processLinkedNotebooksForPartialNotebooks = exports.getExpungedLinkedNotebooks = exports.convertPartialNbGuidToSharedNbGuid = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_data_model_1 = require("en-data-model");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const Auth_1 = require("../Auth");
+const ThriftTypes_1 = require("../ThriftTypes");
 const Converters_1 = require("./Converters");
-const NotebookConverter_1 = require("./NotebookConverter");
 const LINKED_NOTEBOOK_SYNC_STATE_PATH = ['sharing', 'linkedNotebooks'];
 function convertSharedNbGuidToPartialNbGuid(sharedNbId) {
     // appending prefix to prevent any collisions between sharedNbId and actual notebook guids.
@@ -81,6 +81,29 @@ async function getPartialNbToRemoveForSharedNbId(trc, graphTransaction, sharedNb
     }
     return removePartialNb ? partialNbGuid : null;
 }
+async function getLinkedNotebooksFromSharedNbGlobalID(trc, graphTransaction, sharedNotebookGlobalID) {
+    const linkedNbs = [];
+    const syncState = await getLinkedNotebooksSyncState(trc, graphTransaction);
+    for (const guid in syncState) {
+        if (sharedNotebookGlobalID.indexOf(syncState[guid].sharedNotebookGlobalId) !== -1) {
+            linkedNbs.push(guid);
+        }
+    }
+    return linkedNbs;
+}
+async function getExpungedLinkedNotebooks(trc, graphTransaction, notebooks) {
+    const sharedNotebookGlobalIDs = (notebooks || []).reduce((ar, nb) => {
+        var _a;
+        if (((_a = nb.recipientSettings) === null || _a === void 0 ? void 0 : _a.recipientStatus) === ThriftTypes_1.TRecipientStatus.NOT_IN_MY_LIST && Boolean(nb.sharedNotebooks)) {
+            const sharedNbIDs = nb.sharedNotebooks.filter(snb => Boolean(snb.globalId)).map(s => s.globalId);
+            return ar.concat(sharedNbIDs);
+        }
+        return ar;
+    }, []);
+    const linkedNbs = await getLinkedNotebooksFromSharedNbGlobalID(trc, graphTransaction, sharedNotebookGlobalIDs);
+    return linkedNbs;
+}
+exports.getExpungedLinkedNotebooks = getExpungedLinkedNotebooks;
 async function processLinkedNotebooksForPartialNotebooks(trc, graphTransaction, businessID, linkedNbs, expungedLinkedNbs) {
     const partialNbsToAdd = [];
     const partialNbsToRemove = [];
@@ -142,7 +165,6 @@ async function removePartialNotebook(trc, params, syncContext, sharedNotebookGlo
     if (!partialNbNode) {
         return;
     }
-    await NotebookConverter_1.NotebookConverter.preExpungeEntity(trc, params, syncContext, linkedNbId);
     await params.graphTransaction.deleteNode(trc, syncContext, { id: linkedNbId, type: en_data_model_1.CoreEntityTypes.Notebook });
     if (expungeLinkedNbOnService && params.personalAuth) {
         await expungeLinkedNotebooksOnService(trc, params.graphTransaction, params.thriftComm, params.personalAuth, sharedNotebookGlobalID);

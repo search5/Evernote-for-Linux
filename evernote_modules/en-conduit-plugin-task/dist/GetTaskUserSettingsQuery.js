@@ -20,7 +20,7 @@ async function getTaskUserSettings(parent, args, context) {
     }
     const defaultTaskNoteEdge = conduit_utils_1.firstStashEntry(existingTaskUserSettings.outputs.defaultTaskNote);
     let noteLabel = null;
-    if (defaultTaskNoteEdge) {
+    if (defaultTaskNoteEdge && defaultTaskNoteEdge.dstID) {
         const note = await context.db.getNode(context, { id: defaultTaskNoteEdge.dstID, type: en_data_model_1.CoreEntityTypes.Note });
         if (note) {
             noteLabel = note.label;

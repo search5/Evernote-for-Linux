@@ -41,6 +41,12 @@ exports.noteContentInfoIndexConfig = conduit_storage_1.buildNodeIndexConfigurati
             ],
         },
     },
+    queries: {
+        NoteContentInfoAll: {
+            params: {},
+            includeFields: ['parent'],
+        },
+    },
     lookups: ['parent'],
 });
 //# sourceMappingURL=NoteContentInfo.js.map

@@ -1,6 +1,6 @@
 {
   "name": "en-nsync-connector",
-  "version": "1.27.2",
+  "version": "1.28.5",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -20,11 +20,11 @@
     "ts-sinon": "^1.0.21"
   },
   "dependencies": {
-    "conduit-core": "1.27.2",
-    "conduit-storage": "1.27.2",
-    "conduit-utils": "1.27.2",
-    "conduit-view-types": "1.27.2",
-    "en-data-model": "1.27.2",
+    "conduit-core": "1.28.5",
+    "conduit-storage": "1.28.5",
+    "conduit-utils": "1.28.5",
+    "conduit-view-types": "1.28.5",
+    "en-data-model": "1.28.5",
     "long": "^4.0.0",
     "simply-immutable": "^2.1.1"
   }

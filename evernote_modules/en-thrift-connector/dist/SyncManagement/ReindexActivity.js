@@ -20,6 +20,7 @@ class ReindexActivity extends SyncActivity_1.SyncActivity {
             syncProgressTableName: SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
         });
     }
+    get progressBucketSize() { return 20000; }
     async runSyncImpl(trc) {
         const params = this.initParams('best', null, 0);
         await SyncHelpers_1.updateSyncProgressType(trc, this.context.syncEngine, conduit_view_types_1.SyncProgressType.REINDEXING);

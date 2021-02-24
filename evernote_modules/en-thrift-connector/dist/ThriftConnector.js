@@ -30,6 +30,8 @@ const en_data_model_1 = require("en-data-model");
 const en_nsync_connector_1 = require("en-nsync-connector");
 const Auth = __importStar(require("./Auth"));
 const AccountLimitsConverter_1 = require("./Converters/AccountLimitsConverter");
+const NotebookConverter_1 = require("./Converters/NotebookConverter");
+const WorkspaceConverter_1 = require("./Converters/WorkspaceConverter");
 const Helpers_1 = require("./Helpers");
 const ApplicationDataPlugin_1 = require("./Plugins/ApplicationDataPlugin");
 const AuthPlugin_1 = require("./Plugins/AuthPlugin");
@@ -130,11 +132,16 @@ function init(di, configs) {
     const pluginTokenRefreshManager = new PluginHelpers_1.PluginTokenRefreshManager({ refreshAuthToken: refreshNAPAuthToken }, (_b = configs.maxBackoffTimeout) !== null && _b !== void 0 ? _b : 16000);
     const coreEntityPlugin = {
         name: 'CoreEntities',
-        defineQueries: () => (Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({}, AccountLimitsResolver_1.AccountLimitsResolver(thriftComm)), BlobResolver_1.BlobResolver(thriftComm, urlEncoder)), FolderResolver_1.FolderResolver()), MembershipResolver_1.MembershipResolver(thriftComm)), NoteFieldResolver_1.NoteFieldResolver(thriftComm)), PermissionResolver_1.PermissionResolver()), ShareAllowanceResolver_1.ShareAllowanceResolver(thriftComm)), ShareCountResolver_1.ShareCountResolver()), UrlResolver_1.UrlResolver(urlEncoder)), WorkspacePinnedContentsResolver_1.WorkspacePinnedContentsResolver(thriftComm)), WorkspaceUIPreferencesResolver_1.WorkspaceUIPreferencesResolver(thriftComm))),
+        defineQueries: () => (Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({}, AccountLimitsResolver_1.AccountLimitsResolver(thriftComm)), BlobResolver_1.BlobResolver(thriftComm, urlEncoder)), FolderResolver_1.LastUpdatedResolver()), MembershipResolver_1.MembershipResolver(thriftComm)), NoteFieldResolver_1.NoteFieldResolver(thriftComm)), PermissionResolver_1.PermissionResolver()), ShareAllowanceResolver_1.ShareAllowanceResolver(thriftComm)), ShareCountResolver_1.ShareCountResolver()), UrlResolver_1.UrlResolver(urlEncoder)), WorkspacePinnedContentsResolver_1.WorkspacePinnedContentsResolver(thriftComm)), WorkspaceUIPreferencesResolver_1.WorkspaceUIPreferencesResolver(thriftComm))),
         entityTypes: () => {
             const result = Object.assign({}, en_data_model_1.CoreEntityTypeDefs);
-            // inject note dataResolver since it needs Thrift
+            // inject Thrift-specific functions
             result.Note.dataResolver = NoteDataResolver_1.getNoteDataResolver(thriftComm, offlineContentStrategy, di.getSearchShareAcceptMetadata);
+            result.Note.deleteHook = NotebookConverter_1.deletePendingOfflineNoteSyncState;
+            result.Workspace.deleteHook = WorkspaceConverter_1.WorkspaceConverter.onDelete;
+            result.Notebook.deleteHook = async (trc, tx, notebookID) => {
+                await NotebookConverter_1.NotebookConverter.onDelete(trc, tx, di.getLocalSettings(), notebookID);
+            };
             // inject nsync converters
             for (const type in en_nsync_connector_1.CoreEntityNSyncConverters) {
                 result[type].nsyncConverters = en_nsync_connector_1.CoreEntityNSyncConverters[type];

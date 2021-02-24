@@ -33,7 +33,8 @@ function getENNsvcAuthzToken(thriftComm) {
                     expiresAt: Date.now() + conduit_utils_1.MILLIS_IN_ONE_DAY,
                 };
             }
-            return await resolveStorage(tokenCache, context, authorizedToken, tokenType);
+            const userId = conduit_utils_1.keyStringForUserID(user.NodeFields.internal_userID);
+            return await resolveStorage(tokenCache, context, authorizedToken, tokenType, userId);
         }
     }
     /**
@@ -44,12 +45,13 @@ function getENNsvcAuthzToken(thriftComm) {
      * @param context
      * @param authorizedToken
      */
-    async function resolveStorage(tokenStorage, context, authorizedToken, tokenType) {
+    async function resolveStorage(tokenStorage, context, authorizedToken, tokenType, userId) {
         let results;
-        results = tokenStorage.load(tokenType);
+        const tokenStorageKey = `${userId}:${tokenType}`;
+        results = tokenStorage.load(tokenStorageKey);
         if (!tokenStorage.valid(results)) {
             results = await EnTokenThrift_1.getToken(context.trc, thriftComm, authorizedToken, tokenType);
-            tokenStorage.save(results, tokenType);
+            tokenStorage.save(results, tokenStorageKey);
         }
         return results;
     }

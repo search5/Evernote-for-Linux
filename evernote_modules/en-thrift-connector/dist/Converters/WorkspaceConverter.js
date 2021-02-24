@@ -415,23 +415,6 @@ async function mapContentIDAndTypeToContentUpdate(trc, thriftGraphTransaction, w
     }
     return res;
 }
-async function getWorkspaceChildrenNodes(trc, params, workspace) {
-    if (workspace) {
-        const childrenEdges = Object.values(workspace.outputs.children);
-        const res = [];
-        for (const edge of childrenEdges) {
-            const node = await params.graphTransaction.getNode(trc, null, { id: edge.dstID, type: edge.dstType });
-            if (!node) {
-                conduit_utils_1.logger.warn(`Cannot find ${edge.dstType} ${edge.dstID}`);
-            }
-            else if (!conduit_utils_1.firstStashEntry(node.outputs.memberships)) {
-                res.push(node);
-            }
-        }
-        return res;
-    }
-    return null;
-}
 class WorkspaceConverterClass {
     constructor() {
         this.nodeType = en_data_model_1.CoreEntityTypes.Workspace;
@@ -630,19 +613,11 @@ class WorkspaceConverterClass {
         // called by leaveWorkspace. return false so node can be cleaned up from graph.
         return false;
     }
-    async preExpungeEntity(trc, params, syncContext, workspaceID) {
-        const backingNbID = await params.graphTransaction.getSyncState(trc, null, ['workspaces', 'wsToBackingNb', workspaceID]);
-        await params.graphTransaction.deleteSyncState(trc, ['workspaces', 'wsToBackingNb', workspaceID]);
+    async onDelete(trc, tx, workspaceID) {
+        const backingNbID = await tx.getSyncState(trc, null, ['workspaces', 'wsToBackingNb', workspaceID]);
+        await tx.deleteSyncState(trc, ['workspaces', 'wsToBackingNb', workspaceID]);
         if (backingNbID) {
-            params.backingNbToWs = SimplyImmutable.deleteImmutable(params.backingNbToWs, [backingNbID]);
-            await params.graphTransaction.deleteSyncState(trc, ['workspaces', 'backingNbToWs', backingNbID]);
-        }
-        const workspace = await params.graphTransaction.getNode(trc, null, { id: workspaceID, type: en_data_model_1.CoreEntityTypes.Workspace });
-        const childrenNodes = await getWorkspaceChildrenNodes(trc, params, workspace);
-        for (const child of (childrenNodes || [])) {
-            if (child.type === en_data_model_1.CoreEntityTypes.Notebook) {
-                await NotebookConverter_1.NotebookConverter.preExpungeEntity(trc, params, syncContext, child.id, true); // Cleanup offline download state
-            }
+            await tx.deleteSyncState(trc, ['workspaces', 'backingNbToWs', backingNbID]);
         }
     }
     async updateToService(trc, params, syncContext, wsID, diff) {
@@ -699,7 +674,7 @@ __decorate([
 ], WorkspaceConverterClass.prototype, "deleteFromService", null);
 __decorate([
     conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Workspace)
-], WorkspaceConverterClass.prototype, "preExpungeEntity", null);
+], WorkspaceConverterClass.prototype, "onDelete", null);
 __decorate([
     conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Workspace)
 ], WorkspaceConverterClass.prototype, "updateToService", null);

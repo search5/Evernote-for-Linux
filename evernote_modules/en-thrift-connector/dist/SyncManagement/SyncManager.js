@@ -42,6 +42,7 @@ const AccountSessionSyncActivity_1 = require("./AccountSessionSyncActivity");
 const ContentFetchSyncActivity_1 = require("./ContentFetchSyncActivity");
 const HybridInitialDownsyncActivity_1 = require("./HybridInitialDownsyncActivity");
 const IncrementalSyncActivity_1 = require("./IncrementalSyncActivity");
+const NSyncInitActivity_1 = require("./NSyncInitActivity");
 const OfflineSearchIndexActivity_1 = require("./OfflineSearchIndexActivity");
 const ReindexActivity_1 = require("./ReindexActivity");
 const SchemaMigrationActivity_1 = require("./SchemaMigrationActivity");
@@ -73,20 +74,19 @@ class SyncManager {
         this.isSyncing = false;
         this.isDestroyed = false;
         this.isSuppressed = false;
-        this.syncEventManager = null;
         this.initialDownsyncTimings = null;
         this.syncTrc = conduit_utils_1.createTraceContext('SyncManager', this.di.getTestEventTracker());
         this.activityContext = {
             thriftComm,
             syncEngine,
             syncManager: this,
+            syncEventManager: null,
         };
-        this.syncDI = Object.assign(Object.assign({}, this.di), { syncEventManager: () => this.syncEventManager });
     }
     async destructor(trc) {
         var _a;
-        await ((_a = this.syncEventManager) === null || _a === void 0 ? void 0 : _a.destructor(trc));
-        this.syncEventManager = null;
+        await ((_a = this.activityContext.syncEventManager) === null || _a === void 0 ? void 0 : _a.destructor(trc));
+        this.activityContext.syncEventManager = null;
         this.isDestroyed = true;
         await this.pauseSyncing(trc);
     }
@@ -120,9 +120,10 @@ class SyncManager {
     }
     isEventServiceEnabled() {
         var _a;
-        return Boolean((_a = this.syncEventManager) === null || _a === void 0 ? void 0 : _a.isEnabled());
+        return Boolean((_a = this.activityContext.syncEventManager) === null || _a === void 0 ? void 0 : _a.isEnabled());
     }
     async initAuth(trc, auth, startPaused) {
+        var _a;
         const isColdStart = Boolean(!this.auth && auth); // Not a refresh and not clearing auth
         this.auth = auth;
         await this.pauseSyncing(trc);
@@ -131,41 +132,18 @@ class SyncManager {
                 logger.warn('Missing NAP JWT');
             }
             this.initialDownsyncTimings = {};
-            const storage = {
-                transact: (newTrc, name, func) => {
-                    return this.activityContext.syncEngine.transact(newTrc, name, func);
-                },
-                getNode: async (newTrc, ref) => {
-                    return await this.activityContext.syncEngine.graphStorage.getNode(newTrc, null, ref, false);
-                },
-                getSyncState: (newTrc, watcher, path) => {
-                    return this.activityContext.syncEngine.graphStorage.getSyncState(newTrc, watcher, path);
-                },
-                getEphemeralFlag: (newTrc, table, key) => {
-                    return this.activityContext.syncEngine.getEphemeralFlag(newTrc, table, key);
-                },
-                getUserID: () => {
-                    if (!this.auth) {
-                        throw new Error('Missing auth in initted SyncManager');
+            if (this.activityContext.syncEventManager) {
+                await this.activityContext.syncEventManager.updateToken(trc, Auth.hasNapAuthInfo(auth) ? auth.napAuthInfo.jwt : '', auth.token);
+                // set nsyncDisabled flag since NSyncEventManagers init cannot call toggleNSync during init
+                // (toggleNSync calls syncEventManager.isAvailable, but syncEventManager isn't set yet)
+                await this.activityContext.syncEngine.transactEphemeral(trc, 'InitNSyncDisabled', async (tx) => {
+                    if (!this.activityContext.syncEventManager) {
+                        return;
                     }
-                    return this.auth.userID;
-                },
-            };
-            const napAuthInfo = Auth.hasNapAuthInfo(auth) ? auth.napAuthInfo : null;
-            if (this.syncEventManager) {
-                await this.syncEventManager.updateToken(trc, Auth.hasNapAuthInfo(auth) ? auth.napAuthInfo.jwt : '', auth.token);
-            }
-            else if (this.di.initSyncEventManager) {
-                this.syncEventManager = await this.di.initSyncEventManager(trc, auth.urlHost, auth.token, (napAuthInfo === null || napAuthInfo === void 0 ? void 0 : napAuthInfo.jwt) || '', (napAuthInfo === null || napAuthInfo === void 0 ? void 0 : napAuthInfo.clientID) || '', storage, async (newTrc, disable) => {
-                    await this.toggleNSync(newTrc, disable);
+                    await tx.setValue(trc, 'SyncManager', 'nsyncDisabled', !this.activityContext.syncEventManager.isAvailable());
                 });
+                // Don't need to call onSyncStateChange, as NSyncEventManager enables or disables itself in the constructor on the same function
             }
-            // set nsyncDisabled flag since NSyncEventManagers init cannot call toggleNSync during init
-            // (toggleNSync calls syncEventManager.isAvailable, but syncEventManager isn't set yet)
-            await this.activityContext.syncEngine.transactEphemeral(trc, 'InitNSyncDisabled', async (tx) => {
-                await tx.setValue(trc, 'SyncManager', 'nsyncDisabled', !this.syncEventManager.isAvailable());
-            });
-            // Don't need to call onSyncStateChange, as NSyncEventManager enables or disables itself in the constructor on the same function
             this.di.emitEvent(conduit_view_types_1.ConduitEvent.START_SYNCING_WITH_AUTH);
             const syncInitialized = await this.activityContext.syncEngine.graphStorage.getSyncState(trc, null, ['syncInitialized']);
             if (!syncInitialized) {
@@ -175,19 +153,21 @@ class SyncManager {
             }
             else {
                 await this.loadActivityQueue(trc);
+                await this.addNSyncInitActivity(trc);
                 if (this.di.downsyncConfig.downsyncMode === conduit_view_types_1.DownsyncMode.LEGACY_FOR_PREBUILT) {
                     if (isColdStart) {
-                        await this.addActivity(trc, new SchemaMigrationActivity_1.SchemaMigrationActivity(this.di, this.activityContext));
+                        await this.addSchemaMigrationActivity(trc);
                         await this.addReindexingActivity(trc);
                         await this.addImmediateIncrementalSync(trc, isColdStart, SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC);
                     }
                 }
                 else {
                     if (isColdStart) {
-                        await this.addActivity(trc, new SchemaMigrationActivity_1.SchemaMigrationActivity(this.di, this.activityContext));
+                        await this.addSchemaMigrationActivity(trc);
                         await this.addReindexingActivity(trc);
                     }
-                    await this.addImmediateIncrementalSync(trc, isColdStart, SyncActivity_1.SyncActivityPriority.IMMEDIATE);
+                    const showLoadingScreen = (_a = this.di.loadingScreenConfig.showDuringIncrementalSyncAfterStartup) !== null && _a !== void 0 ? _a : true;
+                    await this.addImmediateIncrementalSync(trc, isColdStart && showLoadingScreen, SyncActivity_1.SyncActivityPriority.IMMEDIATE);
                     await this.addActivity(trc, new HybridInitialDownsyncActivity_1.MaestroSyncActivity(this.di, this.activityContext));
                     await this.addActivity(trc, new HybridInitialDownsyncActivity_1.PromotionsSyncActivity(this.di, this.activityContext));
                     await this.addContentFetchSyncActivity(trc);
@@ -243,7 +223,7 @@ class SyncManager {
     async toggleNSync(trc, disable) {
         var _a;
         // if not available, always set to disable
-        const available = Boolean((_a = this.syncEventManager) === null || _a === void 0 ? void 0 : _a.isAvailable());
+        const available = Boolean((_a = this.activityContext.syncEventManager) === null || _a === void 0 ? void 0 : _a.isAvailable());
         if (!available) {
             disable = true;
         }
@@ -267,7 +247,7 @@ class SyncManager {
             if (this.currentActivity && this.currentActivity !== activity) {
                 await this.currentActivity.abort();
             }
-            await this.wakeUp(trc);
+            this.wakeUp();
         }
         if (timeout) {
             // if timeout is hit, let syncing continue in the background but clean up properly below
@@ -281,7 +261,7 @@ class SyncManager {
         }
     }
     async forceDownsyncUpdate(trc, timeout) {
-        await this.addImmediateActivity(trc, new IncrementalSyncActivity_1.IncrementalSyncActivity(this.syncDI, this.activityContext, SyncActivity_1.SyncActivityPriority.IMMEDIATE), timeout);
+        await this.addImmediateActivity(trc, new IncrementalSyncActivity_1.IncrementalSyncActivity(this.di, this.activityContext, SyncActivity_1.SyncActivityPriority.IMMEDIATE), timeout);
     }
     async needImmediateNotesDownsync(trc, args) {
         const existingActivity = this.findActivityByType(SyncActivity_1.SyncActivityType.NotesFetchActivity);
@@ -327,6 +307,12 @@ class SyncManager {
             this.currentActivity.suppress(gQuerySuppressionTime);
         }
     }
+    async addNSyncInitActivity(trc) {
+        await this.addActivity(trc, new NSyncInitActivity_1.NSyncInitActivity(this.di, this.activityContext, HybridInitialDownsyncActivity_1.FINAL_ACTIVITY_ORDER.NSYNC_INIT_ACTIVITY));
+    }
+    async addSchemaMigrationActivity(trc) {
+        await this.addActivity(trc, new SchemaMigrationActivity_1.SchemaMigrationActivity(this.di, this.activityContext, HybridInitialDownsyncActivity_1.FINAL_ACTIVITY_ORDER.SCHEMA_MIGRATION));
+    }
     async addReindexingActivity(trc, graphTransaction) {
         await this.addActivity(trc, new ReindexActivity_1.ReindexActivity(this.di, this.activityContext, HybridInitialDownsyncActivity_1.FINAL_ACTIVITY_ORDER.REINDEX_ACTIVITY), graphTransaction);
     }
@@ -336,7 +322,7 @@ class SyncManager {
         const syncDisabled = await this.activityContext.syncEngine.getEphemeralFlag(trc, 'SyncManager', 'syncDisabled');
         const nSyncDisabled = await this.activityContext.syncEngine.getEphemeralFlag(trc, 'SyncManager', 'nsyncDisabled');
         const shouldSync = this.auth !== null && !syncPaused && !syncDisabled;
-        await ((_a = this.syncEventManager) === null || _a === void 0 ? void 0 : _a.onSyncStateChange(trc, syncPaused, nSyncDisabled || syncDisabled));
+        await ((_a = this.activityContext.syncEventManager) === null || _a === void 0 ? void 0 : _a.onSyncStateChange(trc, nSyncDisabled || syncDisabled));
         if (shouldSync === this.isSyncing) {
             return;
         }
@@ -349,7 +335,8 @@ class SyncManager {
             if (this.isSyncing) {
                 logger.debug('SyncManager: starting sync activity queue');
                 if (this.syncPromise) {
-                    await this.syncPromise;
+                    conduit_utils_1.traceEventStart(trc, 'SyncManager.syncPromise');
+                    await conduit_utils_1.traceEventEndWhenSettled(trc, 'SyncManager.syncPromise', this.syncPromise);
                     loggerArgs.syncPromiseDone = true;
                 }
                 this.syncPromise = this.runSyncActivities(this.syncTrc).catch(err => {
@@ -367,22 +354,24 @@ class SyncManager {
             }
             else {
                 logger.debug('SyncManager: stopping sync activity queue');
-                await this.wakeUp(trc);
+                this.wakeUp();
                 if (this.currentActivity) {
                     const activityName = this.currentActivity.params.activityType;
-                    await this.currentActivity.abort();
+                    conduit_utils_1.traceEventStart(trc, 'SyncManager.abortCurrentActivity');
+                    await conduit_utils_1.traceEventEndWhenSettled(trc, 'SyncManager.abortCurrentActivity', this.currentActivity.abort());
                     logger.debug(`SyncManager: Aborting ${activityName} completed!`);
                     loggerArgs.currentActivityAborted = true;
                 }
                 if (this.syncPromise) {
-                    await this.syncPromise;
+                    conduit_utils_1.traceEventStart(trc, 'SyncManager.syncPromise');
+                    await conduit_utils_1.traceEventEndWhenSettled(trc, 'SyncManager.syncPromise', this.syncPromise);
                     logger.debug(`SyncManager: syncPromise completed!`);
                 }
             }
         });
     }
     async addImmediateIncrementalSync(trc, trackProgress, priority, graphTransaction) {
-        const newActivity = new IncrementalSyncActivity_1.IncrementalSyncActivity(this.syncDI, this.activityContext, priority, 0, 0, trackProgress);
+        const newActivity = new IncrementalSyncActivity_1.IncrementalSyncActivity(this.di, this.activityContext, priority, 0, 0, trackProgress);
         const now = Date.now();
         const queue = this.queue.map(a => a.dehydrate());
         for (let i = 0; i < queue.length; ++i) {
@@ -526,7 +515,7 @@ class SyncManager {
         }
         for (const p of persisted) {
             try {
-                const activity = SyncActivityHydration_1.hydrateActivity(this.syncDI, this.activityContext, p);
+                const activity = SyncActivityHydration_1.hydrateActivity(this.di, this.activityContext, p);
                 this.queue.push(activity);
             }
             catch (err) {
@@ -544,7 +533,7 @@ class SyncManager {
             await this.replaceActivityQueueSyncState(trc, tx);
         }, undefined, MUTEX_TIMEOUT);
     }
-    async wakeUp(trc) {
+    wakeUp() {
         if (this.activityTimer) {
             this.activityTimer.cancel();
             this.activityTimer = null;
@@ -597,7 +586,7 @@ class SyncManager {
             }
         }
         if (!next && !incremental && !noIncremental) {
-            incremental = new IncrementalSyncActivity_1.IncrementalSyncActivity(this.syncDI, this.activityContext, SyncActivity_1.SyncActivityPriority.BACKGROUND);
+            incremental = new IncrementalSyncActivity_1.IncrementalSyncActivity(this.di, this.activityContext, SyncActivity_1.SyncActivityPriority.BACKGROUND);
             await this.addActivity(trc, incremental);
             nextTime = Math.min(nextTime, incremental.params.runAfter);
         }
@@ -651,7 +640,7 @@ class SyncManager {
             logger.error('activity threw an error', activity.params.activityType, err);
         }
         try {
-            const newActivity = SyncActivityHydration_1.hydrateActivity(this.syncDI, this.activityContext, p, timeout);
+            const newActivity = SyncActivityHydration_1.hydrateActivity(this.di, this.activityContext, p, timeout);
             await this.replaceActivity(trc, activity, newActivity);
         }
         catch (hydrateErr) {
@@ -676,11 +665,17 @@ class SyncManager {
             backingNbToWs: {},
         });
         await tx.replaceSyncState(trc, ['offlineNbs'], {});
-        await HybridInitialDownsyncActivity_1.addInitialDownsyncActivities(trc, this.syncDI, this.activityContext, tx);
+        await HybridInitialDownsyncActivity_1.addInitialDownsyncActivities(trc, this.di, this.activityContext, tx);
     }
 }
 __decorate([
     conduit_utils_1.traceAsync('SyncManager')
+], SyncManager.prototype, "initAuth", null);
+__decorate([
+    conduit_utils_1.traceAsync('SyncManager')
 ], SyncManager.prototype, "forceDownsyncUpdate", null);
+__decorate([
+    conduit_utils_1.traceAsync('SyncManager')
+], SyncManager.prototype, "onSyncStateChange", null);
 exports.SyncManager = SyncManager;
 //# sourceMappingURL=SyncManager.js.map

@@ -22,13 +22,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addInitialDownsyncActivities = exports.NSyncInitialDownsyncActivity = exports.NotesFetchActivity = exports.PromotionsSyncActivity = exports.MaestroSyncActivity = exports.NotesCountFetchActivity = exports.FINAL_ACTIVITY_ORDER = exports.INITIAL_DOWNSYNC_CHUNK_TIMEBOX = void 0;
+exports.addInitialDownsyncActivities = exports.NSyncInitialDownsyncActivity = exports.NotesFetchActivity = exports.PromotionsSyncActivity = exports.MaestroSyncActivity = exports.BetaFeatureSyncActivity = exports.NotesCountFetchActivity = exports.FINAL_ACTIVITY_ORDER = exports.INITIAL_DOWNSYNC_CHUNK_TIMEBOX = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
 const en_data_model_1 = require("en-data-model");
 const Auth = __importStar(require("../Auth"));
 const NotebookConverter_1 = require("../Converters/NotebookConverter");
+const BetaFeatureSync_1 = require("../SyncFunctions/BetaFeatureSync");
 const MaestroPropsSync_1 = require("../SyncFunctions/MaestroPropsSync");
 const MessageSync_1 = require("../SyncFunctions/MessageSync");
 const Migrations_1 = require("../SyncFunctions/Migrations");
@@ -37,6 +38,8 @@ const PromotionsSync_1 = require("../SyncFunctions/PromotionsSync");
 const SyncHelpers_1 = require("../SyncFunctions/SyncHelpers");
 const BackgroundNoteSyncActivity_1 = require("./BackgroundNoteSyncActivity");
 const ContentFetchSyncActivity_1 = require("./ContentFetchSyncActivity");
+const IncrementalSyncActivity_1 = require("./IncrementalSyncActivity");
+const NSyncInitActivity_1 = require("./NSyncInitActivity");
 const SchemaMigrationActivity_1 = require("./SchemaMigrationActivity");
 const SyncActivity_1 = require("./SyncActivity");
 const SyncActivityHydration_1 = require("./SyncActivityHydration");
@@ -44,7 +47,9 @@ exports.INITIAL_DOWNSYNC_CHUNK_TIMEBOX = 30000;
 var FINAL_ACTIVITY_ORDER;
 (function (FINAL_ACTIVITY_ORDER) {
     FINAL_ACTIVITY_ORDER[FINAL_ACTIVITY_ORDER["SCHEMA_MIGRATION"] = 997] = "SCHEMA_MIGRATION";
-    FINAL_ACTIVITY_ORDER[FINAL_ACTIVITY_ORDER["REINDEX_ACTIVITY"] = 1000] = "REINDEX_ACTIVITY";
+    FINAL_ACTIVITY_ORDER[FINAL_ACTIVITY_ORDER["REINDEX_ACTIVITY"] = 998] = "REINDEX_ACTIVITY";
+    FINAL_ACTIVITY_ORDER[FINAL_ACTIVITY_ORDER["NSYNC_INIT_ACTIVITY"] = 999] = "NSYNC_INIT_ACTIVITY";
+    FINAL_ACTIVITY_ORDER[FINAL_ACTIVITY_ORDER["INCREMENTAL_SYNC"] = 1000] = "INCREMENTAL_SYNC";
     FINAL_ACTIVITY_ORDER[FINAL_ACTIVITY_ORDER["INITIAL_DOWNSYNC_ACTIVITY"] = 1001] = "INITIAL_DOWNSYNC_ACTIVITY";
 })(FINAL_ACTIVITY_ORDER = exports.FINAL_ACTIVITY_ORDER || (exports.FINAL_ACTIVITY_ORDER = {}));
 const DEFAULT_INITIAL_NOTES_TO_FETCH = 250;
@@ -62,6 +67,7 @@ class InitialDownsyncCompleteActivity extends SyncActivity_1.SyncActivity {
         });
         this.di = di;
     }
+    get progressBucketSize() { return 0; }
     async runSyncImpl(trc) {
         await SyncHelpers_1.clearSyncProgress(trc, this.context.syncEngine);
         this.di.emitEvent(conduit_view_types_1.ConduitEvent.BOOTSTRAP_SYNC_FINISHED);
@@ -85,7 +91,7 @@ class FetchPrebuiltDatabaseActivity extends SyncActivity_1.SyncActivity {
         this.totalBytes = 1000; // gets updated during download
         this.lastPercent = 0;
     }
-    get progressBucketSize() { return 20000; }
+    get progressBucketSize() { return 5000; }
     updateProgress(trc, receivedBytes, totalBytes) {
         // in case we don't get a content-length header, just use a large guess of 30mb
         totalBytes = totalBytes || Math.max(30 * 1024 * 1024, receivedBytes + 1024);
@@ -145,6 +151,10 @@ class FetchPrebuiltDatabaseActivity extends SyncActivity_1.SyncActivity {
             // and kickoff content fetch in the background
             await this.context.syncManager.addActivity(trc, new ContentFetchSyncActivity_1.ContentFetchSyncActivity(this.di, this.context));
         }
+        if (this.di.loadingScreenConfig.showDuringIncrementalSyncAfterPrebuilt) {
+            const incremental = new IncrementalSyncActivity_1.IncrementalSyncActivity(this.di, this.context, SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC, FINAL_ACTIVITY_ORDER.INCREMENTAL_SYNC, undefined, true);
+            await this.context.syncManager.addActivity(trc, incremental);
+        }
         // remove hybrid-mode sync activities from the queue
         await this.context.syncManager.removeActivitiesByType(trc, [
             SyncActivity_1.SyncActivityType.SchemaMigrationCompleteActivity,
@@ -164,6 +174,7 @@ SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType
 });
 /*********************************************************/
 class UserUpdateActivity extends SyncActivity_1.SyncActivity {
+    get progressBucketSize() { return 500; }
     constructor(di, context, subpriority = 0, timeout = 0) {
         super(di, context, {
             activityType: SyncActivity_1.SyncActivityType.UserUpdateActivity,
@@ -240,7 +251,7 @@ SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType
 });
 /*********************************************************/
 class BootstrapActivity extends SyncActivity_1.SyncActivity {
-    get progressBucketSize() { return 2500; }
+    get progressBucketSize() { return 10000; }
     constructor(di, context, forVault, shouldBootstrapNotes, subpriority = 0, timeout = 0) {
         super(di, context, {
             activityType: SyncActivity_1.SyncActivityType.BootstrapActivity,
@@ -262,6 +273,31 @@ SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType
     return new BootstrapActivity(di, context, p.options.forVault, p.options.shouldBootstrapNotes, p.subpriority, timeout);
 });
 /*********************************************************/
+class BetaFeatureSyncActivity extends SyncActivity_1.SyncActivity {
+    constructor(di, context, subpriority = 0, timeout = 0) {
+        super(di, context, {
+            activityType: SyncActivity_1.SyncActivityType.BetaFeatureSyncActivity,
+            priority: subpriority ? SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC : SyncActivity_1.SyncActivityPriority.BACKGROUND,
+            subpriority,
+            runAfter: Date.now() + timeout,
+        }, {
+            syncProgressTableName: subpriority > 0 ? SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE : null,
+        });
+        this.di = di;
+    }
+    async runSyncImpl(trc) {
+        const syncParams = this.initParams('personal', 'betaFeature', exports.INITIAL_DOWNSYNC_CHUNK_TIMEBOX);
+        await BetaFeatureSync_1.syncBetaFeature(trc, syncParams, this.di.getBetaFeatureIDs());
+        this.params.subpriority = 0;
+        this.options.syncProgressTableName = null;
+        throw new conduit_utils_1.RetryError('continue', BetaFeatureSync_1.BETA_FEATURES_SYNC_PERIOD);
+    }
+}
+exports.BetaFeatureSyncActivity = BetaFeatureSyncActivity;
+SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.BetaFeatureSyncActivity, (di, context, p, timeout) => {
+    return new BetaFeatureSyncActivity(di, context, p.subpriority, timeout);
+});
+/*********************************************************/
 class MaestroSyncActivity extends SyncActivity_1.SyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
         super(di, context, {
@@ -274,12 +310,16 @@ class MaestroSyncActivity extends SyncActivity_1.SyncActivity {
         });
         this.di = di;
     }
+    get progressBucketSize() { return 500; }
     async runSyncImpl(trc) {
         const syncParams = this.initParams('personal', 'maestro', exports.INITIAL_DOWNSYNC_CHUNK_TIMEBOX);
         await MaestroPropsSync_1.syncMaestroProps(trc, syncParams, this.di.getMaestroClientType(), this.di.getMaestroPlatform());
         this.params.subpriority = 0;
         this.options.syncProgressTableName = null;
-        throw new conduit_utils_1.RetryError('continue', MaestroPropsSync_1.MAESTRO_SYNC_PERIOD);
+        // GRIN-1041 - mitigate 12-hour interval spikes in maestroProps traffic
+        const MAESTRO_SYNC_JITTER_PERIOD = 4 * conduit_utils_1.MILLIS_IN_ONE_HOUR;
+        const jitter = Math.random() * MAESTRO_SYNC_JITTER_PERIOD;
+        throw new conduit_utils_1.RetryError('continue', MaestroPropsSync_1.MAESTRO_SYNC_PERIOD + jitter);
     }
 }
 exports.MaestroSyncActivity = MaestroSyncActivity;
@@ -299,6 +339,7 @@ class PromotionsSyncActivity extends SyncActivity_1.SyncActivity {
         });
         this.di = di;
     }
+    get progressBucketSize() { return 500; }
     async runSyncImpl(trc) {
         const syncParams = this.initParams('personal', 'promotions', exports.INITIAL_DOWNSYNC_CHUNK_TIMEBOX);
         await PromotionsSync_1.syncPromotions(trc, syncParams, this.di.getPromotionIDs());
@@ -359,7 +400,6 @@ SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType
 });
 /*********************************************************/
 class TrashedNoteMetadataFetchActivity extends SyncActivity_1.SyncActivity {
-    get progressBucketSize() { return 500; }
     constructor(di, context, forVault, subpriority = 0, timeout = 0) {
         super(di, context, {
             activityType: SyncActivity_1.SyncActivityType.TrashedNoteMetadataFetchActivity,
@@ -395,9 +435,11 @@ class NoteMetadataFetchActivity extends SyncActivity_1.SyncActivity {
     }
     async runSyncImpl(trc) {
         const syncParams = this.initParams(this.options.forVault ? 'vault' : 'personal', 'notesMetadata', exports.INITIAL_DOWNSYNC_CHUNK_TIMEBOX);
+        const syncStartTime = Date.now();
         await NoteStoreSync_1.syncAllNotesMetadata(trc, syncParams, false);
         await this.context.syncEngine.graphStorage.transact(trc, 'updateSyncTime', async (tx) => {
             await tx.replaceSyncState(trc, ['lastSyncTime'], Date.now());
+            await tx.replaceSyncState(trc, ['lastDownsyncStartTime'], syncStartTime);
         });
     }
 }
@@ -475,6 +517,7 @@ SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType
 });
 /*********************************************************/
 class SchemaMigrationCompleteActivity extends SyncActivity_1.SyncActivity {
+    get progressBucketSize() { return 2500; }
     constructor(di, context, subpriority = 0) {
         super(di, context, {
             activityType: SyncActivity_1.SyncActivityType.SchemaMigrationCompleteActivity,
@@ -507,6 +550,7 @@ SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType
 });
 /*********************************************************/
 class NSyncInitialDownsyncActivity extends SyncActivity_1.SyncActivity {
+    get progressBucketSize() { return 500; }
     constructor(di, context, subpriority = 0) {
         super(di, context, {
             activityType: SyncActivity_1.SyncActivityType.NSyncInitialDownsyncActivity,
@@ -516,10 +560,9 @@ class NSyncInitialDownsyncActivity extends SyncActivity_1.SyncActivity {
         }, {
             syncProgressTableName: SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
         });
-        this.di = di;
     }
     async runSyncImpl(trc) {
-        const syncEventManager = this.di.syncEventManager();
+        const syncEventManager = this.context.syncEventManager;
         // Possible that nsync not enabled. early out on null manager
         if (!syncEventManager) {
             return;
@@ -582,8 +625,10 @@ async function addInitialDownsyncActivities(trc, di, context, tx) {
         await context.syncManager.addActivity(trc, new BootstrapActivity(di, context, true, shouldBootstrapNotes, order++), tx);
     }
     await context.syncManager.addActivity(trc, new BootstrapActivity(di, context, false, shouldBootstrapNotes, order++), tx);
+    await context.syncManager.addActivity(trc, new NSyncInitActivity_1.NSyncInitActivity(di, context, order++), tx);
     await context.syncManager.addActivity(trc, new NSyncInitialDownsyncActivity(di, context, order++), tx);
     if (!isDownsyncMode(conduit_view_types_1.DownsyncMode.LEGACY_FOR_PREBUILT)) {
+        await context.syncManager.addActivity(trc, new BetaFeatureSyncActivity(di, context, order++), tx);
         await context.syncManager.addActivity(trc, new MaestroSyncActivity(di, context, order++), tx);
         await context.syncManager.addActivity(trc, new PromotionsSyncActivity(di, context, order++), tx);
     }

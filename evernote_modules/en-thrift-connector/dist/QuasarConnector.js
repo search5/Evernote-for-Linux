@@ -187,7 +187,8 @@ class QuasarConnectorAndExecutor extends conduit_core_1.RemoteMutationExecutor {
         }
         else {
             this.backoffManager.resetDelay();
-            return { error: new conduit_utils_1.InternalError('Unknown error in response from the service. Error: ' + response.statusText + 'Status: ' + response.status) };
+            const errorMessage = response.statusText || response.result;
+            return { error: new conduit_utils_1.InternalError(`Unknown error in response from the service. Error: ${errorMessage} Status: ${response.status}`) };
         }
     }
     validateToken(auth) {

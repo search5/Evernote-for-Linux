@@ -5,6 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.convertGuidToService = exports.convertGuidFromService = exports.getNodeConverter = exports.testResetConverters = exports.testOverrideConverters = void 0;
 const en_data_model_1 = require("en-data-model");
+const BetaFeatureConverter_1 = require("./BetaFeatureConverter");
 const InvitationConverter_1 = require("./InvitationConverter");
 const MembershipConverter_1 = require("./MembershipConverter");
 const MessageConverter_1 = require("./MessageConverter");
@@ -35,6 +36,7 @@ function getNodeConverter(nodeType) {
         // lazy init to protect against circular dependencies
         gNodeConverters = {
             Attachment: ResourceConverter_1.ResourceConverter,
+            BetaFeature: BetaFeatureConverter_1.BetaFeatureConverter,
             Invitation: InvitationConverter_1.InvitationConverter,
             Membership: MembershipConverter_1.MembershipConverter,
             Message: MessageConverter_1.MessageConverter,

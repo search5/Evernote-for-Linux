@@ -1,6 +1,6 @@
 {
   "name": "conduit-utils",
-  "version": "1.27.2",
+  "version": "1.28.5",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -9,6 +9,14 @@
   "files": [
     "dist"
   ],
+  "peerDependencies": {
+    "@types/uuid": "^3.4.3"
+  },
+  "peerDependenciesMeta": {
+    "@types/uuid": {
+      "optional": true
+    }
+  },
   "dependencies": {
     "en-ts-utils": "4.0.1",
     "js-md5": "^0.7.3",

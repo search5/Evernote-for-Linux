@@ -15,13 +15,13 @@ class TokenStorage {
     /**
      * load token and expiration from cache
      */
-    load(tokenType) {
+    load(tokenStorageKey) {
         let tokenResult;
-        if (!tokenType) {
-            conduit_utils_1.logger.error(`TokenStorage: invalid token type ${tokenType}`);
+        if (!tokenStorageKey) {
+            conduit_utils_1.logger.error(`TokenStorage: invalid token type ${tokenStorageKey}`);
             return { token: null, expiresAt: null };
         }
-        tokenResult = this.tokenCache.get(tokenType);
+        tokenResult = this.tokenCache.get(tokenStorageKey);
         return tokenResult || { token: null, expiresAt: null };
     }
     /**
@@ -36,8 +36,8 @@ class TokenStorage {
      * @param expiresAt
      * @param token
      */
-    save(results, tokenType) {
-        this.tokenCache.set(tokenType, results);
+    save(results, tokenStorageKey) {
+        this.tokenCache.set(tokenStorageKey, results);
     }
 }
 exports.TokenStorage = TokenStorage;

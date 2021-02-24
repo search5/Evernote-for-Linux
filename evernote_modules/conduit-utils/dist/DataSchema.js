@@ -143,7 +143,7 @@ function validateSchemaType(fieldType, path, value, objectStrictCheck = true) {
     }
     const valType = en_ts_utils_1.getTypeOf(value);
     if (fieldTypeIsEnum(fieldType)) {
-        if (isNullableEnum(fieldType) && value === null) {
+        if (isNullableEnum(fieldType) && (value === null || value === undefined)) {
             return;
         }
         else if (valType !== 'string' || fieldType.indexOf(value) < 0) {

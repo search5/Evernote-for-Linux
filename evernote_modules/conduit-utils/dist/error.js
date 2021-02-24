@@ -22,6 +22,7 @@ var AuthErrorCode;
     AuthErrorCode["EXISTING_ACCOUNT"] = "EXISTING_ACCOUNT";
     AuthErrorCode["SESSION_REVOKED"] = "SESSION_REVOKED";
     AuthErrorCode["BAD_AUTH_TOKEN"] = "BAD_AUTH_TOKEN";
+    AuthErrorCode["PASSWORD_RESET_REQUIRED"] = "PASSWORD_RESET_REQUIRED";
 })(AuthErrorCode = exports.AuthErrorCode || (exports.AuthErrorCode = {}));
 function hashTokenForAuthError(authenticationToken) {
     return authenticationToken ? index_1.md5(authenticationToken) : '';
@@ -84,6 +85,7 @@ var SignupErrorCode;
     SignupErrorCode["OPENID_EMAIL_CONFLICT"] = "OPENID_EMAIL_CONFLICT";
     SignupErrorCode["OPENID_CONFLICT"] = "OPENID_CONFLICT";
     SignupErrorCode["OPENID_ASSOCIATED"] = "OPENID_ASSOCIATED";
+    SignupErrorCode["INVALID_PASSWORD"] = "INVALID_PASSWORD";
 })(SignupErrorCode = exports.SignupErrorCode || (exports.SignupErrorCode = {}));
 class SignupError extends Error {
     constructor(errorCode, message) {

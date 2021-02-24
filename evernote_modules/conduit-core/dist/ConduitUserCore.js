@@ -48,6 +48,7 @@ class ConduitUserCore {
         this.mutatorDefinitions = {};
         this.indexConfig = {};
         this.dataResolvers = {};
+        this.deleteHooks = {};
         this.mutationRules = [];
         this.nodeTypeToNSyncType = {};
         this.nsyncToNodeType = {};

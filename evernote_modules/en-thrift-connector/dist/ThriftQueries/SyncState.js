@@ -56,7 +56,13 @@ async function getDownsyncCount(context, tableName) {
         }
         syncerCount++;
         conduit_utils_1.logger.trace(tableName, state);
-        const totalSize = state.totalSize;
+        let sizeScale = 1;
+        if (state.startTime && state.endTime) {
+            // downweight buckets if they finished very quickly
+            const elapsed = state.endTime - state.startTime;
+            sizeScale = Math.max(0, Math.min(1, elapsed / 500));
+        }
+        const totalSize = state.totalSize * sizeScale;
         const percentComplete = state.percentComplete || 0; // Will be undefined when setting the initial progress bucket sizes
         total += totalSize;
         current += percentComplete * totalSize;
@@ -117,7 +123,9 @@ function addSyncStateQueries(out) {
             conduit_utils_1.logger.trace('SyncState current === total', initialDownsyncCount.current, initialDownsyncCount.total);
             return Object.assign({ progressPercent: 100 }, ret);
         }
-        return Object.assign({ progressPercent: precDown * Math.floor(precUp * initialDownsyncCount.current / initialDownsyncCount.total) }, ret);
+        const progressPercent = precDown * Math.floor(precUp * initialDownsyncCount.current / initialDownsyncCount.total);
+        conduit_utils_1.logger.trace('InitialDownsyncState', { curent: initialDownsyncCount.current, total: initialDownsyncCount.total, progressPercent });
+        return Object.assign({ progressPercent }, ret);
     }
     out.SyncState = {
         args: conduit_core_1.schemaToGraphQLArgs({

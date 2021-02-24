@@ -34,8 +34,10 @@ async function processUpdates(trc, params, maestroProps, lastUpdateCount) {
 async function syncMaestroProps(trc, params, clientType, platform, overridingArmIds) {
     const maestroService = params.thriftComm.getMaestroService(createMaestroUrl(params.auth.urls.webApiUrlPrefix));
     const authToken = params.auth.token;
-    const updateCount = Math.floor(Date.now() / exports.MAESTRO_SYNC_PERIOD);
-    const syncAvailable = await SyncHelpers_1.checkIfSyncAvailable(trc, params, SyncHelpers_1.EmptySyncState, updateCount);
+    const localSyncState = await SyncHelpers_1.getLocalSyncState(trc, params, SyncHelpers_1.EmptySyncState);
+    const currentTimeMillis = Date.now();
+    const lastSyncTimeMillis = localSyncState.lastUpdateCount;
+    const syncAvailable = (currentTimeMillis - lastSyncTimeMillis) > exports.MAESTRO_SYNC_PERIOD;
     if (!syncAvailable) {
         params.setProgress && await params.setProgress(trc, 1);
         return;
@@ -57,7 +59,7 @@ async function syncMaestroProps(trc, params, clientType, platform, overridingArm
     try {
         maestroProps = await SyncHelpers_1.interruptible(params, maestroService.getProps2(trc, authToken, { clientType, overridingArmIds, userInfo }));
         await params.yieldCheck;
-        await processUpdates(trc, params, maestroProps, updateCount);
+        await processUpdates(trc, params, maestroProps, currentTimeMillis);
     }
     catch (err) {
         if (err instanceof conduit_utils_1.RetryError) {

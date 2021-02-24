@@ -454,6 +454,16 @@ async function handleAuthResult(trc, authResult, thriftHost, urlHost, userSlot, 
                     vaultUser: null,
                     secondFactorTempToken: null,
                 };
+            case conduit_utils_1.AuthErrorCode.PASSWORD_RESET_REQUIRED:
+                return {
+                    token: null,
+                    state: conduit_view_types_1.AuthState.PasswordResetRequired,
+                    secondFactorDeliveryHint: null,
+                    usernameOrEmail: null,
+                    user: null,
+                    vaultUser: null,
+                    secondFactorTempToken: null,
+                };
         }
     }
     if (authResult.err) {
@@ -776,6 +786,10 @@ function createSignupError(object) {
         case 'openid.already.associated':
             errorCode = conduit_utils_1.SignupErrorCode.OPENID_ASSOCIATED;
             message = 'Different email address associated with same OpenID provider';
+            break;
+        case 'validation.minlength.valueTooShort':
+            errorCode = conduit_utils_1.SignupErrorCode.INVALID_PASSWORD;
+            message = 'Password must be at least 6 characters long.Password can contain letters, numbers and punctuation.';
             break;
         default:
             break;

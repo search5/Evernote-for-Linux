@@ -447,6 +447,9 @@ class AsyncUtilityStore {
         this.changePinnedContentPosition = (trc, authenticationToken, workspaceGuid, changePositionRequest) => {
             return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'changePinnedContentPosition', this.utilityStore, this.utilityStore.changePinnedContentPosition, authenticationToken, workspaceGuid, changePositionRequest);
         };
+        this.checkUserFeatures = (trc, authenticationToken, featuresToCheck) => {
+            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'checkUserFeatures', this.utilityStore, this.utilityStore.checkUserFeatures, authenticationToken, featuresToCheck);
+        };
         this.updateContentOfPinnedWidget = (trc, authenticationToken, workspaceGuid, toBePinnedContentlist, ToBeUnpinnedContentList) => {
             return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'updateContentOfPinnedWidget', this.utilityStore, this.utilityStore.updateContentOfPinnedWidget, authenticationToken, workspaceGuid, toBePinnedContentlist, ToBeUnpinnedContentList);
         };

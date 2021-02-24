@@ -21,6 +21,7 @@ const electron_1 = require("electron");
 const en_conduit_electron_shared_1 = require("en-conduit-electron-shared");
 const ElectronMainSecureStorage_1 = require("./ElectronMainSecureStorage");
 const MainResourceProxy_1 = require("./MainResourceProxy");
+const MiscMainIPC_1 = require("./MiscMainIPC");
 const setupElectronLogger_1 = require("./setupElectronLogger");
 var electronLogger_1 = require("./electronLogger");
 Object.defineProperty(exports, "electronLogger", { enumerable: true, get: function () { return electronLogger_1.electronLogger; } });
@@ -37,6 +38,7 @@ async function init(config) {
     MainResourceProxy_1.setupContentFetchingIPC();
     MainResourceProxy_1.setupExternalUrlFetchingIPC();
     setupElectronLogger_1.setupElectronLogger();
+    MiscMainIPC_1.setupLocaleFetchingIPC();
     await initWorkerWindow(config);
 }
 exports.init = init;

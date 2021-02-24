@@ -220,9 +220,6 @@ class ThriftStagedBlobManager {
         if (result.error) {
             throw result.error;
         }
-        if (result.error) {
-            throw result.error;
-        }
         // clean up StagedBlob entry
         await this.blobStorage.transact(trc, 'deleteStagedBlob', async (tx) => {
             await tx.removeValue(trc, StagedBlobTable, stagedBlobID);

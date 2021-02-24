@@ -259,7 +259,7 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
                 zh_CN_yxbj: 'zh-CN',
             };
             const resolvedLocale = enLocale ? enLocaleMap[enLocale] || enLocale : enLocale;
-            this.locale = resolvedLocale || this.di.getSystemLocale();
+            this.locale = resolvedLocale || await this.di.getSystemLocale();
             const oldLocale = await graphTransaction.getStoredLocale(trc, null);
             if ((!oldLocale && this.locale) || (this.locale && oldLocale !== this.locale)) {
                 // Going through the sync manager so that the loading screen appears

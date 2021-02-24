@@ -9,7 +9,6 @@ const conduit_view_types_1 = require("conduit-view-types");
 const gTracePool = new conduit_utils_1.AsyncTracePool('FileUploader');
 const CHUNK_SIZE = 100 * 1024;
 const defaultMime = 'application/octet-stream';
-const defaultFileName = 'filename';
 function lastUrlSegment(url) {
     // Get the last path:
     const segments = url.split('/');
@@ -93,18 +92,25 @@ class FileUploader {
             await this.resourceManager.getFileInfo(trc, params.path, params.data) :
             getDataInfo(params.data);
     }
+    // handle externalUrl and fill in default filename if not present
     async handleExternalUrl(trc, params) {
         if (params.url) {
             if (!this.resourceManager) {
                 throw new conduit_utils_1.InvalidOperationError('resource manager required for external resource upload');
             }
             const externalResource = await this.resourceManager.downloadUrl(trc, params.url);
-            params = Object.assign(Object.assign({}, params), { path: externalResource.filePath, mime: params.mime || externalResource.mimeType || defaultMime, filename: params.filename || lastUrlSegment(params.url) || defaultFileName });
+            params = Object.assign(Object.assign({}, params), { path: externalResource.filePath, mime: params.mime || externalResource.mimeType || defaultMime, filename: params.filename || lastUrlSegment(params.url) });
         }
         return params;
     }
+    fixupFilename(params, hash) {
+        if (!params.filename) {
+            params.filename = hash || Date.now().toString();
+        }
+    }
     async stageFileUpload(trc, params, userID, syncContext, hash, size, takeFileOwnership) {
         params = await this.handleExternalUrl(trc, params);
+        this.fixupFilename(params, hash);
         const override = this.di.getFileUploaderOverride(params.parentType);
         if (override) {
             return await override.stageFileUpload(trc, this.stagedBlobManager, params, userID, syncContext, hash, size, takeFileOwnership);
@@ -118,6 +124,7 @@ class FileUploader {
         }
         params = await this.handleExternalUrl(trc, params);
         const { hash, size } = await this.getHashAndSize(trc, params);
+        this.fixupFilename(params, hash);
         const override = this.di.getFileUploaderOverride(params.parentType);
         if (override) {
             return await override.doFileUpload(trc, this.graphDB, this.stagedBlobManager, params, hash, size);

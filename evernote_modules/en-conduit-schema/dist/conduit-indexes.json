@@ -49,6 +49,31 @@
     },
     "lookups": []
   },
+  "BetaFeature": {
+    "indexes": {
+      "9e3686c2e4b97eef607ae43a2e235635": {
+        "index": [
+          {
+            "field": "betaFeatureKey",
+            "order": "ASC",
+            "type": "number"
+          },
+          {
+            "field": "isAvailable",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      }
+    },
+    "lookups": []
+  },
   "Board": {
     "indexes": {
       "256261db00cbb9220a0c22a37c00fd99": {
@@ -347,6 +372,124 @@
   },
   "Note": {
     "indexes": {
+      "06cb6947d72283cbac03ff94eeaf240e": {
+        "index": [
+          {
+            "field": "reminderIsDone",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "reminderTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderOrder",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderDoneTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "EntityRef?"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "hasReminder",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "0a34222c8a36809be77c8e0fbcee21ee": {
+        "index": [
+          {
+            "field": "reminderIsDone",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "reminderTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "reminderOrder",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderDoneTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "EntityRef?"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "hasReminder",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
       "1fb1303d1c26158e6fed8ac03272a548": {
         "index": [
           {
@@ -418,6 +561,183 @@
             "field": "label",
             "order": "ASC",
             "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "hasReminder",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "233d4e77382837b7ede2704249167089": {
+        "index": [
+          {
+            "field": "reminderIsDone",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "reminderTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderOrder",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderDoneTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "EntityRef?"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "hasReminder",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "249a11cdfc6af0fac4bf685a5678710c": {
+        "index": [
+          {
+            "field": "reminderIsDone",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "reminderTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "reminderOrder",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderDoneTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "EntityRef?"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "hasReminder",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "26a2569f1ff9e7c71d4734c62dcc0786": {
+        "index": [
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "EntityRef?"
+          },
+          {
+            "field": "reminderIsDone",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "reminderTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderOrder",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderDoneTime",
+            "order": "ASC",
+            "type": "timestamp?"
           },
           {
             "field": "id",
@@ -521,6 +841,65 @@
           }
         ]
       },
+      "33cde22cb6cc9f9ff4c6f569ce371601": {
+        "index": [
+          {
+            "field": "reminderIsDone",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "reminderTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "reminderOrder",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderDoneTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "EntityRef?"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "hasReminder",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
       "4c3c36d3f89aec50e078ecb962cc0bc8": {
         "index": [
           {
@@ -547,6 +926,65 @@
         "indexCondition": [
           {
             "field": "hasTask",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "50f22fbf7ca116c93ac4cbfd7261ae2c": {
+        "index": [
+          {
+            "field": "reminderIsDone",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "reminderTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderOrder",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderDoneTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "EntityRef?"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "hasReminder",
             "value": true
           },
           {
@@ -621,6 +1059,65 @@
           {
             "field": "inTrash",
             "value": true
+          }
+        ]
+      },
+      "8db76bab821440937105ba9720fec194": {
+        "index": [
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "EntityRef?"
+          },
+          {
+            "field": "reminderIsDone",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "reminderTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderOrder",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderDoneTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "hasReminder",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
           }
         ]
       },
@@ -1278,6 +1775,183 @@
           }
         ]
       },
+      "c0c68e35b839a3f111e8677eb0caf4a6": {
+        "index": [
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "EntityRef?"
+          },
+          {
+            "field": "reminderIsDone",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "reminderTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "reminderOrder",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderDoneTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "hasReminder",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "c200e9da3e904fe6874d70482c3f5316": {
+        "index": [
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "EntityRef?"
+          },
+          {
+            "field": "reminderIsDone",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "reminderTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderOrder",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderDoneTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "hasReminder",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "c70b335e9210a892b34a53e9d2deb277": {
+        "index": [
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "EntityRef?"
+          },
+          {
+            "field": "reminderIsDone",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "reminderTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "reminderOrder",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderDoneTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "hasReminder",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
       "d2756c1a745dd821ac1c36c40f1e2307": {
         "index": [
           {
@@ -1304,6 +1978,65 @@
         "indexCondition": [
           {
             "field": "hasTask",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "d6998be68872144f4e76adda8bc7e459": {
+        "index": [
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "EntityRef?"
+          },
+          {
+            "field": "reminderIsDone",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "reminderTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "reminderOrder",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderDoneTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "hasReminder",
             "value": true
           },
           {

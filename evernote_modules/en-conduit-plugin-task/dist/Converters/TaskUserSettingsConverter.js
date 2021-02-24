@@ -40,12 +40,14 @@ const getTaskUserSettingsNodeAndEdges = async (trc, instance, context) => {
                 srcType: TaskConstants_1.TaskEntityTypes.TaskUserSettings, srcID: taskUserSettings.id, srcPort: 'defaultTaskNote',
             });
         }
-        edgesToCreate.push({
-            dstType: en_data_model_1.CoreEntityTypes.Note,
-            dstID: instance.defaultTaskNoteID,
-            dstPort: 'taskUserSettingsForDefaultNote',
-            srcType: TaskConstants_1.TaskEntityTypes.TaskUserSettings, srcID: taskUserSettings.id, srcPort: 'defaultTaskNote',
-        });
+        if (instance.defaultTaskNoteID) {
+            edgesToCreate.push({
+                dstType: en_data_model_1.CoreEntityTypes.Note,
+                dstID: instance.defaultTaskNoteID,
+                dstPort: 'taskUserSettingsForDefaultNote',
+                srcType: TaskConstants_1.TaskEntityTypes.TaskUserSettings, srcID: taskUserSettings.id, srcPort: 'defaultTaskNote',
+            });
+        }
     }
     return { nodes: { nodesToUpsert, nodesToDelete: [] }, edges: { edgesToDelete, edgesToCreate } };
 };

@@ -325,6 +325,8 @@ class ContentFetchSyncActivity extends SyncActivity_1.SyncActivity {
         }
         conduit_utils_1.logger.debug('Reinitializing SyncProgress information for ContentFetchSyncActivity');
         const newSyncProgress = {
+            startTime: 0,
+            endTime: 0,
             percentComplete: 0,
             totalSize: this.progressBucketSize,
             actualSizeToSync: noteIDs.length,

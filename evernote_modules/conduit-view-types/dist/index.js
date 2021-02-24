@@ -56,6 +56,7 @@ var AuthState;
     AuthState["Authorized"] = "Authorized";
     AuthState["ClientNotSupported"] = "ClientNotSupported";
     AuthState["SessionRevoked"] = "SessionRevoked";
+    AuthState["PasswordResetRequired"] = "PasswordResetRequired";
 })(AuthState = exports.AuthState || (exports.AuthState = {}));
 var OfflineContentStrategy;
 (function (OfflineContentStrategy) {

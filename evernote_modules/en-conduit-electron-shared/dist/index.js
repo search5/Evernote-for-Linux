@@ -15,6 +15,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.cleanupTempFile = exports.fetchPrebuiltDatabase = exports.setDefaultPrebuiltDownloadPath = exports.ElectronRendererHttpClient = exports.ConduitRendererIPC = exports.ConduitMainIPC = exports.getId = exports.ElectronRendererLogger = void 0;
 __exportStar(require("./MessageTypes"), exports);
+__exportStar(require("./MiscRendererIPC"), exports);
 var ElectronRendererLogger_1 = require("./ElectronRendererLogger");
 Object.defineProperty(exports, "ElectronRendererLogger", { enumerable: true, get: function () { return ElectronRendererLogger_1.ElectronRendererLogger; } });
 var ConduitElectronIPC_1 = require("./ConduitElectronIPC");

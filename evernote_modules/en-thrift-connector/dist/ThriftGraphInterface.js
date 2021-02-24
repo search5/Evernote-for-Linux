@@ -212,7 +212,6 @@ class ThriftGraphInterface {
                         }
                         const appliedToGraph = converter && await converter.deleteFromService(trc, mutatorParams, syncContext, [currentChange.nodeRef.id]);
                         if (converter && !appliedToGraph) {
-                            (converter === null || converter === void 0 ? void 0 : converter.preExpungeEntity) && await converter.preExpungeEntity(trc, mutatorParams, syncContext, currentChange.nodeRef.id);
                             await mutatorParams.graphTransaction.deleteNode(trc, syncContext, currentChange.nodeRef);
                         }
                         break;

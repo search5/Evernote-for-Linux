@@ -115,6 +115,18 @@ function getNoteDataResolver(thriftComm, offlineContentStrategy, getSearchShareA
         const auth = Auth_1.decodeAuthData(metadata.authToken);
         const serviceData = await fetchNoteAndNotebook(context, nodeOrRef.id, auth, fetchContent);
         if (serviceData === null || serviceData === void 0 ? void 0 : serviceData.note) {
+            // vault user can access to notes after leaving notebook.
+            // Check existence of note's parent and throw NotFoundError if the note is orphan.
+            if (syncContext === conduit_core_1.VAULT_USER_CONTEXT && serviceData.note.notebookGuid) {
+                const backingNbToWs = (await context.db.getSyncState(trc, null, ['workspaces', 'backingNbToWs']) || {});
+                const parentId = backingNbToWs[serviceData.note.notebookGuid] || Converters_1.convertGuidFromService(serviceData.note.notebookGuid, en_data_model_1.CoreEntityTypes.Notebook);
+                const parentType = backingNbToWs[serviceData.note.notebookGuid] ? en_data_model_1.CoreEntityTypes.Workspace : en_data_model_1.CoreEntityTypes.Notebook;
+                const parent = await context.db.getNode(context, { id: parentId, type: parentType });
+                if (!parent) {
+                    conduit_utils_1.logger.info(`Trying to fetch note ${nodeOrRef.id} but its parent ${parentId} is not found from the local db`);
+                    throw new conduit_utils_1.NotFoundError(nodeOrRef.id, 'Fetching note without notebook is forbidden');
+                }
+            }
             await applyServiceDataToGraph(context, serviceData, syncContext, personalUserId, vaultUserId);
         }
         return Boolean(serviceData === null || serviceData === void 0 ? void 0 : serviceData.note);

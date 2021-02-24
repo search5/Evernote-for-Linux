@@ -369,11 +369,11 @@ const createWidgetUnpinNoteMutator = () => {
             }
             if (note) {
                 const nodeRef = { id: note, type: en_data_model_1.CoreEntityTypes.Note };
-                const ops = await BoardWidgetBuilder_1.buildOpsPlanForUnpinNote(trc, ctx, nodeRef);
+                const { ops } = await BoardWidgetBuilder_1.buildOpsPlanForUnpinNote(trc, ctx, nodeRef);
                 plan.ops = [...plan.ops, ...ops];
             }
             if (notes) {
-                const ops = await BoardWidgetBuilder_1.buildOpsPlanForUnpinNotes(trc, ctx, notes, note);
+                const { ops } = await BoardWidgetBuilder_1.buildOpsPlanForUnpinNotes(trc, ctx, notes, note);
                 if (ops.length > 0) {
                     plan.ops = [...plan.ops, ...ops];
                 }

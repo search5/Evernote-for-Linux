@@ -244,6 +244,7 @@ enum AuthStateEnum {
   Authorized
   ClientNotSupported
   SessionRevoked
+  PasswordResetRequired
 }
 
 type AutoMutatorRes {
@@ -254,6 +255,70 @@ type AutoMutatorRes {
 type AuxSchema {
   id: String!
   jsonStr: String
+}
+
+type BetaFeature {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  betaFeatureKey: Float!
+  isAvailable: Boolean!
+}
+
+input BetaFeatureFilter {
+  field: BetaFeatureFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum BetaFeatureFilterField {
+  betaFeatureKey
+  isAvailable
+  id
+  label
+}
+
+type BetaFeatureListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [BetaFeature!]!
+}
+
+input BetaFeatureSort {
+  field: BetaFeatureSortField!
+  order: IndexOrderType
+}
+
+enum BetaFeatureSortField {
+  betaFeatureKey
+  isAvailable
+  id
+  label
+}
+
+type BetaFeaturesResultFields {
+  id: String!
+  type: String!
+  unindexed: BetaFeature!
+  betaFeatureKey: Float!
+  isAvailable: Boolean!
+}
+
+type BetaFeaturesResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [BetaFeaturesResultFields!]!
 }
 
 type Blob {
@@ -1440,8 +1505,16 @@ type Notebook {
   allMemberships(orderBy: NotebookAllMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NotebookAllMembershipsResults!
   ownMemberships(orderBy: NotebookOwnMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NotebookOwnMembershipsResults!
   childNotes(inTrash: Boolean, orderBy: NotebookChildNotesOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NotebookChildNotesResults!
-  reminderNotes(doneReminders: Boolean, reminderTimeRange: NotebookReminderNotesReminderTimeRange, reverseOrder: Boolean, pageInfo: PageInfo): NotebookReminderNotesResults!
+  reminderNotes(doneReminders: Boolean, reminderTimeRange: NotebookReminderNotesReminderTimeRange, orderBy: NotebookReminderNotesOrderBy, reverseOrder: Boolean, pageInfo: PageInfo): NotebookReminderNotesResults!
+
+  """
+  [WARNING: EXPENSIVE] The max updated value between all Notes in the Notebook and the Notebook's own updated value
+  """
   lastUpdated: Float!
+
+  """
+  [WARNING: EXPENSIVE] The last Profile to edit a Note or any Notebooks fields in the given Notebook.
+  """
   lastEditor: Profile
   CommandPolicy: FolderCommandPolicy!
   shareCount: Float!
@@ -1553,6 +1626,13 @@ type NotebookOwnMembershipsResults {
   list: [NotebookOwnMembershipsResultFields!]!
 }
 
+enum NotebookReminderNotesOrderBy {
+  reminderTime
+  label
+  created
+  updated
+}
+
 input NotebookReminderNotesReminderTimeRange {
   min: Float
   max: Float
@@ -1563,12 +1643,12 @@ type NotebookReminderNotesResultFields {
   type: String!
   unindexed: Note!
   reminderIsDone: Boolean!
-  reminderTime: Float
-  reminderOrder: Float
-  reminderDoneTime: Float
   created: Float!
   updated: Float!
   label: String!
+  reminderTime: Float
+  reminderOrder: Float
+  reminderDoneTime: Float
   parent: NotebookOrWorkspace
 }
 
@@ -1808,6 +1888,22 @@ type NoteContentInfo {
   updated: Float!
   sourceOfChange: String
   parent: Note
+}
+
+type NoteContentInfoAllResultFields {
+  id: String!
+  type: String!
+  unindexed: NoteContentInfo!
+  parent: Note!
+}
+
+type NoteContentInfoAllResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NoteContentInfoAllResultFields!]!
 }
 
 input NoteContentInfoFilter {
@@ -2196,6 +2292,13 @@ type NotesParentsResults {
   list: [NotesParentsResultFields!]!
 }
 
+enum NotesWithRemindersOrderBy {
+  reminderTime
+  label
+  created
+  updated
+}
+
 input NotesWithRemindersReminderTimeRange {
   min: Float
   max: Float
@@ -2206,12 +2309,12 @@ type NotesWithRemindersResultFields {
   type: String!
   unindexed: Note!
   reminderIsDone: Boolean!
-  reminderTime: Float
-  reminderOrder: Float
-  reminderDoneTime: Float
   created: Float!
   updated: Float!
   label: String!
+  reminderTime: Float
+  reminderOrder: Float
+  reminderDoneTime: Float
   parent: NotebookOrWorkspace
 }
 
@@ -2830,6 +2933,9 @@ type RootQueryType {
   AttachmentList(pageInfo: PageInfo, filters: [AttachmentFilter], sorts: [AttachmentSort]): AttachmentListResults! @deprecated(reason: "Use custom query APIs now")
   AttachmentsInNote(note: String, isActive: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): AttachmentsInNoteResults!
   AuxData(id: String!): AuxSchema
+  BetaFeature(id: String!): BetaFeature
+  BetaFeatureList(pageInfo: PageInfo, filters: [BetaFeatureFilter], sorts: [BetaFeatureSort]): BetaFeatureListResults! @deprecated(reason: "Use custom query APIs now")
+  BetaFeatures(reverseOrder: Boolean, pageInfo: PageInfo): BetaFeaturesResults!
   Board(id: String!): Board
   BoardList(pageInfo: PageInfo, filters: [BoardFilter], sorts: [BoardSort]): BoardListResults! @deprecated(reason: "Use custom query APIs now")
   CEDataForTemplates(noteID: String): CEDataForTemplates!
@@ -2855,6 +2961,7 @@ type RootQueryType {
   Note(id: String!): Note
   NoteConflicts(note: String, inTrash: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): NoteConflictsResults!
   NoteContentInfo(id: String!): NoteContentInfo
+  NoteContentInfoAll(reverseOrder: Boolean, pageInfo: PageInfo): NoteContentInfoAllResults!
   NoteContentInfoList(pageInfo: PageInfo, filters: [NoteContentInfoFilter], sorts: [NoteContentInfoSort]): NoteContentInfoListResults! @deprecated(reason: "Use custom query APIs now")
   NoteList(pageInfo: PageInfo, filters: [NoteFilter], sorts: [NoteSort]): NoteListResults! @deprecated(reason: "Use custom query APIs now")
   Notebook(id: String!): Notebook
@@ -2872,7 +2979,7 @@ type RootQueryType {
   NotesInWorkspace(workspace: String, reverseOrder: Boolean, pageInfo: PageInfo): NotesInWorkspaceResults!
   NotesNotInTrash(orderBy: NotesNotInTrashOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NotesNotInTrashResults!
   NotesParents(reverseOrder: Boolean, pageInfo: PageInfo): NotesParentsResults!
-  NotesWithReminders(parent: EntityRef, doneReminders: Boolean, reminderTimeRange: NotesWithRemindersReminderTimeRange, reverseOrder: Boolean, pageInfo: PageInfo): NotesWithRemindersResults!
+  NotesWithReminders(parent: EntityRef, doneReminders: Boolean, reminderTimeRange: NotesWithRemindersReminderTimeRange, orderBy: NotesWithRemindersOrderBy, reverseOrder: Boolean, pageInfo: PageInfo): NotesWithRemindersResults!
   NotesWithSource(source: String, reverseOrder: Boolean, pageInfo: PageInfo): NotesWithSourceResults!
   NsvcAuthzToken(tokenType: String): NsvcAuthzToken
   Profile(id: String!): Profile
@@ -3372,6 +3479,11 @@ type Stack {
   shortcut: Shortcut
   descendentNotes(reverseOrder: Boolean, pageInfo: PageInfo): StackDescendentNotesResults!
   childNotebooks(reverseOrder: Boolean, pageInfo: PageInfo): StackChildNotebooksResults!
+
+  """
+  [WARNING: EXPENSIVE] The max lastUpdated value of Notebooks in the Stack.
+  """
+  lastUpdated: Float!
 }
 
 type StackChildNotebooksResultFields {
@@ -3410,7 +3522,27 @@ type StackedNotebookList {
   list: [StackedNotebookListResult!]!
 }
 
-union StackedNotebookListResult = Stack | Notebook
+type StackedNotebookListNotebook {
+  id: String!
+  type: String!
+  label: String!
+  created: Float
+  updated: Float
+  lastUpdated: Float
+  stackID: String
+}
+
+union StackedNotebookListResult = StackedNotebookListStack | StackedNotebookListNotebook
+
+type StackedNotebookListStack {
+  id: String!
+  type: String!
+  notebooksCount: Float!
+  label: String!
+  created: Float
+  updated: Float
+  lastUpdated: Float
+}
 
 input StackedNotebookSort {
   field: StackedNotebookSortField!
@@ -4567,10 +4699,19 @@ type Workspace {
   allMemberships(orderBy: WorkspaceAllMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceAllMembershipsResults!
   ownMemberships(orderBy: WorkspaceOwnMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceOwnMembershipsResults!
   childNotes(inTrash: Boolean, orderBy: WorkspaceChildNotesOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceChildNotesResults!
-  reminderNotes(doneReminders: Boolean, reminderTimeRange: WorkspaceReminderNotesReminderTimeRange, reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceReminderNotesResults!
+  reminderNotes(doneReminders: Boolean, reminderTimeRange: WorkspaceReminderNotesReminderTimeRange, orderBy: WorkspaceReminderNotesOrderBy, reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceReminderNotesResults!
   descendentNotes(reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceDescendentNotesResults!
   childNotebooks(reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceChildNotebooksResults!
+
+  """
+  [WARNING: EXPENSIVE] The max updated value between all Notes and Notebooks in
+  the Workspace and the Workspace's own updated value.
+  """
   lastUpdated: Float!
+
+  """
+  [WARNING: EXPENSIVE] The last Profile to edit a Note, Notebook, or any Workspace fields in the given Workspace.
+  """
   lastEditor: Profile
   CommandPolicy: FolderCommandPolicy!
   shareCount: Float!
@@ -4759,6 +4900,13 @@ type workspacePublicList {
   workspaces: [WorkspaceResult!]!
 }
 
+enum WorkspaceReminderNotesOrderBy {
+  reminderTime
+  label
+  created
+  updated
+}
+
 input WorkspaceReminderNotesReminderTimeRange {
   min: Float
   max: Float
@@ -4769,12 +4917,12 @@ type WorkspaceReminderNotesResultFields {
   type: String!
   unindexed: Note!
   reminderIsDone: Boolean!
-  reminderTime: Float
-  reminderOrder: Float
-  reminderDoneTime: Float
   created: Float!
   updated: Float!
   label: String!
+  reminderTime: Float
+  reminderOrder: Float
+  reminderDoneTime: Float
   parent: NotebookOrWorkspace
 }
 

@@ -469,7 +469,7 @@ class MultiUserManager {
             throw new conduit_utils_1.InternalError('not initialized');
         }
         const keyStringUserID = conduit_utils_1.keyStringForUserID(userID);
-        await this.cache.transact(trc, 'MUM.setCachedAuthTokenAndState', async (db) => {
+        await this.cache.transact(trc, 'MUM.removeCachedAuthTokenAndState', async (db) => {
             await db.setValue(trc, AUTH_TABLE, keyStringUserID, {
                 userID,
                 token: null,

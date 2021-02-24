@@ -1,6 +1,6 @@
 {
   "name": "conduit-core",
-  "version": "1.27.2",
+  "version": "1.28.5",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -23,9 +23,9 @@
     "ts-sinon": "^1.0.21"
   },
   "dependencies": {
-    "conduit-storage": "1.27.2",
-    "conduit-utils": "1.27.2",
-    "conduit-view-types": "1.27.2",
+    "conduit-storage": "1.28.5",
+    "conduit-utils": "1.28.5",
+    "conduit-view-types": "1.28.5",
     "dataloader": "^1.4.0",
     "en-graph-types": "0.12.1",
     "graphql": "^14.0.2",

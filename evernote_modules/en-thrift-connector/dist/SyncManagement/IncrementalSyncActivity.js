@@ -120,7 +120,6 @@ class IncrementalSyncActivity extends IncrementalSyncBaseActivity {
             priority,
             syncProgressTableName: withProgress ? SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE : null,
         });
-        this.di = di;
         this.withProgress = withProgress;
     }
     get progressBucketSize() {
@@ -143,12 +142,13 @@ class IncrementalSyncActivity extends IncrementalSyncBaseActivity {
         if (!auth) {
             throw new Error('Cannot downsync without auth');
         }
+        const syncStartTime = Date.now();
         // run incremental sync on all sync types
         // be carefull when changing order - make sure to setup right weights and offsets
         await this.yieldCheck;
         await this.syncMessages(trc, MESSAGE_SUBBUCKET_SIZE);
         await this.yieldCheck;
-        await this.syncNSync(trc, this.di.syncEventManager(), NSYNC_SUBBUCKET_SIZE);
+        await this.syncNSync(trc, this.context.syncEventManager, NSYNC_SUBBUCKET_SIZE);
         const notesBucket = auth.vaultAuth ? NOTES_SUBBUCKET_SIZE / 2 : NOTES_SUBBUCKET_SIZE;
         await this.yieldCheck;
         await this.syncNotestore(trc, false, notesBucket, MESSAGE_SUBBUCKET_SIZE);
@@ -178,6 +178,7 @@ class IncrementalSyncActivity extends IncrementalSyncBaseActivity {
         await this.setProgress(trc, MESSAGE_SUBBUCKET_SIZE + NOTES_SUBBUCKET_SIZE + SHAREDNOTEBOOKS_SUBUCKET_SIZE + SHAREDNOTES_SUBUCKET_SIZE);
         await this.context.syncEngine.graphStorage.transact(trc, 'updateSyncTime', async (tx) => {
             await tx.replaceSyncState(trc, ['lastSyncTime'], Date.now());
+            await tx.replaceSyncState(trc, ['lastDownsyncStartTime'], syncStartTime);
         });
     }
 }

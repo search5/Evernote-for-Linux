@@ -1,6 +1,6 @@
 {
   "name": "conduit-view",
-  "version": "1.27.2",
+  "version": "1.28.5",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -14,8 +14,8 @@
     "@types/react": "^16.8.7"
   },
   "dependencies": {
-    "conduit-utils": "1.27.2",
-    "conduit-view-types": "1.27.2",
+    "conduit-utils": "1.28.5",
+    "conduit-view-types": "1.28.5",
     "graphql": "^14.0.2",
     "graphql-tag": "^2.10.1",
     "simply-immutable": "^2.1.1"

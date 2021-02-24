@@ -13,6 +13,7 @@ const WidgetContentConflict_1 = require("./EntityTypes/WidgetContentConflict");
 const BoardMutators_1 = require("./Mutators/BoardMutators");
 const WidgetMutators_1 = require("./Mutators/WidgetMutators");
 const NotePin_1 = require("./NotePin");
+const BoardRules_1 = require("./Rules/BoardRules");
 var BoardConstants_2 = require("./BoardConstants");
 Object.defineProperty(exports, "FormFactor", { enumerable: true, get: function () { return BoardConstants_2.FormFactor; } });
 Object.defineProperty(exports, "WidgetType", { enumerable: true, get: function () { return BoardConstants_2.WidgetType; } });
@@ -84,8 +85,7 @@ function getENBoardPlugin() {
             return result;
         },
         mutationRules: di => {
-            // BoardRules - Temporarily disabled until we can better control this through a release.
-            return [];
+            return BoardRules_1.BoardRules;
         },
     };
 }

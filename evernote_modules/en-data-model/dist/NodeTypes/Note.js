@@ -467,7 +467,6 @@ exports.noteIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
                     field: 'hasReminder',
                     value: true,
                 }],
-            sort: [{ field: 'reminderTime', order: 'DESC' }, { field: 'reminderOrder', order: 'DESC' }, { field: 'reminderDoneTime', order: 'DESC' }],
             params: {
                 parent: {
                     optional: true,
@@ -481,8 +480,17 @@ exports.noteIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
                     optional: true,
                     range: { field: 'reminderTime' },
                 },
+                orderBy: {
+                    defaultValue: 'reminderTime',
+                    sort: {
+                        reminderTime: [{ field: 'reminderTime', order: 'DESC' }, { field: 'reminderOrder', order: 'DESC' }, { field: 'reminderDoneTime', order: 'DESC' }],
+                        label: [{ field: 'label', order: 'ASC' }, { field: 'updated', order: 'DESC' }, { field: 'created', order: 'DESC' }],
+                        created: [{ field: 'created', order: 'DESC' }, { field: 'label', order: 'ASC' }, { field: 'updated', order: 'DESC' }],
+                        updated: [{ field: 'updated', order: 'DESC' }, { field: 'label', order: 'ASC' }, { field: 'created', order: 'DESC' }],
+                    },
+                },
             },
-            includeFields: ['created', 'updated', 'label', 'parent'],
+            includeFields: ['created', 'updated', 'label', 'reminderTime', 'reminderOrder', 'reminderDoneTime', 'parent'],
         },
         NotesInTrash: {
             filter: [{

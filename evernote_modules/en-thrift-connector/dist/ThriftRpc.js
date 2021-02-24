@@ -31,6 +31,7 @@ const SHAPE_HEADER_NAME = 'X-EN-SHAPE';
 const UPGRADE_REQUIRED_CODE = '426';
 const SHAPE_BLOCKED_CODE = '429';
 const DEACTIVATED_BUSINESS_ACCOUNT_PARAMETER = 'businessUserStatus';
+const PASSWORD_RESET_REQUIRED_PARAM = 'password';
 const RETRY_STATUS_CODES = {
     500: true,
     502: true,
@@ -52,6 +53,9 @@ function handleEdamErrorCode(errorCode, authenticationToken, fnName, parameter, 
         case ThriftTypes_1.EDAMErrorCode.INVALID_AUTH:
             return new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.INVALID_AUTH, authenticationToken, parameter || undefined);
         case ThriftTypes_1.EDAMErrorCode.AUTH_EXPIRED:
+            if (parameter === PASSWORD_RESET_REQUIRED_PARAM) {
+                return new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.PASSWORD_RESET_REQUIRED, authenticationToken, parameter || undefined);
+            }
             return new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.AUTH_EXPIRED, authenticationToken, parameter || undefined);
         case ThriftTypes_1.EDAMErrorCode.BUSINESS_SECURITY_LOGIN_REQUIRED:
             return new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.BUSINESS_SECURITY_LOGIN_REQUIRED, authenticationToken, parameter || undefined);

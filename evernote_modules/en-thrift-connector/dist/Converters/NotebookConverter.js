@@ -128,19 +128,6 @@ async function resetOfflineNbsSyncStateOnInit(trc, graphStorage) {
     }
 }
 exports.resetOfflineNbsSyncStateOnInit = resetOfflineNbsSyncStateOnInit;
-async function deleteOfflineNbState(trc, params, notebook) {
-    if (!params.nbsMarkedOffline || !params.nbsMarkedOffline[notebook.id]) {
-        return;
-    }
-    // cleanup sync state and localSettings
-    const noteIDs = await getNotebookNoteIDs(trc, params.graphTransaction, notebook);
-    for (const noteID of noteIDs) {
-        await deletePendingOfflineNoteSyncState(trc, params.graphTransaction, noteID);
-    }
-    // params.nbsMarkedOffline might be stale if notebookToggleAvailableOffline mutation is executed.
-    // set offlineNbs to undefined to fetch from DB again.
-    await updateOfflineNbsInLocalSettings(trc, params.localSettings, params.personalUserId, undefined, notebook.id, false);
-}
 async function getNotebookNoteIDs(trc, tx, ref) {
     const notebook = conduit_storage_1.isGraphNode(ref) ? ref : await tx.getNode(trc, null, ref);
     if (!notebook) {
@@ -530,12 +517,10 @@ class NotebookConverterClass {
     async convertFromService(trc, params, syncContext, serviceData) {
         return await convertNotebookFromServiceImpl(trc, params, syncContext, serviceData);
     }
-    // cleanup stacks if NB is deleted on service
-    async preExpungeEntity(trc, params, syncContext, notebookID, deleteChildren) {
-        const notebook = await params.graphTransaction.getNode(trc, null, { id: notebookID, type: en_data_model_1.CoreEntityTypes.Notebook });
-        if (notebook) {
-            // cleanup state if marked for offline
-            await deleteOfflineNbState(trc, params, notebook);
+    async onDelete(trc, tx, localSettings, notebookID) {
+        const personalMetadata = await tx.getSyncContextMetadata(trc, null, conduit_core_1.PERSONAL_USER_CONTEXT);
+        if (personalMetadata) {
+            await updateOfflineNbsInLocalSettings(trc, localSettings, personalMetadata.userID, undefined, notebookID, false);
         }
     }
     async createOnService(trc, params, syncContext, notebook, serviceGuidSeed, remoteFields) {
@@ -651,17 +636,25 @@ class NotebookConverterClass {
                 else {
                     noteStoreUrl = await params.graphTransaction.getSyncState(trc, null, ['sharing', 'sharedNotebooks', metadata.sharedNotebookGlobalID, 'noteStoreUrl']);
                 }
-                if (noteStoreUrl) {
-                    const authToken = params.personalAuth.token;
-                    const noteStore = params.thriftComm.getNoteStore(noteStoreUrl);
-                    const recipientSettings = new ThriftTypes_1.TNotebookRecipientSettings({ recipientStatus: ThriftTypes_1.TRecipientStatus.NOT_IN_MY_LIST });
-                    await noteStore.setNotebookRecipientSettings(trc, authToken, serviceGuid, recipientSettings);
+                if (!noteStoreUrl) {
+                    throw new conduit_utils_1.InvalidOperationError('noteStoreUrl not provided');
                 }
+                const authToken = params.personalAuth.token;
+                const noteStore = params.thriftComm.getNoteStore(noteStoreUrl);
+                const recipientSettings = new ThriftTypes_1.TNotebookRecipientSettings({ recipientStatus: ThriftTypes_1.TRecipientStatus.NOT_IN_MY_LIST });
+                await noteStore.setNotebookRecipientSettings(trc, authToken, serviceGuid, recipientSettings);
                 const shortcutID = Converters_1.convertGuidFromService(`Notebook:${nbID}`, en_data_model_1.CoreEntityTypes.Shortcut);
                 const shortcut = await params.graphTransaction.getNode(trc, null, { id: shortcutID, type: en_data_model_1.CoreEntityTypes.Shortcut });
                 if (shortcut) {
                     await ShortcutConverter_1.updateShortcutsToService(trc, params, [], [shortcutID]);
                 }
+                if (metadata && metadata.sharedNotebookGlobalID) {
+                    const syncStatePath = ['sharing', 'sharedNotebooks', metadata.sharedNotebookGlobalID];
+                    await params.graphTransaction.deleteSyncState(trc, syncStatePath);
+                }
+                // now we can wipe sync context once new recepient is set
+                await params.graphTransaction.deleteSyncContext(trc, syncContext);
+                await params.graphTransaction.deleteSyncState(trc, [syncContext]);
                 return null;
             }
             case 'NotebookAcceptShare': {
@@ -688,7 +681,6 @@ class NotebookConverterClass {
         const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
         const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
         for (const id of ids) {
-            await this.preExpungeEntity(trc, params, syncContext, id);
             const serviceGuid = Converters_1.convertGuidToService(id, en_data_model_1.CoreEntityTypes.Notebook);
             await noteStore.expungeNotebook(trc, auth.token, serviceGuid);
         }
@@ -894,7 +886,7 @@ __decorate([
 ], NotebookConverterClass.prototype, "convertFromService", null);
 __decorate([
     conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Notebook)
-], NotebookConverterClass.prototype, "preExpungeEntity", null);
+], NotebookConverterClass.prototype, "onDelete", null);
 __decorate([
     conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Notebook)
 ], NotebookConverterClass.prototype, "createOnService", null);

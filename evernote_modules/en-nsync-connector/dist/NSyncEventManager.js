@@ -2,6 +2,12 @@
 /*!
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NSyncEventManager = void 0;
 const conduit_core_1 = require("conduit-core");
@@ -12,10 +18,8 @@ const DataHelpers_1 = require("./DataHelpers");
 const index_1 = require("./index");
 const NSyncProcessor_1 = require("./NSyncProcessor");
 const NSyncTypes_1 = require("./NSyncTypes");
-const BUFFER_TIME = 100;
-const BACKOFF_TIME = 1000;
-const BACKOFF_MAX = 10 * 1000;
-const MAX_INT = 2147483647;
+const gTracePool = new conduit_utils_1.AsyncTracePool('NSyncEventManager');
+const LAST_CONNECTION_BUFFER_TIME = 60000;
 const BACKOFF_RECONNECT = 5 * conduit_utils_1.MILLIS_IN_ONE_SECOND;
 const RECONNECT_JITTER_RATIO = 0.4;
 function buildCatchupFilter(newTypes, oldTypes) {
@@ -27,10 +31,14 @@ function buildCatchupFilter(newTypes, oldTypes) {
     }
     return missingTypes.length ? missingTypes : null;
 }
+function eventTimeFromEventID(eventID) {
+    return (eventID && eventID.indexOf('::') && parseInt(eventID.split('::')[1], 0)) || 0;
+}
 class NSyncEventManager extends conduit_core_1.SyncEventManager {
     constructor(di, hostResolver) {
         super(di);
         this.hostResolver = hostResolver;
+        this.isDestroyed = false;
         this.eventSrc = null;
         this.dataHelpers = null;
         this.storage = null;
@@ -39,6 +47,7 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         this.monolithToken = '';
         this.jwt = '';
         this.connectionInfo = null;
+        this.docQueue = [];
         this.messageQueue = [];
         this.processingEntities = {};
         this.backoffSleep = null;
@@ -48,12 +57,6 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         this.nsyncRunning = false;
         this.toggleEventSync = null;
         this.enabledBeforeOverride = true; // Default is on
-        this.processData = async (docs, opts) => {
-            if (!this.dataHelpers) {
-                throw new Error('NSyncEventManager is not initialized');
-            }
-            return await NSyncProcessor_1.processNSyncData(this.trc, docs, this.dataHelpers, this, opts);
-        };
         this.testOverride = async (trc, args) => {
             let disable = args.disable;
             if (!this.toggleEventSync) {
@@ -92,10 +95,10 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         if (this.di.nSyncEntityFilter === '*') {
             conduit_utils_1.logger.warn('nSyncEntityFilter is set to download everything. This should only be used in development!');
         }
-        this.trc = conduit_utils_1.createTraceContext('NSyncEventManager', this.di.getTestEventTracker());
         this.expungeSet = new Set();
     }
     async init(trc, host, monolithToken, jwtToken, storage, clientID, resourceManager, toggleEventSync, availability) {
+        this.isDestroyed = false;
         this.dataHelpers = DataHelpers_1.createDataHelpers(host, resourceManager);
         this.monolithHost = host;
         this.storage = storage;
@@ -113,7 +116,6 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         }
         if (this.isAvailable()) {
             this.nsyncRunning = true;
-            this.createDataConsumer();
             await this.createSync(trc);
         }
     }
@@ -183,14 +185,82 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         };
         return this.connectionInfo;
     }
+    async processNSyncData(trc, eventData, context) {
+        let idx = 0;
+        let tracker = null;
+        let latestConnectionTime = (await this.getConnectionInformation(trc)).lastConnection;
+        let yieldCheckRes;
+        while (idx < eventData.length) {
+            yieldCheckRes = context.yieldCheck && await conduit_utils_1.withError(context.yieldCheck);
+            if (yieldCheckRes === null || yieldCheckRes === void 0 ? void 0 : yieldCheckRes.err) {
+                conduit_utils_1.logger.info(`processNSyncData yielded and stopped at index ${idx}. Docs length ${eventData.length}`);
+                break;
+            }
+            await this.getStorage().transact(trc, 'processNSyncData', async (tx) => {
+                const startTime = Date.now();
+                for (idx; idx < eventData.length; ++idx) {
+                    yieldCheckRes = context.yieldCheck && await conduit_utils_1.withError(context.yieldCheck);
+                    if (yieldCheckRes === null || yieldCheckRes === void 0 ? void 0 : yieldCheckRes.err) {
+                        conduit_utils_1.logger.debug(`processNSyncData yield and break inner loop. idx ${idx} docs ${eventData.length}`);
+                        break;
+                    }
+                    if (this.isDestroyed || !this.dataHelpers) {
+                        break;
+                    }
+                    const elapsedTime = Date.now() - startTime;
+                    if (elapsedTime > conduit_utils_1.MILLIS_IN_ONE_SECOND) {
+                        // timebox hit, complete transaction and continue from here later
+                        break;
+                    }
+                    const doc = eventData[idx].doc;
+                    if (doc) {
+                        try {
+                            if (doc.instance.ref.type === NSyncTypes_1.NSyncTypes.EntityType.MUTATION_TRACKER) {
+                                if (!tracker || (tracker.instance.updated || 0) < (doc.instance.updated || 0)) {
+                                    tracker = doc;
+                                    continue;
+                                }
+                            }
+                            await NSyncProcessor_1.processNSyncDoc(trc, doc, this, tx, this.dataHelpers);
+                        }
+                        catch (e) {
+                            conduit_utils_1.logger.error('Unable to process document', e);
+                        }
+                    }
+                    if (eventData[idx].eventTime && eventData[idx].eventTime > latestConnectionTime) {
+                        latestConnectionTime = eventData[idx].eventTime;
+                        await this.updateConnectionInformation(trc, { lastConnection: eventData[idx].eventTime }, tx);
+                    }
+                }
+                if (tracker && idx === eventData.length) {
+                    try {
+                        if (!this.dataHelpers) {
+                            return;
+                        }
+                        await NSyncProcessor_1.processNSyncDoc(trc, tracker, this, tx, this.dataHelpers);
+                    }
+                    catch (e) {
+                        conduit_utils_1.logger.error('Unable to update mutation tracker', e);
+                    }
+                }
+            });
+        }
+        return eventData.slice(idx);
+    }
     enqueueEvent(event) {
-        var _a, _b;
+        if (this.isDestroyed) {
+            throw new conduit_utils_1.InternalError('Unable to enqueue nsync event. Doc queue is destroyed.');
+        }
+        const lastEventTime = eventTimeFromEventID(event.lastEventId);
         const docs = conduit_utils_1.safeParse(event.data);
         if (Array.isArray(docs)) {
-            (_a = this.eventConsumer) === null || _a === void 0 ? void 0 : _a.push.apply(this.eventConsumer, docs);
+            for (const doc of docs) {
+                this.docQueue.push({ doc, eventTime: 0 });
+            }
+            this.docQueue.push({ doc: null, eventTime: lastEventTime });
         }
         else if (docs) {
-            (_b = this.eventConsumer) === null || _b === void 0 ? void 0 : _b.push(docs);
+            this.docQueue.push({ doc: docs, eventTime: lastEventTime });
         }
     }
     async updateToken(trc, jwt, monolithToken) {
@@ -213,13 +283,7 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             await this.updateConnectionInformation(trc, { lastConnection: updated }, tx);
         }
     }
-    async onSyncStateChange(trc, paused, disabled) {
-        if (paused) {
-            await this.pause();
-        }
-        else {
-            await this.resume();
-        }
+    async onSyncStateChange(trc, disabled) {
         if (this.nsyncRunning !== disabled) {
             return;
         }
@@ -268,11 +332,13 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             await tx.replaceNode(trc, index_1.NSYNC_CONTEXT, tracker);
         });
     }
-    clearCatchupFilter(trc) {
+    clearCatchupFilter() {
         new Promise(async (resolve) => {
             this.catchupFilter = null;
-            await this.disconnect(trc);
-            await this.createSync(trc);
+            await gTracePool.runTraced(this.di.getTestEventTracker(), async (trc) => {
+                await this.disconnect(trc);
+                await this.createSync(trc);
+            });
             resolve();
         }).catch(err => {
             this.onSyncMessage({
@@ -289,9 +355,6 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         }
         if (this.backoffSleep) {
             return;
-        }
-        if (!this.eventConsumer) {
-            this.createDataConsumer();
         }
         const connInfo = await this.getConnectionInformation(trc);
         if (connInfo.backoff && connInfo.backoff > Date.now()) {
@@ -314,7 +377,7 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             return;
         }
         const entityFilterParam = NSyncTypes_1.nodeTypeArrayToEntityFilterParam(this, (_a = this.catchupFilter) !== null && _a !== void 0 ? _a : this.nodeFilter);
-        const lastConnection = this.catchupFilter ? 0 : connInfo.lastConnection;
+        const lastConnection = this.catchupFilter ? 0 : connInfo.lastConnection - LAST_CONNECTION_BUFFER_TIME;
         const connectionID = this.catchupFilter ? this.di.uuid('NSyncEventManager') : connInfo.connectionID;
         const nsyncHost = await this.hostResolver.getServiceHost(trc, this.monolithHost, 'Sync');
         this.eventSrc = this.di.newEventSource(`${nsyncHost}/v1/connect?lastConnection=${lastConnection}&connectionId=${connectionID}&encode=${false}${entityFilterParam}`, {
@@ -328,16 +391,18 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         }
         this.eventSrc.addEventListener('connection', (event) => {
             conduit_utils_1.logger.debug('Successful connection!', event);
-            this.updateConnectionInformation(trc, {
-                connectionID: event.data.toString(),
-                lastAttempt: 200,
-                attempts: 0,
-                backoff: 0,
+            gTracePool.runTraced(this.di.getTestEventTracker(), async (trc2) => {
+                return this.updateConnectionInformation(trc2, {
+                    connectionID: event.data.toString(),
+                    lastAttempt: 200,
+                    attempts: 0,
+                    backoff: 0,
+                });
             }).catch(err => conduit_utils_1.logger.error('Unable to update connection information', err));
             this.onSyncMessage({ type: 'Connection', message: 'Connected!' });
         });
         this.eventSrc.onerror = (event) => {
-            this.handleErrorEvent(trc, event);
+            this.handleErrorEvent(event);
         };
         this.eventSrc.addEventListener('sync', (event) => {
             conduit_utils_1.logger.debug('Sync event', event);
@@ -351,35 +416,41 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             conduit_utils_1.logger.debug('Ping from service', msg);
         });
         this.eventSrc.addEventListener('complete', (event) => {
-            var _a;
             conduit_utils_1.logger.debug('Sync updates completed.', event);
-            const lastEventTime = (event.lastEventId && event.lastEventId.indexOf('::') && parseInt(event.lastEventId.split('::')[1], 0)) || 0;
-            (_a = this.eventConsumer) === null || _a === void 0 ? void 0 : _a.flush(MAX_INT).then(() => {
+            const lastEventTime = eventTimeFromEventID(event.lastEventId);
+            gTracePool.runTraced(this.di.getTestEventTracker(), async (trc2) => {
+                await this.flush(trc2, { yieldCheck: null });
+            })
+                .then(() => {
                 // If there is a catchup filter set, don't send the onSyncMessage event
                 // instead, clear the filter and restart syncing with full filter
                 if (this.catchupFilter) {
                     conduit_utils_1.logger.debug('Sync updates on catch up completed.', event);
-                    this.clearCatchupFilter(this.trc);
+                    this.clearCatchupFilter();
                     return;
                 }
-                this.updateConnectionInformation(this.trc, {
-                    lastConnection: lastEventTime - 60000,
-                    lastFilter: this.nodeFilter,
+                gTracePool.runTraced(this.di.getTestEventTracker(), async (trc2) => {
+                    return this.updateConnectionInformation(trc2, {
+                        lastConnection: lastEventTime,
+                        lastFilter: this.nodeFilter,
+                    });
                 }).catch(err => conduit_utils_1.logger.error('Unable to update connection information', err));
                 this.onSyncMessage({ type: 'Complete', message: 'Completed' });
                 this.clearProcessingEntities();
                 if (lastEventTime) {
-                    this.upsertTracker(trc, lastEventTime).catch(err => conduit_utils_1.logger.error('Unable to upsert tracker', err));
+                    gTracePool.runTraced(this.di.getTestEventTracker(), async (trc2) => {
+                        return this.upsertTracker(trc2, lastEventTime);
+                    }).catch(err => conduit_utils_1.logger.error('Unable to upsert tracker', err));
                 }
-            }).catch(err => {
+            })
+                .catch(err => {
                 conduit_utils_1.logger.error(`Unable to flush event consumer ${err}`);
                 this.onSyncMessage({ type: 'Complete', message: 'Completed', error: err });
                 this.clearProcessingEntities();
             });
         });
     }
-    handleErrorEvent(trc, errorEvent) {
-        var _a;
+    handleErrorEvent(errorEvent) {
         this.destroySync();
         const attempts = this.connectionInfo ? this.connectionInfo.attempts : 0;
         // First attempt is jitter, use backoff for subsequent
@@ -387,10 +458,13 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         const backoff = Math.min(60000, BACKOFF_RECONNECT * (1 << attempts) - BACKOFF_RECONNECT);
         const jitterMax = Math.max(BACKOFF_RECONNECT, backoff * RECONNECT_JITTER_RATIO);
         const jitter = jitterMax * Math.random();
-        this.updateConnectionInformation(trc, {
-            backoff: Date.now() + backoff + jitter,
-            attempts: attempts + 1,
-            lastAttempt: (_a = errorEvent.status) !== null && _a !== void 0 ? _a : 0,
+        gTracePool.runTraced(this.di.getTestEventTracker(), async (trc) => {
+            var _a;
+            return this.updateConnectionInformation(trc, {
+                backoff: Date.now() + backoff + jitter,
+                attempts: attempts + 1,
+                lastAttempt: (_a = errorEvent.status) !== null && _a !== void 0 ? _a : 0,
+            });
         }).catch(err => conduit_utils_1.logger.error('Unable to update backoff', err));
         if (errorEvent.status && errorEvent.status === 401 || errorEvent.status === 403) {
             this.onSyncMessage({ type: 'Error', message: 'Not Authorized', error: new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.JWT_AUTH_EXPIRED, this.monolithToken) });
@@ -408,7 +482,9 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             conduit_utils_1.logger.error(`Unhandled error: ${errorEvent.message}`);
             this.onSyncMessage({ type: 'Error', message: 'Unknown Error', error: new Error(`${errorEvent.status}: ${errorEvent.message}`) });
         }
-        this.createSync(this.trc).catch(err => {
+        gTracePool.runTraced(this.di.getTestEventTracker(), async (trc) => {
+            return this.createSync(trc);
+        }).catch(err => {
             this.onSyncMessage({ type: 'Error', message: 'Unable to re-create sync', error: err });
         });
     }
@@ -418,29 +494,17 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             this.eventSrc = null;
         }
     }
-    createDataConsumer() {
-        if (!this.nsyncRunning) {
+    async flush(trc, context) {
+        if (!this.docQueue.length) {
             return;
         }
-        this.eventConsumer = new conduit_utils_1.DataConsumer({
-            debugName: 'NSyncDownsync',
-            bufferTime: BUFFER_TIME,
-            consumer: this.processData,
-            backoffIncrement: BACKOFF_TIME,
-            backoffMax: BACKOFF_MAX,
-        });
-    }
-    async pause() {
-        var _a;
-        return await ((_a = this.eventConsumer) === null || _a === void 0 ? void 0 : _a.stopConsumer());
-    }
-    async resume() {
-        var _a;
-        return await ((_a = this.eventConsumer) === null || _a === void 0 ? void 0 : _a.resumeConsumer());
-    }
-    async flush() {
-        var _a;
-        return await ((_a = this.eventConsumer) === null || _a === void 0 ? void 0 : _a.flush());
+        await context.yieldCheck;
+        const docs = this.docQueue;
+        this.docQueue = [];
+        const remainingDocs = await this.processNSyncData(trc, docs, context);
+        if (!this.isDestroyed) {
+            this.docQueue.unshift(...remainingDocs);
+        }
     }
     async disconnect(trc) {
         this.destroySync();
@@ -468,16 +532,14 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
     }
     async destructor(trc) {
         var _a, _b;
+        this.isDestroyed = true;
         this.destroySync();
         (_a = this.backoffSleep) === null || _a === void 0 ? void 0 : _a.cancel();
+        this.dataHelpers = null;
         this.connectionInfo = null;
         this.messageQueue = [];
         this.messageConsumer = null;
-        await this.pause();
-        if (this.eventConsumer) {
-            await this.eventConsumer.destructor(trc);
-            this.eventConsumer = undefined;
-        }
+        this.docQueue.length = 0;
         this.expungeSet.clear();
         this.clearProcessingEntities();
         (_b = this.availability) === null || _b === void 0 ? void 0 : _b.destructor();
@@ -487,7 +549,6 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         this.clientID = '';
         this.monolithHost = '';
         this.monolithToken = '';
-        this.dataHelpers = null;
         this.toggleEventSync = null;
     }
     addProcessingEntity(id, type, entity) {
@@ -539,5 +600,35 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         };
     }
 }
+__decorate([
+    conduit_utils_1.traceAsync('NSyncEventManager')
+], NSyncEventManager.prototype, "init", null);
+__decorate([
+    conduit_utils_1.traceAsync('NSyncEventManager')
+], NSyncEventManager.prototype, "clearBackoff", null);
+__decorate([
+    conduit_utils_1.traceAsync('NSyncEventManager')
+], NSyncEventManager.prototype, "clearConnectionInfo", null);
+__decorate([
+    conduit_utils_1.traceAsync('NSyncEventManager')
+], NSyncEventManager.prototype, "updateConnectionInformation", null);
+__decorate([
+    conduit_utils_1.traceAsync('NSyncEventManager')
+], NSyncEventManager.prototype, "getConnectionInformation", null);
+__decorate([
+    conduit_utils_1.traceAsync('NSyncEventManager')
+], NSyncEventManager.prototype, "processNSyncData", null);
+__decorate([
+    conduit_utils_1.traceAsync('NSyncEventManager')
+], NSyncEventManager.prototype, "onSyncStateChange", null);
+__decorate([
+    conduit_utils_1.traceAsync('NSyncEventManager')
+], NSyncEventManager.prototype, "upsertTracker", null);
+__decorate([
+    conduit_utils_1.traceAsync('NSyncEventManager')
+], NSyncEventManager.prototype, "createSync", null);
+__decorate([
+    conduit_utils_1.traceAsync('NSyncEventManager')
+], NSyncEventManager.prototype, "flush", null);
 exports.NSyncEventManager = NSyncEventManager;
 //# sourceMappingURL=NSyncEventManager.js.map

@@ -16,7 +16,7 @@ function ceDataForTemplatesPlugin(thriftComm) {
             const tokenData = en_thrift_connector_1.decodeAuthData(token);
             return {
                 shard: tokenData.shard,
-                authToken: token,
+                authToken: tokenData.token,
                 userId: tokenData.userID,
             };
         }

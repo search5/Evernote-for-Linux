@@ -566,7 +566,7 @@ class ReadonlyIndexingTree {
             return null;
         }
         const index = this.getIndexForKey(leaf.data, key, false, false).index;
-        if (index < 0 || index >= leaf.data.length) {
+        if (index < 0 || index >= leaf.data.length || !this.comparator(key, leaf.data[index]).matchesAllRequiredFields) {
             return null;
         }
         return leaf.data[index];

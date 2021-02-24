@@ -1,6 +1,6 @@
 {
   "name": "en-conduit-electron-renderer",
-  "version": "1.27.2",
+  "version": "1.28.5",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -10,9 +10,9 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-utils": "1.27.2",
-    "conduit-view": "1.27.2",
-    "conduit-view-types": "1.27.2",
-    "en-conduit-electron-shared": "1.27.2"
+    "conduit-utils": "1.28.5",
+    "conduit-view": "1.28.5",
+    "conduit-view-types": "1.28.5",
+    "en-conduit-electron-shared": "1.28.5"
   }
 }

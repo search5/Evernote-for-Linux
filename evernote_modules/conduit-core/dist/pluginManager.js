@@ -33,6 +33,9 @@ function initPlugins(di, plugins, out) {
                 if (def.dataResolver) {
                     copyOrCollide({ [entityType]: def.dataResolver }, out.dataResolvers, `${entityType}.dataResolver`);
                 }
+                if (def.deleteHook) {
+                    copyOrCollide({ [entityType]: def.deleteHook }, out.deleteHooks, `${entityType}.deleteHook`);
+                }
                 if (def.nsyncConverters) {
                     copyOrCollide(def.nsyncConverters, out.nsyncConverters, `${entityType}.nsyncConverters`);
                     const nsyncType = Object.keys(def.nsyncConverters)[0];

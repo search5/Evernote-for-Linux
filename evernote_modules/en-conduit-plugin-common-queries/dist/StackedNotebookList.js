@@ -14,7 +14,33 @@ exports.getStackedNotebookListPlugin = exports.stackedNotebookList = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_data_model_1 = require("en-data-model");
+const en_thrift_connector_1 = require("en-thrift-connector");
 const graphql_1 = require("graphql");
+/** GraphQL object types from the result list. */
+const GraphQLStackType = new graphql_1.GraphQLObjectType({
+    name: 'StackedNotebookListStack',
+    fields: {
+        id: { type: conduit_core_1.schemaToGraphQLType('ID') },
+        type: { type: conduit_core_1.schemaToGraphQLType('string') },
+        notebooksCount: { type: conduit_core_1.schemaToGraphQLType('number') },
+        label: { type: conduit_core_1.schemaToGraphQLType('string') },
+        created: { type: conduit_core_1.schemaToGraphQLType('number?') },
+        updated: { type: conduit_core_1.schemaToGraphQLType('number?') },
+        lastUpdated: { type: conduit_core_1.schemaToGraphQLType('number?') },
+    },
+});
+const GraphQLNotebookType = new graphql_1.GraphQLObjectType({
+    name: 'StackedNotebookListNotebook',
+    fields: {
+        id: { type: conduit_core_1.schemaToGraphQLType('ID') },
+        type: { type: conduit_core_1.schemaToGraphQLType('string') },
+        label: { type: conduit_core_1.schemaToGraphQLType('string') },
+        created: { type: conduit_core_1.schemaToGraphQLType('number?') },
+        updated: { type: conduit_core_1.schemaToGraphQLType('number?') },
+        lastUpdated: { type: conduit_core_1.schemaToGraphQLType('number?') },
+        stackID: { type: conduit_core_1.schemaToGraphQLType('ID?') },
+    },
+});
 function itemIsStack(item) {
     return item.type === en_data_model_1.CoreEntityTypes.Stack;
 }
@@ -30,35 +56,6 @@ function buildArgs() {
             }),
         },
     };
-}
-async function resolveNotebookLastUpdated(context, tree, index, nbID, nbUpdated) {
-    const noteFilters = [{
-            field: 'inTrash',
-            match: {
-                boolean: false,
-            },
-        }, {
-            field: 'parent',
-            match: {
-                node: {
-                    id: nbID,
-                    type: en_data_model_1.CoreEntityTypes.Notebook,
-                },
-            },
-        }];
-    const treeKey = context.indexer.keyForQuery(en_data_model_1.CoreEntityTypes.Note, 'ASC', index.index, noteFilters);
-    if (!treeKey) {
-        return nbUpdated;
-    }
-    const treeLeaf = await tree.findLeafAndIndex(context.trc, context.watcher, treeKey);
-    if (!treeLeaf) {
-        // No notes in account
-        return nbUpdated;
-    }
-    const possibleNote = treeLeaf.leaf.data[treeLeaf.index];
-    const sameNotebook = Array.isArray(possibleNote) && possibleNote[1].id === nbID;
-    const noteUpdated = sameNotebook ? possibleNote[2] : 0;
-    return Math.max(noteUpdated, nbUpdated);
 }
 async function resolveNotebook(context, indexItem, nbFields, noteIndexTree, noteIndex) {
     var _a;
@@ -79,7 +76,13 @@ async function resolveNotebook(context, indexItem, nbFields, noteIndexTree, note
         if (!noteIndexTree || !noteIndex) {
             throw new conduit_utils_1.InternalError(`Expected an index tree for getting the children notes sorted by updated`);
         }
-        notebook.lastUpdated = await resolveNotebookLastUpdated(context, noteIndexTree, noteIndex, notebook.id, nbFields.updated);
+        const filters = en_thrift_connector_1.getLastUpdatedNoteFilters(notebook);
+        const updatedIndexPos = noteIndex.index.findIndex(e => e.field === 'updated');
+        if (updatedIndexPos < 0) {
+            throw new conduit_utils_1.InternalError(`StackedNotebookList chose the wrong index for last updated`);
+        }
+        const notebookRes = [nbFields.updated, { id: notebook.id, type: notebook.type }];
+        notebook.lastUpdated = (await en_thrift_connector_1.containerLastUpdated(context, noteIndexTree, noteIndex, filters, updatedIndexPos, notebookRes))[0];
         notebook.updated = notebook.lastUpdated;
     }
     return notebook;
@@ -178,7 +181,6 @@ async function stacksForQuery(context, sort) {
             const stack = {
                 id: stackFields.id,
                 type: en_data_model_1.CoreEntityTypes.Stack,
-                notebooks: [],
                 notebooksCount: 0,
                 label: stackFields.label,
             };
@@ -199,11 +201,24 @@ async function stacksForQuery(context, sort) {
     };
 }
 function buildListFromLookup(unstackedNotebooks, stacks, stackedNotebooks, stackLookup, sort, comparator) {
+    var _a;
+    const nestedNotebooksLookup = {};
     // Add the notebooks
     for (const notebook of stackedNotebooks) {
-        const stack = stackLookup[notebook.stackID];
-        stack.notebooks.push(notebook);
+        if (conduit_utils_1.isNullish(notebook.stackID)) {
+            conduit_utils_1.logger.error(`No stack ID for stacked notebook: ${notebook.id}`);
+            continue;
+        }
+        // group stacked notebooks by stackID
+        const group = nestedNotebooksLookup[notebook.stackID];
+        if (group) {
+            group.push(notebook);
+        }
+        else {
+            nestedNotebooksLookup[notebook.stackID] = [notebook];
+        }
         // Assign the stack's created/updated value as the first notebook in the stack
+        const stack = stackLookup[notebook.stackID];
         if (sort.field === 'updated' && !stack.lastUpdated) {
             stack.lastUpdated = notebook.lastUpdated;
             stack.updated = stack.lastUpdated;
@@ -221,8 +236,9 @@ function buildListFromLookup(unstackedNotebooks, stacks, stackedNotebooks, stack
     for (let i = 0; i < unstackedNotebooks.length; i++) {
         const item = unstackedNotebooks[i];
         if (itemIsStack(item)) {
-            unstackedNotebooks.splice(i + 1, 0, ...item.notebooks);
-            item.notebooksCount = item.notebooks.length;
+            const nestedNotebooks = (_a = nestedNotebooksLookup[item.id]) !== null && _a !== void 0 ? _a : [];
+            unstackedNotebooks.splice(i + 1, 0, ...nestedNotebooks);
+            item.notebooksCount = nestedNotebooks.length;
         }
     }
     return unstackedNotebooks;
@@ -280,27 +296,29 @@ async function stackedNotebookList(parent, args, context, info) {
     };
 }
 exports.stackedNotebookList = stackedNotebookList;
+/*
+ * Stacked notebookes plugin.
+ * It makes flattened list with the notebooks in order with their stacks.
+ */
 function getStackedNotebookListPlugin() {
-    return (autoResolverData) => {
-        return {
-            args: buildArgs(),
-            resolve: stackedNotebookList,
-            type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLObjectType({
-                name: 'StackedNotebookList',
-                fields: {
-                    count: { type: conduit_core_1.schemaToGraphQLType('number') },
-                    list: {
-                        type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(new graphql_1.GraphQLNonNull(new graphql_1.GraphQLUnionType({
-                            name: 'StackedNotebookListResult',
-                            types: [autoResolverData.NodeGraphQLTypes.Stack, autoResolverData.NodeGraphQLTypes.Notebook],
-                            resolveType: (value) => {
-                                return value.type === en_data_model_1.CoreEntityTypes.Notebook ? autoResolverData.NodeGraphQLTypes.Notebook : autoResolverData.NodeGraphQLTypes.Stack;
-                            },
-                        })))),
-                    },
+    return {
+        args: buildArgs(),
+        resolve: stackedNotebookList,
+        type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLObjectType({
+            name: 'StackedNotebookList',
+            fields: {
+                count: { type: conduit_core_1.schemaToGraphQLType('number') },
+                list: {
+                    type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(new graphql_1.GraphQLNonNull(new graphql_1.GraphQLUnionType({
+                        name: 'StackedNotebookListResult',
+                        types: [GraphQLStackType, GraphQLNotebookType],
+                        resolveType: (value) => {
+                            return value.type === en_data_model_1.CoreEntityTypes.Notebook ? GraphQLNotebookType : GraphQLStackType;
+                        },
+                    })))),
                 },
-            })),
-        };
+            },
+        })),
     };
 }
 exports.getStackedNotebookListPlugin = getStackedNotebookListPlugin;

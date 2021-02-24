@@ -65,6 +65,8 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
         this.queuedOptimisticMutationRerun = false;
         this.authBackoff = {};
         this.activeAuthRevalidations = {};
+        this.lastRemoteMutationUpsyncTimestamp = 0;
+        this.lastDownsyncTimestamp = 0;
         this.batchGetNodesInternal = (context, type, ids) => {
             if (!this.isInitialized) {
                 return Promise.reject(new conduit_utils_1.RetryError('GraphDB not initialized', 500));
@@ -119,7 +121,12 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
             if (event.path[1] === 'SyncState') {
                 // fire SyncState change events without triggering a rerun of optimistic mutations
                 this.emitChanges([event]);
-                return;
+                if (event.path[2] !== 'lastDownsyncStartTime' || event.type !== conduit_storage_1.StorageChangeType.Replace) {
+                    return;
+                }
+                if (typeof event.value === 'number' && isFinite(event.value)) {
+                    this.lastDownsyncTimestamp = event.value;
+                }
             }
             if (!this.optimisticMutations.length) {
                 this.emitChanges([event]);
@@ -879,6 +886,7 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
             // out as they are seen in onDownsyncChanges. For now, force a downsync here since we don't have Thrift
             // support for identifying which mutations were seen in a downsync.
             const changeEvents = [];
+            this.lastRemoteMutationUpsyncTimestamp = Date.now();
             await conduit_utils_1.withError(this.orchestratorMutex.runInMutex(trc, 'runRemoteMutations', async () => {
                 if (this.isDestroyed) {
                     return;
@@ -899,6 +907,10 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
         return retryMutations || [];
     }
     async clearRoundTrippedOptimisticMutations(trc) {
+        if (this.lastDownsyncTimestamp < this.lastRemoteMutationUpsyncTimestamp) {
+            // we haven't seen the right downsync yet
+            return;
+        }
         await this.localKeyValStorage.transact(trc, 'GraphDB.clearRoundTrippedOptimisticMutations', async (db) => {
             const nsyncEnabled = this.syncEngine.isEventServiceEnabled();
             const lastTrackerTimestamp = this.di.MutationTrackerNodeRef ? await this.fetchNodeField(trc, this.di.MutationTrackerNodeRef, 'NodeFields.updated') || 0 : Date.now();
@@ -1053,6 +1065,9 @@ GraphDB.DB_NAMES = {
     RemoteGraph: 'RemoteGraph',
     LocalStorage: 'LocalStorage',
 };
+__decorate([
+    conduit_utils_1.traceAsync('GraphDB')
+], GraphDB.prototype, "setAuthTokenAndState", null);
 __decorate([
     conduit_utils_1.traceAsync
 ], GraphDB.prototype, "onDownsyncChanges", null);

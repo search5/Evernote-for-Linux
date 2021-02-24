@@ -17,6 +17,7 @@ var SyncActivityType;
     SyncActivityType["FetchPrebuiltDatabaseActivity"] = "FetchPrebuiltDatabaseActivity";
     SyncActivityType["UserUpdateActivity"] = "UserUpdateActivity";
     SyncActivityType["BootstrapActivity"] = "BootstrapActivity";
+    SyncActivityType["BetaFeatureSyncActivity"] = "BetaFeatureSyncActivity";
     SyncActivityType["MaestroSyncActivity"] = "MaestroSyncActivity";
     SyncActivityType["PromotionsSyncActivity"] = "PromotionsSyncActivity";
     SyncActivityType["MessagesSyncActivity"] = "MessagesSyncActivity";
@@ -35,6 +36,7 @@ var SyncActivityType;
     SyncActivityType["SchemaMigrationCompleteActivity"] = "SchemaMigrationCompleteActivity";
     SyncActivityType["NotesCountFetchActivity"] = "NotesCountFetchActivity";
     SyncActivityType["AccountSessionSyncActivity"] = "AccountSessionSyncActivity";
+    SyncActivityType["NSyncInitActivity"] = "NSyncInitActivity";
     SyncActivityType["NSyncInitialDownsyncActivity"] = "NSyncInitialDownsyncActivity";
 })(SyncActivityType = exports.SyncActivityType || (exports.SyncActivityType = {}));
 exports.INITIAL_DOWNSYNC_PROGRESS_TABLE = 'InitialSyncProgress';
@@ -66,10 +68,10 @@ class SyncActivity {
         this.curParams = null;
         this.setBucketSize = async (trc) => {
             if (this.options.syncProgressTableName) { // Params must be initialized in activity's constructor if you want to track progress
-                await this.setProgress(trc, await this.getInitialProgressPercent(trc));
+                await this.setProgress(trc, await this.getInitialProgressPercent(trc), true);
             }
         };
-        this.setProgress = async (trc, percent) => {
+        this.setProgress = async (trc, percent, isInit = false) => {
             const tableName = this.options.syncProgressTableName;
             if (tableName) {
                 const percentValue = tableName === exports.CONTENT_SYNC_PROGRESS_TABLE ?
@@ -77,7 +79,13 @@ class SyncActivity {
                     percent >= 0 || percent <= 1 ? percent : 1;
                 await this.context.syncEngine.transactEphemeral(trc, 'updateSyncProgress', async (tx) => {
                     const prevProgress = await tx.getValue(trc, null, tableName, this.progressBucketName);
-                    const update = Object.assign(Object.assign({}, prevProgress), { totalSize: this.progressBucketSize, percentComplete: percentValue });
+                    const update = Object.assign(Object.assign({ startTime: 0, endTime: 0 }, prevProgress), { totalSize: this.progressBucketSize, percentComplete: percentValue });
+                    if (!isInit && percent === 0) {
+                        update.startTime = Date.now();
+                    }
+                    if (percent === 1) {
+                        update.endTime = Date.now();
+                    }
                     await tx.setValue(trc, tableName, this.progressBucketName, update);
                 });
             }
@@ -147,6 +155,10 @@ class SyncActivity {
             throw new Error('onComplete is null');
         }
         this.hasRun = true;
+        if (this.options.syncProgressTableName) {
+            // this call is to set startTime
+            await this.setProgress(trc, await this.getInitialProgressPercent(trc));
+        }
         conduit_utils_1.traceTestCounts(trc, { [`SyncActivity.${this.params.activityType}`]: 1 });
         conduit_utils_1.traceEventStart(trc, this.params.activityType);
         const err = await conduit_utils_1.traceEventEndWhenSettled(trc, this.params.activityType, this.runSyncInternal(trc));

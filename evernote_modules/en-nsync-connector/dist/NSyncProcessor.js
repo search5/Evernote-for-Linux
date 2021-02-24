@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.processNSyncDoc = exports.processNSyncData = void 0;
+exports.processNSyncDoc = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_data_model_1 = require("en-data-model");
 const index_1 = require("./index");
@@ -180,60 +180,11 @@ async function expungeDoc(trc, doc, eventManager, tx) {
             throw new Error('asked to expunge unknown type: ' + type);
     }
 }
-async function processNSyncData(trc, docs, dataHelpers, eventManager, opts) {
-    let idx = 0;
-    let tracker = null;
-    while (idx < docs.length) {
-        if (opts.stopConsumer) {
-            conduit_utils_1.logger.info(`processNSyncData stopped at index ${idx} as consumer is stopped. Docs length ${docs.length}`);
-            break;
-        }
-        await eventManager.getStorage().transact(trc, 'processNSyncData', async (tx) => {
-            const startTime = Date.now();
-            for (idx; idx < docs.length; ++idx) {
-                if (opts.stopConsumer) {
-                    conduit_utils_1.logger.debug(`processNSyncData break inner loop as stopConsumer is true. idx ${idx} docs ${docs.length}`);
-                    break;
-                }
-                const elapsedTime = Date.now() - startTime;
-                if (elapsedTime > conduit_utils_1.MILLIS_IN_ONE_SECOND) {
-                    // timebox hit, complete transaction and continue from here later
-                    break;
-                }
-                try {
-                    if (docs[idx].instance.ref.type === NSyncTypes_1.NSyncTypes.EntityType.MUTATION_TRACKER) {
-                        if (!tracker || (tracker.instance.updated || 0) < (docs[idx].instance.updated || 0)) {
-                            tracker = docs[idx];
-                            continue;
-                        }
-                    }
-                    await processNSyncDoc(trc, docs[idx], eventManager, tx, dataHelpers);
-                }
-                catch (e) {
-                    conduit_utils_1.logger.error('Unable to process document', e);
-                }
-            }
-            if (tracker && idx === docs.length) {
-                try {
-                    await processNSyncDoc(trc, tracker, eventManager, tx, dataHelpers);
-                }
-                catch (e) {
-                    conduit_utils_1.logger.error('Unable to update mutation tracker', e);
-                }
-            }
-        });
-    }
-    return docs.slice(idx);
-}
-exports.processNSyncData = processNSyncData;
 async function processNSyncDoc(trc, doc, eventManager, tx, dataHelpers) {
     if (doc.updated === null || doc.updated === undefined || !doc.instance || doc.instance.type === null || doc.instance.type === undefined) {
         conduit_utils_1.logger.warn('Unknown sync info', doc);
         return;
     }
-    // update last connection
-    const num = NSyncTypes_1.convertLong(doc.updated);
-    await eventManager.updateLastConnection(trc, num, tx);
     const ref = doc.instance.ref;
     if (ref && ref.id && eventManager.hasBeenExpunged(ref.id)) {
         // Making this a warning as I want to know when we get these ordering problems. Can lower it if spammy.

@@ -109,11 +109,13 @@ async function genTasksDataCreateOps(trc, ctx, tasksExportData, noteID, plan, co
         commandName: 'taskGroupUpsertInNoteContentInfo',
         params: groupParams,
     });
+    const taskKeys = [];
     for (let i = 0; i < tasksExportData.tasks.length; i++) {
         const taskParams = tasksExportData.tasks[i];
         const taskKey = taskParams.taskGroupNoteLevelID + '-' + i;
         const newTaskParams = Object.assign(Object.assign({}, taskParams), { container: noteID, copyOwnerRef, key: taskKey });
         const taskRes = await Task_1.taskCreatePlan(trc, ctx, newTaskParams);
+        taskKeys.push(String(taskRes.result));
         plan.ops.push(...taskRes.ops);
     }
     const params = {
@@ -130,10 +132,8 @@ async function genTasksDataCreateOps(trc, ctx, tasksExportData, noteID, plan, co
         key: [],
         ownerID: parseInt((ctx.vaultUserID || ctx.userID).toString(), 10),
     };
-    const owner = copyOwnerRef || ctx.vaultUserID || ctx.userID;
     let index = 0;
     for (const task of tasksExportData.tasks) {
-        index++;
         params.label.push(task.label);
         params.taskGroupNoteLevelID.push(task.taskGroupNoteLevelID);
         params.dueDate.push(task.dueDate);
@@ -143,7 +143,8 @@ async function genTasksDataCreateOps(trc, ctx, tasksExportData, noteID, plan, co
         params.sortWeight.push(task.sortWeight);
         params.noteLevelID.push(task.noteLevelID);
         params.status.push(task.status);
-        params.key.push((await ctx.generateID(trc, owner, TaskConstants_1.TaskEntityTypes.Task, noteID + index)).toString());
+        params.key.push(taskKeys[index]);
+        index++;
     }
     plan.ops.push({
         changeType: 'Custom',

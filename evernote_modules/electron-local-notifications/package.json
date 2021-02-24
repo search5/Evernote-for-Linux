@@ -1,6 +1,6 @@
 {
   "name": "electron-local-notifications",
-  "version": "1.27.2",
+  "version": "1.28.5",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -19,6 +19,6 @@
     "electron": "^11.1.1"
   },
   "dependencies": {
-    "conduit-utils": "1.27.2"
+    "conduit-utils": "1.28.5"
   }
 }

@@ -393,6 +393,12 @@ class ConduitCore {
         }
         return this.userCore.indexer;
     }
+    getLocalSettings() {
+        if (!this.localSettings) {
+            throw new Error('Conduit not initialized');
+        }
+        return this.localSettings;
+    }
     async initGraph(userID, extra) {
         if (!this.multiUserManager || !this.errorManager || !this.localSettings) {
             throw new Error('MultiUserManager is destroyed');
@@ -404,6 +410,7 @@ class ConduitCore {
                 const storage = new conduit_storage_1.GraphStorageDB(await this.di.KeyValStorage(trc, fullName), this.di.KeyValStorageMem(trc, `ephemeral-${fullName}`), {
                     nodeTypes: this.userCore.nodeTypes,
                     indexer: this.userCore.indexer,
+                    deleteHooks: this.userCore.deleteHooks,
                     countUpdater: this.di.countUpdater,
                     syncContextIndexExcludes: this.config.syncContextIndexExcludes,
                     amendSyncContextMetadataBeforeRead: this.amendSyncContextMetadataBeforeRead,
@@ -551,6 +558,13 @@ function conduitDIProxy(getConduit, eventCallback) {
                 throw new Error('Conduit not initialized');
             }
             return conduit.getIndexer();
+        },
+        getLocalSettings: () => {
+            const conduit = getConduit();
+            if (!conduit) {
+                throw new Error('Conduit not initialized');
+            }
+            return conduit.getLocalSettings();
         },
     };
 }

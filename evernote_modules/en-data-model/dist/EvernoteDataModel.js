@@ -50,6 +50,7 @@ const UserMutators = __importStar(require("./Mutators/UserMutators"));
 const WorkspaceMutators = __importStar(require("./Mutators/WorkspaceMutators"));
 const AccountLimits_1 = require("./NodeTypes/AccountLimits");
 const Attachment_1 = require("./NodeTypes/Attachment");
+const BetaFeature_1 = require("./NodeTypes/BetaFeature");
 const Invitation_1 = require("./NodeTypes/Invitation");
 const MaestroProps_1 = require("./NodeTypes/MaestroProps");
 const Membership_1 = require("./NodeTypes/Membership");
@@ -104,6 +105,10 @@ exports.CoreEntityTypeDefs = {
     [EntityConstants_1.CoreEntityTypes.Attachment]: {
         typeDef: Attachment_1.attachmentTypeDef,
         indexConfig: Attachment_1.attachmentIndexConfig,
+    },
+    [EntityConstants_1.CoreEntityTypes.BetaFeature]: {
+        typeDef: BetaFeature_1.betaFeatureTypeDef,
+        indexConfig: BetaFeature_1.betaFeatureIndexConfig,
     },
     [EntityConstants_1.CoreEntityTypes.Invitation]: {
         typeDef: Invitation_1.invitationTypeDef,

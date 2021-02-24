@@ -711,7 +711,7 @@ class GraphTransactionContext extends GraphStorageBase {
                 }
             }
         }
-        setProgress && await setProgress(trc, 0.3);
+        setProgress && await setProgress(trc, 0.15);
         const toReindexKeys = Object.keys(toReindex);
         const propagatedFieldUpdatesByType = {};
         const sortedKeys = [...toReindexKeys].sort((a, b) => { var _a, _b; return ((_a = priorities[a]) !== null && _a !== void 0 ? _a : GraphIndexTypes_1.IndexPriority.DEFAULT) - ((_b = priorities[b]) !== null && _b !== void 0 ? _b : GraphIndexTypes_1.IndexPriority.DEFAULT); });
@@ -720,7 +720,7 @@ class GraphTransactionContext extends GraphStorageBase {
         sortedKeys.map(type => totalIndexes += toReindex[type].length);
         const setProgressPerType = (async (type, percent) => {
             const progressSoFar = (processedIndexes / totalIndexes) + ((toReindex[type].length / totalIndexes) * percent);
-            setProgress && await setProgress(trc, (0.5 * progressSoFar) + 0.3);
+            setProgress && await setProgress(trc, (0.75 * progressSoFar) + 0.15);
         });
         for (const type of sortedKeys) {
             propagatedFieldUpdatesByType[type] = await this.reindexType(trc, type, toReindex[type], setProgressPerType);
@@ -775,7 +775,7 @@ class GraphTransactionContext extends GraphStorageBase {
                 }
             }
             // set batch fetch progress
-            await setProgressPerType(type, 0.3 * ((i + 1) / chunks.length));
+            await setProgressPerType(type, 0.7 * ((i + 1) / chunks.length));
         }
         for (let i = 0; i < indexes.length; i++) {
             const indexItem = indexes[i];
@@ -787,7 +787,7 @@ class GraphTransactionContext extends GraphStorageBase {
                     await tree.validate();
                 }
             }
-            await setProgressPerType(type, (0.7 * ((i + 1) / indexes.length)) + 0.3);
+            await setProgressPerType(type, (0.3 * ((i + 1) / indexes.length)) + 0.7);
         }
         return propagatedFieldUpdates;
     }
@@ -1166,6 +1166,10 @@ class GraphTransactionContext extends GraphStorageBase {
                 return false;
             }
         }
+        const deleteHook = this.config.deleteHooks[nodeRef.type];
+        if (deleteHook) {
+            await deleteHook(trc, this, nodeRef.id);
+        }
         const removedEdges = [];
         for (const port in node.inputs) {
             const edges = node.inputs[port];
@@ -1402,12 +1406,20 @@ class GraphTransactionContext extends GraphStorageBase {
         if (!origNode && !newNode) {
             throw new conduit_utils_1.InvalidParameterError('A node must be passed in order to propagate index updates');
         }
-        const propagatedFields = {};
+        const origPropagatedFields = {};
+        const newPropagatedFields = {};
         for (const dstPort in edgesToPropagateToByType) {
             const byPort = edgesToPropagateToByType[dstPort];
             // Propagated values should never need any async operations to resolve from the source node, hence we're not passing the nodeFieldLookup func
+            if (origNode) {
+                const origValue = await this.config.indexer.resolveField(trc, origNode, byPort.srcField, null, {});
+                origPropagatedFields[byPort.dstField] = origValue;
+            }
             const newValue = newNode ? await this.config.indexer.resolveField(trc, newNode, byPort.srcField, null, {}) : [null];
-            propagatedFields[byPort.dstField] = newValue;
+            newPropagatedFields[byPort.dstField] = newValue;
+        }
+        if (conduit_utils_1.isEqual(origPropagatedFields, newPropagatedFields)) {
+            return;
         }
         for (const dstPort in edgesToPropagateToByType) {
             const byPort = edgesToPropagateToByType[dstPort];
@@ -1430,10 +1442,10 @@ class GraphTransactionContext extends GraphStorageBase {
                             this.pendingPropagatedFields[ref.type] = {};
                         }
                         if (!this.pendingPropagatedFields[ref.type][ref.id]) {
-                            this.pendingPropagatedFields[ref.type][ref.id] = propagatedFields;
+                            this.pendingPropagatedFields[ref.type][ref.id] = newPropagatedFields;
                         }
                         else {
-                            this.pendingPropagatedFields[ref.type][ref.id] = SimplyImmutable.deepUpdateImmutable(this.pendingPropagatedFields[ref.type][ref.id], propagatedFields);
+                            this.pendingPropagatedFields[ref.type][ref.id] = SimplyImmutable.deepUpdateImmutable(this.pendingPropagatedFields[ref.type][ref.id], newPropagatedFields);
                         }
                     }
                 }
@@ -1837,7 +1849,7 @@ class GraphStorageDB extends GraphStorageBase {
                 };
             }
         }
-        setProgress && await setProgress(trc, 0.1);
+        setProgress && await setProgress(trc, 0.05);
         // compare config to stored
         const oldIndexes = await this.indexes.getData(trc);
         const newLocale = locale || ((_b = oldIndexes.locale) === null || _b === void 0 ? void 0 : _b.locale);
@@ -1853,7 +1865,7 @@ class GraphStorageDB extends GraphStorageBase {
                 setProgress && await setProgress(trc, 1);
                 return null;
             }
-            setProgress && await setProgress(trc, 0.2);
+            setProgress && await setProgress(trc, 0.1);
             return await tx._updateIndexes(trc, oldIndexes, newIndexes, priorities, localeChanged, setProgress);
         });
         if (!indexUpdateResult) {
@@ -1880,7 +1892,7 @@ class GraphStorageDB extends GraphStorageBase {
                 });
             }
         }
-        setProgress && await setProgress(trc, 0.9);
+        setProgress && await setProgress(trc, 0.95);
         // finalize last, to write the newIndex configuration; this is to handle the case where the client crashes or
         // is closed during this logical transaction
         await this.transact(trc, 'configureIndexes', async (tx) => {
