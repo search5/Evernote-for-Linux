@@ -187,7 +187,7 @@ async function batchGetFiles(trc, httpClient, accessToken, resourceIds) {
         batchGetFilePromises.push(batchGetFile);
     });
     const aggResults = await conduit_utils_1.allSettled(batchGetFilePromises);
-    return conduit_utils_1.flattenArray(aggResults);
+    return conduit_utils_1.deepFlattenArray(aggResults);
 }
 async function getFiles(trc, httpClient, accessToken, resourceIds) {
     const freshResourceIds = [];

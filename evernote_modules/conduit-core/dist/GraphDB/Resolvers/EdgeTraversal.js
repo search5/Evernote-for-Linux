@@ -9,6 +9,7 @@ const conduit_utils_1 = require("conduit-utils");
 const graphql_1 = require("graphql");
 const DataSchemaGQL_1 = require("../../Types/DataSchemaGQL");
 const AutoResolvers_1 = require("./AutoResolvers");
+const ResolverHelpers_1 = require("./ResolverHelpers");
 function edgeResolver(portConfig, indexer, portName, typeKey, idKey, isList) {
     return async (parent, args, context, info) => {
         const list = [];
@@ -49,7 +50,7 @@ function buildEdgeGraphQLType(autoResolverData, fields, type, portName, portConf
         resolve: edgeResolver(portConfig, indexer, portName, `${direction}Type`, `${direction}ID`, isList),
     };
     if (isList) {
-        fields[`${portName}Count`] = {
+        fields[ResolverHelpers_1.getPortCountName(portName)] = {
             type: DataSchemaGQL_1.schemaToGraphQLType('int'),
             resolve: edgeCountResolver(portName),
         };

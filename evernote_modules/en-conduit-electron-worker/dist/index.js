@@ -30,9 +30,9 @@ const conduit_view_1 = require("conduit-view");
 const conduit_view_types_1 = require("conduit-view-types");
 const electron_1 = require("electron");
 const en_conduit_electron_shared_1 = require("en-conduit-electron-shared");
+const en_conduit_plugin_scheduled_notification_1 = require("en-conduit-plugin-scheduled-notification");
 const en_conduit_plugin_search_1 = require("en-conduit-plugin-search");
-const en_conduit_plugin_task_1 = require("en-conduit-plugin-task");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const ENThriftConnector = __importStar(require("en-thrift-connector"));
 const event_source_polyfill_1 = require("event-source-polyfill");
 const evernote_thrift_1 = require("evernote-thrift");
@@ -79,7 +79,7 @@ async function init(config) {
         },
     }, c => new en_conduit_electron_shared_1.ElectronRendererLogger(c.name, true));
     const headers = Object.assign({}, customHeaders);
-    headers['X-Feature-Version'] = ENThriftConnector.FEATURE_VERSION;
+    headers['X-Feature-Version'] = conduit_view_types_1.FEATURE_VERSION;
     const emitEvent = (event, data) => {
         gConduitCore && gConduitCore.emitEvent(event, data);
         setupMainToWorkerBridge_1.sendConduitEvent(event, data);
@@ -88,7 +88,7 @@ async function init(config) {
             const transportOptions = { noCredentials: true, headers };
             const transport = new evernote_thrift_1.BinaryFetchHttpTransport(serviceHost, transportOptions);
             return new evernote_thrift_1.BinaryProtocol(transport);
-        }, getResourceProxyType: () => ENThriftConnector.ResourceProxyType.NativeLayerCache, getHttpTransport: () => new en_conduit_electron_shared_1.ElectronRendererHttpClient(), ResourceManager: (rmDI) => new WorkerResourceProxy_1.ElectronResourceManager(rmDI), getOfflineContentStrategy: () => config.params.offlineContentStrategy || conduit_view_types_1.OfflineContentStrategy.NONE, newEventSource: (url, esHeaders) => {
+        }, getResourceProxyType: () => en_conduit_sync_types_1.ResourceProxyType.NativeLayerCache, getHttpTransport: () => new en_conduit_electron_shared_1.ElectronRendererHttpClient(), ResourceManager: (rmDI) => new WorkerResourceProxy_1.ElectronResourceManager(rmDI), getOfflineContentStrategy: () => config.params.offlineContentStrategy || conduit_view_types_1.OfflineContentStrategy.NONE, newEventSource: (url, esHeaders) => {
             // TODO: unsure if this will work with electron
             return new event_source_polyfill_1.EventSourcePolyfill(url, {
                 withCredentials: true,
@@ -105,8 +105,8 @@ async function init(config) {
             return new conduit_storage_1.KeyValBackgroundWriter(db);
         }, KeyValStorageMem: (trc, name) => {
             return new conduit_storage_1.KeyValDatabaseMem(name);
-        }, sendMutationMetrics: !!sendMutationMetrics, loginWithAuthInQueue: thriftConduitConfig.loginWithAuthInQueue, MutationTrackerNodeRef: en_data_model_1.MUTATION_TRACKER_REF, getTestEventTracker: () => null, NotificationManager: () => {
-            return new ElectronNotificationManager_1.ElectronNotificationManager(Object.assign(Object.assign({}, en_conduit_plugin_task_1.notificationManagerSNUtilityDI), { emitEvent, getIconPath: () => iconPath || '' }));
+        }, sendMutationMetrics: !!sendMutationMetrics, loginWithAuthInQueue: thriftConduitConfig.loginWithAuthInQueue, getTestEventTracker: () => null, NotificationManager: () => {
+            return new ElectronNotificationManager_1.ElectronNotificationManager(Object.assign(Object.assign({}, en_conduit_plugin_scheduled_notification_1.notificationManagerSNUtilityDI), { emitEvent, getIconPath: () => iconPath || '' }));
         } });
     gConduitCore = new conduit_core_1.ConduitCore(di, {
         noFreezeImmutable,

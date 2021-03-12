@@ -11,10 +11,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MaestroPropsConverter = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 class MaestroPropsConverterClass {
     constructor() {
-        this.nodeType = en_data_model_1.CoreEntityTypes.MaestroProps;
+        this.nodeType = en_core_entity_types_1.CoreEntityTypes.MaestroProps;
     }
     convertGuidFromService(guid) {
         return ('MaestroProps:' + guid);
@@ -24,8 +24,8 @@ class MaestroPropsConverterClass {
     }
     async convertFromService(trc, params, syncContext, serviceData) {
         const search = {
-            id: en_data_model_1.MAESTRO_PROPS_ID,
-            type: en_data_model_1.CoreEntityTypes.MaestroProps,
+            id: en_core_entity_types_1.MAESTRO_PROPS_ID,
+            type: en_core_entity_types_1.CoreEntityTypes.MaestroProps,
             version: 1,
             syncContexts: [],
             localChangeTimestamp: 0,
@@ -53,16 +53,16 @@ class MaestroPropsConverterClass {
     }
 }
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.MaestroProps)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.MaestroProps)
 ], MaestroPropsConverterClass.prototype, "convertFromService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.MaestroProps)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.MaestroProps)
 ], MaestroPropsConverterClass.prototype, "createOnService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.MaestroProps)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.MaestroProps)
 ], MaestroPropsConverterClass.prototype, "updateToService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.MaestroProps)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.MaestroProps)
 ], MaestroPropsConverterClass.prototype, "deleteFromService", null);
 exports.MaestroPropsConverter = new MaestroPropsConverterClass();
 //# sourceMappingURL=MaestroPropsConverter.js.map

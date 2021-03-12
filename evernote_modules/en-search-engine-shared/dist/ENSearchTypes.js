@@ -17,6 +17,7 @@ var ENSuggestResultType;
     ENSuggestResultType["SPACE"] = "space";
     ENSuggestResultType["TAG"] = "tag";
     ENSuggestResultType["AUTHOR"] = "author";
+    ENSuggestResultType["STACK"] = "stack";
 })(ENSuggestResultType = exports.ENSuggestResultType || (exports.ENSuggestResultType = {}));
 var ENSortType;
 (function (ENSortType) {
@@ -25,4 +26,9 @@ var ENSortType;
     ENSortType[ENSortType["RELEVANCE"] = 3] = "RELEVANCE";
     ENSortType[ENSortType["TITLE"] = 5] = "TITLE";
 })(ENSortType = exports.ENSortType || (exports.ENSortType = {}));
+var ENSuggestOptimization;
+(function (ENSuggestOptimization) {
+    ENSuggestOptimization[ENSuggestOptimization["NONE"] = 0] = "NONE";
+    ENSuggestOptimization[ENSuggestOptimization["O3"] = 1] = "O3";
+})(ENSuggestOptimization = exports.ENSuggestOptimization || (exports.ENSuggestOptimization = {}));
 //# sourceMappingURL=ENSearchTypes.js.map

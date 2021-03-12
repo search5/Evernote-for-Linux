@@ -6,21 +6,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.addNoteMutators = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Auth_1 = require("../Auth");
 const Converters_1 = require("../Converters/Converters");
 const Helpers_1 = require("../Converters/Helpers");
 const NoteConverter_1 = require("../Converters/NoteConverter");
 const BlobResolver_1 = require("../Resolvers/BlobResolver");
 const SharedNoteSync_1 = require("../SyncFunctions/SharedNoteSync");
-function addNoteMutators(thriftComm, out, offlineContentStrategy) {
+function addNoteMutators(out, offlineContentStrategy) {
     async function noteCheckForUpdatesResolver(parent, args, context, info) {
         conduit_core_1.validateDB(context);
         if (!args || !args.id) {
             throw new Error('missing args');
         }
         let didUpdate = false;
-        const noteRef = { id: args.id, type: en_data_model_1.CoreEntityTypes.Note };
+        const noteRef = { id: args.id, type: en_core_entity_types_1.CoreEntityTypes.Note };
         // grab SyncContextMetadata
         const { node: localNote, syncContext } = await context.db.getNodeWithContext(context, noteRef);
         if (!localNote) {
@@ -37,7 +37,7 @@ function addNoteMutators(thriftComm, out, offlineContentStrategy) {
         // fetch note from service
         const auth = Auth_1.decodeAuthData(syncContextMetadata.authToken);
         const noteStoreUrl = syncContextMetadata.sharedNotebookNoteStoreUrl || auth.urls.noteStoreUrl;
-        const resp = await conduit_utils_1.withError(SharedNoteSync_1.fetchNote(context.trc, thriftComm, auth, Converters_1.convertGuidToService(args.id, en_data_model_1.CoreEntityTypes.Note), noteStoreUrl));
+        const resp = await conduit_utils_1.withError(SharedNoteSync_1.fetchNote(context.trc, context.thriftComm, auth, Converters_1.convertGuidToService(args.id, en_core_entity_types_1.CoreEntityTypes.Note), noteStoreUrl));
         if (resp.err instanceof conduit_utils_1.RetryError) {
             return {
                 didUpdate,
@@ -70,7 +70,7 @@ function addNoteMutators(thriftComm, out, offlineContentStrategy) {
         }
         // fetch and cache content if needed and out of date
         if (args.fetchContent) {
-            await BlobResolver_1.resolveContent(thriftComm, context, info, noteRef, 'content');
+            await BlobResolver_1.resolveContent(context, info, noteRef, 'content');
         }
         return {
             didUpdate,

@@ -40,7 +40,7 @@ class BoardFeatureSchemaManager {
         }
         let currentVersion = 0;
         if (board) {
-            const currentVersionFromKey = board[this.formFeatureKey(feature)];
+            const currentVersionFromKey = board[BoardFeatureSchemaManager.formFeatureKey(feature)];
             if (typeof currentVersionFromKey === 'number') {
                 currentVersion = currentVersionFromKey;
             }
@@ -49,6 +49,9 @@ class BoardFeatureSchemaManager {
             return [];
         }
         return featurePipeline.slice(currentVersion, requestedVersion);
+    }
+    static formFeatureKey(feature) {
+        return `${feature}Version`;
     }
     static formDeterministicBoardIdParts(boardType = BoardConstants_1.BoardType.Home, boardIndex = 0, widgetType, widgetIndex = 0) {
         const boardNumber = BoardConstants_1.boardTypeNumberMap.get(boardType);
@@ -103,7 +106,7 @@ class BoardFeatureSchemaManager {
         const featuresRequestedResult = [];
         const featureVersionsRequestedResult = [];
         for (const feature of Object.values(BoardConstants_1.Feature)) {
-            const currentVersion = board[this.formFeatureKey(feature)];
+            const currentVersion = board.NodeFields[BoardFeatureSchemaManager.formFeatureKey(feature)];
             const indexOfFeature = featuresRequested.indexOf(feature);
             // The board already has a feature version number, and we need to run a comparison.
             if (typeof currentVersion === 'number') {
@@ -381,10 +384,7 @@ class BoardFeatureSchemaManager {
                 conduit_utils_1.deepUpdateMutable(boardMutation, stepResults.board.mutation);
             }
         }
-        boardMutation[this.formFeatureKey(feature)] = featureVersion;
-    }
-    formFeatureKey(feature) {
-        return `${feature}Version`;
+        boardMutation[BoardFeatureSchemaManager.formFeatureKey(feature)] = featureVersion;
     }
 }
 exports.BoardFeatureSchemaManager = BoardFeatureSchemaManager;

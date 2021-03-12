@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.noteContentInfoIndexConfig = exports.noteContentInfoTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const TaskConstants_1 = require("../TaskConstants");
 exports.noteContentInfoTypeDef = {
     name: TaskConstants_1.TaskEntityTypes.NoteContentInfo,
@@ -13,7 +13,7 @@ exports.noteContentInfoTypeDef = {
     nsyncFeatureGroup: 'Tasks',
     fieldValidation: {},
     schema: {
-        taskGroups: 'string[]?',
+        taskGroupNoteLevelIDs: 'string[]?',
         created: 'timestamp',
         updated: 'timestamp',
         sourceOfChange: 'string?',
@@ -23,7 +23,7 @@ exports.noteContentInfoTypeDef = {
             constraint: conduit_storage_1.EdgeConstraint.REQUIRED,
             type: conduit_storage_1.EdgeType.ANCESTRY,
             from: {
-                type: en_data_model_1.CoreEntityTypes.Note,
+                type: en_core_entity_types_1.CoreEntityTypes.Note,
                 constraint: conduit_storage_1.EdgeConstraint.OPTIONAL,
                 denormalize: 'noteContentInfo',
             },

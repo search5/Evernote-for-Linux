@@ -5,8 +5,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AccountSessionSyncActivity = void 0;
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const Auth_1 = require("../Auth");
-const ThriftTypes_1 = require("../ThriftTypes");
 const SyncActivity_1 = require("./SyncActivity");
 const SyncActivityHydration_1 = require("./SyncActivityHydration");
 const ACCOUNT_SESSION_SYNC_ACTIVITY_INTERVAL = conduit_utils_1.MILLIS_IN_ONE_MINUTE;
@@ -26,7 +26,7 @@ class AccountSessionSyncActivity extends SyncActivity_1.SyncActivity {
         if (!Auth_1.hasNAPData(params.auth) || !this.context.syncEngine.clientCredentials) {
             return;
         }
-        const request = new ThriftTypes_1.THasActiveSessionRequest({
+        const request = new en_conduit_sync_types_1.THasActiveSessionRequest({
             authenticationToken: params.auth.token,
             deviceIdentifier: this.context.syncEngine.clientCredentials.deviceIdentifier,
             clientId: params.auth.napAuthInfo.clientID,
@@ -44,7 +44,7 @@ class AccountSessionSyncActivity extends SyncActivity_1.SyncActivity {
                 throw error;
             }
             // SDMS is disabled. Logging.
-            if (error instanceof conduit_utils_1.ServiceError && error.errorCode === ThriftTypes_1.EDAMErrorCode.UNSUPPORTED_OPERATION) {
+            if (error instanceof conduit_utils_1.ServiceError && error.errorCode === en_conduit_sync_types_1.EDAMErrorCode.UNSUPPORTED_OPERATION) {
                 conduit_utils_1.logger.debug('Encountered an error when checking session validity: SDMS DISABED');
             }
             else {

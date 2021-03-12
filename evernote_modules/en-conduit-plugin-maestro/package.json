@@ -1,6 +1,6 @@
 {
   "name": "en-conduit-plugin-maestro",
-  "version": "1.28.5",
+  "version": "1.30.2",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -10,10 +10,10 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-core": "1.28.5",
-    "conduit-utils": "1.28.5",
-    "en-data-model": "1.28.5",
-    "en-thrift-connector": "1.28.5"
+    "conduit-core": "1.30.2",
+    "conduit-utils": "1.30.2",
+    "en-core-entity-types": "1.30.2",
+    "en-thrift-connector": "1.30.2"
   },
   "peerDependencies": {
     "graphql": "^14.0.2"

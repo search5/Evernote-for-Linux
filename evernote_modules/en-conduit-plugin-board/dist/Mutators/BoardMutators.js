@@ -1,12 +1,12 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.createBoardMutators = void 0;
 /*
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createBoardMutators = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const BoardConstants_1 = require("../BoardConstants");
 const BoardFeatureSchemaManager_1 = require("../Schema/BoardFeatureSchemaManager");
 const emptyContentHash = conduit_utils_1.md5('');
@@ -14,7 +14,7 @@ const createBoardCreateHomeMutator = (di) => {
     const boardCreateHome = {
         type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
         requiredParams: {
-            serviceLevel: Object.values(en_data_model_1.ServiceLevel),
+            serviceLevel: Object.values(en_core_entity_types_1.ServiceLevel),
         },
         optionalParams: {
             resetLayout: 'boolean',
@@ -26,6 +26,7 @@ const createBoardCreateHomeMutator = (di) => {
             features: 'string[]',
             featureVersions: 'number[]',
         },
+        resultTypes: conduit_core_1.GenericMutatorResultsSchema,
         initParams: async (trc, ctx, paramsIn, paramsOut) => {
             var _a, _b;
             // Lazily initialization since this mutator is called very infrequently.
@@ -51,7 +52,7 @@ const createBoardCreateHomeMutator = (di) => {
             const boardID = boardGenID[1];
             const boardRef = { type: BoardConstants_1.BoardEntityTypes.Board, id: boardID };
             const board = await ctx.fetchEntity(trc, boardRef);
-            const isBasicLayout = serviceLevel === en_data_model_1.ServiceLevel.BASIC || serviceLevel === en_data_model_1.ServiceLevel.PLUS;
+            const isBasicLayout = serviceLevel === en_core_entity_types_1.ServiceLevel.BASIC || serviceLevel === en_core_entity_types_1.ServiceLevel.PLUS;
             const { features, featureVersions, } = boardFeatureSchemaManager.mergeToMinimumFeatureVersions(featuresParam, featureVersionsParam, board);
             const boardCreateHomeStash = {
                 board: {
@@ -183,7 +184,9 @@ const createBoardCreateHomeMutator = (di) => {
                 }
             }
             const plan = {
-                result: boardID,
+                results: {
+                    result: boardID,
+                },
                 ops: [],
             };
             for (const widget of boardCreateHomeStash.widgets) {
@@ -254,8 +257,8 @@ const createBoardStartFreeTrialMutator = () => {
             if (board.NodeFields.freeTrialExpiration) {
                 throw new conduit_utils_1.InternalError('Cannot do more than one free trial');
             }
-            const plan = {
-                result: null,
+            return {
+                results: {},
                 ops: [{
                         changeType: 'Node:UPDATE',
                         nodeRef,
@@ -265,14 +268,13 @@ const createBoardStartFreeTrialMutator = () => {
                         }),
                     }],
             };
-            return plan;
         },
     };
     return boardStartFreeTrial;
 };
 async function createDeleteBoardImageExecutionPlan(trc, ctx, param, boardID) {
     return {
-        result: null,
+        results: {},
         ops: [
             {
                 changeType: 'Node:UPDATE',

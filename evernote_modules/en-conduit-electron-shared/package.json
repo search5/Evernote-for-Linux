@@ -1,6 +1,6 @@
 {
   "name": "en-conduit-electron-shared",
-  "version": "1.28.5",
+  "version": "1.30.2",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -10,12 +10,12 @@
     "dist"
   ],
   "devDependencies": {
-    "electron": "^11.1.1"
+    "electron": "^11.3.0"
   },
   "dependencies": {
-    "conduit-ipc-messages": "1.28.5",
-    "conduit-utils": "1.28.5",
-    "conduit-view-types": "1.28.5",
+    "conduit-ipc-messages": "1.30.2",
+    "conduit-utils": "1.30.2",
+    "conduit-view-types": "1.30.2",
     "fs-extra": "^7.0.1",
     "graphql": "^14.0.2"
   }

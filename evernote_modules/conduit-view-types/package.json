@@ -1,6 +1,6 @@
 {
   "name": "conduit-view-types",
-  "version": "1.28.5",
+  "version": "1.30.2",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -10,6 +10,6 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-utils": "1.28.5"
+    "conduit-utils": "1.30.2"
   }
 }

@@ -28,7 +28,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.KeyValOverlay = exports.KeyValOverlayReadOnly = exports.KeyValStorage = exports.validateIsObject = exports.validateIsString = exports.validateIsBoolean = void 0;
+exports.KeyValOverlay = exports.KeyValOverlayReadOnly = exports.KeyValStorage = exports.CorruptDBError = exports.validateIsObject = exports.validateIsString = exports.validateIsBoolean = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const StorageEventEmitter_1 = require("./StorageEventEmitter");
@@ -65,6 +65,13 @@ function validateIsObject(val) {
     return undefined;
 }
 exports.validateIsObject = validateIsObject;
+class CorruptDBError extends Error {
+    constructor(msg) {
+        super(msg);
+        this.name = 'CorruptDBError';
+    }
+}
+exports.CorruptDBError = CorruptDBError;
 class KeyValStorage extends StorageEventEmitter_1.StorageEventEmitter {
     constructor(dbName, cachePolicy, mutexTimeout, isOverlay = false, globalKey) {
         super();

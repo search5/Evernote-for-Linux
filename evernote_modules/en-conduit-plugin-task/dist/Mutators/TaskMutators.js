@@ -6,11 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.taskMove = exports.taskUpdate = exports.taskDelete = exports.taskCreate = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
-const ScheduledNotificationUtils_1 = require("../ScheduledNotifications/ScheduledNotificationUtils");
+const en_core_entity_types_1 = require("en-core-entity-types");
+const ReminderStatusContainmentRules_1 = require("../Rules/ReminderStatusContainmentRules");
 const TaskConstants_1 = require("../TaskConstants");
 const NoteContentInfo_1 = require("./Helpers/NoteContentInfo");
-const ScheduledNotificationHelpers_1 = require("./Helpers/ScheduledNotificationHelpers");
 const Task_1 = require("./Helpers/Task");
 async function genericUpdateExecutionPlan(trc, ctx, taskID, fields) {
     const nodeRef = { id: taskID, type: TaskConstants_1.TaskEntityTypes.Task };
@@ -19,19 +18,14 @@ async function genericUpdateExecutionPlan(trc, ctx, taskID, fields) {
         throw new conduit_utils_1.NotFoundError(taskID, 'missing task in update');
     }
     return {
-        result: null,
+        results: {},
         ops: await taskUpdateOps(trc, ctx, nodeRef, fields),
     };
 }
 async function taskUpdateOps(trc, ctx, taskRef, fields) {
-    const snOps = [];
     fields.updated = ctx.timestamp;
     if (fields.status) {
         fields.statusUpdated = ctx.timestamp;
-        // mute/unmute scheduledNotifications
-        await ScheduledNotificationUtils_1.forEachTaskReminderScheduledNotification(trc, ctx, taskRef, async (snRef, reminderRef) => {
-            await ScheduledNotificationHelpers_1.addOpsForTaskReminderSNUpsert(trc, ctx, snOps, { mute: (fields.status === TaskConstants_1.TaskStatus.completed) }, reminderRef, snRef);
-        });
     }
     const ops = [
         {
@@ -39,9 +33,8 @@ async function taskUpdateOps(trc, ctx, taskRef, fields) {
             nodeRef: taskRef,
             node: ctx.assignFields(TaskConstants_1.TaskEntityTypes.Task, fields),
         },
-        ...snOps,
     ];
-    const profile = await en_data_model_1.getAccountProfileRef(trc, ctx);
+    const profile = await en_core_entity_types_1.getAccountProfileRef(trc, ctx);
     if (profile) {
         ops.push({
             changeType: 'Edge:MODIFY',
@@ -70,6 +63,7 @@ exports.taskCreate = {
         noteLevelID: 'string',
         sourceOfChange: 'string',
     },
+    resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
         var _a, _b;
         paramsOut.noteLevelID = (_a = paramsIn.noteLevelID) !== null && _a !== void 0 ? _a : conduit_utils_1.uuid();
@@ -98,7 +92,13 @@ exports.taskDelete = {
     requiredParams: {
         task: 'ID',
     },
-    optionalParams: {},
+    optionalParams: {
+        sourceOfChange: 'string',
+    },
+    initParams: async (trc, ctx, paramsIn, paramsOut) => {
+        var _a;
+        paramsOut.sourceOfChange = (_a = paramsIn.sourceOfChange) !== null && _a !== void 0 ? _a : '';
+    },
     execute: async (trc, ctx, params) => {
         const nodeRef = { id: params.task, type: TaskConstants_1.TaskEntityTypes.Task };
         const task = await ctx.fetchEntity(trc, nodeRef);
@@ -106,14 +106,24 @@ exports.taskDelete = {
             throw new conduit_utils_1.NotFoundError(nodeRef.id, 'Missing task in taskDelete');
         }
         await Task_1.checkNoteEditPermissionByTask(trc, ctx, task);
+        const parentNodeEdge = conduit_utils_1.firstStashEntry(task.inputs.parent);
+        if (!parentNodeEdge) {
+            throw new conduit_utils_1.NotFoundError(params.task, `Task's parent not found in taskMove`);
+        }
+        const { srcID: parentNoteId } = parentNodeEdge;
+        const { noteContentInfoID } = await NoteContentInfo_1.getNoteContentInfoID(trc, ctx, { id: parentNoteId, type: en_core_entity_types_1.CoreEntityTypes.Note });
         return {
-            result: null,
+            results: {},
             ops: [
+                {
+                    changeType: 'Node:UPDATE',
+                    nodeRef: { id: noteContentInfoID, type: TaskConstants_1.TaskEntityTypes.NoteContentInfo },
+                    node: ctx.assignFields(TaskConstants_1.TaskEntityTypes.NoteContentInfo, { sourceOfChange: params.sourceOfChange }),
+                },
                 {
                     changeType: 'Node:DELETE',
                     nodeRef,
-                },
-                {
+                }, {
                     changeType: 'Edge:MODIFY',
                     edgesToDelete: [
                         { dstID: params.task, dstType: TaskConstants_1.TaskEntityTypes.Task, dstPort: 'parent' },
@@ -144,6 +154,25 @@ exports.taskUpdate = {
         var _a;
         paramsOut.sourceOfChange = (_a = paramsIn.sourceOfChange) !== null && _a !== void 0 ? _a : '';
     },
+    buffering: {
+        time: 1500,
+    },
+    rollupStrategy: {
+        ifParamsMatch: [
+            { prev: 'task', next: 'task' },
+        ],
+        combineParams: {
+            label: 'or',
+            dueDate: 'or',
+            timeZone: 'or',
+            dueDateUIOption: 'or',
+            flag: 'or',
+            sortWeight: 'or',
+            status: 'or',
+            sourceOfChange: 'or',
+            taskGroupNoteLevelID: 'or',
+        },
+    },
     execute: async (trc, ctx, params) => {
         const fields = {
             label: params.label,
@@ -158,23 +187,25 @@ exports.taskUpdate = {
             taskGroupNoteLevelID: params.taskGroupNoteLevelID,
         };
         const taskRef = { id: params.task, type: TaskConstants_1.TaskEntityTypes.Task };
-        const noteEdge = await ctx.traverseGraph(trc, taskRef, [{ edge: ['inputs', 'parent'], type: en_data_model_1.CoreEntityTypes.Note }]);
+        const noteEdge = await ctx.traverseGraph(trc, taskRef, [{ edge: ['inputs', 'parent'], type: en_core_entity_types_1.CoreEntityTypes.Note }]);
         if (!noteEdge || !noteEdge.length || !noteEdge[0].edge) {
             throw new conduit_utils_1.NotFoundError('The task does not have parent Note');
         }
         const noteID = noteEdge[0].edge.srcID;
+        const plan = await genericUpdateExecutionPlan(trc, ctx, params.task, fields);
         if (params.taskGroupNoteLevelID) {
-            const noteContentInfoID = NoteContentInfo_1.getNoteContentInfoIDByNoteID(noteID);
-            const noteContentInfo = await ctx.fetchEntity(trc, { id: noteContentInfoID, type: TaskConstants_1.TaskEntityTypes.NoteContentInfo });
-            if (!noteContentInfo ||
-                !noteContentInfo.NodeFields.taskGroups ||
-                !noteContentInfo.NodeFields.taskGroups.length ||
-                !noteContentInfo.NodeFields.taskGroups.find(tg => tg === params.taskGroupNoteLevelID)) {
-                throw new conduit_utils_1.InvalidParameterError('Parent note\'s NoteContentInfo doesn\'t have the new taskGroupNoteLevelID');
+            const taskGroupUpsertPlan = await NoteContentInfo_1.taskGroupUpsertPlanFor(trc, ctx, noteID, params.taskGroupNoteLevelID, params.sourceOfChange);
+            if (taskGroupUpsertPlan.ops.length) {
+                plan.ops.push(...taskGroupUpsertPlan.ops);
             }
         }
-        const plan = await genericUpdateExecutionPlan(trc, ctx, params.task, fields);
         const existingTask = await ctx.fetchEntity(trc, taskRef);
+        if (params.taskGroupNoteLevelID) {
+            const taskGroupUpsertPlan = await NoteContentInfo_1.taskGroupUpsertPlanFor(trc, ctx, noteID, params.taskGroupNoteLevelID, params.sourceOfChange);
+            if (taskGroupUpsertPlan.ops.length) {
+                plan.ops.push(...taskGroupUpsertPlan.ops);
+            }
+        }
         await Task_1.checkNoteEditPermissionByNoteId(trc, ctx, noteID);
         const reminderRefs = await ctx.traverseGraph(trc, taskRef, [{ edge: ['outputs', 'reminders'], type: TaskConstants_1.TaskEntityTypes.Reminder }]);
         const reminderIds = reminderRefs.map(reminder => {
@@ -205,6 +236,13 @@ exports.taskUpdate = {
                     node: ctx.assignFields(TaskConstants_1.TaskEntityTypes.Reminder, reminderFields),
                 };
             });
+            if (params.status) {
+                // TODO ^^ this is not great.
+                // We should have a single method that can deal with reminder updates given the structure of the mutation
+                // Or fix the rules so that we can implement this as a rule (currently impossible)
+                const reminderStatus = params.status === TaskConstants_1.TaskStatus.completed ? TaskConstants_1.ReminderStatus.muted : TaskConstants_1.ReminderStatus.active;
+                await ReminderStatusContainmentRules_1.updateReminderStatus(ctx, trc, taskRef.id, ops, reminderStatus, reminders);
+            }
             // delete relative reminders on deleting dueDate
         }
         else if (params.dueDate === null) {
@@ -221,6 +259,10 @@ exports.taskUpdate = {
                     nodeRef: { id: reminder.id, type: TaskConstants_1.TaskEntityTypes.Reminder },
                 };
             });
+        }
+        else if (params.status) {
+            const reminderStatus = params.status === TaskConstants_1.TaskStatus.completed ? TaskConstants_1.ReminderStatus.muted : TaskConstants_1.ReminderStatus.active;
+            await ReminderStatusContainmentRules_1.updateReminderStatus(ctx, trc, taskRef.id, ops, reminderStatus, reminders);
         }
         // let's remove the associations
         ops.forEach(op => {
@@ -249,6 +291,7 @@ exports.taskMove = {
         destNoteOwnerID: 'number',
         sourceOfChange: 'string',
     },
+    resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
         var _a;
         paramsOut.sourceOfChange = (_a = paramsIn.sourceOfChange) !== null && _a !== void 0 ? _a : '';
@@ -256,7 +299,7 @@ exports.taskMove = {
         if (!conduit_utils_1.isNullish(destNoteOwnerID)) {
             return;
         }
-        const destNote = await ctx.fetchEntity(trc, { id: destNoteID, type: en_data_model_1.CoreEntityTypes.Note });
+        const destNote = await ctx.fetchEntity(trc, { id: destNoteID, type: en_core_entity_types_1.CoreEntityTypes.Note });
         if (!destNote) {
             throw new conduit_utils_1.NotFoundError(destNoteID, 'Target note not found in taskMove');
         }
@@ -269,7 +312,7 @@ exports.taskMove = {
         if (!task) {
             throw new conduit_utils_1.NotFoundError(params.task, 'Task not found in taskMove');
         }
-        const destNote = await ctx.fetchEntity(trc, { id: params.destNoteID, type: en_data_model_1.CoreEntityTypes.Note });
+        const destNote = await ctx.fetchEntity(trc, { id: params.destNoteID, type: en_core_entity_types_1.CoreEntityTypes.Note });
         if (!destNote) {
             throw new conduit_utils_1.NotFoundError(params.destNoteID, 'Target note not found in taskMove');
         }
@@ -284,7 +327,7 @@ exports.taskMove = {
         if (srcNoteID === destNote.id
             && task.NodeFields.taskGroupNoteLevelID === params.destTaskGroupNoteLevelID) {
             return {
-                result: null,
+                results: {},
                 ops: [],
             };
         }
@@ -306,7 +349,7 @@ exports.taskMove = {
                     dstID: task.id, dstType: task.type, dstPort: 'parent',
                 }],
             edgesToDelete: [{
-                    srcID: srcNoteID, srcType: en_data_model_1.CoreEntityTypes.Note, srcPort: 'tasks',
+                    srcID: srcNoteID, srcType: en_core_entity_types_1.CoreEntityTypes.Note, srcPort: 'tasks',
                     dstID: task.id, dstType: task.type, dstPort: 'parent',
                 }],
         });
@@ -314,8 +357,15 @@ exports.taskMove = {
         if (destTaskGroupUpsertPlan.ops.length) {
             ops.push(...destTaskGroupUpsertPlan.ops);
         }
+        ops.push({
+            changeType: 'Node:UPDATE',
+            nodeRef: { id: NoteContentInfo_1.getNoteContentInfoIDByNoteID(srcNoteID), type: TaskConstants_1.TaskEntityTypes.NoteContentInfo },
+            node: ctx.assignFields(TaskConstants_1.TaskEntityTypes.NoteContentInfo, {
+                sourceOfChange: params.sourceOfChange,
+            }),
+        });
         return {
-            result: null,
+            results: {},
             ops,
         };
     },

@@ -8,10 +8,10 @@
 namespace en_search {
 
     SearchEngineContext::SearchEngineContext(): kMaxIDSize(220), kIDField("_id"), kIDFieldWide(L"_id"),
-    kNotebookField(L"notebook"), kNotebookTextField(L"notebookText"), kNotebookGuidField(L"nbGuid"), kStack(L"stack"),
-    kTagField(L"tag"), kTagTextField(L"tagText"), kTagGuidField(L"tagGuid"), kSpaceField(L"space"), kSpaceTextField(L"spaceText"),
+    kNotebookField(L"notebook"), kNotebookTextField(L"notebookText"), kNotebookTextAltField(L"notebookTextAlt"), kNotebookGuidField(L"nbGuid"), kStack(L"stack"), kStackText(L"stackText"), kStackTextAlt(L"stackTextAlt"),
+    kTagField(L"tag"), kTagTextField(L"tagText"), kTagTextAltField(L"tagTextAlt"), kTagGuidField(L"tagGuid"), kSpaceField(L"space"), kSpaceTextField(L"spaceText"), kSpaceTextAltField(L"spaceTextAlt"),
     kSpaceGuidField(L"spaceGuid"), kResourceMime(L"resourceMime"), kResourceFileName(L"resourceFileName"), kCreated(L"created"),
-    kUpdated(L"updated"), KTitle(L"title"), KTitleRaw(L"titleRaw"), kSubjectDate(L"subjectDate"), kAuthor(L"author"), kAuthorText(L"authorText"),
+    kUpdated(L"updated"), KTitle(L"title"), KTitleAlt(L"titleAlt"), KTitleRaw(L"titleRaw"), kSubjectDate(L"subjectDate"), kAuthor(L"author"), kAuthorText(L"authorText"), kAuthorTextAlt(L"authorTextAlt"),
     kCreatorId(L"creatorId"), kLastEditorId(L"lastEditorId"), kSource(L"source"), kSourceApplication(L"sourceApplication"),
     kSourceURL(L"sourceURL"), kContentClass(L"contentClass"), kPlaceName(L"placeName"), kApplicationData(L"applicationData"),
     kReminderOrder(L"reminderOrder"), kReminderTime(L"reminderTime"), kReminderDoneTime(L"reminderDoneTime"), kContains(L"contains"),
@@ -367,23 +367,30 @@ namespace en_search {
         analyzer_->addAnalyzer(kIDFieldWide.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kNotebookField.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kNotebookTextField.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
+        analyzer_->addAnalyzer(kNotebookTextAltField.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
         analyzer_->addAnalyzer(kNotebookGuidField.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kStack.c_str(), new lucene::analysis::KeywordAnalyzer());
+        analyzer_->addAnalyzer(kStackText.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
+        analyzer_->addAnalyzer(kStackTextAlt.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
         analyzer_->addAnalyzer(kTagField.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kTagTextField.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
+        analyzer_->addAnalyzer(kTagTextAltField.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
         analyzer_->addAnalyzer(kTagGuidField.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kSpaceField.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kSpaceTextField.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
+        analyzer_->addAnalyzer(kSpaceTextAltField.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
         analyzer_->addAnalyzer(kSpaceGuidField.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kResourceMime.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kResourceFileName.c_str(), new StandardAnalyzer());
         analyzer_->addAnalyzer(kCreated.c_str(), new StandardAnalyzer());
         analyzer_->addAnalyzer(kUpdated.c_str(), new StandardAnalyzer());
         analyzer_->addAnalyzer(KTitle.c_str(), new StandardAnalyzer());
+        analyzer_->addAnalyzer(KTitleAlt.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
         analyzer_->addAnalyzer(KTitleRaw.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kSubjectDate.c_str(), new StandardAnalyzer());
         analyzer_->addAnalyzer(kAuthor.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kAuthorText.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
+        analyzer_->addAnalyzer(kAuthorTextAlt.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
         analyzer_->addAnalyzer(kCreatorId.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kLastEditorId.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kSource.c_str(), new lucene::analysis::KeywordAnalyzer());

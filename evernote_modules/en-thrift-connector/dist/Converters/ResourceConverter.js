@@ -33,7 +33,7 @@ const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const Auth = __importStar(require("../Auth"));
 const BlobConverter_1 = require("./BlobConverter");
@@ -61,7 +61,7 @@ async function fetchAndCacheAttachmentData(trc, thriftComm, auth, attachmentID, 
 exports.fetchAndCacheAttachmentData = fetchAndCacheAttachmentData;
 async function getResourceWithRetry(trc, thriftComm, auth, attachmentID) {
     const noteStore = thriftComm.getNoteStore(auth.urls.noteStoreUrl);
-    const serviceGuid = Converters_1.convertGuidToService(attachmentID, en_data_model_1.CoreEntityTypes.Attachment);
+    const serviceGuid = Converters_1.convertGuidToService(attachmentID, en_core_entity_types_1.CoreEntityTypes.Attachment);
     // try to refetch attachment if the first attempt fails. Calling Utility.getResource too soon after
     // Utility.addResource can fail due to a race condition on the backend.
     let nAttempts = 0;
@@ -122,12 +122,12 @@ exports.generateResourceUrl = generateResourceUrl;
 function resourceFromService(serviceData) {
     var _a, _b;
     const resourceOut = {
-        id: Converters_1.convertGuidFromService(serviceData.guid, en_data_model_1.CoreEntityTypes.Attachment),
-        type: en_data_model_1.CoreEntityTypes.Attachment,
+        id: Converters_1.convertGuidFromService(serviceData.guid, en_core_entity_types_1.CoreEntityTypes.Attachment),
+        type: en_core_entity_types_1.CoreEntityTypes.Attachment,
         version: serviceData.updateSequenceNum || 0,
         syncContexts: [],
         localChangeTimestamp: 0,
-        label: (serviceData.attributes && serviceData.attributes.fileName) || en_data_model_1.CoreEntityTypes.Attachment,
+        label: (serviceData.attributes && serviceData.attributes.fileName) || en_core_entity_types_1.CoreEntityTypes.Attachment,
         NodeFields: {
             mime: serviceData.mime || '',
             width: serviceData.width || 0,
@@ -158,16 +158,16 @@ function resourceFromService(serviceData) {
     };
     if (serviceData.noteGuid) {
         conduit_storage_1.addInputEdgeToNode(resourceOut, 'parent', {
-            id: Converters_1.convertGuidFromService(serviceData.noteGuid, en_data_model_1.CoreEntityTypes.Note),
+            id: Converters_1.convertGuidFromService(serviceData.noteGuid, en_core_entity_types_1.CoreEntityTypes.Note),
             port: serviceData.active ? 'attachments' : 'inactiveAttachments',
-            type: en_data_model_1.CoreEntityTypes.Note,
+            type: en_core_entity_types_1.CoreEntityTypes.Note,
         });
     }
     return resourceOut;
 }
 class ResourceConverterClass {
     constructor() {
-        this.nodeType = en_data_model_1.CoreEntityTypes.Attachment;
+        this.nodeType = en_core_entity_types_1.CoreEntityTypes.Attachment;
     }
     convertGuidFromService(guid) {
         return guid;
@@ -217,12 +217,31 @@ class ResourceConverterClass {
         // service backend will remove resources via note content change.
         return false;
     }
+    async customToService(trc, params, commandRun, syncContext) {
+        switch (commandRun.command) {
+            case 'attachmentSetAppData': {
+                const commandParams = commandRun.params;
+                const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+                const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
+                const guid = Converters_1.convertGuidToService(commandParams.id, en_core_entity_types_1.CoreEntityTypes.Attachment);
+                if (commandParams.value !== null) {
+                    await noteStore.setResourceApplicationDataEntry(trc, auth.token, guid, commandParams.key, commandParams.value);
+                }
+                else {
+                    await noteStore.unsetResourceApplicationDataEntry(trc, auth.token, guid, commandParams.key);
+                }
+                return null;
+            }
+            default:
+                throw new Error(`Unknown customToService command for Attachment ${commandRun.command}`);
+        }
+    }
     async updateToService(trc, params, syncContext, attachmentID, diff) {
         let hasChanges = false;
         const serviceData = {
-            guid: Converters_1.convertGuidToService(attachmentID, en_data_model_1.CoreEntityTypes.Attachment),
+            guid: Converters_1.convertGuidToService(attachmentID, en_core_entity_types_1.CoreEntityTypes.Attachment),
         };
-        const resourceRef = { id: attachmentID, type: en_data_model_1.CoreEntityTypes.Attachment };
+        const resourceRef = { id: attachmentID, type: en_core_entity_types_1.CoreEntityTypes.Attachment };
         const curResource = await params.graphTransaction.getNode(trc, null, resourceRef);
         if (!curResource) {
             throw new conduit_utils_1.NotFoundError(resourceRef.id, `Missing note ${resourceRef.id} from local graph storage`);
@@ -260,10 +279,13 @@ class ResourceConverterClass {
     }
 }
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Attachment)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Attachment)
 ], ResourceConverterClass.prototype, "convertFromService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Attachment)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Attachment)
+], ResourceConverterClass.prototype, "customToService", null);
+__decorate([
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Attachment)
 ], ResourceConverterClass.prototype, "updateToService", null);
 exports.ResourceConverter = new ResourceConverterClass();
 //# sourceMappingURL=ResourceConverter.js.map

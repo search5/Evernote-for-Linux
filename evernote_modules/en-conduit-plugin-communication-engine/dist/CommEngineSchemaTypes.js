@@ -8,7 +8,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.responseSchemaType = exports.clientTypeEnumType = exports.supportedPlacementEnumType = exports.eventType = exports.enumToGraphQLEnumValues = void 0;
 const conduit_core_1 = require("conduit-core");
-const en_thrift_connector_1 = require("en-thrift-connector");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const graphql_1 = require("graphql");
 const graphql_tag_1 = __importDefault(require("graphql-tag"));
 const enumToGraphQLEnumValues = enumObject => {
@@ -28,17 +28,17 @@ exports.eventType = new graphql_1.GraphQLInputObjectType({
     }), {
         type: { type: new graphql_1.GraphQLEnumType({
                 name: 'CommEngineEventType',
-                values: exports.enumToGraphQLEnumValues(en_thrift_connector_1.TCommEngineEventType),
+                values: exports.enumToGraphQLEnumValues(en_conduit_sync_types_1.TCommEngineEventType),
             }) },
     }),
 });
 exports.supportedPlacementEnumType = new graphql_1.GraphQLEnumType({
     name: 'SupportedPlacement',
-    values: exports.enumToGraphQLEnumValues(en_thrift_connector_1.TCommEnginePlacement),
+    values: exports.enumToGraphQLEnumValues(en_conduit_sync_types_1.TCommEnginePlacement),
 });
 exports.clientTypeEnumType = new graphql_1.GraphQLEnumType({
     name: 'ClientType',
-    values: exports.enumToGraphQLEnumValues(en_thrift_connector_1.TCommEngineClientType),
+    values: exports.enumToGraphQLEnumValues(en_conduit_sync_types_1.TCommEngineClientType),
 });
 // MessageContent is deprecated, remove on next breaking change
 exports.responseSchemaType = conduit_core_1.fromSchema('CommEngineResponseSchema', graphql_tag_1.default `

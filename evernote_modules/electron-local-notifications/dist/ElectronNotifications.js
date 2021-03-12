@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ElectronNotifications = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const electron_1 = require("electron");
+const analytics_1 = require("./analytics");
 /**
  * Class responsible for handling Electron Notifications,
  */
@@ -24,6 +25,7 @@ class ElectronNotifications {
         this.removePendingNotification(notificationData.id);
         const notification = this.createElectronNotificationFromData(notificationData);
         const mutableTimeoutId = conduit_utils_1.setTimeoutForTimestamp(() => {
+            analytics_1.recordOpenEvent();
             notification.show();
             delete this.pendingNotifications[notificationData.id];
         }, sendAt);
@@ -80,6 +82,7 @@ class ElectronNotifications {
             icon: notificationData.iconPath ? electron_1.nativeImage.createFromDataURL(notificationData.iconPath) : undefined,
         });
         notification.on('click', () => {
+            analytics_1.recordBodyClickEvent();
             const callback = notificationData.onClick;
             this.removePendingNotification(notificationData.id);
             notification.close();
@@ -91,6 +94,7 @@ class ElectronNotifications {
         });
         notification.on('action', (_, actionIdx) => {
             var _a;
+            // TODO: add analytics
             const callback = (_a = notificationData.buttons) === null || _a === void 0 ? void 0 : _a[actionIdx].onClick;
             this.removePendingNotification(notificationData.id);
             notification.close();
@@ -101,6 +105,7 @@ class ElectronNotifications {
             conduit_utils_1.logger.info(`No onClick callback defined for button index num: '${actionIdx}'`);
         });
         notification.on('close', () => {
+            analytics_1.recordCloseEvent();
             const callback = notificationData.onClose;
             this.removePendingNotification(notificationData.id);
             if (callback) {

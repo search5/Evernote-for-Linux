@@ -9,12 +9,12 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MessageConverter = exports.messageFromService = void 0;
+exports.MessageConverter = exports.validateAndCreateMessageBody = exports.messageFromService = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
-const ThriftTypes_1 = require("../ThriftTypes");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Converters_1 = require("./Converters");
 const WorkChatUtils_1 = require("./WorkChatUtils");
 const sanitazeMessageExp = /(<!--(\s|\S)*?\/-->)|(<\/?(\s|\S)*?>)/g;
@@ -24,8 +24,8 @@ function messageFromService(serviceData) {
     const hasAttachments = Boolean((_a = serviceData === null || serviceData === void 0 ? void 0 : serviceData.attachments) === null || _a === void 0 ? void 0 : _a.length);
     const supportedMessage = WorkChatUtils_1.supportedForWorkChat(hasAttachments, serviceData.sentAt);
     const message = {
-        id: Converters_1.convertGuidFromService(messageId, en_data_model_1.CoreEntityTypes.Message),
-        type: en_data_model_1.CoreEntityTypes.Message,
+        id: Converters_1.convertGuidFromService(messageId, en_core_entity_types_1.CoreEntityTypes.Message),
+        type: en_core_entity_types_1.CoreEntityTypes.Message,
         syncContexts: [],
         label: (serviceData.body || '').replace(sanitazeMessageExp, ''),
         version: 0,
@@ -33,7 +33,7 @@ function messageFromService(serviceData) {
         NodeFields: {
             created: serviceData.sentAt || 0,
             reshareMessage: serviceData.reshareMessage || false,
-            creator: Converters_1.convertGuidFromService(serviceData.senderId || 0, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User),
+            creator: Converters_1.convertGuidFromService(serviceData.senderId || 0, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User),
             hasAttachments,
             supportedForWorkChat: supportedMessage,
         },
@@ -48,33 +48,41 @@ function messageFromService(serviceData) {
     if (serviceData.messageThreadId) {
         const threadID = serviceData.messageThreadId;
         conduit_storage_1.addInputEdgeToNode(message, 'thread', {
-            id: Converters_1.convertGuidFromService(threadID, en_data_model_1.CoreEntityTypes.Thread),
+            id: Converters_1.convertGuidFromService(threadID, en_core_entity_types_1.CoreEntityTypes.Thread),
             port: 'messages',
-            type: en_data_model_1.CoreEntityTypes.Thread,
+            type: en_core_entity_types_1.CoreEntityTypes.Thread,
         });
     }
     for (const attachment of (serviceData.attachments || [])) {
-        if (attachment.type === ThriftTypes_1.TMessageAttachmentType.NOTE) {
+        if (attachment.type === en_conduit_sync_types_1.TMessageAttachmentType.NOTE) {
             conduit_storage_1.addOutputEdgeToNode(message, 'notes', {
-                id: Converters_1.convertGuidFromService(attachment.guid, en_data_model_1.CoreEntityTypes.Note),
+                id: Converters_1.convertGuidFromService(attachment.guid, en_core_entity_types_1.CoreEntityTypes.Note),
                 port: null,
-                type: en_data_model_1.CoreEntityTypes.Note,
+                type: en_core_entity_types_1.CoreEntityTypes.Note,
             });
         }
-        if (attachment.type === ThriftTypes_1.TMessageAttachmentType.NOTEBOOK) {
+        if (attachment.type === en_conduit_sync_types_1.TMessageAttachmentType.NOTEBOOK) {
             conduit_storage_1.addOutputEdgeToNode(message, 'notebooks', {
-                id: Converters_1.convertGuidFromService(attachment.guid, en_data_model_1.CoreEntityTypes.Notebook),
+                id: Converters_1.convertGuidFromService(attachment.guid, en_core_entity_types_1.CoreEntityTypes.Notebook),
                 port: null,
-                type: en_data_model_1.CoreEntityTypes.Notebook,
+                type: en_core_entity_types_1.CoreEntityTypes.Notebook,
             });
         }
     }
     return message;
 }
 exports.messageFromService = messageFromService;
+function validateAndCreateMessageBody(message) {
+    const messageBody = `<msg>${message}</msg>`;
+    if (messageBody.length > en_core_entity_types_1.WORKCHAT_MESSAGE_BODY_LEN_MAX) {
+        throw new conduit_utils_1.MalformedDataError('Validation Failed: message too long');
+    }
+    return messageBody;
+}
+exports.validateAndCreateMessageBody = validateAndCreateMessageBody;
 class MessageConverterClass {
     constructor() {
-        this.nodeType = en_data_model_1.CoreEntityTypes.Message;
+        this.nodeType = en_core_entity_types_1.CoreEntityTypes.Message;
     }
     convertGuidFromService(guid) {
         return ('Message:' + guid);
@@ -93,9 +101,10 @@ class MessageConverterClass {
         }
         const auth = params.personalAuth;
         const messageStore = params.thriftComm.getMessageStore(auth.urls.messageStoreUrl);
+        const messageBody = validateAndCreateMessageBody(message.label);
         const messageThread = {
-            messageThreadId: Converters_1.convertGuidToService(remoteFields.threadID, en_data_model_1.CoreEntityTypes.Thread),
-            body: `<msg>${message.label}</msg>`,
+            messageThreadId: Converters_1.convertGuidToService(remoteFields.threadID, en_core_entity_types_1.CoreEntityTypes.Thread),
+            body: messageBody,
         };
         const resp = await messageStore.messageSendToThread(trc, auth.token, messageThread);
         await exports.MessageConverter.convertFromService(trc, params, conduit_core_1.PERSONAL_USER_CONTEXT, resp);
@@ -118,13 +127,13 @@ class MessageConverterClass {
     }
 }
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Message)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Message)
 ], MessageConverterClass.prototype, "convertFromService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Thread)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Thread)
 ], MessageConverterClass.prototype, "updateToService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Thread)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Thread)
 ], MessageConverterClass.prototype, "customToService", null);
 exports.MessageConverter = new MessageConverterClass();
 //# sourceMappingURL=MessageConverter.js.map

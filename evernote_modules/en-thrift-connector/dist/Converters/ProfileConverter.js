@@ -12,9 +12,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProfileConverter = exports.convertProfileGuidFromService = exports.getUserProfileIDAndEmailFromProfileID = exports.profileFromContact = exports.profileFromIdentity = exports.profileFromUser = exports.profileFromUserProfile = exports.ProfileSourceConfidence = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const simply_immutable_1 = require("simply-immutable");
-const ThriftTypes_1 = require("../ThriftTypes");
 const Converters_1 = require("./Converters");
 var ProfileSourceConfidence;
 (function (ProfileSourceConfidence) {
@@ -24,18 +24,18 @@ var ProfileSourceConfidence;
 })(ProfileSourceConfidence = exports.ProfileSourceConfidence || (exports.ProfileSourceConfidence = {}));
 function convertBusinessUserStatusToProfileStatusEnum(status) {
     switch (status) {
-        case ThriftTypes_1.TBusinessUserStatus.ACTIVE:
-            return en_data_model_1.ProfileStatusEnum.ACTIVE;
-        case ThriftTypes_1.TBusinessUserStatus.DEACTIVATED:
-            return en_data_model_1.ProfileStatusEnum.INACTIVE;
+        case en_conduit_sync_types_1.TBusinessUserStatus.ACTIVE:
+            return en_core_entity_types_1.ProfileStatusEnum.ACTIVE;
+        case en_conduit_sync_types_1.TBusinessUserStatus.DEACTIVATED:
+            return en_core_entity_types_1.ProfileStatusEnum.INACTIVE;
         default:
             conduit_utils_1.logger.debug(`Unknown BusinessUserStatus: ${status}`);
-            return en_data_model_1.ProfileStatusEnum.ACTIVE; // Assume all profiles are active basically
+            return en_core_entity_types_1.ProfileStatusEnum.ACTIVE; // Assume all profiles are active basically
     }
 }
 function profileFromUserProfile(profile, isSameBusiness) {
     return {
-        source: en_data_model_1.PROFILE_SOURCE.User,
+        source: en_core_entity_types_1.PROFILE_SOURCE.User,
         id: profile.id,
         photoLastUpdated: profile.photoLastUpdated,
         photoUrl: profile.photoUrl,
@@ -53,7 +53,7 @@ function profileFromUserProfile(profile, isSameBusiness) {
 exports.profileFromUserProfile = profileFromUserProfile;
 function profileFromUser(user, confidence = ProfileSourceConfidence.Source, status) {
     return {
-        source: en_data_model_1.PROFILE_SOURCE.User,
+        source: en_core_entity_types_1.PROFILE_SOURCE.User,
         id: user.id,
         photoLastUpdated: user.photoLastUpdated,
         email: user.email,
@@ -74,15 +74,15 @@ function profileFromIdentity(identity, confidence = ProfileSourceConfidence.Sour
     }
     const id = identity.id;
     return {
-        source: en_data_model_1.PROFILE_SOURCE.Identity,
+        source: en_core_entity_types_1.PROFILE_SOURCE.Identity,
         id,
         photoUrl: identity.contact.photoUrl,
         photoLastUpdated: identity.contact.photoLastUpdated,
         name: identity.contact.name || '',
-        email: identity.contact.type === ThriftTypes_1.TContactType.EMAIL ? identity.contact.id : '',
+        email: identity.contact.type === en_conduit_sync_types_1.TContactType.EMAIL ? identity.contact.id : '',
         username: '',
         confidence,
-        userId: identity.userId || (identity.contact.type === ThriftTypes_1.TContactType.EVERNOTE ? Number(identity.contact.id) : null),
+        userId: identity.userId || (identity.contact.type === en_conduit_sync_types_1.TContactType.EVERNOTE ? Number(identity.contact.id) : null),
         isSameBusiness: identity.sameBusiness || false,
         isConnected: identity.userConnected || false,
         isBlocked: identity.blocked || false,
@@ -93,7 +93,7 @@ exports.profileFromIdentity = profileFromIdentity;
 function profileFromContact(contact, confidence = ProfileSourceConfidence.Source, status) {
     const id = contact.id || '';
     return {
-        source: en_data_model_1.PROFILE_SOURCE.Contact,
+        source: en_core_entity_types_1.PROFILE_SOURCE.Contact,
         id,
         photoUrl: contact.photoUrl,
         photoLastUpdated: contact.photoLastUpdated,
@@ -108,7 +108,7 @@ function profileFromContact(contact, confidence = ProfileSourceConfidence.Source
 exports.profileFromContact = profileFromContact;
 async function getUserProfileIDAndEmailFromProfileID(trc, db, id) {
     const idSplit = id.split(':');
-    const node = await db.getNode(trc, null, { type: en_data_model_1.CoreEntityTypes.Profile, id });
+    const node = await db.getNode(trc, null, { type: en_core_entity_types_1.CoreEntityTypes.Profile, id });
     if (node && node.inputs.parent) {
         const parentEdge = conduit_utils_1.firstStashEntry(node.inputs.parent);
         if (parentEdge) {
@@ -120,7 +120,7 @@ async function getUserProfileIDAndEmailFromProfileID(trc, db, id) {
     }
     return {
         email: node && node.NodeFields.email ? node.NodeFields.email : undefined,
-        profileID: idSplit[1] === en_data_model_1.PROFILE_SOURCE.User ? id : undefined,
+        profileID: idSplit[1] === en_core_entity_types_1.PROFILE_SOURCE.User ? id : undefined,
         nodeID: id,
     };
 }
@@ -173,7 +173,7 @@ function convertProfileGuidFromService(source, id) {
 exports.convertProfileGuidFromService = convertProfileGuidFromService;
 class ProfileConverterClass {
     constructor() {
-        this.nodeType = en_data_model_1.CoreEntityTypes.Profile;
+        this.nodeType = en_core_entity_types_1.CoreEntityTypes.Profile;
     }
     convertGuidFromService(guid) {
         throw new Error('ProfileConverter.convertGuidFromService not supported, use Converters.convertGuidFromService instead!');
@@ -183,9 +183,9 @@ class ProfileConverterClass {
     }
     async convertFromService(trc, params, syncContext, profile) {
         var _a, _b;
-        const source = profile.source || en_data_model_1.PROFILE_SOURCE.User;
-        const profileID = Converters_1.convertGuidFromService(profile.id, en_data_model_1.CoreEntityTypes.Profile, source);
-        const currentProfile = await params.graphTransaction.getNode(trc, null, { id: profileID, type: en_data_model_1.CoreEntityTypes.Profile });
+        const source = profile.source || en_core_entity_types_1.PROFILE_SOURCE.User;
+        const profileID = Converters_1.convertGuidFromService(profile.id, en_core_entity_types_1.CoreEntityTypes.Profile, source);
+        const currentProfile = await params.graphTransaction.getNode(trc, null, { id: profileID, type: en_core_entity_types_1.CoreEntityTypes.Profile });
         const status = (_b = (_a = profile.status) !== null && _a !== void 0 ? _a : currentProfile === null || currentProfile === void 0 ? void 0 : currentProfile.NodeFields.status) !== null && _b !== void 0 ? _b : null;
         let label = profile.name || profile.email || '';
         // when service returns the id as the name, prefer the email as the label cc
@@ -194,7 +194,7 @@ class ProfileConverterClass {
         }
         let profileOut = {
             id: profileID,
-            type: en_data_model_1.CoreEntityTypes.Profile,
+            type: en_core_entity_types_1.CoreEntityTypes.Profile,
             version: profile.confidence || ProfileSourceConfidence.Source,
             syncContexts: [],
             localChangeTimestamp: 0,
@@ -228,16 +228,16 @@ class ProfileConverterClass {
                 profileOut = mergeProfileData(profileOut, currentProfile);
             }
         }
-        if (source === en_data_model_1.PROFILE_SOURCE.Identity) {
+        if (source === en_core_entity_types_1.PROFILE_SOURCE.Identity) {
             let rootUserID = profile.userId;
             if (!rootUserID && (currentProfile === null || currentProfile === void 0 ? void 0 : currentProfile.NodeFields.rootID) !== (currentProfile === null || currentProfile === void 0 ? void 0 : currentProfile.id)) {
-                rootUserID = parseInt(Converters_1.convertGuidToService(currentProfile === null || currentProfile === void 0 ? void 0 : currentProfile.NodeFields.rootID, en_data_model_1.CoreEntityTypes.Profile), 0);
+                rootUserID = parseInt(Converters_1.convertGuidToService(currentProfile === null || currentProfile === void 0 ? void 0 : currentProfile.NodeFields.rootID, en_core_entity_types_1.CoreEntityTypes.Profile), 0);
             }
             if (rootUserID) {
-                await exports.ProfileConverter.convertFromService(trc, params, syncContext, Object.assign(Object.assign({}, profile), { source: en_data_model_1.PROFILE_SOURCE.User, confidence: ProfileSourceConfidence.Identity, id: rootUserID, email: profileOut.NodeFields.email || (currentProfile === null || currentProfile === void 0 ? void 0 : currentProfile.NodeFields.email) || '', username: profileOut.NodeFields.username || (currentProfile === null || currentProfile === void 0 ? void 0 : currentProfile.NodeFields.username), name: profileOut.NodeFields.name || (currentProfile === null || currentProfile === void 0 ? void 0 : currentProfile.NodeFields.name) || '' }));
-                profileOut.NodeFields.rootID = Converters_1.convertGuidFromService(rootUserID, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User);
+                await exports.ProfileConverter.convertFromService(trc, params, syncContext, Object.assign(Object.assign({}, profile), { source: en_core_entity_types_1.PROFILE_SOURCE.User, confidence: ProfileSourceConfidence.Identity, id: rootUserID, email: profileOut.NodeFields.email || (currentProfile === null || currentProfile === void 0 ? void 0 : currentProfile.NodeFields.email) || '', username: profileOut.NodeFields.username || (currentProfile === null || currentProfile === void 0 ? void 0 : currentProfile.NodeFields.username), name: profileOut.NodeFields.name || (currentProfile === null || currentProfile === void 0 ? void 0 : currentProfile.NodeFields.name) || '' }));
+                profileOut.NodeFields.rootID = Converters_1.convertGuidFromService(rootUserID, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
                 conduit_storage_1.addInputEdgeToNode(profileOut, 'parent', {
-                    id: convertProfileGuidFromService(en_data_model_1.PROFILE_SOURCE.User, rootUserID.toString()),
+                    id: convertProfileGuidFromService(en_core_entity_types_1.PROFILE_SOURCE.User, rootUserID.toString()),
                     type: exports.ProfileConverter.nodeType,
                     port: 'relatedIdentities',
                 });
@@ -263,7 +263,7 @@ class ProfileConverterClass {
             if (!params.personalAuth) {
                 throw new Error('Personal auth token needed');
             }
-            const profile = await params.graphTransaction.getNode(trc, null, { id: profileID, type: en_data_model_1.CoreEntityTypes.Profile });
+            const profile = await params.graphTransaction.getNode(trc, null, { id: profileID, type: en_core_entity_types_1.CoreEntityTypes.Profile });
             if (!profile || !profile.NodeFields.internal_userId) {
                 throw new conduit_utils_1.InvalidOperationError('no user id');
             }
@@ -278,7 +278,7 @@ class ProfileConverterClass {
     }
 }
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Profile)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Profile)
 ], ProfileConverterClass.prototype, "convertFromService", null);
 exports.ProfileConverter = new ProfileConverterClass();
 //# sourceMappingURL=ProfileConverter.js.map

@@ -20,7 +20,7 @@ exports.SupportTicketArgs = conduit_core_1.schemaToGraphQLArgs({
     deviceInfo: 'string?',
     tags: 'string[]?',
 });
-function getSupportTicketPlugin(thriftComms, filesystemClient) {
+function getSupportTicketPlugin(filesystemClient) {
     async function readLogFile(trc, logUri) {
         if (!logUri) {
             return undefined;
@@ -50,7 +50,7 @@ function getSupportTicketPlugin(thriftComms, filesystemClient) {
         }
         const authorizedToken = await conduit_core_1.retrieveAuthorizedToken(context);
         const authData = en_thrift_connector_1.decodeAuthData(authorizedToken);
-        const utilityStore = thriftComms.getUtilityStore(authData.urls.utilityUrl);
+        const utilityStore = context.thriftComm.getUtilityStore(authData.urls.utilityUrl);
         const logData = await readLogFile(context.trc, args.logUri);
         await utilityStore.fileSupportTicket(context.trc, authData.token, {
             logFile: logData,

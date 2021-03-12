@@ -25,14 +25,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BlobResolver = exports.resolveContent = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Auth = __importStar(require("../Auth"));
 const NoteConverter_1 = require("../Converters/NoteConverter");
 const ResourceConverter_1 = require("../Converters/ResourceConverter");
 const Helpers_1 = require("../Helpers");
-const BlobWithContent = conduit_core_1.schemaToGraphQLType(Object.assign(Object.assign({}, en_data_model_1.BlobSchema), { content: 'string?' }), 'Blob', false);
-const BlobWithoutContent = conduit_core_1.schemaToGraphQLType(Object.assign({}, en_data_model_1.BlobSchema), 'BlobWithoutContent', false);
-async function fetchAndCacheBlobContent(context, thriftComm, node, syncContext, blobName) {
+const BlobWithContent = conduit_core_1.schemaToGraphQLType(Object.assign(Object.assign({}, en_core_entity_types_1.BlobBaseSchema), { content: 'string?' }), 'BlobWithContent', false);
+const NoteContentBlob = conduit_core_1.schemaToGraphQLType(Object.assign(Object.assign({}, en_core_entity_types_1.BlobBaseSchema), { content: 'string?', editSequenceNumber: 'int' }), 'NoteContentBlob', false);
+const BlobWithoutContent = conduit_core_1.schemaToGraphQLType(Object.assign({}, en_core_entity_types_1.BlobSchema), 'Blob', false);
+async function fetchAndCacheBlobContent(context, node, syncContext, blobName) {
     var _a;
     conduit_core_1.validateDB(context);
     const syncContextMetadata = (await context.db.getSyncContextMetadata(context, syncContext));
@@ -40,10 +41,10 @@ async function fetchAndCacheBlobContent(context, thriftComm, node, syncContext, 
         throw new Error('not authorized');
     }
     const authData = Auth.decodeAuthData(syncContextMetadata.authToken);
-    if (node.type === en_data_model_1.CoreEntityTypes.Note && blobName === 'content') {
-        return await NoteConverter_1.fetchAndCacheNoteContentData(context.trc, thriftComm, authData, node.id, syncContext, context.db, context.localSettings, context.offlineContentStrategy);
+    if (node.type === en_core_entity_types_1.CoreEntityTypes.Note && blobName === 'content') {
+        return await NoteConverter_1.fetchAndCacheNoteContentData(context.trc, context.thriftComm, authData, node.id, syncContext, context.db, context.localSettings, context.offlineContentStrategy);
     }
-    if (node.type === en_data_model_1.CoreEntityTypes.Attachment && (blobName === 'recognition' ||
+    if (node.type === en_core_entity_types_1.CoreEntityTypes.Attachment && (blobName === 'recognition' ||
         blobName === 'alternateData')) {
         if (node.localChangeTimestamp) {
             // upload is pending, subscription will trigger after upload completes
@@ -52,11 +53,11 @@ async function fetchAndCacheBlobContent(context, thriftComm, node, syncContext, 
         if (!((_a = node.NodeFields[blobName]) === null || _a === void 0 ? void 0 : _a.size)) {
             return null;
         }
-        return await ResourceConverter_1.fetchAndCacheAttachmentData(context.trc, thriftComm, authData, node.id, syncContext, blobName, context.db, context.localSettings, context.offlineContentStrategy);
+        return await ResourceConverter_1.fetchAndCacheAttachmentData(context.trc, context.thriftComm, authData, node.id, syncContext, blobName, context.db, context.localSettings, context.offlineContentStrategy);
     }
     throw new Error(`No fetcher defined for Blob ${node.type}.${blobName}`);
 }
-async function resolveContent(thriftComm, context, info, nodeRef, blobName) {
+async function resolveContent(context, info, nodeRef, blobName) {
     var _a;
     const unboundedQuery = conduit_core_1.getUnboundedQuery(context, info);
     if (unboundedQuery) {
@@ -66,7 +67,7 @@ async function resolveContent(thriftComm, context, info, nodeRef, blobName) {
     try {
         return (_a = await context.db.getNodeCachedField(context, nodeRef, `${blobName}.content`, async (node) => {
             const syncContext = await Helpers_1.getBestSyncContextForNode(context.trc, node, context.db.syncContextMetadataProvider, null);
-            return await fetchAndCacheBlobContent(context, thriftComm, node, syncContext, blobName);
+            return await fetchAndCacheBlobContent(context, node, syncContext, blobName);
         })) !== null && _a !== void 0 ? _a : null;
     }
     catch (err) {
@@ -88,7 +89,7 @@ async function resolveUrl(urlEncoder, context, node, blobName) {
     conduit_core_1.validateDB(context);
     // walk up to blob's attachment's note
     const notes = await context.db.traverseGraph(context, node, [
-        { edge: ['inputs', 'parent'], type: en_data_model_1.CoreEntityTypes.Note },
+        { edge: ['inputs', 'parent'], type: en_core_entity_types_1.CoreEntityTypes.Note },
     ]);
     if (!notes.length) {
         return node.NodeFields[blobName].url;
@@ -100,10 +101,13 @@ async function resolveUrl(urlEncoder, context, node, blobName) {
     }
     return await urlEncoder(note.id, node.NodeFields[blobName].hash, node.NodeFields[blobName].url, conduit_utils_1.keyStringForUserID(userID));
 }
-function blobResolvers(thriftComm, urlEncoder, type, blobName, hasContent) {
+function blobResolvers(urlEncoder, type, blobName, schema) {
+    const hasContent = schema !== BlobWithoutContent;
+    const hasSeqNumber = schema === NoteContentBlob;
     return {
-        type: (hasContent ? BlobWithContent : BlobWithoutContent),
+        type: schema,
         resolve: async (nodeRef, _, context, info) => {
+            var _a, _b;
             conduit_core_1.validateDB(context);
             const node = await context.db.getNode(context, { id: nodeRef.id, type });
             if (!node) {
@@ -112,21 +116,24 @@ function blobResolvers(thriftComm, urlEncoder, type, blobName, hasContent) {
             const fieldSelection = info ? conduit_core_1.getFieldsForResolver(context.querySelectionFields, info.path) : {};
             const fields = Object.assign({}, node.NodeFields[blobName]);
             if (hasContent && fieldSelection.content) {
-                fields.content = await resolveContent(thriftComm, context, info, node, blobName);
+                fields.content = await resolveContent(context, info, node, blobName);
             }
-            if (fieldSelection.url && urlEncoder && fields.url) {
+            if (!hasContent && fieldSelection.url && urlEncoder && fields.url) {
                 fields.url = await resolveUrl(urlEncoder, context, node, blobName);
+            }
+            if (hasSeqNumber && fieldSelection.editSequenceNumber) {
+                fields.editSequenceNumber = (_b = (_a = node.CacheFields) === null || _a === void 0 ? void 0 : _a[`${blobName}.editSequenceNumber`]) !== null && _b !== void 0 ? _b : 0;
             }
             return fields;
         },
     };
 }
-function BlobResolver(thriftComm, urlEncoder) {
+function BlobResolver(urlEncoder) {
     return {
-        'Note.content': blobResolvers(thriftComm, null, en_data_model_1.CoreEntityTypes.Note, 'content', true),
-        'Attachment.data': blobResolvers(thriftComm, urlEncoder, en_data_model_1.CoreEntityTypes.Attachment, 'data', false),
-        'Attachment.recognition': blobResolvers(thriftComm, urlEncoder, en_data_model_1.CoreEntityTypes.Attachment, 'recognition', true),
-        'Attachment.alternateData': blobResolvers(thriftComm, urlEncoder, en_data_model_1.CoreEntityTypes.Attachment, 'alternateData', true),
+        'Note.content': blobResolvers(null, en_core_entity_types_1.CoreEntityTypes.Note, 'content', NoteContentBlob),
+        'Attachment.data': blobResolvers(urlEncoder, en_core_entity_types_1.CoreEntityTypes.Attachment, 'data', BlobWithoutContent),
+        'Attachment.recognition': blobResolvers(urlEncoder, en_core_entity_types_1.CoreEntityTypes.Attachment, 'recognition', BlobWithContent),
+        'Attachment.alternateData': blobResolvers(urlEncoder, en_core_entity_types_1.CoreEntityTypes.Attachment, 'alternateData', BlobWithContent),
     };
 }
 exports.BlobResolver = BlobResolver;

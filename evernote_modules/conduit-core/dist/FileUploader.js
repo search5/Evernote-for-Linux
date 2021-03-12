@@ -153,7 +153,7 @@ class FileUploader {
             parentType: node.type,
             parentID: node.id,
             hash,
-            remoteUrl: res.result,
+            remoteUrl: res.results.result,
             mimeType: params.mime,
             fileData: params.data,
             filePath: params.path,
@@ -162,7 +162,7 @@ class FileUploader {
         });
         return {
             uploadedHash: hash,
-            uploadedUrl: res.result || undefined,
+            uploadedUrl: res.results.result || undefined,
         };
     }
     async uploadFile(upload) {

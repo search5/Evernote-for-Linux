@@ -13,7 +13,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CONDUIT_VERSION = exports.OfflineContentStrategy = exports.FeatureFlags = exports.AuthState = exports.DataWatcher = exports.recordSession = exports.eventsOverIPCDestination = void 0;
+exports.OfflineContentStrategy = exports.FeatureFlags = exports.CONDUIT_VERSION = exports.AuthState = exports.DataWatcher = exports.recordSession = exports.eventsOverIPCDestination = void 0;
 __exportStar(require("./Connector"), exports);
 __exportStar(require("./Hooks"), exports);
 __exportStar(require("./Observable"), exports);
@@ -29,8 +29,7 @@ var DataWatcher_1 = require("./components/DataWatcher");
 Object.defineProperty(exports, "DataWatcher", { enumerable: true, get: function () { return DataWatcher_1.DataWatcher; } });
 var conduit_view_types_1 = require("conduit-view-types");
 Object.defineProperty(exports, "AuthState", { enumerable: true, get: function () { return conduit_view_types_1.AuthState; } });
+Object.defineProperty(exports, "CONDUIT_VERSION", { enumerable: true, get: function () { return conduit_view_types_1.CONDUIT_VERSION; } });
 Object.defineProperty(exports, "FeatureFlags", { enumerable: true, get: function () { return conduit_view_types_1.FeatureFlags; } });
 Object.defineProperty(exports, "OfflineContentStrategy", { enumerable: true, get: function () { return conduit_view_types_1.OfflineContentStrategy; } });
-var ConduitVersion_1 = require("./ConduitVersion");
-Object.defineProperty(exports, "CONDUIT_VERSION", { enumerable: true, get: function () { return ConduitVersion_1.CONDUIT_VERSION; } });
 //# sourceMappingURL=index.js.map

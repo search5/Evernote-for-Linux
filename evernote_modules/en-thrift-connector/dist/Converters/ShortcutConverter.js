@@ -6,12 +6,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ShortcutConverter = exports.updateShortcutsToService = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
-const ThriftTypes_1 = require("../ThriftTypes");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Converters_1 = require("./Converters");
 const ShortcutHelpers_1 = require("./ShortcutHelpers");
 async function getCurrentShortcuts(trc, params) {
-    const nodes = await params.graphTransaction.getGraphNodesByType(trc, null, en_data_model_1.CoreEntityTypes.Shortcut);
+    const nodes = await params.graphTransaction.getGraphNodesByType(trc, null, en_core_entity_types_1.CoreEntityTypes.Shortcut);
     const nodeMap = {};
     nodes.sort((a, b) => {
         if (a.NodeFields.sortOrder === b.NodeFields.sortOrder) {
@@ -34,7 +34,7 @@ async function getCurrentShortcuts(trc, params) {
     };
 }
 function getIncomingShortcuts(prefs) {
-    const shortcuts = prefs.preferences[ThriftTypes_1.EDAM_PREFERENCE_SHORTCUTS] || [];
+    const shortcuts = prefs.preferences[en_conduit_sync_types_1.EDAM_PREFERENCE_SHORTCUTS] || [];
     const nodeMap = {};
     const nodes = [];
     let lastOrder = '';
@@ -59,9 +59,9 @@ function getIncomingShortcuts(prefs) {
 }
 function nodeFromShortcut(parent, sortOrder) {
     const node = {
-        id: Converters_1.convertGuidFromService(parent.id, en_data_model_1.CoreEntityTypes.Shortcut),
+        id: Converters_1.convertGuidFromService(parent.id, en_core_entity_types_1.CoreEntityTypes.Shortcut),
         version: 0,
-        type: en_data_model_1.CoreEntityTypes.Shortcut,
+        type: en_core_entity_types_1.CoreEntityTypes.Shortcut,
         syncContexts: [],
         label: `Shortcut for ${parent.id}`,
         localChangeTimestamp: 0,
@@ -117,14 +117,14 @@ async function updateShortcutsToService(trc, params, added, deleted) {
         }
     });
     const preferences = {
-        [ThriftTypes_1.EDAM_PREFERENCE_SHORTCUTS]: shortcutData,
+        [en_conduit_sync_types_1.EDAM_PREFERENCE_SHORTCUTS]: shortcutData,
     };
     await noteStore.updatePreferences(trc, params.personalAuth.token, preferences);
 }
 exports.updateShortcutsToService = updateShortcutsToService;
 class ShortcutConverterClass {
     constructor() {
-        this.nodeType = en_data_model_1.CoreEntityTypes.Shortcut;
+        this.nodeType = en_core_entity_types_1.CoreEntityTypes.Shortcut;
     }
     convertGuidFromService(guid) {
         return `Shortcut:${guid}`;
@@ -138,7 +138,7 @@ class ShortcutConverterClass {
         let isReplace = false;
         async function updateNode(id, shortcut) {
             if (!shortcut) {
-                await params.graphTransaction.deleteNode(trc, syncContext, { id, type: en_data_model_1.CoreEntityTypes.Shortcut });
+                await params.graphTransaction.deleteNode(trc, syncContext, { id, type: en_core_entity_types_1.CoreEntityTypes.Shortcut });
             }
             else {
                 const prevNode = await params.graphTransaction.replaceNodeAndEdges(trc, syncContext, shortcut);
@@ -157,7 +157,7 @@ class ShortcutConverterClass {
         return false;
     }
     async updateToService(trc, params, syncContext, shortcutID, diff) {
-        const curShortcut = await params.graphTransaction.getNode(trc, null, { id: shortcutID, type: en_data_model_1.CoreEntityTypes.Shortcut });
+        const curShortcut = await params.graphTransaction.getNode(trc, null, { id: shortcutID, type: en_core_entity_types_1.CoreEntityTypes.Shortcut });
         if (diff.NodeFields && diff.NodeFields.sortOrder && curShortcut && curShortcut.NodeFields.sortOrder !== diff.NodeFields.sortOrder) {
             await updateShortcutsToService(trc, params, [Object.assign(Object.assign({}, curShortcut), { NodeFields: {
                         sortOrder: diff.NodeFields.sortOrder,
@@ -166,7 +166,7 @@ class ShortcutConverterClass {
         return false;
     }
     async applyEdgeChangesToService(trc, params, syncContext, shortcutID, changes) {
-        const curShortcut = await params.graphTransaction.getNode(trc, null, { type: en_data_model_1.CoreEntityTypes.Shortcut, id: shortcutID });
+        const curShortcut = await params.graphTransaction.getNode(trc, null, { type: en_core_entity_types_1.CoreEntityTypes.Shortcut, id: shortcutID });
         if (!curShortcut) {
             return false;
         }

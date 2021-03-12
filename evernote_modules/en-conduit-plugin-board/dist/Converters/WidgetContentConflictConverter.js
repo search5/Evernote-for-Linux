@@ -14,8 +14,8 @@ const getWidgetContentConflictNodeAndEdges = async (trc, instance, context) => {
         return null;
     }
     const widgetContentConflict = Object.assign(Object.assign({}, initial), { type: BoardConstants_1.BoardEntityTypes.WidgetContentConflict, NodeFields: {
-            created: en_nsync_connector_1.convertLong(instance.created || 0),
-            updated: en_nsync_connector_1.convertLong(instance.updated || 0),
+            created: instance.created,
+            updated: instance.updated,
             content: en_nsync_connector_1.toBlobV2WithContentFields(instance.content),
         }, inputs: {
             parent: {},

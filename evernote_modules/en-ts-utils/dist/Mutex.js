@@ -106,7 +106,7 @@ class Mutex {
             throw new Error(`Attempted to acquire lock to a destructed mutex "${this.debugName}"`);
         }
         // allocate lock and add to the queue
-        const lock = new MutexLock(this, timeout, traceName, (lock) => this.locks.indexOf(lock));
+        const lock = new MutexLock(this, timeout, traceName, lk => this.locks.indexOf(lk));
         this.locks.push(lock);
         if (this.locks[0] === lock) {
             // this is the only lock in the queue, unlock it
@@ -231,7 +231,7 @@ class RankedMutex {
             throw new Error(`Attempted to acquire lock to a destructed mutex "${this.debugName}"`);
         }
         // allocate lock and add to the queue
-        const lock = new MutexLock(this, timeout, traceName, (lock) => this.locks.indexOf(lock, priority));
+        const lock = new MutexLock(this, timeout, traceName, lk => this.locks.indexOf(lk, priority));
         this.locks.push(lock, priority);
         if (this.locks.length === 1) {
             // this is the only lock in the queue, unlock it

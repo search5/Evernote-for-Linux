@@ -24,10 +24,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateStackToServiceForPartialNb = exports.expungeLinkedNotebooksOnService = exports.removePartialNotebook = exports.processLinkedNotebooksForPartialNotebooks = exports.getExpungedLinkedNotebooks = exports.convertPartialNbGuidToSharedNbGuid = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const Auth_1 = require("../Auth");
-const ThriftTypes_1 = require("../ThriftTypes");
 const Converters_1 = require("./Converters");
 const LINKED_NOTEBOOK_SYNC_STATE_PATH = ['sharing', 'linkedNotebooks'];
 function convertSharedNbGuidToPartialNbGuid(sharedNbId) {
@@ -35,7 +35,7 @@ function convertSharedNbGuidToPartialNbGuid(sharedNbId) {
     return `lnb:${sharedNbId}`;
 }
 function convertSharedNbGuidToPartialNbNodeID(sharedNbId) {
-    return Converters_1.convertGuidFromService(convertSharedNbGuidToPartialNbGuid(sharedNbId), en_data_model_1.CoreEntityTypes.Notebook);
+    return Converters_1.convertGuidFromService(convertSharedNbGuidToPartialNbGuid(sharedNbId), en_core_entity_types_1.CoreEntityTypes.Notebook);
 }
 function convertPartialNbGuidToSharedNbGuid(partialNbId) {
     return partialNbId.slice('lnb:'.length);
@@ -94,7 +94,7 @@ async function getLinkedNotebooksFromSharedNbGlobalID(trc, graphTransaction, sha
 async function getExpungedLinkedNotebooks(trc, graphTransaction, notebooks) {
     const sharedNotebookGlobalIDs = (notebooks || []).reduce((ar, nb) => {
         var _a;
-        if (((_a = nb.recipientSettings) === null || _a === void 0 ? void 0 : _a.recipientStatus) === ThriftTypes_1.TRecipientStatus.NOT_IN_MY_LIST && Boolean(nb.sharedNotebooks)) {
+        if (((_a = nb.recipientSettings) === null || _a === void 0 ? void 0 : _a.recipientStatus) === en_conduit_sync_types_1.TRecipientStatus.NOT_IN_MY_LIST && Boolean(nb.sharedNotebooks)) {
             const sharedNbIDs = nb.sharedNotebooks.filter(snb => Boolean(snb.globalId)).map(s => s.globalId);
             return ar.concat(sharedNbIDs);
         }
@@ -149,7 +149,7 @@ async function processLinkedNotebooksForPartialNotebooks(trc, graphTransaction, 
             partialNbsToAdd.push(nbServiceData);
         }
     }
-    for (const shareNbId in sharedNbsToRemove) {
+    for (const shareNbId of sharedNbsToRemove) {
         const partialNbGuid = await getPartialNbToRemoveForSharedNbId(trc, graphTransaction, sharedNbSyncState || {}, linkedNbsSyncState, shareNbId);
         if (partialNbGuid) {
             partialNbsToRemove.push(partialNbGuid);
@@ -161,11 +161,11 @@ exports.processLinkedNotebooksForPartialNotebooks = processLinkedNotebooksForPar
 // Remove partial notebook created for sharedNotebook
 async function removePartialNotebook(trc, params, syncContext, sharedNotebookGlobalID, expungeLinkedNbOnService) {
     const linkedNbId = convertSharedNbGuidToPartialNbNodeID(sharedNotebookGlobalID);
-    const partialNbNode = await params.graphTransaction.getNode(trc, null, { id: linkedNbId, type: en_data_model_1.CoreEntityTypes.Notebook });
+    const partialNbNode = await params.graphTransaction.getNode(trc, null, { id: linkedNbId, type: en_core_entity_types_1.CoreEntityTypes.Notebook });
     if (!partialNbNode) {
         return;
     }
-    await params.graphTransaction.deleteNode(trc, syncContext, { id: linkedNbId, type: en_data_model_1.CoreEntityTypes.Notebook });
+    await params.graphTransaction.deleteNode(trc, syncContext, { id: linkedNbId, type: en_core_entity_types_1.CoreEntityTypes.Notebook });
     if (expungeLinkedNbOnService && params.personalAuth) {
         await expungeLinkedNotebooksOnService(trc, params.graphTransaction, params.thriftComm, params.personalAuth, sharedNotebookGlobalID);
     }
@@ -201,7 +201,7 @@ async function updateStackToServiceForPartialNb(trc, params, notebook, stack) {
         throw new conduit_utils_1.InternalError(`Missing linkedNb params in partial Nb. ${conduit_utils_1.safeStringify(notebook)}`);
     }
     const { personalAuth, thriftComm } = params;
-    const sharedNotebookGlobalId = convertPartialNbGuidToSharedNbGuid(Converters_1.convertGuidToService(notebook.id, en_data_model_1.CoreEntityTypes.Notebook));
+    const sharedNotebookGlobalId = convertPartialNbGuidToSharedNbGuid(Converters_1.convertGuidToService(notebook.id, en_core_entity_types_1.CoreEntityTypes.Notebook));
     // need to fetch sharedNB in order to get username without which updateLinkedNotebook fails.
     const sharedNotebook = await Auth_1.authenticateToSharedNotebook(trc, params.thriftComm, personalAuth, sharedNotebookGlobalId, noteStoreUrl);
     if (!sharedNotebook) {

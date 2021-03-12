@@ -60,7 +60,7 @@ class BackgroundNoteSyncActivity extends SyncActivity_1.SyncActivity {
     async kickoffBackgroundContentFetch(trc, syncParams) {
         // all notes synced. Start content fetch activity for any nbs marked for offline.
         if (syncParams.offlineContentStrategy !== conduit_view_types_1.OfflineContentStrategy.NONE) {
-            await this.context.syncManager.addActivity(trc, new ContentFetchSyncActivity_1.ContentFetchSyncActivity(this.di, this.context));
+            await this.context.syncManager.addActivity(trc, new ContentFetchSyncActivity_1.ContentFetchSyncActivity(this.di, this.context, null));
         }
     }
 }

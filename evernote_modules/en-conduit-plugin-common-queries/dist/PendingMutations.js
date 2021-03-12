@@ -11,18 +11,18 @@ async function hasPendingMutationsResolver(parent, args, context) {
     if (!context || !context.db) {
         return {
             result: false,
-            largestTimestamp: 0,
         };
     }
     // Need to debounce this watcher as it can otherwise get noisy
     (_a = context.watcher) === null || _a === void 0 ? void 0 : _a.setDebounceTime(conduit_utils_1.MILLIS_IN_ONE_SECOND);
-    return await context.db.hasPendingMutations(context.trc, context.watcher);
+    return {
+        result: await context.db.hasPendingMutations(context.trc, context.watcher),
+    };
 }
 exports.hasPendingMutationsPlugin = {
     args: {},
     type: conduit_core_1.schemaToGraphQLType({
         result: 'boolean',
-        largestTimestamp: 'timestamp',
     }, 'HasPendingMutationsResult', false),
     resolve: hasPendingMutationsResolver,
 };

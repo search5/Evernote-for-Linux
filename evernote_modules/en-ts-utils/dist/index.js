@@ -25,7 +25,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !exports.hasOwnProperty(p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.setDiff = exports.setEquals = exports.setContains = exports.toPascalCase = exports.basename = exports.deepUpdateMutable = exports.DemandLoader = exports.binarySearch = exports.DataConsumer = exports.runAfter = exports.logIfSlow = exports.logAfter = exports.deleteUndefinedProperties = exports.verifyStash = exports.isStashEmpty = exports.firstStashEntry = exports.firstStashKey = exports.allSettled = exports.allWithError = exports.unwrapErrOrData = exports.withError = exports.fromMaybe = exports.cancellableSleep = exports.allocPromise = exports.convertStashToPaths = exports.objectSetField = exports.walkObjectPathSupportsNumeric = exports.walkObjectPath = exports.sleep = exports.absurd = exports.arrayFindAndDelete = exports.arrayPushUnique = exports.loopArray = exports.multiSplitArray = exports.chunkArray = exports.isEqual = exports.getTypeOf = exports.safeParse = exports.safeStringify = exports.promisifyCallUntyped = exports.promisifyCall = exports.isValuePrimitiveType = exports.emptyAsyncFunc = exports.emptyFunc = void 0;
+exports.setDiff = exports.setEquals = exports.setContains = exports.toPascalCase = exports.basename = exports.deepUpdateMutable = exports.DemandLoader = exports.binarySearch = exports.DataConsumer = exports.runAfter = exports.logIfSlow = exports.logAfter = exports.deleteUndefinedProperties = exports.verifyStash = exports.isStashEmpty = exports.firstStashEntry = exports.firstStashKey = exports.allSettled = exports.allWithError = exports.unwrapErrOrData = exports.withError = exports.fromMaybe = exports.cancellableSleep = exports.allocPromise = exports.convertStashToPaths = exports.objectSetField = exports.walkObjectPathSupportsNumeric = exports.walkObjectPath = exports.sleep = exports.absurd = exports.arrayFindAndDelete = exports.arrayPushUnique = exports.loopArray = exports.multiSplitArray = exports.chunkArray = exports.deepFlattenArray = exports.toArray = exports.isNotNullish = exports.isNullish = exports.isEqual = exports.getTypeOf = exports.safeParse = exports.safeStringify = exports.promisifyCallUntyped = exports.promisifyCall = exports.isValuePrimitiveType = exports.emptyAsyncFunc = exports.emptyFunc = void 0;
 const Errors_1 = require("./Errors");
 const EventTracer_1 = require("./EventTracer");
 const logger_1 = require("./logger");
@@ -41,6 +41,7 @@ __exportStar(require("./EventTracerInterface"), exports);
 __exportStar(require("./ExponentialBackoffManager"), exports);
 __exportStar(require("./Functions"), exports);
 __exportStar(require("./logger"), exports);
+__exportStar(require("./LongUtils"), exports);
 var Mutex_1 = require("./Mutex");
 Object.defineProperty(exports, "Mutex", { enumerable: true, get: function () { return Mutex_1.Mutex; } });
 Object.defineProperty(exports, "RankedMutex", { enumerable: true, get: function () { return Mutex_1.RankedMutex; } });
@@ -168,6 +169,36 @@ function isEqual(a, b) {
     return false;
 }
 exports.isEqual = isEqual;
+function isNullish(value) {
+    return value === null || value === undefined;
+}
+exports.isNullish = isNullish;
+function isNotNullish(value) {
+    return value !== null && value !== undefined;
+}
+exports.isNotNullish = isNotNullish;
+function toArray(val) {
+    if (Array.isArray(val)) {
+        return val;
+    }
+    if (val === undefined) {
+        return [];
+    }
+    return [val];
+}
+exports.toArray = toArray;
+function deepFlattenArray(arr, out = []) {
+    for (const a of arr) {
+        if (Array.isArray(a)) {
+            deepFlattenArray(a, out);
+        }
+        else {
+            out.push(a);
+        }
+    }
+    return out;
+}
+exports.deepFlattenArray = deepFlattenArray;
 function chunkArray(array, chunkSize) {
     const chunkedArray = [];
     let index = 0;

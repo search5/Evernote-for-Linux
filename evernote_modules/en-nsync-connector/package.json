@@ -1,6 +1,6 @@
 {
   "name": "en-nsync-connector",
-  "version": "1.28.5",
+  "version": "1.30.2",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -11,7 +11,6 @@
   ],
   "devDependencies": {
     "@types/chai-as-promised": "^7.1.1",
-    "@types/long": "^4.0.1",
     "@types/node": "^10.12.2",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
@@ -20,12 +19,14 @@
     "ts-sinon": "^1.0.21"
   },
   "dependencies": {
-    "conduit-core": "1.28.5",
-    "conduit-storage": "1.28.5",
-    "conduit-utils": "1.28.5",
-    "conduit-view-types": "1.28.5",
-    "en-data-model": "1.28.5",
-    "long": "^4.0.0",
+    "conduit-core": "1.30.2",
+    "conduit-storage": "1.30.2",
+    "conduit-utils": "1.30.2",
+    "conduit-view-types": "1.30.2",
+    "en-conduit-sync-types": "1.30.2",
+    "en-core-entity-types": "1.30.2",
+    "en-data-model": "^2.7.0",
+    "en-graph-types": "1.2.2",
     "simply-immutable": "^2.1.1"
   }
 }

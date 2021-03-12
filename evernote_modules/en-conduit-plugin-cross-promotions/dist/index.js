@@ -7,11 +7,11 @@ exports.setupENCrossPromotionPlugin = void 0;
 const conduit_core_1 = require("conduit-core");
 const en_thrift_connector_1 = require("en-thrift-connector");
 const ENThriftCrossPromotionInfo_1 = require("./ENThriftCrossPromotionInfo");
-function setupENCrossPromotionPlugin(thriftComm) {
+function setupENCrossPromotionPlugin() {
     async function crossPromotionInfoResolver(_, args, context) {
         const authorizedToken = await conduit_core_1.retrieveAuthorizedToken(context);
         const authData = en_thrift_connector_1.decodeAuthData(authorizedToken);
-        return ENThriftCrossPromotionInfo_1.getCrossPromotionsInfo(context.trc, thriftComm, authData);
+        return ENThriftCrossPromotionInfo_1.getCrossPromotionsInfo(context.trc, context.thriftComm, authData);
     }
     const responseType = conduit_core_1.schemaToGraphQLType({
         usesEvernoteWindows: 'boolean',

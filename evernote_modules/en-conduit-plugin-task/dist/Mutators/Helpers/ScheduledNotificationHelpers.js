@@ -5,12 +5,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addOpsForTaskReminderSNCreate = exports.addOpsForTaskReminderSNUpsert = exports.addScheduledNotificationCreateOps = exports.createNewScheduledNotification = void 0;
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_plugin_scheduled_notification_shared_1 = require("en-conduit-plugin-scheduled-notification-shared");
 const ScheduledNotificationUtils_1 = require("../../ScheduledNotifications/ScheduledNotificationUtils");
 const TaskConstants_1 = require("../../TaskConstants");
 function createNewScheduledNotification(trc, ctx, schedulingEntityRef, dataSourceEntityRef, mute) {
     const scheduledNotificationType = ScheduledNotificationUtils_1.getScheduledNotificationType(dataSourceEntityRef.type);
     const id = `${scheduledNotificationType}:${schedulingEntityRef.id}`;
-    const sn = ctx.createEntity({ id, type: TaskConstants_1.TaskEntityTypes.ScheduledNotification }, {
+    const sn = ctx.createEntity({ id, type: en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.ScheduledNotification }, {
         dataSourceUpdatedAt: ctx.timestamp,
         schedulingUpdatedAt: ctx.timestamp,
         scheduledNotificationType,
@@ -53,7 +54,7 @@ async function addOpsForTaskReminderSNUpsert(trc, ctx, ops, fields, reminderRef,
         ops.push({
             changeType: 'Node:UPDATE',
             nodeRef: snRef,
-            node: ctx.assignFields(TaskConstants_1.TaskEntityTypes.ScheduledNotification, fields),
+            node: ctx.assignFields(en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.ScheduledNotification, Object.assign(Object.assign({}, fields), { updated: ctx.timestamp })),
         });
     }
 }

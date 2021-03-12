@@ -244,11 +244,9 @@ class MutationEngine {
             name,
             params,
             guids,
-            result: null,
+            results: {},
             timestamp,
             isRetry: false,
-            clearedWithMutationTracker: mutatorDef.type === 'CommandService',
-            commandServiceTimestamp: null,
         };
         if (mutatorDef.buffering) {
             const bufferTime = typeof mutatorDef.buffering.time === 'string' ? clientValues[mutatorDef.buffering.time] : mutatorDef.buffering.time;
@@ -262,7 +260,8 @@ class MutationEngine {
                 }
             }
         }
-        await this.runMutatorInternal(trc, ctx, mutation);
+        const { results } = await this.runMutatorInternal(trc, ctx, mutation);
+        mutation.results = results;
         return mutation;
     }
     async runMutation(trc, graphInterface, isOptimistic, userID, vaultUserID, mutation) {
@@ -271,11 +270,11 @@ class MutationEngine {
     }
     async runMutatorInternal(trc, ctx, mutation) {
         const mutatorDef = this.mutators[mutation.name];
-        let timestampOut;
         if (!mutatorDef) {
             throw new conduit_utils_1.NotFoundError(mutation.name, `No mutator named "${mutation.name}"`);
         }
-        let result = null;
+        let deps = null;
+        let results = {};
         if (mutatorDef.execute) {
             const plan = await mutatorDef.execute(trc, ctx, mutation.params);
             // containment and account limit rules applied here
@@ -283,18 +282,27 @@ class MutationEngine {
             if (plan.lateOps) {
                 plan.lateOps = await this.processOps(trc, ctx, mutatorDef, plan.lateOps);
             }
-            timestampOut = await ctx.graphInterface.runExecutionPlan(trc, mutation, plan);
-            result = plan.result;
+            deps = await ctx.graphInterface.runExecutionPlan(trc, mutation, plan);
+            results = Object.assign({}, plan.results);
         }
         else if (ctx.graphInterface.runRemoteCommand) {
             const command = await mutatorDef.executeOnService(trc, ctx, mutation.params);
-            result = await ctx.graphInterface.runRemoteCommand(trc, mutation, command);
+            const result = await ctx.graphInterface.runRemoteCommand(trc, mutation, command);
+            if (result && typeof result === 'object') {
+                results.result = result.id;
+            }
+            else if (typeof result === 'string') {
+                results.result = result;
+            }
         }
-        if (result && typeof result === 'object') {
-            mutation.result = result.id;
-        }
-        else if (typeof result === 'string') {
-            mutation.result = result;
+        if (mutatorDef.resultTypes) {
+            for (const key in mutatorDef.resultTypes) {
+                if (!(key in results)) {
+                    // fill in null for missing values, so that they pass GraphQL validation
+                    results[key] = null;
+                }
+                conduit_utils_1.validateSchemaType(mutatorDef.resultTypes[key], key, results[key]);
+            }
         }
         if (this.config.sendMutationMetrics && !ctx.isOptimistic && Object.keys(ctx.eventsToRecord).length) {
             for (const key in ctx.eventsToRecord) {
@@ -302,7 +310,7 @@ class MutationEngine {
                 this.config.recordEvent(event);
             }
         }
-        return timestampOut;
+        return { deps, results };
     }
     async processOps(trc, ctx, mutatorDef, opsIn) {
         let lastEdgeModify;

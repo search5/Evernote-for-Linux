@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getSavedSearchNodesAndEdges = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const BaseConverter_1 = require("./BaseConverter");
 const getSavedSearchNodesAndEdges = async (trc, instance) => {
     const initial = BaseConverter_1.createInitialNode(instance);
@@ -13,7 +13,7 @@ const getSavedSearchNodesAndEdges = async (trc, instance) => {
         conduit_utils_1.logger.error('Missing initial values');
         return null;
     }
-    const node = Object.assign(Object.assign({}, initial), { type: en_data_model_1.CoreEntityTypes.SavedSearch, NodeFields: {
+    const node = Object.assign(Object.assign({}, initial), { type: en_core_entity_types_1.CoreEntityTypes.SavedSearch, NodeFields: {
             query: instance.query,
         }, inputs: {}, outputs: {
             shortcut: {},

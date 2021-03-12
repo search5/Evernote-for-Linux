@@ -12,16 +12,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.NSyncEventManager = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
-const MutationTrackerConverter_1 = require("./Converters/MutationTrackerConverter");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const DataHelpers_1 = require("./DataHelpers");
-const index_1 = require("./index");
 const NSyncProcessor_1 = require("./NSyncProcessor");
-const NSyncTypes_1 = require("./NSyncTypes");
 const gTracePool = new conduit_utils_1.AsyncTracePool('NSyncEventManager');
 const LAST_CONNECTION_BUFFER_TIME = 60000;
 const BACKOFF_RECONNECT = 5 * conduit_utils_1.MILLIS_IN_ONE_SECOND;
 const RECONNECT_JITTER_RATIO = 0.4;
+const NEW_CONNID_TRACKER_KEY = 'NSyncEventManager.setConnectionID';
+const CLEAR_CONN_INFO_KEY = 'NSyncEventManager.clearConnInfo';
+const CONNECTED_KEY = 'NSyncEventManager.connected';
+const AUTHENTICATION_EXPIRED = 'Authentication Expired';
 function buildCatchupFilter(newTypes, oldTypes) {
     const missingTypes = [];
     for (const type of newTypes) {
@@ -97,7 +99,7 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         }
         this.expungeSet = new Set();
     }
-    async init(trc, host, monolithToken, jwtToken, storage, clientID, resourceManager, toggleEventSync, availability) {
+    async init(trc, host, monolithToken, jwtToken, storage, clientID, resourceManager, usedPrebuilt, toggleEventSync, availability) {
         this.isDestroyed = false;
         this.dataHelpers = DataHelpers_1.createDataHelpers(host, resourceManager);
         this.monolithHost = host;
@@ -109,8 +111,8 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         this.availability = availability;
         this.availability.startPolling(trc);
         this.connectionInfo = null;
-        const connInfo = await this.getConnectionInformation(trc);
-        this.nodeFilter = en_data_model_1.getNSyncEntityFilter(this.di.getNodeTypeDefs(), this.di.nSyncEntityFilter);
+        const connInfo = await (usedPrebuilt ? this.updateConnectionInformation(trc, { connectionID: conduit_utils_1.uuid() }) : this.getConnectionInformation(trc));
+        this.nodeFilter = en_core_entity_types_1.getNSyncEntityFilter(this.di.getNodeTypeDefs(), this.di.nSyncEntityFilter);
         if (connInfo.lastFilter.length) {
             this.catchupFilter = buildCatchupFilter(this.nodeFilter, connInfo.lastFilter);
         }
@@ -121,7 +123,7 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
     }
     isAvailable() {
         var _a;
-        return Boolean(this.di.isNSyncEnabled && ((_a = this.availability) === null || _a === void 0 ? void 0 : _a.isServiceAvailable()));
+        return Boolean(this.di.isNSyncEnabled && ((_a = this.availability) === null || _a === void 0 ? void 0 : _a.isServiceAvailable()) && this.di.nSyncEntityFilter.length);
     }
     isEnabled() {
         return this.nsyncRunning;
@@ -138,19 +140,45 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             }
         }
     }
-    async clearConnectionInfo(trc) {
+    async refreshConnectionInfo(trc) {
+        var _a, _b, _c;
+        if (!this.storage) {
+            throw new Error('Unable to read from storage');
+        }
+        const connInfo = await this.storage.getSyncState(trc, null, ['NSyncEventManager']);
+        if (connInfo) {
+            this.connectionInfo = {
+                connectionID: (_a = connInfo === null || connInfo === void 0 ? void 0 : connInfo.connectionID) !== null && _a !== void 0 ? _a : this.di.uuid('NSyncEventManager'),
+                lastConnection: (_b = connInfo === null || connInfo === void 0 ? void 0 : connInfo.lastConnection) !== null && _b !== void 0 ? _b : 0,
+                lastFilter: (_c = connInfo === null || connInfo === void 0 ? void 0 : connInfo.lastFilter) !== null && _c !== void 0 ? _c : [],
+                backoff: 0,
+                attempts: 0,
+                lastAttempt: 0,
+            };
+        }
+    }
+    async onDBClear(trc) {
+        var _a;
+        conduit_utils_1.traceTestCounts(trc, { [CLEAR_CONN_INFO_KEY]: 1 });
         await this.updateConnectionInformation(trc, {
             connectionID: this.di.uuid('NSyncEventManager'),
             lastConnection: 0,
+            backoff: 0,
+            attempts: 0,
+            lastAttempt: 0,
         });
         if (this.eventSrc) {
-            this.destroySync();
-            await this.createSync(trc);
+            await this.disconnect(trc);
+            this.docQueue.length = 0;
         }
+        (_a = this.backoffSleep) === null || _a === void 0 ? void 0 : _a.cancel();
     }
     async updateConnectionInformation(trc, updates, tx) {
         if (!this.connectionInfo) {
             this.connectionInfo = await this.getConnectionInformation(trc);
+        }
+        if (updates.connectionID && this.connectionInfo.connectionID !== updates.connectionID) {
+            conduit_utils_1.traceTestCounts(trc, { [NEW_CONNID_TRACKER_KEY]: 1 });
         }
         this.connectionInfo = Object.assign(Object.assign({}, this.connectionInfo), updates);
         if (tx) {
@@ -187,7 +215,6 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
     }
     async processNSyncData(trc, eventData, context) {
         let idx = 0;
-        let tracker = null;
         let latestConnectionTime = (await this.getConnectionInformation(trc)).lastConnection;
         let yieldCheckRes;
         while (idx < eventData.length) {
@@ -215,32 +242,15 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
                     const doc = eventData[idx].doc;
                     if (doc) {
                         try {
-                            if (doc.instance.ref.type === NSyncTypes_1.NSyncTypes.EntityType.MUTATION_TRACKER) {
-                                if (!tracker || (tracker.instance.updated || 0) < (doc.instance.updated || 0)) {
-                                    tracker = doc;
-                                    continue;
-                                }
-                            }
                             await NSyncProcessor_1.processNSyncDoc(trc, doc, this, tx, this.dataHelpers);
                         }
                         catch (e) {
                             conduit_utils_1.logger.error('Unable to process document', e);
                         }
                     }
-                    if (eventData[idx].eventTime && eventData[idx].eventTime > latestConnectionTime) {
+                    if (!this.catchupFilter && (eventData[idx].event === 'complete' || eventData[idx].eventTime && eventData[idx].eventTime > latestConnectionTime)) {
                         latestConnectionTime = eventData[idx].eventTime;
-                        await this.updateConnectionInformation(trc, { lastConnection: eventData[idx].eventTime }, tx);
-                    }
-                }
-                if (tracker && idx === eventData.length) {
-                    try {
-                        if (!this.dataHelpers) {
-                            return;
-                        }
-                        await NSyncProcessor_1.processNSyncDoc(trc, tracker, this, tx, this.dataHelpers);
-                    }
-                    catch (e) {
-                        conduit_utils_1.logger.error('Unable to update mutation tracker', e);
+                        await this.updateConnectionInformation(trc, { lastConnection: eventData[idx].eventTime, lastFilter: this.nodeFilter }, tx);
                     }
                 }
             });
@@ -255,15 +265,16 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         const docs = conduit_utils_1.safeParse(event.data);
         if (Array.isArray(docs)) {
             for (const doc of docs) {
-                this.docQueue.push({ doc, eventTime: 0 });
+                this.docQueue.push({ doc, eventTime: 0, event: null });
             }
-            this.docQueue.push({ doc: null, eventTime: lastEventTime });
+            this.docQueue.push({ doc: null, eventTime: lastEventTime, event: event.type });
         }
         else if (docs) {
-            this.docQueue.push({ doc: docs, eventTime: lastEventTime });
+            this.docQueue.push({ doc: docs, eventTime: lastEventTime, event: event.type });
         }
     }
     async updateToken(trc, jwt, monolithToken) {
+        conduit_utils_1.logger.info('Update Nsync engine auth data.');
         if (this.jwt !== jwt || this.monolithToken !== this.monolithToken) {
             this.destroySync();
             this.jwt = jwt;
@@ -319,19 +330,6 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
     clearMessageConsumer() {
         this.messageConsumer = null;
     }
-    async upsertTracker(trc, timestamp) {
-        if (!this.storage) {
-            throw new Error('Missing storage, cannot get nsync connection info');
-        }
-        const currentTracker = await this.storage.getNode(trc, en_data_model_1.MUTATION_TRACKER_REF);
-        if (currentTracker && currentTracker.NodeFields.updated > timestamp) {
-            return;
-        }
-        await this.storage.transact(trc, 'updateMutationTracker', async (tx) => {
-            const tracker = MutationTrackerConverter_1.createTrackerNode(timestamp, this.getUserID());
-            await tx.replaceNode(trc, index_1.NSYNC_CONTEXT, tracker);
-        });
-    }
     clearCatchupFilter() {
         new Promise(async (resolve) => {
             this.catchupFilter = null;
@@ -376,11 +374,12 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             this.onSyncMessage({ type: 'Error', message: 'Not Authorized', error: new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.JWT_AUTH_EXPIRED, this.monolithToken) });
             return;
         }
-        const entityFilterParam = NSyncTypes_1.nodeTypeArrayToEntityFilterParam(this, (_a = this.catchupFilter) !== null && _a !== void 0 ? _a : this.nodeFilter);
-        const lastConnection = this.catchupFilter ? 0 : connInfo.lastConnection - LAST_CONNECTION_BUFFER_TIME;
+        const mockExpirationParam = this.di.mockExpiration ? `&expiration=${Date.now() + this.di.mockExpiration}` : '';
+        const entityFilterParam = en_conduit_sync_types_1.nodeTypeArrayToEntityFilterParam(this, (_a = this.catchupFilter) !== null && _a !== void 0 ? _a : this.nodeFilter);
+        const lastConnection = this.catchupFilter ? 0 : Math.max(0, connInfo.lastConnection - LAST_CONNECTION_BUFFER_TIME);
         const connectionID = this.catchupFilter ? this.di.uuid('NSyncEventManager') : connInfo.connectionID;
         const nsyncHost = await this.hostResolver.getServiceHost(trc, this.monolithHost, 'Sync');
-        this.eventSrc = this.di.newEventSource(`${nsyncHost}/v1/connect?lastConnection=${lastConnection}&connectionId=${connectionID}&encode=${false}${entityFilterParam}`, {
+        this.eventSrc = this.di.newEventSource(`${nsyncHost}/v1/connect?lastConnection=${lastConnection}&connectionId=${connectionID}&encode=${false}${entityFilterParam}${mockExpirationParam}`, {
             ['x-mono-authn-token']: `auth=${this.monolithToken}`,
             Authorization: `Bearer ${this.jwt}`,
             ['x-conduit-version']: conduit_core_1.CONDUIT_VERSION,
@@ -390,7 +389,7 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             throw new Error('EventSource failed to connect');
         }
         this.eventSrc.addEventListener('connection', (event) => {
-            conduit_utils_1.logger.debug('Successful connection!', event);
+            conduit_utils_1.logger.debug('Successful connection!', event.lastEventId);
             gTracePool.runTraced(this.di.getTestEventTracker(), async (trc2) => {
                 return this.updateConnectionInformation(trc2, {
                     connectionID: event.data.toString(),
@@ -399,55 +398,55 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
                     backoff: 0,
                 });
             }).catch(err => conduit_utils_1.logger.error('Unable to update connection information', err));
+            conduit_utils_1.traceTestCounts(trc, { [CONNECTED_KEY]: 1 });
             this.onSyncMessage({ type: 'Connection', message: 'Connected!' });
         });
         this.eventSrc.onerror = (event) => {
             this.handleErrorEvent(event);
         };
         this.eventSrc.addEventListener('sync', (event) => {
-            conduit_utils_1.logger.debug('Sync event', event);
+            conduit_utils_1.logger.debug('Sync event', event.lastEventId);
             this.enqueueEvent(event);
         });
         this.eventSrc.addEventListener('event', (event) => {
-            conduit_utils_1.logger.debug('Event event', event);
+            conduit_utils_1.logger.debug('Event event', event.lastEventId);
             this.enqueueEvent(event);
         });
         this.eventSrc.addEventListener('ping', (msg) => {
             conduit_utils_1.logger.debug('Ping from service', msg);
         });
+        this.eventSrc.addEventListener('exception', (msg) => {
+            if (!msg.data) {
+                conduit_utils_1.logger.warn('Received exception with empty data', msg);
+                return;
+            }
+            const evt = conduit_utils_1.safeParse(msg.data);
+            if (!evt || typeof (evt) !== 'object') {
+                conduit_utils_1.logger.warn('Received exception with non-object error', evt);
+                return;
+            }
+            const err = {
+                type: 'error',
+                status: evt.status || 0,
+                message: evt.message || 'Empty Exception',
+            };
+            if (err.status === 401 && err.message === AUTHENTICATION_EXPIRED) {
+                // Should not happen often and want to see it in logs later
+                conduit_utils_1.logger.info('Received token expired exception from nsync. Will get new token...');
+            }
+            this.handleErrorEvent(err);
+        });
         this.eventSrc.addEventListener('complete', (event) => {
-            conduit_utils_1.logger.debug('Sync updates completed.', event);
-            const lastEventTime = eventTimeFromEventID(event.lastEventId);
-            gTracePool.runTraced(this.di.getTestEventTracker(), async (trc2) => {
-                await this.flush(trc2, { yieldCheck: null });
-            })
-                .then(() => {
-                // If there is a catchup filter set, don't send the onSyncMessage event
-                // instead, clear the filter and restart syncing with full filter
-                if (this.catchupFilter) {
-                    conduit_utils_1.logger.debug('Sync updates on catch up completed.', event);
-                    this.clearCatchupFilter();
-                    return;
-                }
-                gTracePool.runTraced(this.di.getTestEventTracker(), async (trc2) => {
-                    return this.updateConnectionInformation(trc2, {
-                        lastConnection: lastEventTime,
-                        lastFilter: this.nodeFilter,
-                    });
-                }).catch(err => conduit_utils_1.logger.error('Unable to update connection information', err));
-                this.onSyncMessage({ type: 'Complete', message: 'Completed' });
-                this.clearProcessingEntities();
-                if (lastEventTime) {
-                    gTracePool.runTraced(this.di.getTestEventTracker(), async (trc2) => {
-                        return this.upsertTracker(trc2, lastEventTime);
-                    }).catch(err => conduit_utils_1.logger.error('Unable to upsert tracker', err));
-                }
-            })
-                .catch(err => {
-                conduit_utils_1.logger.error(`Unable to flush event consumer ${err}`);
-                this.onSyncMessage({ type: 'Complete', message: 'Completed', error: err });
-                this.clearProcessingEntities();
-            });
+            // If there is a catchup filter set, don't send the onSyncMessage event or
+            // the enqueue event. Instead, clear the filter and restart syncing with full filter
+            if (this.catchupFilter) {
+                this.clearCatchupFilter();
+                conduit_utils_1.logger.debug('Sync updates on catch up completed.', event.lastEventId);
+                return;
+            }
+            conduit_utils_1.logger.debug('Sync updates completed.', event.lastEventId);
+            this.enqueueEvent(event);
+            this.onSyncMessage({ type: 'Complete', message: 'Completed' });
         });
     }
     handleErrorEvent(errorEvent) {
@@ -504,6 +503,9 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         const remainingDocs = await this.processNSyncData(trc, docs, context);
         if (!this.isDestroyed) {
             this.docQueue.unshift(...remainingDocs);
+            if (!this.docQueue.length) {
+                this.clearProcessingEntities();
+            }
         }
     }
     async disconnect(trc) {
@@ -608,9 +610,6 @@ __decorate([
 ], NSyncEventManager.prototype, "clearBackoff", null);
 __decorate([
     conduit_utils_1.traceAsync('NSyncEventManager')
-], NSyncEventManager.prototype, "clearConnectionInfo", null);
-__decorate([
-    conduit_utils_1.traceAsync('NSyncEventManager')
 ], NSyncEventManager.prototype, "updateConnectionInformation", null);
 __decorate([
     conduit_utils_1.traceAsync('NSyncEventManager')
@@ -621,9 +620,6 @@ __decorate([
 __decorate([
     conduit_utils_1.traceAsync('NSyncEventManager')
 ], NSyncEventManager.prototype, "onSyncStateChange", null);
-__decorate([
-    conduit_utils_1.traceAsync('NSyncEventManager')
-], NSyncEventManager.prototype, "upsertTracker", null);
 __decorate([
     conduit_utils_1.traceAsync('NSyncEventManager')
 ], NSyncEventManager.prototype, "createSync", null);

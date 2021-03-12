@@ -4,7 +4,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateTokenTypeArg = exports.disallowedEmailDomain = void 0;
-const en_thrift_connector_1 = require("en-thrift-connector");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const DISALLOWED_AUTHZ_DOMAINS = [
     /@etonreve.com$/i,
     /@inactive.evernote.com$/i,
@@ -21,7 +21,7 @@ exports.disallowedEmailDomain = disallowedEmailDomain;
 function validateTokenTypeArg(args) {
     if (args.hasOwnProperty('tokenType')) {
         const tokenTypeName = args.tokenType;
-        const tokenType = en_thrift_connector_1.TNsvcTokenType[tokenTypeName];
+        const tokenType = en_conduit_sync_types_1.TNsvcTokenType[tokenTypeName];
         if (tokenType === undefined) {
             throw new Error(`Invalid tokenType query argument: ${args.tokenType}`);
         }

@@ -7,7 +7,7 @@ exports.addMarkedForOfflineMutators = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const NotebookConverter_1 = require("../Converters/NotebookConverter");
 function addMarkedForOfflineMutators(out, resourceManager, offlineContentStrategy) {
     async function markedForOfflineResolver(parent, args, context) {
@@ -26,7 +26,7 @@ function addMarkedForOfflineMutators(out, resourceManager, offlineContentStrateg
         if (userID === null) {
             throw new Error('No current user for setting local settings');
         }
-        const nbRef = { id: args.id, type: en_data_model_1.CoreEntityTypes.Notebook };
+        const nbRef = { id: args.id, type: en_core_entity_types_1.CoreEntityTypes.Notebook };
         const nodeWithContext = await context.db.getNodeWithContext(context, nbRef);
         if (!nodeWithContext.node) {
             throw new conduit_utils_1.NotFoundError(args.id, `Notebook not found in graph`);
@@ -47,7 +47,7 @@ function addMarkedForOfflineMutators(out, resourceManager, offlineContentStrateg
         for (const edge in noteEdges) {
             noteIDs.push(noteEdges[edge].dstID);
         }
-        const notes = noteIDs.length ? await context.db.batchGetNodes(context, en_data_model_1.CoreEntityTypes.Note, noteIDs) : [];
+        const notes = noteIDs.length ? await context.db.batchGetNodes(context, en_core_entity_types_1.CoreEntityTypes.Note, noteIDs) : [];
         for (const note of notes) {
             if (!note) {
                 continue;
@@ -85,17 +85,17 @@ function addMarkedForOfflineMutators(out, resourceManager, offlineContentStrateg
             graphTransactionFn = async (tx) => {
                 await NotebookConverter_1.deletePendingOfflineNotebookSyncState(context.trc, tx, nbRef.id, syncContext);
                 for (const noteID of noteIDs) {
-                    clearData && await tx.removeNodeCachedFields(context.trc, { id: noteID, type: en_data_model_1.CoreEntityTypes.Note }, ['content.content']);
+                    clearData && await tx.removeNodeCachedFields(context.trc, { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note }, ['content.content']);
                     await NotebookConverter_1.updateContentDownloadForNote(context.trc, tx, syncContext, noteID, false);
                 }
                 if (clearData) {
                     const attachmentIDs = Object.keys(attachmentNoteMap);
-                    const attachments = attachmentIDs.length ? await context.db.batchGetNodes(context, en_data_model_1.CoreEntityTypes.Attachment, attachmentIDs) : [];
+                    const attachments = attachmentIDs.length ? await context.db.batchGetNodes(context, en_core_entity_types_1.CoreEntityTypes.Attachment, attachmentIDs) : [];
                     for (const attachment of attachments) {
                         if (!attachment) {
                             continue;
                         }
-                        await tx.removeNodeCachedFields(context.trc, { id: attachment.id, type: en_data_model_1.CoreEntityTypes.Attachment }, ['data.content', 'recognition.content', 'alternateData.content']);
+                        await tx.removeNodeCachedFields(context.trc, { id: attachment.id, type: en_core_entity_types_1.CoreEntityTypes.Attachment }, ['data.content', 'recognition.content', 'alternateData.content']);
                         const dataBlob = attachment.NodeFields.data;
                         if (dataBlob.url && resourceManager && attachmentNoteMap[attachment.id]) {
                             const resourceRef = {

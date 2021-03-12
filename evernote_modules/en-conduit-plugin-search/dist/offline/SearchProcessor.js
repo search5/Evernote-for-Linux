@@ -7,7 +7,7 @@ exports.SearchProcessor = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
 const en_conduit_plugin_task_1 = require("en-conduit-plugin-task");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const SearchExtractor_1 = require("./etl/SearchExtractor");
 const SearchLoader_1 = require("./etl/SearchLoader");
 const SearchTransformer_1 = require("./etl/SearchTransformer");
@@ -19,11 +19,13 @@ const SearchExporter_1 = require("./exporters/SearchExporter");
  */
 class SearchProcessor {
     constructor(graphDB, searchEngine) {
-        this.supportedStreamingEventTypes = [en_data_model_1.CoreEntityTypes.Attachment, en_data_model_1.CoreEntityTypes.Message, en_data_model_1.CoreEntityTypes.Note, en_conduit_plugin_task_1.TaskEntityTypes.Task];
+        this.supportedStreamingEventTypes = [en_core_entity_types_1.CoreEntityTypes.Attachment, en_core_entity_types_1.CoreEntityTypes.Message, en_core_entity_types_1.CoreEntityTypes.Note, en_conduit_plugin_task_1.TaskEntityTypes.Task];
         // maximum time for the processing pipeline
         this.maxProcessingTime = 200;
         // maximum intervals between two flushes
         this.maxFlushInterval = 2 * 60 * 1000;
+        // maximum not processed events in journal
+        this.maxTailOffset = 5;
         // current event batch
         this.batch = [];
         // required in order to defer the events export up to the first process function call
@@ -38,9 +40,9 @@ class SearchProcessor {
         this.supportedReindexationTypes = new Array();
         // ENSearchEngineWeb for now does not support search by messages.
         if (searchEngine.getEngineType() !== 'shared') {
-            this.supportedReindexationTypes.push(en_data_model_1.CoreEntityTypes.Message);
+            this.supportedReindexationTypes.push(en_core_entity_types_1.CoreEntityTypes.Message);
         }
-        this.supportedReindexationTypes.push(en_data_model_1.CoreEntityTypes.Note);
+        this.supportedReindexationTypes.push(en_core_entity_types_1.CoreEntityTypes.Note);
         this.searchEngine = searchEngine;
         this.searchExtractor = new SearchExtractor_1.SearchExtractor(graphDB);
         this.searchLoader = new SearchLoader_1.SearchLoader(searchEngine);
@@ -163,7 +165,7 @@ class SearchProcessor {
             await this.getEvents(trc);
         }
         if (indexUpdated) {
-            di.emitEvent(conduit_view_types_1.ConduitEvent.LOCAL_INDEX_UPDATED);
+            di.emitEvent(conduit_view_types_1.ConduitEvent.SEARCH_INDEX_UPDATED);
         }
         if (this.requiresFlush && Date.now() - this.latestFlush > this.maxFlushInterval) {
             try {
@@ -233,6 +235,10 @@ class SearchProcessor {
      */
     getSupportedStreamingEventTypes() {
         return this.supportedStreamingEventTypes;
+    }
+    isInitialIndexationFinished() {
+        return (this.reindexationState === SearchExporter_1.ReindexationState.FINISHED &&
+            this.searchExporter.getTail() - this.searchExporter.getConsumerLocalOffset() < this.maxTailOffset);
     }
 }
 exports.SearchProcessor = SearchProcessor;

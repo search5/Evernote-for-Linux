@@ -3,7 +3,8 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LimitError = exports.GraphError = exports.PermissionError = exports.NotFoundError = void 0;
+exports.RetryGRPCError = exports.TransportError = exports.LimitError = exports.GraphError = exports.PermissionError = exports.NotFoundError = void 0;
+const en_ts_utils_1 = require("en-ts-utils");
 class NotFoundError extends Error {
     constructor(id, message = 'not found') {
         super(message);
@@ -36,4 +37,20 @@ class LimitError extends Error {
     }
 }
 exports.LimitError = LimitError;
+// For more granular control over retry attempts.
+class TransportError extends Error {
+    constructor(message, code, reason) {
+        super(message);
+        this.code = code;
+        this.reason = reason;
+    }
+}
+exports.TransportError = TransportError;
+class RetryGRPCError extends en_ts_utils_1.RetryError {
+    constructor(message, timeout, reason, code) {
+        super(message, timeout, reason);
+        this.code = code;
+    }
+}
+exports.RetryGRPCError = RetryGRPCError;
 //# sourceMappingURL=Errors.js.map

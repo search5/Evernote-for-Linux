@@ -3,38 +3,28 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.commonTraverseGraphAdapter = exports.forEachTaskReminderScheduledNotification = exports.genScheduledNotificationId = exports.getDependencyRefsForSN = exports.getScheduledNotificationType = void 0;
+exports.commonTraverseGraphAdapter = exports.forEachTaskReminderScheduledNotification = exports.genScheduledNotificationId = exports.getScheduledNotificationType = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_plugin_scheduled_notification_shared_1 = require("en-conduit-plugin-scheduled-notification-shared");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const TaskConstants_1 = require("../TaskConstants");
-const ScheduledNotificationConstants_1 = require("./ScheduledNotificationConstants");
 function getScheduledNotificationType(dataSourceType) {
     switch (dataSourceType) {
         case TaskConstants_1.TaskEntityTypes.Task:
-            return ScheduledNotificationConstants_1.ScheduledNotificationType.TaskReminder;
+            return en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationType.TaskReminder;
         default:
             throw new conduit_utils_1.InvalidParameterError(`dataSourceEnity type not accounted for- ${dataSourceType}. No matching for ScheduledNotificationType`);
     }
 }
 exports.getScheduledNotificationType = getScheduledNotificationType;
-function getDependencyRefsForSN(sn) {
-    const scheduling = conduit_utils_1.firstStashEntry(sn.inputs.scheduling);
-    const dataSource = conduit_utils_1.firstStashEntry(sn.outputs.dataSource);
-    if (!scheduling || !dataSource) {
-        return null;
-    }
-    return {
-        schedulingRef: { type: scheduling.srcType, id: scheduling.srcID },
-        dataSourceRef: { type: dataSource.dstType, id: dataSource.dstID },
-    };
-}
-exports.getDependencyRefsForSN = getDependencyRefsForSN;
 function genScheduledNotificationId(scheduledNotificationType, schedulingEntityId) {
     return `${scheduledNotificationType}:${schedulingEntityId}`;
 }
 exports.genScheduledNotificationId = genScheduledNotificationId;
 async function forEachTaskReminderSNOnReminder(trc, ctx, reminderRef, cb) {
-    const snRefs = await ctx.traverseGraph(trc, reminderRef, [{ edge: ['outputs', 'scheduledNotification'], type: TaskConstants_1.TaskEntityTypes.ScheduledNotification }]);
+    const snRefs = await ctx.traverseGraph(trc, reminderRef, [
+        { edge: ['outputs', 'scheduledNotification'], type: en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.ScheduledNotification }
+    ]);
     await cb(snRefs[0], reminderRef);
 }
 async function forEachTaskReminderSNOnTask(trc, ctx, taskRef, cb) {
@@ -45,7 +35,7 @@ async function forEachTaskReminderSNOnTask(trc, ctx, taskRef, cb) {
 }
 async function forEachTaskReminderScheduledNotification(trc, ctx, traverseStartRef, cb) {
     if (traverseStartRef.type === 'Notebook') {
-        const notes = await ctx.traverseGraph(trc, traverseStartRef, [{ edge: ['outputs', 'children'], type: en_data_model_1.CoreEntityTypes.Note }]);
+        const notes = await ctx.traverseGraph(trc, traverseStartRef, [{ edge: ['outputs', 'children'], type: en_core_entity_types_1.CoreEntityTypes.Note }]);
         for (const note of notes) {
             const tasks = await ctx.traverseGraph(trc, { type: note.type, id: note.id }, [{ edge: ['outputs', 'tasks'], type: TaskConstants_1.TaskEntityTypes.Task }]);
             for (const task of tasks) {

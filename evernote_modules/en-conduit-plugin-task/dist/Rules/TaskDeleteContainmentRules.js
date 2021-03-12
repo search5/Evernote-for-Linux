@@ -5,11 +5,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TaskDeleteContainmentRules = void 0;
 const conduit_core_1 = require("conduit-core");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const TaskConstants_1 = require("../TaskConstants");
 exports.TaskDeleteContainmentRules = [{
         on: 'Node:DELETE',
-        where: { type: en_data_model_1.CoreEntityTypes.Note },
+        where: { type: en_core_entity_types_1.CoreEntityTypes.Note },
         when: conduit_core_1.GraphMutationRuleWhen.Always,
         getExtraOps: async (trc, ctx, op) => {
             return await onNoteDelete(ctx, trc, op.nodeRef, []);

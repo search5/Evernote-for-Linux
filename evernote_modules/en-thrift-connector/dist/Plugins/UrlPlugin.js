@@ -25,10 +25,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUrlPlugin = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Auth = __importStar(require("../Auth"));
 const Converters_1 = require("../Converters/Converters");
-function getUrlPlugin(thriftComm, tokenRefreshManager) {
+function getUrlPlugin(tokenRefreshManager) {
     async function getNoteMetadata(args, context) {
         conduit_core_1.validateDB(context);
         if (!args.note) {
@@ -37,7 +37,7 @@ function getUrlPlugin(thriftComm, tokenRefreshManager) {
         const token = await conduit_core_1.retrieveAuthorizedToken(context);
         const authData = Auth.decodeAuthData(token);
         const serviceBaseUrl = authData.urlHost;
-        const { node: note, syncContext } = await context.db.getNodeWithContext(context, { id: args.note, type: en_data_model_1.CoreEntityTypes.Note });
+        const { node: note, syncContext } = await context.db.getNodeWithContext(context, { id: args.note, type: en_core_entity_types_1.CoreEntityTypes.Note });
         if (!note) {
             throw new conduit_utils_1.NotFoundError(args.note, 'Note argument not found');
         }
@@ -79,7 +79,7 @@ function getUrlPlugin(thriftComm, tokenRefreshManager) {
             throw new Error('Missing layout argument');
         }
         const { business, id, serviceBaseUrl, shard, userSlot } = await getNoteMetadata(args, context);
-        const noteGuid = Converters_1.convertGuidToService(id, en_data_model_1.CoreEntityTypes.Note);
+        const noteGuid = Converters_1.convertGuidToService(id, en_core_entity_types_1.CoreEntityTypes.Note);
         const userSlotSegment = (userSlot === null || userSlot === undefined) ? '' : `/u/${userSlot}`;
         return business
             ? `${serviceBaseUrl}/shard/${shard}/business/dispatch/NoteVersions.action?layout=${args.layout}&guid=${noteGuid}`
@@ -126,7 +126,7 @@ function getUrlPlugin(thriftComm, tokenRefreshManager) {
             if (!(authAndState === null || authAndState === void 0 ? void 0 : authAndState.token)) {
                 throw new Error('Not logged in');
             }
-            sessionToken = await tokenRefreshManager.renewAndSaveAuthToken(context, thriftComm);
+            sessionToken = await tokenRefreshManager.renewAndSaveAuthToken(context);
             origin = Auth.decodeAuthData(authAndState.token).urlHost;
         }
         return buildTargetUrl(origin, sessionToken, args.url, args.utm_source, args.utm_medium, args.url_params);
@@ -140,7 +140,7 @@ function getUrlPlugin(thriftComm, tokenRefreshManager) {
                 tokenPayload: args.tokenPayload,
                 serviceProvider: Auth.SERVICE_PROVIDER_STRING_TO_ENUM[args.serviceProvider],
             };
-            const userStore = thriftComm.getUserStore(`${args.serviceHost}/edam/user`);
+            const userStore = context.thriftComm.getUserStore(`${args.serviceHost}/edam/user`);
             const authResult = await userStore.authenticateOpenID(context.trc, openIdCredential, context.clientCredentials.consumerKey, context.clientCredentials.consumerSecret, context.clientCredentials.deviceIdentifier, context.clientCredentials.deviceDescription, false, // authLongSession. Long session is not required for this purpose.
             false);
             if (!authResult.authenticationToken) {

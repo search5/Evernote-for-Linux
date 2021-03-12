@@ -25,7 +25,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LastUpdatedResolver = exports.getLastUpdatedNoteFilters = exports.containerLastUpdated = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const BATCH_SIZE = 100;
 function noteLastEditorID(note) {
@@ -35,16 +35,42 @@ function noteLastEditorID(note) {
     }
     return null;
 }
-async function getLastEditor(context, node) {
-    const profileID = noteLastEditorID(node);
-    if (profileID) {
-        return conduit_core_1.resolveNode({ id: profileID, type: en_data_model_1.CoreEntityTypes.Profile }, context);
+function notebookLastEditorID(notebook) {
+    const edge = conduit_utils_1.firstStashEntry(notebook.outputs.creator);
+    if (edge) {
+        return edge.dstID;
     }
     return null;
 }
+function workspaceLastEditorID(workspace) {
+    const edge = conduit_utils_1.firstStashEntry(workspace.outputs.manager);
+    if (edge) {
+        return edge.dstID;
+    }
+    return null;
+}
+async function getLastEditor(context, node) {
+    let profileID = null;
+    if (node) {
+        switch (node.type) {
+            case en_core_entity_types_1.CoreEntityTypes.Note:
+                profileID = noteLastEditorID(node);
+                break;
+            case en_core_entity_types_1.CoreEntityTypes.Notebook:
+                profileID = notebookLastEditorID(node);
+                break;
+            default:
+                profileID = workspaceLastEditorID(node);
+        }
+    }
+    if (!profileID) {
+        profileID = conduit_core_1.PERSONAL_USER_ID;
+    }
+    return conduit_core_1.resolveNode({ id: profileID, type: en_core_entity_types_1.CoreEntityTypes.Profile }, context);
+}
 async function containerLastUpdated(context, tree, index, noteFilters, updatedIndexPos, defaultResult) {
     const res = defaultResult ? SimplyImmutable.cloneMutable(defaultResult) : [0, null];
-    const key = context.indexer.keyForQuery(en_data_model_1.CoreEntityTypes.Note, 'ASC', index.index, noteFilters);
+    const key = context.indexer.keyForQuery(en_core_entity_types_1.CoreEntityTypes.Note, 'ASC', index.index, noteFilters);
     if (!key) {
         return res;
     }
@@ -55,7 +81,7 @@ async function containerLastUpdated(context, tree, index, noteFilters, updatedIn
     const noteMaxUpdated = found[updatedIndexPos];
     if (noteMaxUpdated > res[0]) {
         res[0] = noteMaxUpdated;
-        res[1] = { type: en_data_model_1.CoreEntityTypes.Note, id: found[found.length - 1] }; // id is always last in the index
+        res[1] = { type: en_core_entity_types_1.CoreEntityTypes.Note, id: found[found.length - 1] }; // id is always last in the index
     }
     return res;
 }
@@ -83,12 +109,12 @@ async function getLastUpdatedNoteParams(context, noteFilters) {
             field: 'updated',
             order: 'DESC',
         }];
-    const index = context.indexer.indexForQuery(en_data_model_1.CoreEntityTypes.Note, noteFilters, sorts, [], []);
+    const index = context.indexer.indexForQuery(en_core_entity_types_1.CoreEntityTypes.Note, noteFilters, sorts, [], []);
     const updatedIndexPos = index.index.findIndex(e => e.field === 'updated');
     if (updatedIndexPos < 0) {
         throw new conduit_utils_1.InternalError(`lastUpdated selected the wrong index! Chose: ${conduit_utils_1.safeStringify(index)}`);
     }
-    const tree = await ((_a = context.db) === null || _a === void 0 ? void 0 : _a.readonlyIndexingTreeForTypeAndIndex(context.trc, en_data_model_1.CoreEntityTypes.Note, index));
+    const tree = await ((_a = context.db) === null || _a === void 0 ? void 0 : _a.readonlyIndexingTreeForTypeAndIndex(context.trc, en_core_entity_types_1.CoreEntityTypes.Note, index));
     if (!tree) {
         throw new conduit_utils_1.InternalError(`Failed to get the note tree for lastUpdated! Index: ${conduit_utils_1.safeStringify(index)}`);
     }
@@ -105,12 +131,12 @@ async function multiNotebookLastUpdated(context, nbs, defaultResult) {
         conduit_utils_1.logger.warn(`Oddly have no notebooks in resolving lastUpdated`);
         return res;
     }
-    const filters = getLastUpdatedNoteFilters({ id: nbs[0], type: en_data_model_1.CoreEntityTypes.Notebook });
+    const filters = getLastUpdatedNoteFilters({ id: nbs[0], type: en_core_entity_types_1.CoreEntityTypes.Notebook });
     // Index selection doesn't care about the values in the filters, just the fields, so just pass an arbitrary parent
     const { index, updatedIndexPos, tree } = await getLastUpdatedNoteParams(context, filters);
     const chunks = conduit_utils_1.chunkArray(nbs, BATCH_SIZE);
     for (const chunk of chunks) {
-        const notebooks = await ((_a = context.db) === null || _a === void 0 ? void 0 : _a.batchGetNodes(context, en_data_model_1.CoreEntityTypes.Notebook, chunk));
+        const notebooks = await ((_a = context.db) === null || _a === void 0 ? void 0 : _a.batchGetNodes(context, en_core_entity_types_1.CoreEntityTypes.Notebook, chunk));
         if (!notebooks) {
             continue;
         }
@@ -148,7 +174,7 @@ async function resolveStackLastUpdated(nodeRef, _, context) {
     conduit_core_1.validateDB(context);
     const nbs = (await context.db.traverseGraph(context, nodeRef, [{
             edge: ['outputs', 'notebooks'],
-            type: en_data_model_1.CoreEntityTypes.Notebook,
+            type: en_core_entity_types_1.CoreEntityTypes.Notebook,
         }])).map(e => e.id);
     const res = await multiNotebookLastUpdated(context, nbs);
     return res[0];
@@ -163,7 +189,7 @@ async function resolveWorkspaceLastUpdated(nodeRef, _, context) {
     const workspaceRes = [workspace.NodeFields.updated, nodeRef];
     const nbs = (await context.db.traverseGraph(context, workspace, [{
             edge: ['outputs', 'children'],
-            type: en_data_model_1.CoreEntityTypes.Notebook,
+            type: en_core_entity_types_1.CoreEntityTypes.Notebook,
         }])).map(e => e.id);
     let res = await multiNotebookLastUpdated(context, nbs, workspaceRes);
     const filters = getLastUpdatedNoteFilters(workspace);
@@ -177,13 +203,11 @@ async function resolveNotebookLastEditor(nodeRef, _, context) {
     const filters = getLastUpdatedNoteFilters(nodeRef);
     const { index, updatedIndexPos, tree } = await getLastUpdatedNoteParams(context, filters);
     const res = await containerLastUpdated(context, tree, index, filters, updatedIndexPos);
-    if (!res[1]) {
-        throw new conduit_utils_1.InternalError(`Was unable to retrieve the associated node with lastUpdated when resolving lastEditor`);
+    let sourceNodeRef = res[1];
+    if (!sourceNodeRef) {
+        sourceNodeRef = nodeRef;
     }
-    const lastUpdatedNode = await context.db.getNode(context, res[1]);
-    if (!lastUpdatedNode) {
-        throw new conduit_utils_1.NotFoundError(res[1].id, `Failed to get node for lastEditor`);
-    }
+    const lastUpdatedNode = await context.db.getNode(context, sourceNodeRef);
     return getLastEditor(context, lastUpdatedNode);
 }
 async function resolveWorkspaceLastEditor(nodeRef, _, context) {
@@ -192,13 +216,11 @@ async function resolveWorkspaceLastEditor(nodeRef, _, context) {
     const filters = getLastUpdatedNoteFilters(nodeRef);
     const { index, updatedIndexPos, tree } = await getLastUpdatedNoteParams(context, filters);
     const res = await containerLastUpdated(context, tree, index, filters, updatedIndexPos);
-    if (!res[1]) {
-        throw new conduit_utils_1.InternalError(`Was unable to retrieve the associated node with lastUpdated when resolving lastEditor`);
+    let sourceNodeRef = res[1];
+    if (!sourceNodeRef) {
+        sourceNodeRef = nodeRef;
     }
-    const lastUpdatedNode = await context.db.getNode(context, res[1]);
-    if (!lastUpdatedNode) {
-        throw new conduit_utils_1.NotFoundError(res[1].id, `Failed to get node for lastEditor`);
-    }
+    const lastUpdatedNode = await context.db.getNode(context, sourceNodeRef);
     return getLastEditor(context, lastUpdatedNode);
 }
 function LastUpdatedResolver() {

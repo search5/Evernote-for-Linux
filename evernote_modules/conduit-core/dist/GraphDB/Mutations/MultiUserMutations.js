@@ -15,7 +15,9 @@ async function setCurrentUserResolver(_, args, context) {
     if (!context) {
         throw new Error('Missing graphql context');
     }
-    await ((_a = context.db) === null || _a === void 0 ? void 0 : _a.flushRemoteMutations());
+    // Flushing is best-effort to make account switching work in offline mode.
+    const flushing = (_a = context.db) === null || _a === void 0 ? void 0 : _a.flushRemoteMutations();
+    flushing && await conduit_utils_1.logAndDiscardError(flushing);
     await context.multiUserProvider.setCurrentUser(context.trc, conduit_utils_1.userIDForKeyString(args.userID));
     return { success: true };
 }

@@ -11,11 +11,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BetaFeatureConverter = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Converters_1 = require("./Converters");
 class BetaFeatureConverterClass {
     constructor() {
-        this.nodeType = en_data_model_1.CoreEntityTypes.BetaFeature;
+        this.nodeType = en_core_entity_types_1.CoreEntityTypes.BetaFeature;
     }
     convertGuidFromService(guid) {
         return ('BetaFeature:' + guid);
@@ -26,8 +26,8 @@ class BetaFeatureConverterClass {
     async convertFromService(trc, params, syncContext, serviceData) {
         const betaFeatureKey = (typeof serviceData.featureKey === 'number' ? serviceData.featureKey : -1);
         const betaFeature = {
-            id: Converters_1.convertGuidFromService(betaFeatureKey.toString(), en_data_model_1.CoreEntityTypes.BetaFeature),
-            type: en_data_model_1.CoreEntityTypes.BetaFeature,
+            id: Converters_1.convertGuidFromService(betaFeatureKey.toString(), en_core_entity_types_1.CoreEntityTypes.BetaFeature),
+            type: en_core_entity_types_1.CoreEntityTypes.BetaFeature,
             version: 1,
             syncContexts: [],
             localChangeTimestamp: 0,
@@ -56,16 +56,16 @@ class BetaFeatureConverterClass {
     }
 }
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.BetaFeature)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.BetaFeature)
 ], BetaFeatureConverterClass.prototype, "convertFromService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.BetaFeature)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.BetaFeature)
 ], BetaFeatureConverterClass.prototype, "createOnService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.BetaFeature)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.BetaFeature)
 ], BetaFeatureConverterClass.prototype, "updateToService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.BetaFeature)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.BetaFeature)
 ], BetaFeatureConverterClass.prototype, "deleteFromService", null);
 exports.BetaFeatureConverter = new BetaFeatureConverterClass();
 //# sourceMappingURL=BetaFeatureConverter.js.map

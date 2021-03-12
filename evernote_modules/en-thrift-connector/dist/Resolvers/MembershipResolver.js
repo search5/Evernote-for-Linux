@@ -7,16 +7,16 @@ exports.MembershipResolver = exports.processAndCacheAcceptedMemberships = void 0
 const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Auth_1 = require("../Auth");
 const Converters_1 = require("../Converters/Converters");
 const gFetches = {};
 async function getShares(trc, noteStore, authToken, nodeRef) {
     switch (nodeRef.type) {
-        case en_data_model_1.CoreEntityTypes.Note:
-            return noteStore.getNoteShares(trc, authToken, Converters_1.convertGuidToService(nodeRef.id, en_data_model_1.CoreEntityTypes.Note));
-        case en_data_model_1.CoreEntityTypes.Notebook:
-            return noteStore.getNotebookShares(trc, authToken, Converters_1.convertGuidToService(nodeRef.id, en_data_model_1.CoreEntityTypes.Notebook));
+        case en_core_entity_types_1.CoreEntityTypes.Note:
+            return noteStore.getNoteShares(trc, authToken, Converters_1.convertGuidToService(nodeRef.id, en_core_entity_types_1.CoreEntityTypes.Note));
+        case en_core_entity_types_1.CoreEntityTypes.Notebook:
+            return noteStore.getNotebookShares(trc, authToken, Converters_1.convertGuidToService(nodeRef.id, en_core_entity_types_1.CoreEntityTypes.Notebook));
         default:
             throw new Error('Unknown type');
     }
@@ -25,7 +25,7 @@ async function processAndCacheAcceptedMemberships(trc, tx, response, parentEdge)
     const out = {};
     if (response.memberships) {
         for (const member of response.memberships) {
-            out[Converters_1.convertGuidFromService(member.recipientUserId, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User)] = true;
+            out[Converters_1.convertGuidFromService(member.recipientUserId, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User)] = true;
         }
     }
     if (response.invitations) {
@@ -38,29 +38,29 @@ async function processAndCacheAcceptedMemberships(trc, tx, response, parentEdge)
             else {
                 profileID = invite.recipientIdentityId.toString();
             }
-            out[Converters_1.convertGuidFromService(profileID, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.Identity)] = false;
+            out[Converters_1.convertGuidFromService(profileID, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.Identity)] = false;
         }
     }
     await tx.setNodeCachedField(trc, parentEdge, 'internal_membershipsAcceptStatus', out, []);
     return out;
 }
 exports.processAndCacheAcceptedMemberships = processAndCacheAcceptedMemberships;
-async function cacheMissForAcceptedMemberships(thriftComm, context, node, syncContext) {
+async function cacheMissForAcceptedMemberships(context, node, syncContext) {
     conduit_core_1.validateDB(context);
     const metadata = await context.db.getSyncContextMetadata(context, syncContext);
     if (!metadata || !metadata.authToken) {
         throw new Error('not authorized');
     }
     const auth = Auth_1.decodeAuthData(metadata.authToken);
-    const noteStore = thriftComm.getNoteStore(auth.urls.noteStoreUrl);
+    const noteStore = context.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
     const response = await getShares(context.trc, noteStore, auth.token, node);
     return context.db.transactSyncedStorage(context.trc, 'processAndCacheAcceptedMemberships', async (tx) => {
         return await processAndCacheAcceptedMemberships(context.trc, tx, response, node);
     });
 }
-async function resolveMembershipAccepted(nodeRef, context, thriftComm) {
+async function resolveMembershipAccepted(nodeRef, context) {
     conduit_core_1.validateDB(context);
-    const node = await context.db.getNode(context, { id: nodeRef.id, type: en_data_model_1.CoreEntityTypes.Membership });
+    const node = await context.db.getNode(context, { id: nodeRef.id, type: en_core_entity_types_1.CoreEntityTypes.Membership });
     if (!node) {
         throw new conduit_utils_1.NotFoundError(nodeRef.id, 'graph node not found');
     }
@@ -73,7 +73,7 @@ async function resolveMembershipAccepted(nodeRef, context, thriftComm) {
         throw new Error('no recipient edge for membership');
     }
     const parentRef = conduit_storage_1.getEdgeConnection(parentEdgeRef, node.id);
-    if (parentRef.type === en_data_model_1.CoreEntityTypes.Workspace) {
+    if (parentRef.type === en_core_entity_types_1.CoreEntityTypes.Workspace) {
         // Memberships are always accepted for workspaces, no need to do any caching here
         return true;
     }
@@ -83,7 +83,7 @@ async function resolveMembershipAccepted(nodeRef, context, thriftComm) {
         if (gFetches[cacheID] && gFetches[cacheID].inProgress === true) {
             return gFetches[cacheID].promise;
         }
-        fetchPromise = cacheMissForAcceptedMemberships(thriftComm, context, parentNode, syncContext);
+        fetchPromise = cacheMissForAcceptedMemberships(context, parentNode, syncContext);
         gFetches[cacheID] = {
             promise: fetchPromise,
             inProgress: true,
@@ -106,13 +106,13 @@ async function resolveMembershipAccepted(nodeRef, context, thriftComm) {
     }
     return cacheResp ? cacheResp[recipientEdgeRef.dstID] || false : null;
 }
-function MembershipResolver(thriftComm) {
+function MembershipResolver() {
     const resolvers = {
         'Membership.hasAccepted': {
             type: conduit_core_1.schemaToGraphQLType('boolean?'),
             resolve: async (nodeRef, _, context) => {
                 try {
-                    return await resolveMembershipAccepted(nodeRef, context, thriftComm);
+                    return await resolveMembershipAccepted(nodeRef, context);
                 }
                 catch (err) {
                     if (err instanceof conduit_utils_1.AuthError && err.errorCode === conduit_utils_1.AuthErrorCode.PERMISSION_DENIED) {

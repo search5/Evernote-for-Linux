@@ -26,9 +26,14 @@ const getWidgetNode = async (trc, instance, context) => {
     const widget = Object.assign(Object.assign({}, initial), { type: BoardConstants_1.BoardEntityTypes.Widget, NodeFields: {
             boardType: instance.boardType,
             widgetType: instance.widgetType,
-            created: en_nsync_connector_1.convertLong(instance.created || 0),
-            updated: en_nsync_connector_1.convertLong(instance.updated || 0),
+            created: instance.created,
+            updated: instance.updated,
             isEnabled: instance.isEnabled,
+            /*
+             * This is fine at this time, as Ion/Boron always filters the OnboardingChecklist widget out
+             *  and this is needed for Neutron, which is just about to hit Beta and can launch without
+             */
+            softDelete: instance.softDelete,
             mobile: Object.assign({}, instance.mobile),
             desktop: Object.assign({}, instance.desktop),
             selectedTab,

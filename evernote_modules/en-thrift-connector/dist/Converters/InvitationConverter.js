@@ -31,7 +31,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.InvitationConverter = exports.acceptSharedNote = exports.acceptSharedNotebook = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Auth = __importStar(require("../Auth"));
 const ThriftGraphInterface_1 = require("../ThriftGraphInterface");
 const Converters_1 = require("./Converters");
@@ -46,7 +46,7 @@ async function acceptSharedNotebook(trc, params, syncContext, acceptParams) {
         // notebook has been unshared
         if (acceptParams.invitationNodeID) {
             // delete invitation node.
-            await params.graphTransaction.deleteNode(trc, conduit_core_1.PERSONAL_USER_CONTEXT, { id: acceptParams.invitationNodeID, type: en_data_model_1.CoreEntityTypes.Invitation });
+            await params.graphTransaction.deleteNode(trc, conduit_core_1.PERSONAL_USER_CONTEXT, { id: acceptParams.invitationNodeID, type: en_core_entity_types_1.CoreEntityTypes.Invitation });
         }
         else {
             // cleanup partial notebook.
@@ -67,7 +67,7 @@ async function acceptSharedNotebook(trc, params, syncContext, acceptParams) {
     if (!shareState) {
         shareState = {
             guid: shareGuid,
-            notebookGuid: Converters_1.convertGuidFromService(sharedNotebook.notebookGuid, en_data_model_1.CoreEntityTypes.Notebook),
+            notebookGuid: Converters_1.convertGuidFromService(sharedNotebook.notebookGuid, en_core_entity_types_1.CoreEntityTypes.Notebook),
             noteStoreUrl: acceptParams.noteStoreUrl,
             authStr: sharedNotebook.authStr,
             sharedNotebookId: sharedNotebook.id || null,
@@ -124,14 +124,14 @@ async function acceptSharedNote(trc, params, invitation) {
         await params.graphTransaction.replaceSyncState(trc, ['sharing', 'sharedNotes', sharedNoteGuid], shareState);
     }
     return {
-        noteID: Converters_1.convertGuidFromService(sharedNoteGuid, en_data_model_1.CoreEntityTypes.Note),
+        noteID: Converters_1.convertGuidFromService(sharedNoteGuid, en_core_entity_types_1.CoreEntityTypes.Note),
         shareState,
     };
 }
 exports.acceptSharedNote = acceptSharedNote;
 class InvitationConverterClass {
     constructor() {
-        this.nodeType = en_data_model_1.CoreEntityTypes.Invitation;
+        this.nodeType = en_core_entity_types_1.CoreEntityTypes.Invitation;
     }
     convertGuidFromService(guid) {
         return `Invitation:${guid}`;
@@ -150,7 +150,7 @@ class InvitationConverterClass {
         switch (commandRun.command) {
             case 'AcceptInvitation':
                 const acceptParams = commandRun.params;
-                const invitation = await params.graphTransaction.getNode(trc, null, { type: en_data_model_1.CoreEntityTypes.Invitation, id: acceptParams.invitation });
+                const invitation = await params.graphTransaction.getNode(trc, null, { type: en_core_entity_types_1.CoreEntityTypes.Invitation, id: acceptParams.invitation });
                 if (!invitation) {
                     throw new conduit_utils_1.NotFoundError(acceptParams.invitation, `unable to find invitation`);
                 }
@@ -178,7 +178,7 @@ class InvitationConverterClass {
     }
 }
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Invitation)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Invitation)
 ], InvitationConverterClass.prototype, "customToService", null);
 exports.InvitationConverter = new InvitationConverterClass();
 //# sourceMappingURL=InvitationConverter.js.map

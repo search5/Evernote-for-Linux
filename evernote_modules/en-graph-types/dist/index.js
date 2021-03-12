@@ -17,4 +17,5 @@ __exportStar(require("./Errors"), exports);
 __exportStar(require("./ExecutionPlan"), exports);
 __exportStar(require("./GraphInterface"), exports);
 __exportStar(require("./GraphTypes"), exports);
+__exportStar(require("./ServiceResults"), exports);
 //# sourceMappingURL=index.js.map

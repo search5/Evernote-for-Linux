@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.onlineMessageSearch = exports.sendLogRequest = exports.onlineSearchEx = exports.onlineRelatedWithExArgs = exports.onlineSuggest = exports.onlineSearch = exports.searchLogInfoEncodeBase64 = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const en_search_engine_shared_1 = require("en-search-engine-shared");
 const en_thrift_connector_1 = require("en-thrift-connector");
 const js_base64_1 = require("js-base64");
@@ -58,8 +58,8 @@ async function onlineSearch(trc, thriftComm, auth, args) {
     const results = [];
     for (const note of notes.notes) {
         results.push({
-            noteID: note.guid ? en_thrift_connector_1.convertGuidFromService(note.guid, en_data_model_1.CoreEntityTypes.Note) : null,
-            containerID: note.notebookGuid ? en_thrift_connector_1.convertGuidFromService(note.notebookGuid, en_data_model_1.CoreEntityTypes.Notebook) : null,
+            noteID: note.guid ? en_thrift_connector_1.convertGuidFromService(note.guid, en_core_entity_types_1.CoreEntityTypes.Note) : null,
+            containerID: note.notebookGuid ? en_thrift_connector_1.convertGuidFromService(note.notebookGuid, en_core_entity_types_1.CoreEntityTypes.Notebook) : null,
             score: note.score === undefined ? null : note.score,
             label: note.title === undefined ? null : note.title,
             updated: note.updated === undefined ? null : note.updated,
@@ -155,7 +155,7 @@ async function onlineRelatedWithExArgs(trc, thriftComm, authData, args) {
     let referenceUriArg;
     if (args.queryContext) {
         if (args.queryContext.noteID) {
-            noteGuidArg = en_thrift_connector_1.convertGuidToService(args.queryContext.noteID, en_data_model_1.CoreEntityTypes.Note);
+            noteGuidArg = en_thrift_connector_1.convertGuidToService(args.queryContext.noteID, en_core_entity_types_1.CoreEntityTypes.Note);
         }
         plainTextArg = args.queryContext.text;
         referenceUriArg = args.queryContext.url;
@@ -170,7 +170,7 @@ async function onlineRelatedWithExArgs(trc, thriftComm, authData, args) {
         includeContainingNotebooks: true,
         includeDebugInfo: false,
     };
-    const isBusiness = authData.serviceLevel === en_thrift_connector_1.TServiceLevel.BUSINESS;
+    const isBusiness = authData.serviceLevel === en_thrift_connector_1.AuthServiceLevel.BUSINESS;
     const defaultMaxResults = 5;
     for (const spec of args.param.resultSpec) {
         switch (spec.type) {
@@ -451,7 +451,7 @@ async function onlineMessageSearch(trc, thriftComm, authData, args) {
         return {
             type: SearchSchemaTypes_1.SearchExResultType.MESSAGE,
             label: m.body || '',
-            id: m.id ? en_thrift_connector_1.convertGuidFromService(m.id, en_data_model_1.CoreEntityTypes.Message) : null,
+            id: m.id ? en_thrift_connector_1.convertGuidFromService(m.id, en_core_entity_types_1.CoreEntityTypes.Message) : null,
             // according to document the response does not include lucene score
             score: null,
             searchFilter: null,

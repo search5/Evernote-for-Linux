@@ -16,7 +16,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.clearMutableTimeout = exports.setTimeoutForTimestamp = exports.MemLogger = exports.flattenArray = exports.memoize = exports.timeboxExecution = exports.toArray = exports.isNotNullish = exports.isNullish = exports.DefaultWidgetRanker = exports.bytesToUuid = exports.uuid = exports.md5Base64 = exports.md5 = exports.createLCGGenerator = exports.generateRandomString = exports.rateLimitErrorLog = exports.getSessionBlock = exports.logAndDiscardError = exports.getVisibleItems = exports.Priority = void 0;
+exports.clearMutableTimeout = exports.setTimeoutForTimestamp = exports.MemLogger = exports.memoize = exports.timeboxExecution = exports.DefaultWidgetRanker = exports.bytesToUuid = exports.uuid = exports.md5Base64 = exports.md5 = exports.createLCGGenerator = exports.generateRandomString = exports.rateLimitErrorLog = exports.getSessionBlock = exports.logAndDiscardError = exports.getVisibleItems = exports.Priority = void 0;
 const en_ts_utils_1 = require("en-ts-utils");
 const js_md5_1 = __importDefault(require("js-md5"));
 const uuid_1 = __importDefault(require("uuid"));
@@ -114,24 +114,6 @@ function bytesToUuid(bytes) {
 exports.bytesToUuid = bytesToUuid;
 // Only allow sort weights of length 50 or less.
 exports.DefaultWidgetRanker = new en_ts_utils_1.LexoRankHandler(50);
-function isNullish(value) {
-    return value === null || value === undefined;
-}
-exports.isNullish = isNullish;
-function isNotNullish(value) {
-    return value !== null && value !== undefined;
-}
-exports.isNotNullish = isNotNullish;
-function toArray(val) {
-    if (Array.isArray(val)) {
-        return val;
-    }
-    if (val === undefined) {
-        return [];
-    }
-    return [val];
-}
-exports.toArray = toArray;
 async function throwRetryErrorAfter(after, msg, timeout) {
     await en_ts_utils_1.sleep(after);
     throw new en_ts_utils_1.RetryError(msg, timeout);
@@ -165,18 +147,6 @@ function memoize(debugName, f, key, lifetime = 1000, maxWait = 10000) {
     return [memoizedFunc, reset];
 }
 exports.memoize = memoize;
-function flattenArray(arr, out = []) {
-    for (const a of arr) {
-        if (Array.isArray(a)) {
-            flattenArray(a, out);
-        }
-        else {
-            out.push(a);
-        }
-    }
-    return out;
-}
-exports.flattenArray = flattenArray;
 class MemLogger {
     constructor(maxKeys = 10, maxEntriesPerKey = 50) {
         this.maxEntriesPerKey = maxEntriesPerKey;

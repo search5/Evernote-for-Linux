@@ -24,7 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.syncLinkedNotebook = exports.isValidSharedNotebookMembershipProvider = exports.createSharedNotebookSyncContextMetadata = exports.deleteLinkedNotebookContext = exports.linkedNotebookSyncContext = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Auth = __importStar(require("../Auth"));
 const Converters_1 = require("../Converters/Converters");
 const ChunkConversion_1 = require("./ChunkConversion");
@@ -129,7 +129,7 @@ async function syncLinkedNotebook(trc, params, shareState, sharedNotebookGlobalI
         if (isFirstSync) {
             // if syncing shared nb for the first time, fetch nb first so that clients can immediately query for it. CON-1829
             const noteStore = params.thriftComm.getNoteStore(noteStoreUrl);
-            const notebook = await noteStore.getNotebook(trc, params.auth.token, Converters_1.convertGuidToService(notebookGuid, en_data_model_1.CoreEntityTypes.Notebook));
+            const notebook = await noteStore.getNotebook(trc, params.auth.token, Converters_1.convertGuidToService(notebookGuid, en_core_entity_types_1.CoreEntityTypes.Notebook));
             const fakeChunk = {
                 currentTime: Date.now(),
                 updateCount: 0,
@@ -146,7 +146,7 @@ async function syncLinkedNotebook(trc, params, shareState, sharedNotebookGlobalI
         }
         await ChunkConversion_1.convertSyncChunk(trc, params, chunk, lastUpdateCount);
         if (sharedNotebookId) {
-            await SyncHelpers_1.updateSyncContextPrivilege(trc, params, { id: notebookGuid, type: en_data_model_1.CoreEntityTypes.Notebook }, isValidSharedNotebookMembershipProvider(sharedNotebookId));
+            await SyncHelpers_1.updateSyncContextPrivilege(trc, params, { id: notebookGuid, type: en_core_entity_types_1.CoreEntityTypes.Notebook }, isValidSharedNotebookMembershipProvider(sharedNotebookId));
         }
     }
 }

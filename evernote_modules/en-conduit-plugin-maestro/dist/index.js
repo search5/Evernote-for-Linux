@@ -10,9 +10,9 @@ const en_thrift_connector_1 = require("en-thrift-connector");
 const graphql_1 = require("graphql");
 const EnMaestroServiceRequest_1 = require("./EnMaestroServiceRequest");
 const POLL_INTERVAL = conduit_utils_1.MILLIS_IN_ONE_DAY / 2;
-function getENMaestroPlugin(thriftComm) {
+function getENMaestroPlugin() {
     let gMaestroProps;
-    const maestroPropsResolver = async (parent, args = {}, context) => {
+    const maestroPropsResolver = async (parent, args, context) => {
         EnMaestroServiceRequest_1.validateResolverArgs(['clientType'], args);
         conduit_core_1.validateDB(context);
         const user = await context.db.getUserNode(context);
@@ -34,7 +34,7 @@ function getENMaestroPlugin(thriftComm) {
                 user,
             });
             gMaestroProps = {
-                props: await EnMaestroServiceRequest_1.maestroRequest(thriftComm, 'getProps2', { clientType, overridingArmIds, userInfo }, context),
+                props: await EnMaestroServiceRequest_1.maestroRequest(context.thriftComm, 'getProps2', { clientType, overridingArmIds, userInfo }, context),
                 user,
                 timestamp: currentTime,
                 overridingArmIds: JSON.stringify(overridingArmIds),
@@ -50,10 +50,10 @@ function getENMaestroPlugin(thriftComm) {
             props: gMaestroProps.props,
         };
     };
-    const maestroServiceStateResolver = async (parent, args = {}, context) => {
+    const maestroServiceStateResolver = async (parent, args, context) => {
         EnMaestroServiceRequest_1.validateResolverArgs(['clientType'], args);
         return {
-            serviceState: EnMaestroServiceRequest_1.maestroRequest(thriftComm, 'getServiceState2', args, context),
+            serviceState: EnMaestroServiceRequest_1.maestroRequest(context.thriftComm, 'getServiceState2', args, context),
         };
     };
     const clearMaestroPropsCache = async () => {

@@ -12,10 +12,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.StackConverter = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 class StackConverterClass {
     constructor() {
-        this.nodeType = en_data_model_1.CoreEntityTypes.Stack;
+        this.nodeType = en_core_entity_types_1.CoreEntityTypes.Stack;
     }
     convertGuidFromService(stackName) {
         return ('Stack:' + stackName);
@@ -31,7 +31,7 @@ class StackConverterClass {
         // noop for Thrift but need to add node to database
         const stack = {
             id: data.id,
-            type: en_data_model_1.CoreEntityTypes.Stack,
+            type: en_core_entity_types_1.CoreEntityTypes.Stack,
             version: 0,
             syncContexts: [],
             localChangeTimestamp: 0,
@@ -59,13 +59,13 @@ class StackConverterClass {
     }
 }
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Stack)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Stack)
 ], StackConverterClass.prototype, "createOnService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Stack)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Stack)
 ], StackConverterClass.prototype, "deleteFromService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Stack)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Stack)
 ], StackConverterClass.prototype, "updateToService", null);
 exports.StackConverter = new StackConverterClass();
 //# sourceMappingURL=StackConverter.js.map

@@ -13,8 +13,9 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ThriftComm = exports.OfflineSearchIndexActivity = exports.ThriftRemoteMutationExecutor = exports.getLastUpdatedNoteFilters = exports.containerLastUpdated = exports.resolveContent = exports.toUserClientInfo = exports.workspaceFromService = exports.generateResourceUrl = exports.profileFromContact = exports.ProfileConverter = exports.notebookObjectFromService = exports.getOfflineNbsFromLocalSettings = exports.membershipFromWorkspace = exports.makeConverterParams = exports.convertGuidToService = exports.convertGuidFromService = exports.RemoteServiceCredentialGQL = exports.hasNapAuthInfo = exports.getScopedGoogleOAuthCredential = exports.encodeAuthData = exports.decodeAuthData = void 0;
+exports.ThriftComm = exports.OfflineSearchIndexActivity = exports.ThriftRemoteMutationExecutor = exports.getLastUpdatedNoteFilters = exports.containerLastUpdated = exports.resolveContent = exports.toUserClientInfo = exports.workspaceFromService = exports.generateResourceUrl = exports.profileFromContact = exports.ProfileConverter = exports.notebookObjectFromService = exports.getOfflineNbsFromLocalSettings = exports.membershipFromWorkspace = exports.makeConverterParams = exports.convertGuidToService = exports.convertGuidFromService = exports.RemoteServiceCredentialGQL = exports.hasNapAuthInfo = exports.getScopedGoogleOAuthCredential = exports.encodeAuthData = exports.decodeAuthData = exports.AuthServiceLevel = void 0;
 var Auth_1 = require("./Auth");
+Object.defineProperty(exports, "AuthServiceLevel", { enumerable: true, get: function () { return Auth_1.AuthServiceLevel; } });
 Object.defineProperty(exports, "decodeAuthData", { enumerable: true, get: function () { return Auth_1.decodeAuthData; } });
 Object.defineProperty(exports, "encodeAuthData", { enumerable: true, get: function () { return Auth_1.encodeAuthData; } });
 Object.defineProperty(exports, "getScopedGoogleOAuthCredential", { enumerable: true, get: function () { return Auth_1.getScopedGoogleOAuthCredential; } });
@@ -47,12 +48,10 @@ Object.defineProperty(exports, "containerLastUpdated", { enumerable: true, get: 
 Object.defineProperty(exports, "getLastUpdatedNoteFilters", { enumerable: true, get: function () { return FolderResolver_1.getLastUpdatedNoteFilters; } });
 var ThriftRemoteMutationExecutor_1 = require("./ThriftRemoteMutationExecutor");
 Object.defineProperty(exports, "ThriftRemoteMutationExecutor", { enumerable: true, get: function () { return ThriftRemoteMutationExecutor_1.ThriftRemoteMutationExecutor; } });
-__exportStar(require("./ThriftTypes"), exports);
 __exportStar(require("./Types"), exports);
 var OfflineSearchIndexActivity_1 = require("./SyncManagement/OfflineSearchIndexActivity");
 Object.defineProperty(exports, "OfflineSearchIndexActivity", { enumerable: true, get: function () { return OfflineSearchIndexActivity_1.OfflineSearchIndexActivity; } });
 var Thrift_1 = require("./Thrift");
 Object.defineProperty(exports, "ThriftComm", { enumerable: true, get: function () { return Thrift_1.ThriftComm; } });
 __exportStar(require("./ThriftConnector"), exports);
-__exportStar(require("./QuasarMinusAuthHandler"), exports);
 //# sourceMappingURL=index.js.map

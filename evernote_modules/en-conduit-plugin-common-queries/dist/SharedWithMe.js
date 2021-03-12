@@ -13,7 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.sharedWithMePlugin = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const en_thrift_connector_1 = require("en-thrift-connector");
 const graphql_1 = require("graphql");
 function buildArgs() {
@@ -36,13 +36,13 @@ async function resolveSharedWithMe(_, args, context, info) {
     conduit_core_1.validateDB(context);
     const sort = args.sort || { field: 'created', order: 'DESC' };
     const [membershipIterator, invitationIterator] = await conduit_utils_1.allSettled([
-        getIndexedIterator(en_data_model_1.CoreEntityTypes.Membership, sort, context, info),
-        getIndexedIterator(en_data_model_1.CoreEntityTypes.Invitation, sort, context, info),
+        getIndexedIterator(en_core_entity_types_1.CoreEntityTypes.Membership, sort, context, info),
+        getIndexedIterator(en_core_entity_types_1.CoreEntityTypes.Invitation, sort, context, info),
     ]);
-    const membershipIds = await getNodeIDsFromIterator(context.indexer, en_data_model_1.CoreEntityTypes.Membership, membershipIterator);
-    const invitationIds = await getNodeIDsFromIterator(context.indexer, en_data_model_1.CoreEntityTypes.Invitation, invitationIterator);
-    const membershipNodes = await context.db.batchGetNodes(context, en_data_model_1.CoreEntityTypes.Membership, membershipIds);
-    const invitationNodes = await context.db.batchGetNodes(context, en_data_model_1.CoreEntityTypes.Invitation, invitationIds);
+    const membershipIds = await getNodeIDsFromIterator(context.indexer, en_core_entity_types_1.CoreEntityTypes.Membership, membershipIterator);
+    const invitationIds = await getNodeIDsFromIterator(context.indexer, en_core_entity_types_1.CoreEntityTypes.Invitation, invitationIterator);
+    const membershipNodes = await context.db.batchGetNodes(context, en_core_entity_types_1.CoreEntityTypes.Membership, membershipIds);
+    const invitationNodes = await context.db.batchGetNodes(context, en_core_entity_types_1.CoreEntityTypes.Invitation, invitationIds);
     const acceptedSharedObjects = new Set();
     const syncContexts = new Set();
     for (const node of membershipNodes) {
@@ -50,7 +50,7 @@ async function resolveSharedWithMe(_, args, context, info) {
             continue;
         }
         const parentRef = conduit_utils_1.firstStashEntry(node.inputs.parent);
-        if (!parentRef || parentRef.srcType === en_data_model_1.CoreEntityTypes.Workspace) {
+        if (!parentRef || parentRef.srcType === en_core_entity_types_1.CoreEntityTypes.Workspace) {
             continue;
         }
         const recipient = conduit_utils_1.firstStashEntry(node.outputs.recipient);
@@ -61,7 +61,7 @@ async function resolveSharedWithMe(_, args, context, info) {
         if (node.NodeFields.recipientIsMe) {
             const ref = { id: node.id, type: node.type };
             acceptedSharedObjects.add(en_thrift_connector_1.convertGuidToService(parentRef.srcID, parentRef.srcType));
-            if (parentRef.srcType === en_data_model_1.CoreEntityTypes.Notebook) {
+            if (parentRef.srcType === en_core_entity_types_1.CoreEntityTypes.Notebook) {
                 acceptedSharedObjects.add(en_thrift_connector_1.convertGuidToService(node.id, node.type));
             }
             if (recipient.dstID !== sharer.dstID) {
@@ -81,8 +81,8 @@ async function resolveSharedWithMe(_, args, context, info) {
         // If invitation type is NOTE, we check if SharedNote sync context exists for this note or not.
         // If SharedNote sync context exist, it means note invitation is accepted separately
         // If SharedNote sync context does not exist, it means note invitation is not yet accepted and hence should be displayed in result
-        if (!node || (acceptedSharedObjects.has(en_thrift_connector_1.convertGuidToService(node.id, en_data_model_1.CoreEntityTypes.Invitation)) &&
-            (node.NodeFields.invitationType !== 'NOTE' || syncContexts.has('SharedNote:' + en_thrift_connector_1.convertGuidToService(node.id, en_data_model_1.CoreEntityTypes.Invitation))))) {
+        if (!node || (acceptedSharedObjects.has(en_thrift_connector_1.convertGuidToService(node.id, en_core_entity_types_1.CoreEntityTypes.Invitation)) &&
+            (node.NodeFields.invitationType !== 'NOTE' || syncContexts.has('SharedNote:' + en_thrift_connector_1.convertGuidToService(node.id, en_core_entity_types_1.CoreEntityTypes.Invitation))))) {
             continue;
         }
         const ref = { id: node.id, type: node.type };

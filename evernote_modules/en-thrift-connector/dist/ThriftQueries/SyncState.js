@@ -14,7 +14,7 @@ const AdaptiveDownsyncTypeEnum = Object.keys(conduit_view_types_1.AdaptiveDownsy
 AdaptiveDownsyncTypeEnum.__enumName = 'AdaptiveDownsyncTypeEnum';
 const SyncProgressTypeEnum = Object.keys(conduit_view_types_1.SyncProgressType);
 SyncProgressTypeEnum.__enumName = 'SyncProgressTypeEnum';
-function addSyncStateMutators(thriftComm, out) {
+function addSyncStateMutators(out) {
     async function addSessionResolver(parent, args, context) {
         conduit_core_1.validateDB(context);
         const currentSessionBlock = conduit_utils_1.getSessionBlock(Date.now());
@@ -24,7 +24,7 @@ function addSyncStateMutators(thriftComm, out) {
             const authState = await context.db.getAuthTokenAndState(context.trc, null);
             if (authState === null || authState === void 0 ? void 0 : authState.token) {
                 const auth = Auth_1.decodeAuthData(authState.token);
-                const noteStore = thriftComm.getNoteStore(auth.urls.noteStoreUrl);
+                const noteStore = context.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
                 const result = await conduit_utils_1.withError(noteStore.getSyncStateWithMetrics(context.trc, auth.token, sessionCount));
                 if (!result.err) {
                     sessionCount = 0;

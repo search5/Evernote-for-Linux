@@ -53,7 +53,8 @@ class ENSearchEngineElectron {
         };
         return await this.clucene.search(queryWithParams);
     }
-    async suggest(query, documentType) {
+    async suggest(query, documentType, optimization) {
+        const suggestOptimization = optimization !== null && optimization !== void 0 ? optimization : ENSearchEngineElectron.defaultSuggestOptimization;
         // console.log('query: ', query);
         const param = new en_search_engine_shared_1.QueryStringParserParam();
         // while parsing query string for suggestions mustn't ignore stopwords, set stop word list as empty
@@ -67,12 +68,22 @@ class ENSearchEngineElectron {
         // modify query
         if (pquery.firstSearchWords && pquery.firstSearchWords.length > 0) {
             // there is string begining, we want to search it in entities fields
-            const suggestTypes = ['notebookText', 'spaceText', 'tagText', 'authorText', 'title'];
+            const suggestTypes = ['notebookText', 'spaceText', 'tagText', 'authorText', 'title', 'stackText'];
             for (const suggestType of suggestTypes) {
+                const conditions = new Array();
+                for (const firstSearchWord of pquery.firstSearchWords) {
+                    const escapedToken = en_search_engine_shared_1.ESQueryStringBuilder.escapeReservedChars(firstSearchWord.token);
+                    if (en_search_engine_shared_1.ENCLuceneHelper.primaryToAltFields.has(suggestType)) {
+                        const altSuggestType = en_search_engine_shared_1.ENCLuceneHelper.primaryToAltFields.get(suggestType);
+                        conditions.push(`(${suggestType}:${escapedToken}* OR ${altSuggestType}:${escapedToken}*)`);
+                    }
+                    else {
+                        conditions.push(`${suggestType}:${escapedToken}*`);
+                    }
+                }
                 // searchWords have prefixes 'content:', replace them with current entity name
                 // split/join trick to replace all occurrences of the substring, as sting.replace only works with the first match 
-                const suggestQuery = (filters ? (filters + ' AND ') : '') +
-                    pquery.firstSearchWords.map(w => suggestType + ":" + en_search_engine_shared_1.ESQueryStringBuilder.escapeReservedChars(w.token) + "*").join(" AND ");
+                const suggestQuery = (filters ? (filters + ' AND ') : '') + conditions.join(" AND ");
                 // console.log('suggestQuery: ', suggestQuery);
                 const queryWithParams = Object.assign({}, exports.defaultQueryWithParams);
                 queryWithParams.queryString = en_search_engine_shared_1.ENCLuceneHelper.createLuceneQuery(suggestQuery, true, documentType);
@@ -91,7 +102,10 @@ class ENSearchEngineElectron {
             };
             suggestResult = await this.clucene.suggest(queryWithParams, null);
         }
-        return await this.filterOutUselessSuggests(suggestResult, filters);
+        if (suggestOptimization === en_search_engine_shared_1.ENSuggestOptimization.O3) {
+            return await this.filterOutUselessSuggests(suggestResult, filters);
+        }
+        return suggestResult;
     }
     async filterOutUselessSuggests(suggestResults, filters, documentType) {
         // remove suggests which don't narrow current results
@@ -139,6 +153,7 @@ exports.ENSearchEngineElectron = ENSearchEngineElectron;
 // with the previous one
 ENSearchEngineElectron.version = '11';
 ENSearchEngineElectron.type = 'electron';
+ENSearchEngineElectron.defaultSuggestOptimization = en_search_engine_shared_1.ENSuggestOptimization.O3;
 /**
  * Base factory function.
  */

@@ -13,11 +13,11 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.VAULT_USER_ID = exports.VAULT_USER_CONTEXT = exports.PERSONAL_USER_ID = exports.PERSONAL_USER_CONTEXT = exports.LocalSettings = exports.resolveUnindexedPaths = exports.resolveNodesFromList = exports.graphqlPathForIndexComponents = exports.getListResolverParams = exports.IndexRange = exports.IndexOrderType = exports.IndexMatch = exports.indexedSortsCongruencyCheck = exports.initPlugins = exports.getNsyncAssociationKey = exports.GraphQLWatcher = exports.shouldIgnoreFieldSelection = exports.getUnboundedQuery = exports.getFieldsForResolver = exports.SYNC_DB_VERSION = exports.GraphDB = exports.MutationEngine = exports.MutationContext = exports.schemaFieldToGraphQL = exports.resolveNode = exports.getEntityUnionType = exports.CONDUIT_VERSION = exports.ConduitUserCore = void 0;
+exports.VAULT_USER_ID = exports.VAULT_USER_CONTEXT = exports.PERSONAL_USER_ID = exports.PERSONAL_USER_CONTEXT = exports.LocalSettings = exports.resolveUnindexedPaths = exports.resolveNodesFromList = exports.graphqlPathForIndexComponents = exports.getListResolverParams = exports.IndexRange = exports.IndexOrderType = exports.IndexMatch = exports.indexedSortsCongruencyCheck = exports.initPlugins = exports.getNsyncAssociationKey = exports.GraphQLWatcher = exports.shouldIgnoreFieldSelection = exports.getUnboundedQuery = exports.getFieldsForResolver = exports.SYNC_DB_VERSION = exports.GraphDB = exports.MutationEngine = exports.MutationContext = exports.schemaFieldToGraphQL = exports.resolveNode = exports.getEntityUnionType = exports.ConduitUserCore = exports.CONDUIT_VERSION = void 0;
+var conduit_view_types_1 = require("conduit-view-types");
+Object.defineProperty(exports, "CONDUIT_VERSION", { enumerable: true, get: function () { return conduit_view_types_1.CONDUIT_VERSION; } });
 var ConduitUserCore_1 = require("./ConduitUserCore");
 Object.defineProperty(exports, "ConduitUserCore", { enumerable: true, get: function () { return ConduitUserCore_1.ConduitUserCore; } });
-var ConduitVersion_1 = require("./ConduitVersion");
-Object.defineProperty(exports, "CONDUIT_VERSION", { enumerable: true, get: function () { return ConduitVersion_1.CONDUIT_VERSION; } });
 var AutoResolvers_1 = require("./GraphDB/Resolvers/AutoResolvers");
 Object.defineProperty(exports, "getEntityUnionType", { enumerable: true, get: function () { return AutoResolvers_1.getEntityUnionType; } });
 Object.defineProperty(exports, "resolveNode", { enumerable: true, get: function () { return AutoResolvers_1.resolveNode; } });

@@ -12,8 +12,8 @@ const getBoardNode = async (trc, instance, context) => {
     }
     const board = Object.assign(Object.assign({}, initial), { type: BoardConstants_1.BoardEntityTypes.Board, NodeFields: {
             boardType: instance.boardType,
-            created: en_nsync_connector_1.convertLong(instance.created || 0),
-            updated: en_nsync_connector_1.convertLong(instance.updated || 0),
+            created: instance.created,
+            updated: instance.updated,
             headerBG: en_nsync_connector_1.toBlobV2Fields(instance.headerBG),
             headerBGMime: instance.headerBGMime,
             headerBGFileName: instance.headerBGFileName,

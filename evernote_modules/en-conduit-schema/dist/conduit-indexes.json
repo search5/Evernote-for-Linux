@@ -2342,6 +2342,31 @@
         ],
         "indexCondition": []
       },
+      "797e84a8e6d6ec5da464efded8eb8cf8": {
+        "index": [
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "childrenCount",
+            "order": "ASC",
+            "type": "int"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      },
       "b99b4be9980093ee5762034b0721dd88": {
         "index": [
           {
@@ -2388,6 +2413,21 @@
             "field": "childrenCount",
             "order": "ASC",
             "type": "int"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      },
+      "d4ae5b19180792454b248d8c3018c9f3": {
+        "index": [
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
           },
           {
             "field": "id",
@@ -2781,6 +2821,66 @@
         ],
         "indexCondition": []
       },
+      "20d60c0b80b804ac4e049066a7bf94af": {
+        "index": [
+          {
+            "field": "syncContext",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "refsCount",
+            "order": "DESC",
+            "type": "int"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      },
+      "579d7af997fe335397049795fe080078": {
+        "index": [
+          {
+            "field": "syncContext",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "refsCount",
+            "order": "DESC",
+            "type": "int"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      },
       "bbd234c05c7748c88e1f5d3b8d803288": {
         "index": [
           {
@@ -3125,7 +3225,7 @@
   },
   "Widget": {
     "indexes": {
-      "0fe60f73b1fd9f0da44f27eed5a79f50": {
+      "970ded93efef0684fe147e35a8a20f4f": {
         "index": [
           {
             "field": "parent",
@@ -3159,6 +3259,35 @@
             ]
           },
           {
+            "field": "isEnabled",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "selectedTab",
+            "order": "ASC",
+            "type": [
+              "Recent",
+              "Suggested",
+              "WebClips",
+              "Emails",
+              "Images",
+              "Audio",
+              "Documents",
+              "?"
+            ]
+          },
+          {
+            "field": "contentProvider",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "mobile_sortWeight",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
             "field": "id",
             "order": "ASC",
             "type": "ID"
@@ -3171,7 +3300,7 @@
           }
         ]
       },
-      "a6494c302f8ef663c09d8a9d7abbf2c2": {
+      "a6d032e3773f516621fb9177a283f3f1": {
         "index": [
           {
             "field": "parent",
@@ -3203,6 +3332,35 @@
               "Calendar",
               "Tasks"
             ]
+          },
+          {
+            "field": "isEnabled",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "selectedTab",
+            "order": "ASC",
+            "type": [
+              "Recent",
+              "Suggested",
+              "WebClips",
+              "Emails",
+              "Images",
+              "Audio",
+              "Documents",
+              "?"
+            ]
+          },
+          {
+            "field": "contentProvider",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "desktop_sortWeight",
+            "order": "ASC",
+            "type": "string"
           },
           {
             "field": "id",

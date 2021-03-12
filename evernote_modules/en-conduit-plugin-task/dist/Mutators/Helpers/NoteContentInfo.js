@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.genTasksDataCreateOps = exports.taskGroupUpsertPlanFor = exports.taskGroupUpsertPlan = exports.getNoteContentInfoIDByNoteID = exports.getNoteContentInfoID = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const TaskConstants_1 = require("../../TaskConstants");
 const Task_1 = require("./Task");
 async function getNoteContentInfoID(trc, ctx, noteRef, copyOwnerRef) {
@@ -21,7 +21,7 @@ function getNoteContentInfoIDByNoteID(noteID) {
 }
 exports.getNoteContentInfoIDByNoteID = getNoteContentInfoIDByNoteID;
 async function taskGroupUpsertPlan(trc, ctx, params, copyOwnerRef) {
-    const containerRef = { id: params.noteID, type: en_data_model_1.CoreEntityTypes.Note };
+    const containerRef = { id: params.noteID, type: en_core_entity_types_1.CoreEntityTypes.Note };
     // Only check if working on an existing note, not for a soon to be created copy
     if (!copyOwnerRef) {
         const note = await ctx.fetchEntity(trc, containerRef);
@@ -35,13 +35,32 @@ async function taskGroupUpsertPlan(trc, ctx, params, copyOwnerRef) {
     const existingNoteContentInfo = await ctx.fetchEntity(trc, noteContentInfoRef);
     let plan;
     if (existingNoteContentInfo) {
+        const parentEdge = conduit_utils_1.firstStashEntry(existingNoteContentInfo.inputs.parent);
+        if (parentEdge) {
+            const parentNoteRef = { type: parentEdge.srcType, id: parentEdge.srcID };
+            const parentNote = await ctx.fetchEntity(trc, parentNoteRef);
+            if (parentNote) {
+                const taskRefs = await ctx.traverseGraph(trc, { type: parentNote.type, id: parentNote.id }, [{ edge: ['outputs', 'tasks'], type: TaskConstants_1.TaskEntityTypes.Task }]);
+                const existingTasks = await ctx.fetchEntities(trc, TaskConstants_1.TaskEntityTypes.Task, taskRefs.map(t => t.edge.dstID));
+                for (const task of existingTasks) {
+                    if (!task) {
+                        continue;
+                    }
+                    if (!params.taskGroupNoteLevelIDs.includes(task.NodeFields.taskGroupNoteLevelID)) {
+                        params.taskGroupNoteLevelIDs.push(task.NodeFields.taskGroupNoteLevelID);
+                    }
+                }
+            }
+        }
         plan = {
-            result: noteContentInfoRef,
+            results: {
+                result: noteContentInfoRef.id,
+            },
             ops: [{
                     changeType: 'Node:UPDATE',
                     nodeRef: noteContentInfoRef,
                     node: ctx.assignFields(TaskConstants_1.TaskEntityTypes.NoteContentInfo, {
-                        taskGroups: params.taskGroupNoteLevelIDs,
+                        taskGroupNoteLevelIDs: params.taskGroupNoteLevelIDs,
                         updated: ctx.timestamp,
                         sourceOfChange: params.sourceOfChange,
                     }),
@@ -50,13 +69,15 @@ async function taskGroupUpsertPlan(trc, ctx, params, copyOwnerRef) {
     }
     else {
         const noteContentInfoEntity = ctx.createEntity(noteContentInfoRef, {
-            taskGroups: params.taskGroupNoteLevelIDs,
+            taskGroupNoteLevelIDs: params.taskGroupNoteLevelIDs,
             created: ctx.timestamp,
             updated: ctx.timestamp,
             sourceOfChange: params.sourceOfChange,
         }, ctx.userID);
         plan = {
-            result: noteContentInfoRef,
+            results: {
+                result: noteContentInfoRef.id,
+            },
             ops: [{
                     changeType: 'Node:CREATE',
                     node: noteContentInfoEntity,
@@ -64,7 +85,7 @@ async function taskGroupUpsertPlan(trc, ctx, params, copyOwnerRef) {
                 }, {
                     changeType: 'Edge:MODIFY',
                     edgesToCreate: [{
-                            srcID: params.noteID, srcType: en_data_model_1.CoreEntityTypes.Note, srcPort: 'noteContentInfo',
+                            srcID: params.noteID, srcType: en_core_entity_types_1.CoreEntityTypes.Note, srcPort: 'noteContentInfo',
                             dstID: noteContentInfoID, dstType: noteContentInfoEntity.type, dstPort: 'parent',
                         }],
                 }],
@@ -79,11 +100,11 @@ async function taskGroupUpsertPlanFor(trc, ctx, noteID, taskGroupNoteLevelID, so
     const noteContentInfoRef = { id: noteContentInfoID, type: TaskConstants_1.TaskEntityTypes.NoteContentInfo };
     const noteContentInfo = await ctx.fetchEntity(trc, noteContentInfoRef);
     if (noteContentInfo) {
-        const noteContentInfoTaskGroups = noteContentInfo.NodeFields.taskGroups;
+        const noteContentInfoTaskGroups = noteContentInfo.NodeFields.taskGroupNoteLevelIDs;
         if (noteContentInfoTaskGroups) {
             if (noteContentInfoTaskGroups.includes(taskGroupNoteLevelID)) {
                 return {
-                    result: null,
+                    results: {},
                     ops: [],
                 };
             }
@@ -94,6 +115,7 @@ async function taskGroupUpsertPlanFor(trc, ctx, noteID, taskGroupNoteLevelID, so
     return taskGroupUpsertPlan(trc, ctx, {
         noteID: noteID,
         taskGroupNoteLevelIDs,
+        sourceOfChange,
     }, copyOwnerRef);
 }
 exports.taskGroupUpsertPlanFor = taskGroupUpsertPlanFor;
@@ -115,7 +137,7 @@ async function genTasksDataCreateOps(trc, ctx, tasksExportData, noteID, plan, co
         const taskKey = taskParams.taskGroupNoteLevelID + '-' + i;
         const newTaskParams = Object.assign(Object.assign({}, taskParams), { container: noteID, copyOwnerRef, key: taskKey });
         const taskRes = await Task_1.taskCreatePlan(trc, ctx, newTaskParams);
-        taskKeys.push(String(taskRes.result));
+        taskKeys.push(taskRes.results.result);
         plan.ops.push(...taskRes.ops);
     }
     const params = {

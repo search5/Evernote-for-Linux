@@ -106,7 +106,8 @@ function copyOrCollide(src, dest, type) {
     }
     Object.assign(dest, src);
 }
-function getPluginResolvers(plugins, di, type) {
+function getPluginResolvers(trc, plugins, di, type) {
+    conduit_utils_1.traceEventStart(trc, `getPluginResolvers:${type}`);
     const out = {};
     for (const name in plugins) {
         const plugin = plugins[name];
@@ -121,6 +122,7 @@ function getPluginResolvers(plugins, di, type) {
             }
         }
     }
+    conduit_utils_1.traceEventEnd(trc, `getPluginResolvers:${type}`);
     return out;
 }
 exports.getPluginResolvers = getPluginResolvers;

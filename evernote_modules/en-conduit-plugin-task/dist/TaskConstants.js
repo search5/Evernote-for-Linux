@@ -8,7 +8,6 @@ const conduit_utils_1 = require("conduit-utils");
 exports.TaskEntityTypes = {
     NoteContentInfo: 'NoteContentInfo',
     Reminder: 'Reminder',
-    ScheduledNotification: 'ScheduledNotification',
     Task: 'Task',
     TaskUserSettings: 'TaskUserSettings',
 };

@@ -192,7 +192,8 @@ class CLuceneWrapper {
         }
         if (document.stack) {
             existsContent = existsContent.concat(en_search_engine_shared_1.ENCLuceneHelper.stack + ' ');
-            doc.addField(en_search_engine_shared_1.ENCLuceneHelper.stack, document.stack, clucene.STORE_NO | clucene.INDEX_UNTOKENIZED);
+            doc.addField(en_search_engine_shared_1.ENCLuceneHelper.stack, document.stack, clucene.STORE_YES | clucene.INDEX_UNTOKENIZED);
+            doc.addField(en_search_engine_shared_1.ENCLuceneHelper.stackText, document.stack, clucene.STORE_NO | clucene.INDEX_TOKENIZED);
         }
         if (document.tags && document.tags.length !== 0) {
             existsContent = existsContent.concat(en_search_engine_shared_1.ENCLuceneHelper.tagField + ' ');
@@ -438,7 +439,7 @@ class CLuceneWrapper {
             throw new Error('CLucene: unsupported on this platform');
         }
         // console.log('suggest query: ', query);
-        queryWithParams.stored_fields = ['nbGuid', 'notebook', 'spaceGuid', 'space', 'tagGuid', 'tag', 'creatorId', 'author', 'title'];
+        queryWithParams.stored_fields = ['nbGuid', 'notebook', 'spaceGuid', 'space', 'tagGuid', 'tag', 'creatorId', 'author', 'title', 'stack'];
         const { error, result } = this.cl.search('', JSON.stringify(queryWithParams));
         if (error) {
             this.logger.error(en_search_engine_shared_1.formatSearchEngineException('CLuceneWrapper', 'suggest', error));

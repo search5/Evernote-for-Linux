@@ -5,12 +5,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getNoteNodeAndEdges = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
-const NSyncTypes_1 = require("../NSyncTypes");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const BaseConverter_1 = require("./BaseConverter");
 const EDAM_NOTE_TITLE_QUALITY_UNTITLED = 0; // copied from en-thrift-internal
 const getNoteNodeAndEdges = async (trc, instance, context) => {
-    var _a;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s;
     const attrs = instance.attributes;
     if (!attrs) {
         conduit_utils_1.logger.warn('missing note attributes');
@@ -27,15 +26,13 @@ const getNoteNodeAndEdges = async (trc, instance, context) => {
         conduit_utils_1.logger.error('Missing initial values');
         return null;
     }
-    const note = Object.assign(Object.assign({}, initial), { type: en_data_model_1.CoreEntityTypes.Note, NodeFields: {
+    const note = Object.assign(Object.assign({}, initial), { type: en_core_entity_types_1.CoreEntityTypes.Note, NodeFields: {
             isUntitled: attrs.noteTitleQuality === EDAM_NOTE_TITLE_QUALITY_UNTITLED,
             isExternal,
             isMetadata: false,
-            created: NSyncTypes_1.convertLong(instance.created || 0),
-            updated: NSyncTypes_1.convertLong(instance.updated || 0),
-            deleted: (instance.deleted === null || instance.deleted === undefined)
-                ? null
-                : NSyncTypes_1.convertLong(instance.deleted) || null,
+            created: instance.created,
+            updated: instance.updated,
+            deleted: (_a = instance.deleted) !== null && _a !== void 0 ? _a : null,
             noteResourceCountMax: 0,
             noteSizeMax: 0,
             resourceSizeMax: 0,
@@ -43,9 +40,8 @@ const getNoteNodeAndEdges = async (trc, instance, context) => {
             uploaded: 0,
             content: {
                 hash: contentBlobData.bodyHash,
-                size: (_a = NSyncTypes_1.convertLong(contentBlobData.size)) !== null && _a !== void 0 ? _a : 0,
+                size: contentBlobData.size,
                 localChangeTimestamp: 0,
-                url: '',
             },
             thumbnailUrl: null,
             /* TODO
@@ -62,31 +58,31 @@ const getNoteNodeAndEdges = async (trc, instance, context) => {
             shareUrlPlaceholder: '',
             internal_shareCountProfiles: {},
             Attributes: {
-                contentClass: attrs.contentClass || null,
-                subjectDate: NSyncTypes_1.convertLong(attrs.subjectDate || 0) || null,
+                contentClass: (_b = attrs.contentClass) !== null && _b !== void 0 ? _b : null,
+                subjectDate: (_c = attrs.subjectDate) !== null && _c !== void 0 ? _c : null,
                 Location: {
-                    latitude: attrs.latitude || null,
-                    longitude: attrs.longitude || null,
-                    altitude: attrs.altitude || null,
-                    placeName: attrs.placeName || null,
+                    latitude: (_d = attrs.latitude) !== null && _d !== void 0 ? _d : null,
+                    longitude: (_e = attrs.longitude) !== null && _e !== void 0 ? _e : null,
+                    altitude: (_f = attrs.altitude) !== null && _f !== void 0 ? _f : null,
+                    placeName: (_g = attrs.placeName) !== null && _g !== void 0 ? _g : null,
                 },
                 Reminder: {
-                    reminderOrder: attrs.reminderOrder || null,
-                    reminderDoneTime: attrs.reminderDoneTime || null,
-                    reminderTime: NSyncTypes_1.convertLong(attrs.reminderTime || 0) || null,
+                    reminderOrder: (_h = attrs.reminderOrder) !== null && _h !== void 0 ? _h : null,
+                    reminderDoneTime: (_j = attrs.reminderDoneTime) !== null && _j !== void 0 ? _j : null,
+                    reminderTime: (_k = attrs.reminderTime) !== null && _k !== void 0 ? _k : null,
                 },
                 Share: {
-                    shareDate: NSyncTypes_1.convertLong(attrs.shareDate || 0) || null,
-                    sharedWithBusiness: attrs.sharedWithBusiness || null,
+                    shareDate: (_l = attrs.shareDate) !== null && _l !== void 0 ? _l : null,
+                    sharedWithBusiness: (_m = attrs.sharedWithBusiness) !== null && _m !== void 0 ? _m : null,
                 },
                 Editor: {
-                    author: attrs.author || null,
-                    lastEditedBy: attrs.lastEditedBy || null,
+                    author: (_o = attrs.author) !== null && _o !== void 0 ? _o : null,
+                    lastEditedBy: (_p = attrs.lastEditedBy) !== null && _p !== void 0 ? _p : null,
                 },
                 Source: {
-                    source: attrs.source || null,
-                    sourceURL: attrs.sourceURL || null,
-                    sourceApplication: attrs.sourceApplication || null,
+                    source: (_q = attrs.source) !== null && _q !== void 0 ? _q : null,
+                    sourceURL: (_r = attrs.sourceURL) !== null && _r !== void 0 ? _r : null,
+                    sourceApplication: (_s = attrs.sourceApplication) !== null && _s !== void 0 ? _s : null,
                 },
             },
         }, inputs: {

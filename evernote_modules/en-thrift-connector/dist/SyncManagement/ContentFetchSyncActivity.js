@@ -25,14 +25,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ContentFetchSyncActivity = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const simply_immutable_1 = require("simply-immutable");
 const Auth = __importStar(require("../Auth"));
 const BlobConverter_1 = require("../Converters/BlobConverter");
 const Converters_1 = require("../Converters/Converters");
 const NotebookConverter_1 = require("../Converters/NotebookConverter");
 const ResourceConverter_1 = require("../Converters/ResourceConverter");
-const ThriftTypes_1 = require("../ThriftTypes");
 const SyncActivity_1 = require("./SyncActivity");
 const SyncActivityHydration_1 = require("./SyncActivityHydration");
 // Queue of resources currently being downloaded
@@ -129,8 +129,8 @@ async function fetchNoteContent(trc, params, note, syncContext) {
     conduit_utils_1.logger.debug(`Fetching note content for note ${note.id} ${note.label}`);
     const authData = Auth.decodeAuthData(metadata.authToken);
     const noteStore = params.syncEngine.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
-    const serviceGuid = Converters_1.convertGuidToService(noteID, en_data_model_1.CoreEntityTypes.Note);
-    const specs = new ThriftTypes_1.TNoteResultSpec({
+    const serviceGuid = Converters_1.convertGuidToService(noteID, en_core_entity_types_1.CoreEntityTypes.Note);
+    const specs = new en_conduit_sync_types_1.TNoteResultSpec({
         includeContent: true,
         includeResourcesRecognition: true,
         includeResourcesAlternateData: true,
@@ -142,9 +142,9 @@ async function fetchNoteContent(trc, params, note, syncContext) {
             size: serviceData.contentLength,
             body: serviceData.content,
         };
-        await BlobConverter_1.updateBlobToGraph(trc, graphTransaction, contentBlobData, { id: noteID, type: en_data_model_1.CoreEntityTypes.Note }, 'content', syncContext);
+        await BlobConverter_1.updateBlobToGraph(trc, graphTransaction, contentBlobData, { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note }, 'content', syncContext);
         for (const resource of (serviceData.resources || [])) {
-            const resourceRef = { id: Converters_1.convertGuidFromService(resource.guid, en_data_model_1.CoreEntityTypes.Attachment), type: en_data_model_1.CoreEntityTypes.Attachment };
+            const resourceRef = { id: Converters_1.convertGuidFromService(resource.guid, en_core_entity_types_1.CoreEntityTypes.Attachment), type: en_core_entity_types_1.CoreEntityTypes.Attachment };
             if (resource.data) {
                 const resourceUrl = ResourceConverter_1.generateResourceUrl(metadata, 'res', resource.guid);
                 const resourceBlobData = Object.assign(Object.assign({}, resource.data), { url: resourceUrl });
@@ -180,7 +180,7 @@ async function fetchNoteResources(trc, params, noteID, syncContext, maxResources
             if (resIndex === -1) {
                 break;
             }
-            const attachment = await params.syncEngine.graphStorage.getNode(trc, null, { id: resourceID, type: en_data_model_1.CoreEntityTypes.Attachment });
+            const attachment = await params.syncEngine.graphStorage.getNode(trc, null, { id: resourceID, type: en_core_entity_types_1.CoreEntityTypes.Attachment });
             if (!attachment) {
                 conduit_utils_1.logger.warn(`ContentFetchSyncActivity: Attachment ${resourceID} for note ${noteID} not found in graph. Possibly deleted`);
                 isDeleted = await updateOfflineSyncState(trc, params, noteID, syncContext, resourceID, UpdateSyncStateOperation.RESOURCE_DONE);
@@ -229,7 +229,7 @@ async function downsyncNote(trc, params, noteID, maxResources) {
     if (!noteSyncState) {
         return;
     }
-    const note = await graphStorage.getNode(trc, null, { id: noteID, type: en_data_model_1.CoreEntityTypes.Note });
+    const note = await graphStorage.getNode(trc, null, { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note });
     if (!note) {
         conduit_utils_1.logger.warn(`ContentFetchSyncActivity: Note ${noteID} not found in graph. Possibly deleted`);
         return await updateOfflineSyncState(trc, params, noteID, '', null, UpdateSyncStateOperation.DELETE_NOTE);
@@ -304,14 +304,16 @@ function isContentFetchSyncProgress(obj) {
     return false;
 }
 class ContentFetchSyncActivity extends SyncActivity_1.SyncActivity {
-    constructor(di, context, subpriority = 0, timeout = 0) {
+    constructor(di, context, args, subpriority = 0, timeout = 0) {
         super(di, context, {
             activityType: SyncActivity_1.SyncActivityType.ContentFetchSyncActivity,
-            priority: SyncActivity_1.SyncActivityPriority.BACKGROUND,
+            priority: args ? SyncActivity_1.SyncActivityPriority.IMMEDIATE : SyncActivity_1.SyncActivityPriority.BACKGROUND,
             subpriority,
             runAfter: Date.now() + timeout,
+            dontPersist: Boolean(args),
         }, {
             syncProgressTableName: SyncActivity_1.CONTENT_SYNC_PROGRESS_TABLE,
+            immediateSyncArgs: args,
         });
         this.di = di;
     }
@@ -338,9 +340,10 @@ class ContentFetchSyncActivity extends SyncActivity_1.SyncActivity {
     }
     async runSyncImpl(trc) {
         var _a, _b, _c, _d;
-        const maxTime = (_a = this.di.backgroundNoteContentSyncConfig.maxTimePerPollMilliseconds) !== null && _a !== void 0 ? _a : 1000;
+        const args = this.options.immediateSyncArgs;
+        const maxTime = (_a = (args ? args.maxTime : this.di.backgroundNoteContentSyncConfig.maxTimePerPollMilliseconds)) !== null && _a !== void 0 ? _a : 1000;
         const pollTime = (_b = this.di.backgroundNoteContentSyncConfig.pollingIntervalMilliseconds) !== null && _b !== void 0 ? _b : 10000;
-        const maxResources = (_c = this.di.backgroundNoteContentSyncConfig.maxAttachmentFetchParallelization) !== null && _c !== void 0 ? _c : 6;
+        const maxResources = (_c = (args ? args.maxResources : this.di.backgroundNoteContentSyncConfig.maxAttachmentFetchParallelization)) !== null && _c !== void 0 ? _c : 6;
         const idlePollTime = (_d = this.di.backgroundNoteContentSyncConfig.idlePollingIntervalMilliseconds) !== null && _d !== void 0 ? _d : 30000;
         const syncParams = this.initParams('best', 'offlineNbs', maxTime);
         if (syncParams.offlineContentStrategy === conduit_view_types_1.OfflineContentStrategy.NONE) {
@@ -349,7 +352,12 @@ class ContentFetchSyncActivity extends SyncActivity_1.SyncActivity {
         }
         const noteIDs = await NotebookConverter_1.getPendingOfflineNoteIDs(trc, this.context.syncEngine.graphStorage);
         const fetchProgressStatus = await this.initActualSyncSize(trc, noteIDs);
-        if (await contentFetch(trc, syncParams, maxTime, maxResources, noteIDs, fetchProgressStatus)) {
+        const moreToSync = await contentFetch(trc, syncParams, maxTime, maxResources, noteIDs, fetchProgressStatus);
+        if (args) {
+            conduit_utils_1.logger.debug(`ContentFetchActivity: ${args ? 'More to downsync' : 'All content downsynced'}. Not retrying immediateContentSync activity`);
+            return;
+        }
+        else if (moreToSync) {
             conduit_utils_1.logger.debug(`ContentFetchActivity: More content to be downsynced. Retrying after ${pollTime}`);
             throw new conduit_utils_1.RetryError('continue', pollTime);
         }
@@ -361,6 +369,6 @@ class ContentFetchSyncActivity extends SyncActivity_1.SyncActivity {
 }
 exports.ContentFetchSyncActivity = ContentFetchSyncActivity;
 SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.ContentFetchSyncActivity, (di, context, p, timeout) => {
-    return new ContentFetchSyncActivity(di, context, p.subpriority, timeout);
+    return new ContentFetchSyncActivity(di, context, p.options.immediateSyncArgs, p.subpriority, timeout);
 });
 //# sourceMappingURL=ContentFetchSyncActivity.js.map

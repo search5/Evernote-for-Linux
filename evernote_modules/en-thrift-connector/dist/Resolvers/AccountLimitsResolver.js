@@ -7,7 +7,7 @@ exports.AccountLimitsResolver = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const ShareAllowanceResolver_1 = require("./ShareAllowanceResolver");
-function AccountLimitsResolver(thriftComm) {
+function AccountLimitsResolver() {
     function genericRatioResolverFactory(countName, limitName) {
         return async (nodeRef, _, context) => {
             conduit_core_1.validateDB(context);
@@ -30,7 +30,7 @@ function AccountLimitsResolver(thriftComm) {
             throw new conduit_utils_1.NotFoundError(nodeRef.id, 'Missing AccountLimits node');
         }
         const numerator = node.NodeFields.Counts.userNoteAndNotebookSharesSentCount;
-        const denominator = await ShareAllowanceResolver_1.getShareAllowance(thriftComm, context);
+        const denominator = await ShareAllowanceResolver_1.getShareAllowance(context);
         if (!denominator || denominator === ShareAllowanceResolver_1.UNLIMITED_SHARES) {
             return null;
         }

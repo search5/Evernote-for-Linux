@@ -305,6 +305,33 @@ class GraphStorageBase extends StorageEventEmitter_1.StorageEventEmitter {
         const nodes = (await this.getFullTable(trc, watcher, tableForNodeType(type))) || {};
         return Object.values(nodes).filter(n => !n.dummy);
     }
+    async getEdge(trc, watcher, association) {
+        const srcNode = await this.getNode(trc, watcher, association.src);
+        if (srcNode) {
+            for (const port in srcNode.outputs) {
+                const edges = srcNode.outputs[port];
+                for (const key in edges) {
+                    const edge = edges[key];
+                    if (edge.dstID === association.dst.id && edge.dstType === association.dst.type) {
+                        return edge;
+                    }
+                }
+            }
+        }
+        const dstNode = await this.getNode(trc, watcher, association.dst);
+        if (dstNode) {
+            for (const port in dstNode.outputs) {
+                const edges = dstNode.outputs[port];
+                for (const key in edges) {
+                    const edge = edges[key];
+                    if (edge.srcID === association.src.id && edge.srcType === association.src.type) {
+                        return edge;
+                    }
+                }
+            }
+        }
+        return null;
+    }
     async traverseGraph(trc, watcher, nodeRef, traverse) {
         let ret = [];
         let node;
@@ -749,6 +776,7 @@ class GraphTransactionContext extends GraphStorageBase {
         for (let i = 0; i < chunks.length; i++) {
             const chunk = chunks[i];
             const nodes = await this.batchGetNodes(trc, null, type, chunk.map(ref => ref.id), false);
+            const ps = [];
             for (const node of nodes) {
                 if (!node) {
                     continue;
@@ -758,7 +786,7 @@ class GraphTransactionContext extends GraphStorageBase {
                 for (const indexItem of indexes) {
                     if (GraphIndexTypes_1.isLookup(indexItem)) {
                         const lookupValue = resolvedFields[indexItem];
-                        await this.setNodeFieldLookupValue(trc, node, indexItem, lookupValue[0]);
+                        ps.push(this.setNodeFieldLookupValue(trc, node, indexItem, lookupValue[0]));
                     }
                     else {
                         const keys = this.config.indexer.keysForNodeAndIndex(node, indexItem, resolvedFields);
@@ -774,6 +802,7 @@ class GraphTransactionContext extends GraphStorageBase {
                     propagatedFieldUpdates[node.id] = newPropagatedFields;
                 }
             }
+            await conduit_utils_1.allSettled(ps);
             // set batch fetch progress
             await setProgressPerType(type, 0.7 * ((i + 1) / chunks.length));
         }
@@ -1493,7 +1522,7 @@ class GraphTransactionContext extends GraphStorageBase {
         for (const indexItem of indexes) {
             if (GraphIndexTypes_1.isLookup(indexItem)) {
                 const lookupValue = resolvedFields[indexItem];
-                await this.setNodeFieldLookupValue(trc, nodeRef, indexItem, !lookupValue ? lookupValue : lookupValue[0]);
+                ps.push(this.setNodeFieldLookupValue(trc, nodeRef, indexItem, !lookupValue ? lookupValue : lookupValue[0]));
             }
             else {
                 const tree = this.readWriteTreeForTypeAndIndex(nodeRef.type, indexItem, false);

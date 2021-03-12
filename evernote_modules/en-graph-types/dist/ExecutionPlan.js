@@ -13,5 +13,6 @@ var RetryErrorCode;
     RetryErrorCode["PublishedFailed"] = "PublishedFailed";
     RetryErrorCode["FileCleanupFailed"] = "FileCleanupFailed";
     RetryErrorCode["Unknown"] = "Unknown";
+    RetryErrorCode["Transport"] = "Transport";
 })(RetryErrorCode = exports.RetryErrorCode || (exports.RetryErrorCode = {}));
 //# sourceMappingURL=ExecutionPlan.js.map

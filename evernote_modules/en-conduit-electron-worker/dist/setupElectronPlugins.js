@@ -8,6 +8,7 @@ const clucene_1 = require("clucene");
 const en_conduit_electron_shared_1 = require("en-conduit-electron-shared");
 const en_conduit_plugin_analytics_measurement_protocol_1 = require("en-conduit-plugin-analytics-measurement-protocol");
 const en_conduit_plugin_board_1 = require("en-conduit-plugin-board");
+const en_conduit_plugin_calendar_service_1 = require("en-conduit-plugin-calendar-service");
 const en_conduit_plugin_common_queries_1 = require("en-conduit-plugin-common-queries");
 const en_conduit_plugin_communication_engine_1 = require("en-conduit-plugin-communication-engine");
 const en_conduit_plugin_cross_promotions_1 = require("en-conduit-plugin-cross-promotions");
@@ -21,28 +22,30 @@ const en_conduit_plugin_monetization_1 = require("en-conduit-plugin-monetization
 const en_conduit_plugin_note_import_1 = require("en-conduit-plugin-note-import");
 const en_conduit_plugin_notification_scheduler_1 = require("en-conduit-plugin-notification-scheduler");
 const en_conduit_plugin_nsvc_authz_token_1 = require("en-conduit-plugin-nsvc-authz-token");
+const en_conduit_plugin_scheduled_notification_1 = require("en-conduit-plugin-scheduled-notification");
 const en_conduit_plugin_search_1 = require("en-conduit-plugin-search");
 const en_conduit_plugin_support_ticket_1 = require("en-conduit-plugin-support-ticket");
 const en_conduit_plugin_task_1 = require("en-conduit-plugin-task");
 function setupElectronPlugins(thriftConduitConfig, servicesConfig, customHeaders) {
-    var _a, _b;
+    var _a, _b, _c;
     const httpClient = new en_conduit_electron_shared_1.ElectronRendererHttpClient(customHeaders);
     let isSearchPluginConfigured = false;
     const plugins = [
         ...thriftConduitConfig.plugins,
-        en_conduit_plugin_common_queries_1.getPlugin(thriftConduitConfig.thriftComm, thriftConduitConfig.offlineContentStrategy),
-        en_conduit_plugin_note_import_1.getNoteImportPlugin(thriftConduitConfig.thriftComm),
-        en_conduit_plugin_communication_engine_1.getENCommEnginePlugin(thriftConduitConfig.thriftComm),
-        en_conduit_plugin_in_app_purchasing_1.getENInAppPurchasingPlugin(thriftConduitConfig.thriftComm, httpClient),
-        en_conduit_plugin_maestro_1.getENMaestroPlugin(thriftConduitConfig.thriftComm),
-        en_conduit_plugin_google_services_1.getGoogleServicesPlugin(thriftConduitConfig.thriftComm, httpClient),
-        en_conduit_plugin_cross_promotions_1.setupENCrossPromotionPlugin(thriftConduitConfig.thriftComm),
-        en_conduit_plugin_support_ticket_1.getSupportTicketPlugin(thriftConduitConfig.thriftComm, null),
-        en_conduit_plugin_nsvc_authz_token_1.getENNsvcAuthzToken(thriftConduitConfig.thriftComm),
+        en_conduit_plugin_common_queries_1.getCommonQueryPlugin(),
+        en_conduit_plugin_note_import_1.getNoteImportPlugin(),
+        en_conduit_plugin_communication_engine_1.getENCommEnginePlugin(),
+        en_conduit_plugin_in_app_purchasing_1.getENInAppPurchasingPlugin(httpClient),
+        en_conduit_plugin_maestro_1.getENMaestroPlugin(),
+        en_conduit_plugin_google_services_1.getGoogleServicesPlugin(httpClient),
+        en_conduit_plugin_cross_promotions_1.setupENCrossPromotionPlugin(),
+        en_conduit_plugin_support_ticket_1.getSupportTicketPlugin(null),
+        en_conduit_plugin_nsvc_authz_token_1.getENNsvcAuthzToken(),
         en_conduit_plugin_features_rollout_1.getFeatureRolloutPlugin(httpClient),
         en_conduit_plugin_notification_scheduler_1.getENSchedulerPlugin(),
         en_conduit_plugin_board_1.getENBoardPlugin(),
         en_conduit_plugin_task_1.getENTaskPlugin(),
+        en_conduit_plugin_scheduled_notification_1.getENScheduledNotificationPlugin(),
     ];
     // Configuration-based plug-ins...
     if (servicesConfig) {
@@ -61,14 +64,17 @@ function setupElectronPlugins(thriftConduitConfig, servicesConfig, customHeaders
         // Plug-ins hidden behind feature flags...
         if ((_a = servicesConfig.featureFlags) === null || _a === void 0 ? void 0 : _a.isOfflineSearchEnabled) {
             isSearchPluginConfigured = true;
-            plugins.push(en_conduit_plugin_search_1.getENSearchPlugin(thriftConduitConfig.thriftComm, clucene_1.provideSearchEngine));
+            plugins.push(en_conduit_plugin_search_1.getENSearchPlugin(clucene_1.provideSearchEngine, thriftConduitConfig.di));
         }
         if ((_b = servicesConfig.featureFlags) === null || _b === void 0 ? void 0 : _b.isMonetizationServiceEnabled) {
-            plugins.push(en_conduit_plugin_monetization_1.getENMonetizationPlugin(thriftConduitConfig.thriftComm));
+            plugins.push(en_conduit_plugin_monetization_1.getENMonetizationPlugin());
+        }
+        if ((_c = servicesConfig.featureFlags) === null || _c === void 0 ? void 0 : _c.isCalendarServiceEnabled) {
+            plugins.push(en_conduit_plugin_calendar_service_1.getCalendarServicePlugin(httpClient));
         }
     }
     if (!isSearchPluginConfigured) {
-        plugins.push(en_conduit_plugin_search_1.getENSearchPlugin(thriftConduitConfig.thriftComm));
+        plugins.push(en_conduit_plugin_search_1.getENSearchPlugin(thriftConduitConfig.di));
     }
     return plugins;
 }

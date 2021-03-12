@@ -1,0 +1,22 @@
+{
+  "name": "en-core-entity-types",
+  "version": "1.30.2",
+  "publishConfig": {
+    "registry": "http://localhost:4873"
+  },
+  "description": "Node types, schemas, and mutators for Evernote-secific domain logic.",
+  "main": "dist/index",
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@types/node": "^10.12.2",
+    "chai": "^4.2.0"
+  },
+  "dependencies": {
+    "conduit-core": "1.30.2",
+    "conduit-storage": "1.30.2",
+    "conduit-utils": "1.30.2",
+    "conduit-view-types": "1.30.2"
+  }
+}

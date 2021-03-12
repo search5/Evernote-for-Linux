@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.toUserClientInfo = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 var ConvertedBool;
 (function (ConvertedBool) {
     ConvertedBool["FALSE"] = "FALSE";
@@ -76,9 +76,9 @@ function toUserClientInfo({ clientType, host, platform, user, }) {
         is_account_less_14_days: isAccountLessThan(created, conduit_utils_1.MILLIS_IN_FOURTEEN_DAYS),
         is_account_less_30_days: isAccountLessThan(created, conduit_utils_1.MILLIS_IN_THIRTY_DAYS),
         is_account_created_before_2020_06_01: isAccountCreatedBefore(created, '2020-06-01'),
-        is_basic_account: serviceLevel === en_data_model_1.ServiceLevel.BASIC,
-        is_business_only_account: serviceLevel === en_data_model_1.ServiceLevel.BUSINESS,
-        is_business_admin: businessUserRole === en_data_model_1.BusinessUserRole.ADMIN,
+        is_basic_account: serviceLevel === en_core_entity_types_1.ServiceLevel.BASIC,
+        is_business_only_account: serviceLevel === en_core_entity_types_1.ServiceLevel.BUSINESS,
+        is_business_admin: businessUserRole === en_core_entity_types_1.BusinessUserRole.ADMIN,
         language: getLanguage(languageCode),
         language_code: getLanguageCode(languageCode),
         platform,
@@ -86,7 +86,7 @@ function toUserClientInfo({ clientType, host, platform, user, }) {
         requesting_environment: getRequestingEnvironment(host),
         requesting_page: CLIENT_VALUE_TO_REQUESTING_PAGE.get(clientType),
         subscription_level: serviceLevel,
-        has_been_premium: premiumServiceStatus !== en_data_model_1.PremiumOrderStatus.NONE,
+        has_been_premium: premiumServiceStatus !== en_core_entity_types_1.PremiumOrderStatus.NONE,
     };
     for (const key in userInfo) {
         userInfo[key] = convertIfBoolean(userInfo[key]);

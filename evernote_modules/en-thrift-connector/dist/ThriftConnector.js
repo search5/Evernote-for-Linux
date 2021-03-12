@@ -24,9 +24,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.init = void 0;
 const conduit_core_1 = require("conduit-core");
+const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const en_nsync_connector_1 = require("en-nsync-connector");
 const Auth = __importStar(require("./Auth"));
 const AccountLimitsConverter_1 = require("./Converters/AccountLimitsConverter");
@@ -35,6 +37,7 @@ const WorkspaceConverter_1 = require("./Converters/WorkspaceConverter");
 const Helpers_1 = require("./Helpers");
 const ApplicationDataPlugin_1 = require("./Plugins/ApplicationDataPlugin");
 const AuthPlugin_1 = require("./Plugins/AuthPlugin");
+const MockQueryPlugin_1 = require("./Plugins/MockQueryPlugin");
 const PluginHelpers_1 = require("./Plugins/PluginHelpers");
 const PreferencesPlugin_1 = require("./Plugins/PreferencesPlugin");
 const ThriftPlugin_1 = require("./Plugins/ThriftPlugin");
@@ -59,8 +62,6 @@ const ThriftRemoteMutationExecutor_1 = require("./ThriftRemoteMutationExecutor")
 const ThriftRpc_1 = require("./ThriftRpc");
 const ThriftStagedBlobManager_1 = require("./ThriftStagedBlobManager");
 const ThriftSyncEngine_1 = require("./ThriftSyncEngine");
-const ThriftTypes_1 = require("./ThriftTypes");
-const Types_1 = require("./Types");
 const UrlCacheEncoder = __importStar(require("./UrlCacheEncoder"));
 let gAuthTokenCacheLifetime = conduit_utils_1.registerDebugSetting('AuthTokenCacheLifetime', 30000, v => gAuthTokenCacheLifetime = v);
 const HOST_RESOLVER_URL = 'https://update.evernote.com/enclients/hostResolver.json';
@@ -71,13 +72,13 @@ function init(di, configs) {
     const hostResolver = new conduit_core_1.HostResolver(di.hostDefaults, di.hostResolverUrl || HOST_RESOLVER_URL, di.getHttpTransport);
     const offlineContentStrategy = di.getOfflineContentStrategy ? di.getOfflineContentStrategy() : conduit_view_types_1.OfflineContentStrategy.NONE;
     let urlEncoder = null;
-    const proxyType = di.getResourceProxyType ? di.getResourceProxyType() : Types_1.ResourceProxyType.None;
+    const proxyType = di.getResourceProxyType ? di.getResourceProxyType() : en_conduit_sync_types_1.ResourceProxyType.None;
     switch (proxyType) {
-        case Types_1.ResourceProxyType.None:
+        case en_conduit_sync_types_1.ResourceProxyType.None:
             break;
-        case Types_1.ResourceProxyType.CookieAuth:
+        case en_conduit_sync_types_1.ResourceProxyType.CookieAuth:
             break;
-        case Types_1.ResourceProxyType.NativeLayerCache:
+        case en_conduit_sync_types_1.ResourceProxyType.NativeLayerCache:
             urlEncoder = UrlCacheEncoder.urlToNativeCache;
             break;
         default: {
@@ -95,7 +96,7 @@ function init(di, configs) {
             return fileSerivce;
         },
     });
-    const nSyncEventManager = new en_nsync_connector_1.NSyncEventManager(Object.assign(Object.assign({}, di), { featureVersion: ThriftTypes_1.FEATURE_VERSION }), hostResolver);
+    const nSyncEventManager = new en_nsync_connector_1.NSyncEventManager(Object.assign(Object.assign({}, di), { featureVersion: conduit_view_types_1.FEATURE_VERSION }), hostResolver);
     function refreshAuthToken(trc, oldAuthData) {
         if (!di.getHttpTransport) {
             throw new Error('Unable to refresh auth token because HttpTransport is missing!');
@@ -108,7 +109,7 @@ function init(di, configs) {
     // X is an arbitrary number that is most likely smaller than any realistic auth token lifetime.
     const [refreshNAPAuthToken] = conduit_utils_1.memoize('refreshAuthToken', refreshAuthToken, (_, oldAuth) => `${oldAuth.token}:${oldAuth.userID}`, gAuthTokenCacheLifetime);
     const quasarConnector = new QuasarConnector_1.QuasarConnectorAndExecutor(di, hostResolver, nSyncEventManager);
-    const initSyncEventManager = async (trc, host, token, jwt, clientID, storage, toggleEventSync) => {
+    const initSyncEventManager = async (trc, host, token, jwt, clientID, storage, fromPrebuilt, toggleEventSync) => {
         const abilityDI = {
             httpProvider: di.getHttpTransport,
             onChange: async (newTrc, isNowAvailable) => {
@@ -126,17 +127,17 @@ function init(di, configs) {
             url: di.serviceAvailabilityOverrideUrl,
         };
         const availability = new en_nsync_connector_1.ServiceAvailability(abilityDI);
-        await nSyncEventManager.init(trc, host, token, jwt, storage, clientID, resourceManager, toggleEventSync, availability);
+        await nSyncEventManager.init(trc, host, token, jwt, storage, clientID, resourceManager, fromPrebuilt, toggleEventSync, availability);
         return nSyncEventManager;
     };
     const pluginTokenRefreshManager = new PluginHelpers_1.PluginTokenRefreshManager({ refreshAuthToken: refreshNAPAuthToken }, (_b = configs.maxBackoffTimeout) !== null && _b !== void 0 ? _b : 16000);
     const coreEntityPlugin = {
         name: 'CoreEntities',
-        defineQueries: () => (Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({}, AccountLimitsResolver_1.AccountLimitsResolver(thriftComm)), BlobResolver_1.BlobResolver(thriftComm, urlEncoder)), FolderResolver_1.LastUpdatedResolver()), MembershipResolver_1.MembershipResolver(thriftComm)), NoteFieldResolver_1.NoteFieldResolver(thriftComm)), PermissionResolver_1.PermissionResolver()), ShareAllowanceResolver_1.ShareAllowanceResolver(thriftComm)), ShareCountResolver_1.ShareCountResolver()), UrlResolver_1.UrlResolver(urlEncoder)), WorkspacePinnedContentsResolver_1.WorkspacePinnedContentsResolver(thriftComm)), WorkspaceUIPreferencesResolver_1.WorkspaceUIPreferencesResolver(thriftComm))),
+        defineQueries: () => (Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({}, AccountLimitsResolver_1.AccountLimitsResolver()), BlobResolver_1.BlobResolver(urlEncoder)), FolderResolver_1.LastUpdatedResolver()), MembershipResolver_1.MembershipResolver()), NoteFieldResolver_1.NoteFieldResolver()), PermissionResolver_1.PermissionResolver()), ShareAllowanceResolver_1.ShareAllowanceResolver()), ShareCountResolver_1.ShareCountResolver()), UrlResolver_1.UrlResolver(urlEncoder)), WorkspacePinnedContentsResolver_1.WorkspacePinnedContentsResolver()), WorkspaceUIPreferencesResolver_1.WorkspaceUIPreferencesResolver())),
         entityTypes: () => {
-            const result = Object.assign({}, en_data_model_1.CoreEntityTypeDefs);
+            const result = Object.assign({}, en_core_entity_types_1.CoreEntityTypeDefs);
             // inject Thrift-specific functions
-            result.Note.dataResolver = NoteDataResolver_1.getNoteDataResolver(thriftComm, offlineContentStrategy, di.getSearchShareAcceptMetadata);
+            result.Note.dataResolver = NoteDataResolver_1.getNoteDataResolver(di.getSearchShareAcceptMetadata);
             result.Note.deleteHook = NotebookConverter_1.deletePendingOfflineNoteSyncState;
             result.Workspace.deleteHook = WorkspaceConverter_1.WorkspaceConverter.onDelete;
             result.Notebook.deleteHook = async (trc, tx, notebookID) => {
@@ -149,10 +150,10 @@ function init(di, configs) {
             return result;
         },
         mutationRules: () => {
-            return en_data_model_1.CoreMutationRules;
+            return en_core_entity_types_1.CoreMutationRules;
         },
         mutatorDefs: () => {
-            return en_data_model_1.CoreMutatorDefs;
+            return en_core_entity_types_1.CoreMutatorDefs;
         },
     };
     function createMutationEngine(sendMutationMetrics) {
@@ -165,8 +166,8 @@ function init(di, configs) {
             recordEvent: conduit_utils_1.recordEvent,
             md5: conduit_utils_1.md5,
             guidGenerator: conduit_core_1.GuidGenerator,
-            userRef: { id: conduit_core_1.PERSONAL_USER_ID, type: en_data_model_1.CoreEntityTypes.User },
-            vaultRef: { id: conduit_core_1.VAULT_USER_ID, type: en_data_model_1.CoreEntityTypes.User },
+            userRef: { id: conduit_core_1.PERSONAL_USER_ID, type: en_core_entity_types_1.CoreEntityTypes.User },
+            vaultRef: { id: conduit_core_1.VAULT_USER_ID, type: en_core_entity_types_1.CoreEntityTypes.User },
         });
     }
     return {
@@ -212,16 +213,24 @@ function init(di, configs) {
             fileResolver: FileResolver_1.FileResolverDI(hostResolver, urlEncoder, di.overrideFileServiceUrl),
             Indexer: (nodeTypes, indexConfig) => {
                 var _a;
-                return new en_data_model_1.EvernoteIndexer(indexConfig, nodeTypes, (_a = configs.doValidation) !== null && _a !== void 0 ? _a : false);
+                return new conduit_storage_1.EvernoteIndexer(indexConfig, nodeTypes, (_a = configs.doValidation) !== null && _a !== void 0 ? _a : false);
+            },
+            extendContext: () => {
+                return {
+                    thriftComm,
+                    offlineContentStrategy,
+                    makeQueryRequest: quasarConnector.makeQueryRequestFromGraphQL,
+                };
             },
         },
         plugins: [
-            ApplicationDataPlugin_1.getApplicationDataPlugin(thriftComm),
-            AuthPlugin_1.getAuthPlugin(thriftComm, (_c = (di.getHttpTransport && di.getHttpTransport())) !== null && _c !== void 0 ? _c : null, pluginTokenRefreshManager, (_d = di.clientCredentials) === null || _d === void 0 ? void 0 : _d.deviceIdentifier),
-            PreferencesPlugin_1.getPreferencePlugin(thriftComm),
-            ThriftPlugin_1.getThriftPlugin(thriftComm, resourceManager, offlineContentStrategy),
+            ApplicationDataPlugin_1.getApplicationDataPlugin(),
+            AuthPlugin_1.getAuthPlugin((_c = (di.getHttpTransport && di.getHttpTransport())) !== null && _c !== void 0 ? _c : null, pluginTokenRefreshManager, (_d = di.clientCredentials) === null || _d === void 0 ? void 0 : _d.deviceIdentifier),
+            MockQueryPlugin_1.getMockQueryPlugin(),
+            PreferencesPlugin_1.getPreferencePlugin(),
+            ThriftPlugin_1.getThriftPlugin(resourceManager, offlineContentStrategy),
             nSyncEventManager.getPlugin(),
-            UrlPlugin_1.getUrlPlugin(thriftComm, pluginTokenRefreshManager),
+            UrlPlugin_1.getUrlPlugin(pluginTokenRefreshManager),
             coreEntityPlugin,
         ],
         offlineContentStrategy,

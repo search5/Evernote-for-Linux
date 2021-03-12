@@ -38,6 +38,8 @@ const createBoardBootstrapDefinition = (di) => {
     return {
         args: {
             parent: { type: conduit_core_1.schemaToGraphQLType('EntityRef?', 'parent', false) },
+            resetLayout: { type: graphql_1.GraphQLBoolean },
+            platform: { type: conduit_core_1.schemaToGraphQLType([...Object.keys(BoardConstants_1.FormFactor), '?'], 'BoardBootstrapPlatform') },
             features: { type: new graphql_1.GraphQLInputObjectType({
                     name: 'BoardBootstrapFeatureArgs',
                     fields: {
@@ -68,7 +70,7 @@ const createBoardBootstrapDefinition = (di) => {
                 leadingSegments: BoardFeatureSchemaManager_1.BoardFeatureSchemaManager.formDeterministicBoardIdParts(),
             });
             conduit_core_1.validateDB(context);
-            const { features: featuresParam, } = args;
+            const { features: featuresParam, resetLayout, platform, } = args;
             const board = await context.db.getNode(context, { id: boardID, type: BoardConstants_1.BoardEntityTypes.Board });
             const schemaFeatures = Utilities.getBoardPluginFeatures(di).schema;
             const features = [];
@@ -97,15 +99,15 @@ const createBoardBootstrapDefinition = (di) => {
                 for (let i = 0; i < features.length; i++) {
                     const feature = features[i];
                     const featureVersion = featureVersions[i];
-                    const currentVersion = board.NodeFields[`${feature}Version`];
+                    const currentVersion = board.NodeFields[BoardFeatureSchemaManager_1.BoardFeatureSchemaManager.formFeatureKey(feature)];
                     if (!currentVersion || currentVersion < featureVersion) {
                         upgradeDetected = true;
                         break;
                     }
                 }
-                if (upgradeDetected) {
+                if (upgradeDetected || resetLayout) {
                     const serviceLevel = userNode.NodeFields.serviceLevel;
-                    await context.db.runMutator(context.trc, 'boardCreateHome', { serviceLevel, features, featureVersions });
+                    await context.db.runMutator(context.trc, 'boardCreateHome', { serviceLevel, features, featureVersions, resetLayout, platform });
                 }
             }
             // Return the Board ID...

@@ -7,40 +7,40 @@ exports.UserConverter = exports.convertUserFromService = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
-const ThriftTypes_1 = require("../ThriftTypes");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Converters_1 = require("./Converters");
 const Helpers_1 = require("./Helpers");
 const NotebookConverter_1 = require("./NotebookConverter");
 const ProfileConverter_1 = require("./ProfileConverter");
 function toPrivilegeLevel(t) {
     switch (t) {
-        case ThriftTypes_1.TPrivilegeLevel.NORMAL:
-            return en_data_model_1.PrivilegeLevel.NORMAL;
-        case ThriftTypes_1.TPrivilegeLevel.PREMIUM:
-            return en_data_model_1.PrivilegeLevel.PREMIUM;
-        case ThriftTypes_1.TPrivilegeLevel.VIP:
-            return en_data_model_1.PrivilegeLevel.VIP;
-        case ThriftTypes_1.TPrivilegeLevel.MANAGER:
-            return en_data_model_1.PrivilegeLevel.MANAGER;
-        case ThriftTypes_1.TPrivilegeLevel.SUPPORT:
-            return en_data_model_1.PrivilegeLevel.SUPPORT;
-        case ThriftTypes_1.TPrivilegeLevel.ADMIN:
-            return en_data_model_1.PrivilegeLevel.ADMIN;
+        case en_conduit_sync_types_1.TPrivilegeLevel.NORMAL:
+            return en_core_entity_types_1.PrivilegeLevel.NORMAL;
+        case en_conduit_sync_types_1.TPrivilegeLevel.PREMIUM:
+            return en_core_entity_types_1.PrivilegeLevel.PREMIUM;
+        case en_conduit_sync_types_1.TPrivilegeLevel.VIP:
+            return en_core_entity_types_1.PrivilegeLevel.VIP;
+        case en_conduit_sync_types_1.TPrivilegeLevel.MANAGER:
+            return en_core_entity_types_1.PrivilegeLevel.MANAGER;
+        case en_conduit_sync_types_1.TPrivilegeLevel.SUPPORT:
+            return en_core_entity_types_1.PrivilegeLevel.SUPPORT;
+        case en_conduit_sync_types_1.TPrivilegeLevel.ADMIN:
+            return en_core_entity_types_1.PrivilegeLevel.ADMIN;
         default:
             throw conduit_utils_1.absurd(t, 'Unknown service privilege level');
     }
 }
 function toServiceLevel(t) {
     switch (t) {
-        case ThriftTypes_1.TServiceLevel.BASIC:
-            return en_data_model_1.ServiceLevel.BASIC;
-        case ThriftTypes_1.TServiceLevel.PLUS:
-            return en_data_model_1.ServiceLevel.PLUS;
-        case ThriftTypes_1.TServiceLevel.PREMIUM:
-            return en_data_model_1.ServiceLevel.PREMIUM;
-        case ThriftTypes_1.TServiceLevel.BUSINESS:
-            return en_data_model_1.ServiceLevel.BUSINESS;
+        case en_conduit_sync_types_1.TServiceLevel.BASIC:
+            return en_core_entity_types_1.ServiceLevel.BASIC;
+        case en_conduit_sync_types_1.TServiceLevel.PLUS:
+            return en_core_entity_types_1.ServiceLevel.PLUS;
+        case en_conduit_sync_types_1.TServiceLevel.PREMIUM:
+            return en_core_entity_types_1.ServiceLevel.PREMIUM;
+        case en_conduit_sync_types_1.TServiceLevel.BUSINESS:
+            return en_core_entity_types_1.ServiceLevel.BUSINESS;
         default:
             throw conduit_utils_1.absurd(t, 'Unknown service service level');
     }
@@ -51,48 +51,48 @@ function toServiceLevelArray(t) {
 function toPremiumServiceStatus(t) {
     switch (t) {
         case null:
-        case ThriftTypes_1.TPremiumOrderStatus.NONE:
-            return en_data_model_1.PremiumOrderStatus.NONE;
-        case ThriftTypes_1.TPremiumOrderStatus.PENDING:
-            return en_data_model_1.PremiumOrderStatus.PENDING;
-        case ThriftTypes_1.TPremiumOrderStatus.ACTIVE:
-            return en_data_model_1.PremiumOrderStatus.ACTIVE;
-        case ThriftTypes_1.TPremiumOrderStatus.FAILED:
-            return en_data_model_1.PremiumOrderStatus.FAILED;
-        case ThriftTypes_1.TPremiumOrderStatus.CANCELLATION_PENDING:
-            return en_data_model_1.PremiumOrderStatus.CANCELLATION_PENDING;
-        case ThriftTypes_1.TPremiumOrderStatus.CANCELED:
-            return en_data_model_1.PremiumOrderStatus.CANCELED;
+        case en_conduit_sync_types_1.TPremiumOrderStatus.NONE:
+            return en_core_entity_types_1.PremiumOrderStatus.NONE;
+        case en_conduit_sync_types_1.TPremiumOrderStatus.PENDING:
+            return en_core_entity_types_1.PremiumOrderStatus.PENDING;
+        case en_conduit_sync_types_1.TPremiumOrderStatus.ACTIVE:
+            return en_core_entity_types_1.PremiumOrderStatus.ACTIVE;
+        case en_conduit_sync_types_1.TPremiumOrderStatus.FAILED:
+            return en_core_entity_types_1.PremiumOrderStatus.FAILED;
+        case en_conduit_sync_types_1.TPremiumOrderStatus.CANCELLATION_PENDING:
+            return en_core_entity_types_1.PremiumOrderStatus.CANCELLATION_PENDING;
+        case en_conduit_sync_types_1.TPremiumOrderStatus.CANCELED:
+            return en_core_entity_types_1.PremiumOrderStatus.CANCELED;
         default:
             throw new Error(`Invalid PremiumOrderStatus returned from service`);
     }
 }
 function toBusinessUserRole(t) {
     if (!t) {
-        return en_data_model_1.BusinessUserRole.NORMAL;
+        return en_core_entity_types_1.BusinessUserRole.NORMAL;
     }
     switch (t) {
-        case ThriftTypes_1.TBusinessUserRole.ADMIN:
-            return en_data_model_1.BusinessUserRole.ADMIN;
-        case ThriftTypes_1.TBusinessUserRole.NORMAL:
-            return en_data_model_1.BusinessUserRole.NORMAL;
+        case en_conduit_sync_types_1.TBusinessUserRole.ADMIN:
+            return en_core_entity_types_1.BusinessUserRole.ADMIN;
+        case en_conduit_sync_types_1.TBusinessUserRole.NORMAL:
+            return en_core_entity_types_1.BusinessUserRole.NORMAL;
         default:
             throw new Error('Unknown business user role');
     }
 }
 function convertReminderEmailConfig(reminderEmailConfig) {
     switch (reminderEmailConfig) {
-        case ThriftTypes_1.TReminderEmailConfig.SEND_DAILY_EMAIL:
-            return en_data_model_1.UserReminderEmailConfig.SEND_DAILY_EMAIL;
+        case en_conduit_sync_types_1.TReminderEmailConfig.SEND_DAILY_EMAIL:
+            return en_core_entity_types_1.UserReminderEmailConfig.SEND_DAILY_EMAIL;
         default:
-            return en_data_model_1.UserReminderEmailConfig.DO_NOT_SEND;
+            return en_core_entity_types_1.UserReminderEmailConfig.DO_NOT_SEND;
     }
 }
 async function convertUserFromService(trc, params, syncContext, user, isVaultUser) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41;
     const userOut = {
         id: isVaultUser ? conduit_core_1.VAULT_USER_ID : conduit_core_1.PERSONAL_USER_ID,
-        type: en_data_model_1.CoreEntityTypes.User,
+        type: en_core_entity_types_1.CoreEntityTypes.User,
         version: user.updated || 0,
         syncContexts: [],
         localChangeTimestamp: 0,
@@ -104,8 +104,8 @@ async function convertUserFromService(trc, params, syncContext, user, isVaultUse
             email: user.email || '',
             name: user.name || null,
             timezone: user.timezone || null,
-            privilege: toPrivilegeLevel(user.privilege || ThriftTypes_1.TPrivilegeLevel.NORMAL),
-            serviceLevel: toServiceLevel(user.serviceLevel || ThriftTypes_1.TServiceLevel.BASIC),
+            privilege: toPrivilegeLevel(user.privilege || en_conduit_sync_types_1.TPrivilegeLevel.NORMAL),
+            serviceLevel: toServiceLevel(user.serviceLevel || en_conduit_sync_types_1.TServiceLevel.BASIC),
             created: user.created || 0,
             updated: user.updated || 0,
             deleted: user.deleted || null,
@@ -153,7 +153,7 @@ async function convertUserFromService(trc, params, syncContext, user, isVaultUse
                 emailAddressLastConfirmed: user.attributes && user.attributes.emailAddressLastConfirmed || null,
                 passwordUpdated: user.attributes && user.attributes.passwordUpdated || null,
                 incomingEmailAddress: user.attributes && user.attributes.incomingEmailAddress ? user.attributes.incomingEmailAddress.concat('@evernote.com') : null,
-                reminderEmail: user.attributes ? convertReminderEmailConfig(user.attributes.reminderEmailConfig) : en_data_model_1.UserReminderEmailConfig.DO_NOT_SEND,
+                reminderEmail: user.attributes ? convertReminderEmailConfig(user.attributes.reminderEmailConfig) : en_core_entity_types_1.UserReminderEmailConfig.DO_NOT_SEND,
             },
             subscriptionInfo: {
                 updatedTime: user.subscriptionInfo && user.subscriptionInfo.currentTime || null,
@@ -180,19 +180,19 @@ async function convertUserFromService(trc, params, syncContext, user, isVaultUse
     };
     if (!isVaultUser) {
         conduit_storage_1.addOutputEdgeToNode(userOut, 'profile', {
-            id: Converters_1.convertGuidFromService(user.id, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User),
-            type: en_data_model_1.CoreEntityTypes.Profile,
+            id: Converters_1.convertGuidFromService(user.id, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User),
+            type: en_core_entity_types_1.CoreEntityTypes.Profile,
             port: null,
         });
-        await ProfileConverter_1.ProfileConverter.convertFromService(trc, params, syncContext, ProfileConverter_1.profileFromUser(user, ProfileConverter_1.ProfileSourceConfidence.Source, en_data_model_1.ProfileStatusEnum.ACTIVE));
+        await ProfileConverter_1.ProfileConverter.convertFromService(trc, params, syncContext, ProfileConverter_1.profileFromUser(user, ProfileConverter_1.ProfileSourceConfidence.Source, en_core_entity_types_1.ProfileStatusEnum.ACTIVE));
         conduit_storage_1.addOutputEdgeToNode(userOut, 'accountLimits', {
-            id: en_data_model_1.ACCOUNT_LIMITS_ID,
-            type: en_data_model_1.CoreEntityTypes.AccountLimits,
+            id: en_core_entity_types_1.ACCOUNT_LIMITS_ID,
+            type: en_core_entity_types_1.CoreEntityTypes.AccountLimits,
             port: null,
         });
         conduit_storage_1.addOutputEdgeToNode(userOut, 'maestroProps', {
-            id: en_data_model_1.MAESTRO_PROPS_ID,
-            type: en_data_model_1.CoreEntityTypes.MaestroProps,
+            id: en_core_entity_types_1.MAESTRO_PROPS_ID,
+            type: en_core_entity_types_1.CoreEntityTypes.MaestroProps,
             port: null,
         });
         // carryover previous defaultNotebook and userNotebook edges, they are unique because of how they are synced
@@ -221,7 +221,7 @@ async function convertUserFromService(trc, params, syncContext, user, isVaultUse
 exports.convertUserFromService = convertUserFromService;
 class UserConverterClass {
     constructor() {
-        this.nodeType = en_data_model_1.CoreEntityTypes.User;
+        this.nodeType = en_core_entity_types_1.CoreEntityTypes.User;
     }
     convertGuidFromService(guid) {
         throw new Error('TUserID cannot be converted from service');
@@ -251,7 +251,7 @@ class UserConverterClass {
             return false;
         }
         const nbID = defaultNotebookChanges.creates[0].dstID;
-        const curNotebook = await params.graphTransaction.getNode(trc, null, { id: nbID, type: en_data_model_1.CoreEntityTypes.Notebook });
+        const curNotebook = await params.graphTransaction.getNode(trc, null, { id: nbID, type: en_core_entity_types_1.CoreEntityTypes.Notebook });
         if (!curNotebook) {
             throw new conduit_utils_1.NotFoundError(nbID, `Missing notebook ${nbID} from local graph storage`);
         }
@@ -263,12 +263,12 @@ class UserConverterClass {
         const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
         let recipientSettings;
         let resp;
-        const nbGuid = Converters_1.convertGuidToService(nbID, en_data_model_1.CoreEntityTypes.Notebook);
+        const nbGuid = Converters_1.convertGuidToService(nbID, en_core_entity_types_1.CoreEntityTypes.Notebook);
         const serviceData = {
             guid: nbGuid,
         };
         if (syncContextMetadata.isVaultUser || syncContextMetadata.sharedNotebookGlobalID) {
-            recipientSettings = new ThriftTypes_1.TNotebookRecipientSettings({ recipientStatus: ThriftTypes_1.TRecipientStatus.IN_MY_LIST_AND_DEFAULT_NOTEBOOK });
+            recipientSettings = new en_conduit_sync_types_1.TNotebookRecipientSettings({ recipientStatus: en_conduit_sync_types_1.TRecipientStatus.IN_MY_LIST_AND_DEFAULT_NOTEBOOK });
         }
         else {
             serviceData.defaultNotebook = true;
@@ -277,7 +277,7 @@ class UserConverterClass {
             if (curNotebook.inputs.stack) {
                 const edge = conduit_utils_1.firstStashEntry(curNotebook.inputs.stack);
                 if (edge) {
-                    const stackNode = await params.graphTransaction.getNode(trc, null, { id: edge.srcID, type: en_data_model_1.CoreEntityTypes.Stack });
+                    const stackNode = await params.graphTransaction.getNode(trc, null, { id: edge.srcID, type: en_core_entity_types_1.CoreEntityTypes.Stack });
                     if (stackNode) {
                         serviceData.stack = stackNode.label;
                     }
@@ -286,9 +286,7 @@ class UserConverterClass {
         }
         let skipShare = false;
         if (recipientSettings) {
-            // for business user, we need to use personal user auth token for setNotebookRecipientSettings call
-            const authToken = (syncContextMetadata.isVaultUser || syncContextMetadata.sharedNotebookGlobalID) && params.personalAuth ? params.personalAuth.token : auth.token;
-            resp = await noteStore.setNotebookRecipientSettings(trc, authToken, nbGuid, recipientSettings);
+            resp = await NotebookConverter_1.notebookSetRecipientSettingsWrapper(trc, noteStore, syncContextMetadata, auth, params.personalAuth, nbGuid, recipientSettings, curNotebook);
             skipShare = true;
         }
         if (Object.keys(serviceData).length > 1) {
@@ -315,7 +313,7 @@ class UserConverterClass {
                 const auth = params.personalAuth;
                 const updateParams = commandRun.params;
                 const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
-                await noteStore.updateUserSetting(trc, auth.token, ThriftTypes_1.TUserSetting.RECEIVE_REMINDER_EMAIL, updateParams.setting);
+                await noteStore.updateUserSetting(trc, auth.token, en_conduit_sync_types_1.TUserSetting.RECEIVE_REMINDER_EMAIL, updateParams.setting);
                 const userStore = params.thriftComm.getUserStore(auth.urls.userStoreUrl);
                 const user = await userStore.getUser(trc, auth.token);
                 const isVaultUser = Boolean(auth.vaultAuth);

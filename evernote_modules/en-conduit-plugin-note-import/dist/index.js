@@ -26,10 +26,11 @@ exports.getNoteImportPlugin = void 0;
 const NoteImportMutators = __importStar(require("./Mutators/NoteImportMutators"));
 const NoteCopy_1 = require("./NoteCopy");
 const NoteImport_1 = require("./NoteImport");
-function getNoteImportPlugin(thriftComm) {
+const NoteMerge_1 = require("./NoteMerge");
+function getNoteImportPlugin() {
     return {
         name: 'NoteImport',
-        defineMutators: () => (Object.assign({ noteImport: NoteImport_1.noteImportPlugin }, NoteCopy_1.getNoteCopyPlugin(thriftComm))),
+        defineMutators: () => (Object.assign(Object.assign({ noteImport: NoteImport_1.noteImport }, NoteCopy_1.noteCopyMutations), { noteMerge: NoteMerge_1.noteMerge })),
         mutatorDefs: () => {
             return Object.assign({}, NoteImportMutators);
         },

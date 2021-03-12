@@ -5,15 +5,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getShortcutNodesAndEdges = exports.reconcileIncomingShortcuts = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
-const NSyncTypes_1 = require("../NSyncTypes");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const BaseConverter_1 = require("./BaseConverter");
 function convertGuidFromService(guid) {
     return `Shortcut:${guid}`;
 }
 // All these copied from en-thrift-connectors ShortcutConverter and ShorcutHelpers
 async function getCurrentShortcuts(trc, tx) {
-    const nodes = await tx.getGraphNodesByType(trc, null, en_data_model_1.CoreEntityTypes.Shortcut);
+    const nodes = await tx.getGraphNodesByType(trc, null, en_core_entity_types_1.CoreEntityTypes.Shortcut);
     const nodeMap = {};
     nodes.sort((a, b) => {
         if (a.NodeFields.sortOrder === b.NodeFields.sortOrder) {
@@ -41,7 +41,7 @@ function nodeFromShortcut(instance, parent, sortOrder) {
         conduit_utils_1.logger.error('Missing initial values');
         throw new Error('Missing initial values for Shortcut');
     }
-    const node = Object.assign(Object.assign({}, initial), { version: 0, syncContexts: [], localChangeTimestamp: 0, id: convertGuidFromService(parent.id), type: en_data_model_1.CoreEntityTypes.Shortcut, label: `Shortcut for ${parent.id}`, NodeFields: {
+    const node = Object.assign(Object.assign({}, initial), { version: 0, syncContexts: [], localChangeTimestamp: 0, id: convertGuidFromService(parent.id), type: en_core_entity_types_1.CoreEntityTypes.Shortcut, label: `Shortcut for ${parent.id}`, NodeFields: {
             sortOrder,
         }, inputs: {
             source: {},
@@ -50,7 +50,7 @@ function nodeFromShortcut(instance, parent, sortOrder) {
 }
 function getIncomingShortcuts(instance) {
     const prefs = instance.preferences;
-    const shortcuts = prefs[NSyncTypes_1.PREFERENCE_SHORTCUTS_KEY] || [];
+    const shortcuts = prefs[en_conduit_sync_types_1.PREFERENCE_SHORTCUTS_KEY] || [];
     const nodeMap = {};
     const nodes = [];
     const edges = [];
@@ -227,7 +227,7 @@ const getShortcutNodesAndEdges = async (trc, instance, context) => {
     const currentShortcuts = await getCurrentShortcuts(trc, context.tx);
     function processNode(id, shortcut) {
         if (!shortcut) {
-            nodesAndEdges.nodes.nodesToDelete.push({ id, type: en_data_model_1.CoreEntityTypes.Shortcut });
+            nodesAndEdges.nodes.nodesToDelete.push({ id, type: en_core_entity_types_1.CoreEntityTypes.Shortcut });
         }
         else {
             nodesAndEdges.nodes.nodesToUpsert.push(shortcut);

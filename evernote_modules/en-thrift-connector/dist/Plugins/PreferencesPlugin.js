@@ -24,18 +24,18 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPreferencePlugin = void 0;
 const conduit_core_1 = require("conduit-core");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const Auth = __importStar(require("../Auth"));
-const ThriftTypes_1 = require("../ThriftTypes");
-function getPreferencePlugin(thriftComm) {
-    async function getPreferences(trc, auth) {
-        const notestore = thriftComm.getNoteStore(auth.urls.noteStoreUrl);
-        return notestore.getPreferences(trc, auth.token, [ThriftTypes_1.EDAM_PREFERENCE_WORKCHATACTIVE]);
+function getPreferencePlugin() {
+    async function getPreferences(context, auth) {
+        const notestore = context.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
+        return notestore.getPreferences(context.trc, auth.token, [en_conduit_sync_types_1.EDAM_PREFERENCE_WORKCHATACTIVE]);
     }
-    async function hasNoEmptyMessages(trc, auth) {
-        const messageStore = thriftComm.getMessageStore(auth.urls.messageStoreUrl);
-        const sinceTimestamp = Date.now() - ThriftTypes_1.EDAM_PREFERENCE_WORKCHATACTIVE_TIMESPAN;
+    async function hasNoEmptyMessages(context, auth) {
+        const messageStore = context.thriftComm.getMessageStore(auth.urls.messageStoreUrl);
+        const sinceTimestamp = Date.now() - en_conduit_sync_types_1.EDAM_PREFERENCE_WORKCHATACTIVE_TIMESPAN;
         const dateFilter = { sinceTimestamp };
-        return messageStore.hasNonEmptyMessages(trc, auth.token, dateFilter);
+        return messageStore.hasNonEmptyMessages(context.trc, auth.token, dateFilter);
     }
     async function workChatPreferenceResolver(_1, _2, context) {
         conduit_core_1.validateDB(context);
@@ -43,9 +43,9 @@ function getPreferencePlugin(thriftComm) {
         if (authorizedToken) {
             const authData = Auth.decodeAuthData(authorizedToken);
             const isBizUser = Boolean(authData.vaultAuth);
-            const results = await getPreferences(context.trc, authData);
-            const prefValue = results && results.preferences && results.preferences[ThriftTypes_1.EDAM_PREFERENCE_WORKCHATACTIVE] &&
-                results.preferences[ThriftTypes_1.EDAM_PREFERENCE_WORKCHATACTIVE][0];
+            const results = await getPreferences(context, authData);
+            const prefValue = results && results.preferences && results.preferences[en_conduit_sync_types_1.EDAM_PREFERENCE_WORKCHATACTIVE] &&
+                results.preferences[en_conduit_sync_types_1.EDAM_PREFERENCE_WORKCHATACTIVE][0];
             let isActive = false;
             // if prefence not set - check if user biz
             // if not biz - check  any non empty message being sent in EDAM_PREFERENCE_WORKCHATACTIVE_TIMESPAN span
@@ -54,7 +54,7 @@ function getPreferencePlugin(thriftComm) {
                     isActive = true;
                 }
                 else {
-                    isActive = await hasNoEmptyMessages(context.trc, authData);
+                    isActive = await hasNoEmptyMessages(context, authData);
                 }
             }
             else {
@@ -70,9 +70,9 @@ function getPreferencePlugin(thriftComm) {
         if (authorizedToken) {
             const authData = Auth.decodeAuthData(authorizedToken);
             const preferences = {
-                [ThriftTypes_1.EDAM_PREFERENCE_WORKCHATACTIVE]: [args.isActive.toString()],
+                [en_conduit_sync_types_1.EDAM_PREFERENCE_WORKCHATACTIVE]: [args.isActive.toString()],
             };
-            const notestore = thriftComm.getNoteStore(authData.urls.noteStoreUrl);
+            const notestore = context.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
             await notestore.updatePreferences(context.trc, authData.token, preferences);
             return { success: true };
         }

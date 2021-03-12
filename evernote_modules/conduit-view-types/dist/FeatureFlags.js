@@ -14,6 +14,7 @@ class FeatureFlags {
         // due to the offline search global variables (the same state will be shared accross all instances)
         this.isOfflineSearchEnabled = false;
         this.isMonetizationServiceEnabled = false;
+        this.isCalendarServiceEnabled = false;
         this.boardPluginFeatures = undefined; // Must assign to undefined for hasOwnProperty to detect.
         if (overrides) {
             for (const property in overrides) {

@@ -6,8 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getNotebookNodesAndEdges = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
-const NSyncTypes_1 = require("../NSyncTypes");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const BaseConverter_1 = require("./BaseConverter");
 const StackConverter_1 = require("./StackConverter");
 const getNotebookNodesAndEdges = async (trc, instance, context) => {
@@ -18,9 +17,9 @@ const getNotebookNodesAndEdges = async (trc, instance, context) => {
     }
     const settings = context.eventManager.getProcessingEntity(initial.id, 'RecipientSettings');
     const isExternal = context.currentUserID !== instance.ownerId;
-    const notebook = Object.assign(Object.assign({}, initial), { type: en_data_model_1.CoreEntityTypes.Notebook, NodeFields: {
-            created: NSyncTypes_1.convertLong(instance.created || 0),
-            updated: NSyncTypes_1.convertLong(instance.updated || 0),
+    const notebook = Object.assign(Object.assign({}, initial), { type: en_core_entity_types_1.CoreEntityTypes.Notebook, NodeFields: {
+            created: instance.created,
+            updated: instance.updated,
             isPartialNotebook: false,
             isPublished: instance.published === true,
             inWorkspace: instance.inWorkspace === true,
@@ -46,14 +45,14 @@ const getNotebookNodesAndEdges = async (trc, instance, context) => {
     const edgesToDelete = [];
     const isDefault = instance.isDefault === true;
     const isOwner = context.currentUserID === instance.ownerId;
-    context.eventManager.addProcessingEntity(notebook.id, en_data_model_1.CoreEntityTypes.Notebook, notebook);
+    context.eventManager.addProcessingEntity(notebook.id, en_core_entity_types_1.CoreEntityTypes.Notebook, notebook);
     if (isDefault && isOwner) {
         edgesToDelete.push({
-            srcID: conduit_core_1.PERSONAL_USER_ID, srcType: en_data_model_1.CoreEntityTypes.User, srcPort: 'defaultNotebook',
+            srcID: conduit_core_1.PERSONAL_USER_ID, srcType: en_core_entity_types_1.CoreEntityTypes.User, srcPort: 'defaultNotebook',
         });
         edgesToCreate.push({
-            srcID: conduit_core_1.PERSONAL_USER_ID, srcType: en_data_model_1.CoreEntityTypes.User, srcPort: 'defaultNotebook',
-            dstID: notebook.id, dstType: en_data_model_1.CoreEntityTypes.Notebook, dstPort: 'userForDefaultNotebook',
+            srcID: conduit_core_1.PERSONAL_USER_ID, srcType: en_core_entity_types_1.CoreEntityTypes.User, srcPort: 'defaultNotebook',
+            dstID: notebook.id, dstType: en_core_entity_types_1.CoreEntityTypes.Notebook, dstPort: 'userForDefaultNotebook',
         });
     }
     let stackName = null;

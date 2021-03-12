@@ -5,18 +5,18 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BoardRules = void 0;
 const conduit_core_1 = require("conduit-core");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const BoardWidgetBuilder_1 = require("../BoardWidgetBuilder");
 exports.BoardRules = [{
         on: 'Node:UPDATE',
-        where: { type: en_data_model_1.CoreEntityTypes.Note },
+        where: { type: en_core_entity_types_1.CoreEntityTypes.Note },
         when: conduit_core_1.GraphMutationRuleWhen.Always,
         getExtraOps: async (trc, ctx, op) => {
             return await onNoteUpdate(ctx, trc, op.nodeRef, [], op);
         },
     }, {
         on: 'Node:DELETE',
-        where: { type: en_data_model_1.CoreEntityTypes.Notebook },
+        where: { type: en_core_entity_types_1.CoreEntityTypes.Notebook },
         when: conduit_core_1.GraphMutationRuleWhen.Always,
         getExtraOps: async (trc, ctx, op) => {
             return await onNotebookDelete(ctx, trc, op.nodeRef, []);
@@ -39,7 +39,7 @@ async function onNotebookDelete(ctx, trc, nodeRef, ops) {
      * Gather potential notes that need to be deleted
      *  This is the best possible solution for service structure until Notebooks can be traversed in Command Service+Feature Services
      */
-    const potentialEdgesToDelete = await ctx.traverseGraph(trc, nodeRef, [{ edge: ['outputs', 'children'], type: en_data_model_1.CoreEntityTypes.Note }]);
+    const potentialEdgesToDelete = await ctx.traverseGraph(trc, nodeRef, [{ edge: ['outputs', 'children'], type: en_core_entity_types_1.CoreEntityTypes.Note }]);
     const nodeIDs = potentialEdgesToDelete.filter(e => Boolean(e.edge)).map(e => e.edge.dstID);
     const deleteOps = await BoardWidgetBuilder_1.buildOpsPlanForNotebookDelete(trc, ctx, nodeIDs);
     ops.push(...deleteOps);

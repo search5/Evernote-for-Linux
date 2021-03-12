@@ -1,14 +1,15 @@
 "use strict";
+/*
+ * Copyright 2020 Evernote Corporation. All rights reserved.
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.processNSyncDoc = void 0;
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
 const index_1 = require("./index");
 const NSyncEntityConverter_1 = require("./NSyncEntityConverter");
-const NSyncTypes_1 = require("./NSyncTypes");
-function isAssociationInstance(instance) {
-    return Boolean(instance.ref.src) && Boolean(instance.ref.dst) && Boolean(!instance.ref.hasOwnProperty('role'));
-}
 async function processEntityAndEdges(trc, entityAndEdges, tx) {
     const { nodes, edges } = entityAndEdges;
     if (nodes) {
@@ -29,42 +30,50 @@ async function processEntityAndEdges(trc, entityAndEdges, tx) {
         await tx.replaceEdges(trc, edges.edgesToDelete, edges.edgesToCreate);
     }
 }
-async function upsertDoc(trc, doc, currentUserID, eventManager, tx, dataHelpers) {
-    const type = doc.instance.type;
-    switch (type) {
+async function upsertSyncInstance(trc, instance, currentUserID, eventManager, tx, dataHelpers) {
+    switch (instance.type) {
         case null:
         case undefined:
             break;
-        case NSyncTypes_1.NSyncTypes.EnType.AGENT:
+        case en_data_model_1.ClientNSyncTypes.SyncInstanceType.AGENT:
             break;
-        case NSyncTypes_1.NSyncTypes.EnType.ASSOCIATION:
-            conduit_utils_1.logger.debug('processing event > association');
-            if (!isAssociationInstance(doc.instance)) {
-                break;
+        case en_data_model_1.ClientNSyncTypes.SyncInstanceType.ASSOCIATION: {
+            const depKey = NSyncEntityConverter_1.associationRefToDepKey(eventManager.di, instance.ref);
+            if (depKey && !conduit_utils_1.isNullish(instance.version)) {
+                await eventManager.di.markDependencySynced(trc, depKey, instance.version);
             }
-            const edge = NSyncEntityConverter_1.getEdge(eventManager, doc.instance);
+            const edge = NSyncEntityConverter_1.getEdge(eventManager, instance);
             if (!edge) {
                 break;
             }
             await tx.replaceEdges(trc, [], [edge]);
             break;
-        case NSyncTypes_1.NSyncTypes.EnType.CONNECTION:
+        }
+        case en_data_model_1.ClientNSyncTypes.SyncInstanceType.CONNECTION:
             break;
-        case NSyncTypes_1.NSyncTypes.EnType.ENTITY: {
-            const ref = doc.instance.ref;
+        case en_data_model_1.ClientNSyncTypes.SyncInstanceType.ENTITY: {
+            const ref = instance.ref;
             if (ref.id && eventManager.hasBeenExpunged(ref.id)) {
                 conduit_utils_1.logger.warn(`Received upsert event operation on node id:${ref.id}, type: ${ref.type} after it had been expunged.`);
                 return;
             }
-            const entityAndEdges = await NSyncEntityConverter_1.getEntityAndEdges(trc, doc.instance, currentUserID, eventManager, tx, dataHelpers);
+            const depKey = NSyncEntityConverter_1.entityRefToDepKey(eventManager.di, ref);
+            if (depKey && !conduit_utils_1.isNullish(instance.version)) {
+                await eventManager.di.markDependencySynced(trc, depKey, instance.version);
+            }
+            const entityAndEdges = await NSyncEntityConverter_1.getEntityAndEdges(trc, instance, currentUserID, eventManager, tx, dataHelpers);
             if (!entityAndEdges) {
                 break;
             }
             await processEntityAndEdges(trc, entityAndEdges, tx);
             break;
         }
-        case NSyncTypes_1.NSyncTypes.EnType.MEMBERSHIP: {
-            const entityAndEdges = NSyncEntityConverter_1.getMembership(eventManager, doc.instance, currentUserID);
+        case en_data_model_1.ClientNSyncTypes.SyncInstanceType.MEMBERSHIP: {
+            const depKey = NSyncEntityConverter_1.membershipRefToDepKey(eventManager.di, instance.ref);
+            if (depKey && !conduit_utils_1.isNullish(instance.version)) {
+                await eventManager.di.markDependencySynced(trc, depKey, instance.version);
+            }
+            const entityAndEdges = NSyncEntityConverter_1.getMembership(eventManager, instance, currentUserID);
             if (!entityAndEdges) {
                 break;
             }
@@ -72,7 +81,7 @@ async function upsertDoc(trc, doc, currentUserID, eventManager, tx, dataHelpers)
             break;
         }
         default:
-            throw conduit_utils_1.absurd(type, 'Unknown msg type');
+            conduit_utils_1.logger.warn('upsertSyncInstance', conduit_utils_1.absurd(instance, 'Unknown sync instance type'));
     }
 }
 async function removeMembership(trc, eventManager, tx, membership) {
@@ -80,8 +89,8 @@ async function removeMembership(trc, eventManager, tx, membership) {
         conduit_utils_1.logger.warn('Missing membership ref on nsync expunge');
         return;
     }
-    const id = NSyncEntityConverter_1.generateMembershipID(membership);
-    const membershipRef = { id, type: en_data_model_1.CoreEntityTypes.Membership };
+    const id = NSyncEntityConverter_1.generateMembershipID(membership.ref);
+    const membershipRef = { id, type: en_core_entity_types_1.CoreEntityTypes.Membership };
     if (eventManager.hasBeenExpunged(membershipRef.id)) {
         conduit_utils_1.logger.debug(`Duplicate event on id: ${membershipRef.id}, was previously expunged.`);
         return;
@@ -92,32 +101,42 @@ async function removeMembership(trc, eventManager, tx, membership) {
         conduit_utils_1.logger.warn(`Node (id: ${membershipRef.id}, type: ${membershipRef.type}) could not be expunged. Possibly missing.`);
     }
 }
-async function deleteDoc(trc, doc, currentUserID, eventManager, tx, dataHelpers) {
+async function deleteSyncInstance(trc, instance, currentUserID, eventManager, tx, dataHelpers) {
     var _a;
-    const type = doc.instance.type;
-    switch (type) {
+    switch (instance.type) {
         case null:
         case undefined:
             break;
-        case NSyncTypes_1.NSyncTypes.EnType.AGENT:
-        case NSyncTypes_1.NSyncTypes.EnType.CONNECTION:
-            conduit_utils_1.logger.warn('Unhandled delete: ' + type);
+        case en_data_model_1.ClientNSyncTypes.SyncInstanceType.AGENT:
+        case en_data_model_1.ClientNSyncTypes.SyncInstanceType.CONNECTION:
+            conduit_utils_1.logger.warn('Unhandled delete: ' + instance.type);
             break;
-        case NSyncTypes_1.NSyncTypes.EnType.MEMBERSHIP:
-            await removeMembership(trc, eventManager, tx, doc.instance);
-        case NSyncTypes_1.NSyncTypes.EnType.ASSOCIATION:
-            conduit_utils_1.logger.debug('processing event > association');
-            if (!isAssociationInstance(doc.instance)) {
-                break;
+        case en_data_model_1.ClientNSyncTypes.SyncInstanceType.MEMBERSHIP: {
+            const depKey = NSyncEntityConverter_1.membershipRefToDepKey(eventManager.di, instance.ref);
+            if (depKey) {
+                await eventManager.di.markDependencySynced(trc, depKey, Infinity);
             }
-            const edge = NSyncEntityConverter_1.getEdge(eventManager, doc.instance);
+            await removeMembership(trc, eventManager, tx, instance);
+            break;
+        }
+        case en_data_model_1.ClientNSyncTypes.SyncInstanceType.ASSOCIATION: {
+            const depKey = NSyncEntityConverter_1.associationRefToDepKey(eventManager.di, instance.ref);
+            if (depKey) {
+                await eventManager.di.markDependencySynced(trc, depKey, Infinity);
+            }
+            const edge = NSyncEntityConverter_1.getEdge(eventManager, instance);
             if (!edge) {
                 break;
             }
             await tx.replaceEdges(trc, [edge], []);
             break;
-        case NSyncTypes_1.NSyncTypes.EnType.ENTITY:
-            const entityAndEdges = await NSyncEntityConverter_1.getEntityAndEdges(trc, doc.instance, currentUserID, eventManager, tx, dataHelpers);
+        }
+        case en_data_model_1.ClientNSyncTypes.SyncInstanceType.ENTITY: {
+            const depKey = NSyncEntityConverter_1.entityRefToDepKey(eventManager.di, instance.ref);
+            if (depKey) {
+                await eventManager.di.markDependencySynced(trc, depKey, Infinity);
+            }
+            const entityAndEdges = await NSyncEntityConverter_1.getEntityAndEdges(trc, instance, currentUserID, eventManager, tx, dataHelpers);
             if (!entityAndEdges) {
                 break;
             }
@@ -129,43 +148,47 @@ async function deleteDoc(trc, doc, currentUserID, eventManager, tx, dataHelpers)
             const syncContext = index_1.NSYNC_CONTEXT;
             // add updated/new node
             await tx.replaceNode(trc, syncContext, nodes[0]);
+            break;
+        }
+        default:
+            conduit_utils_1.logger.warn('deleteSyncInstance', conduit_utils_1.absurd(instance, 'Unknown sync instance type'));
     }
 }
-async function expungeDoc(trc, doc, eventManager, tx) {
-    const type = doc.instance.type;
-    switch (type) {
+async function expungeSyncInstance(trc, instance, eventManager, tx) {
+    switch (instance.type) {
         case null:
         case undefined:
             break;
-        case NSyncTypes_1.NSyncTypes.EnType.AGENT:
-        case NSyncTypes_1.NSyncTypes.EnType.ASSOCIATION:
-        case NSyncTypes_1.NSyncTypes.EnType.CONNECTION:
-            conduit_utils_1.logger.warn('Unhandled expunge: ' + type);
+        case en_data_model_1.ClientNSyncTypes.SyncInstanceType.AGENT:
+        case en_data_model_1.ClientNSyncTypes.SyncInstanceType.CONNECTION:
+            conduit_utils_1.logger.warn('Unhandled expunge: ' + instance.type);
             break;
-        case NSyncTypes_1.NSyncTypes.EnType.MEMBERSHIP:
-            await removeMembership(trc, eventManager, tx, doc.instance);
+        case en_data_model_1.ClientNSyncTypes.SyncInstanceType.ASSOCIATION: {
+            const depKey = NSyncEntityConverter_1.associationRefToDepKey(eventManager.di, instance.ref);
+            if (depKey) {
+                await eventManager.di.markDependencySynced(trc, depKey, Infinity);
+            }
             break;
-        case NSyncTypes_1.NSyncTypes.EnType.ENTITY:
-            const instance = doc.instance;
-            const ref = instance.ref;
-            if (!ref) {
-                conduit_utils_1.logger.warn('Missing instance ref on nsync expunge');
-                break;
+        }
+        case en_data_model_1.ClientNSyncTypes.SyncInstanceType.MEMBERSHIP: {
+            const depKey = NSyncEntityConverter_1.membershipRefToDepKey(eventManager.di, instance.ref);
+            if (depKey) {
+                await eventManager.di.markDependencySynced(trc, depKey, Infinity);
             }
-            if (!ref.type) {
-                conduit_utils_1.logger.warn('Missing instance ref type on nsync expunge');
-                break;
+            await removeMembership(trc, eventManager, tx, instance);
+            break;
+        }
+        case en_data_model_1.ClientNSyncTypes.SyncInstanceType.ENTITY: {
+            const depKey = NSyncEntityConverter_1.entityRefToDepKey(eventManager.di, instance.ref);
+            if (depKey) {
+                await eventManager.di.markDependencySynced(trc, depKey, Infinity);
             }
-            const nodeType = NSyncTypes_1.entityTypeAsNodeType(eventManager, ref.type);
-            if (!nodeType) {
+            const nodeType = en_conduit_sync_types_1.entityTypeAsNodeType(eventManager.di, instance.ref.type);
+            if (conduit_utils_1.isNullish(nodeType)) {
                 conduit_utils_1.logger.warn(`Expunge on unhandled nsync entity type: ${instance.ref.type}`);
                 break;
             }
-            if (ref.id === null || ref.id === undefined) {
-                conduit_utils_1.logger.warn('Missing instance ref id on nsync expunge');
-                break;
-            }
-            const nodeRef = { id: ref.id, type: nodeType };
+            const nodeRef = { id: instance.ref.id, type: nodeType };
             if (eventManager.hasBeenExpunged(nodeRef.id)) {
                 conduit_utils_1.logger.debug(`Duplicate event on id: ${nodeRef.id}, was previously expunged.`);
                 break;
@@ -176,8 +199,9 @@ async function expungeDoc(trc, doc, eventManager, tx) {
                 conduit_utils_1.logger.warn(`Node (id: ${nodeRef.id}, type: ${nodeRef.type}) could not be expunged. Possibly missing.`);
             }
             break;
+        }
         default:
-            throw new Error('asked to expunge unknown type: ' + type);
+            conduit_utils_1.logger.warn('expungeSyncInstance', conduit_utils_1.absurd(instance, 'Unknown sync instance type'));
     }
 }
 async function processNSyncDoc(trc, doc, eventManager, tx, dataHelpers) {
@@ -185,33 +209,31 @@ async function processNSyncDoc(trc, doc, eventManager, tx, dataHelpers) {
         conduit_utils_1.logger.warn('Unknown sync info', doc);
         return;
     }
+    const instance = doc.instance;
     const ref = doc.instance.ref;
-    if (ref && ref.id && eventManager.hasBeenExpunged(ref.id)) {
+    if ((ref === null || ref === void 0 ? void 0 : ref.id) && eventManager.hasBeenExpunged(ref.id)) {
         // Making this a warning as I want to know when we get these ordering problems. Can lower it if spammy.
         conduit_utils_1.logger.warn(`Received event operation: ${doc.operation} on node id:${ref.id}, type: ${ref.type} after it had been expunged.`);
         return;
     }
-    let currentUserID;
     switch (doc.operation) {
-        case NSyncTypes_1.NSyncTypes.SyncOperation.ACCESS_FANOUT:
-        case NSyncTypes_1.NSyncTypes.SyncOperation.CREATE:
-        case NSyncTypes_1.NSyncTypes.SyncOperation.UPDATE:
-        case NSyncTypes_1.NSyncTypes.SyncOperation.WITH_ENTITY_CREATE: // may want to handle this one separately in the future (batched for after create?)
-            currentUserID = eventManager.getUserID();
-            await upsertDoc(trc, doc, currentUserID, eventManager, tx, dataHelpers);
+        case en_data_model_1.ClientNSyncTypes.SyncOperation.ACCESS_FANOUT:
+        case en_data_model_1.ClientNSyncTypes.SyncOperation.CREATE:
+        case en_data_model_1.ClientNSyncTypes.SyncOperation.UPDATE:
+        case en_data_model_1.ClientNSyncTypes.SyncOperation.WITH_ENTITY_CREATE: // may want to handle this one separately in the future (batched for after create?)
+            await upsertSyncInstance(trc, instance, eventManager.getUserID(), eventManager, tx, dataHelpers);
             break;
-        case NSyncTypes_1.NSyncTypes.SyncOperation.DELETE:
-            currentUserID = eventManager.getUserID();
-            await deleteDoc(trc, doc, currentUserID, eventManager, tx, dataHelpers);
+        case en_data_model_1.ClientNSyncTypes.SyncOperation.DELETE:
+            await deleteSyncInstance(trc, instance, eventManager.getUserID(), eventManager, tx, dataHelpers);
             break;
-        case NSyncTypes_1.NSyncTypes.SyncOperation.EXPUNGE:
-            await expungeDoc(trc, doc, eventManager, tx);
+        case en_data_model_1.ClientNSyncTypes.SyncOperation.EXPUNGE:
+            await expungeSyncInstance(trc, instance, eventManager, tx);
             break;
-        case NSyncTypes_1.NSyncTypes.SyncOperation.MIGRATE:
+        case en_data_model_1.ClientNSyncTypes.SyncOperation.MIGRATE:
             conduit_utils_1.logger.warn('Presently not handling MIGRATE operation');
             break;
         default:
-            conduit_utils_1.logger.warn(`Unhandled syncOperation: ${doc.operation}`);
+            conduit_utils_1.logger.warn('processNSyncDoc', conduit_utils_1.absurd(doc.operation, `Unhandled SyncOperation: ${doc.operation}`));
             break;
     }
 }

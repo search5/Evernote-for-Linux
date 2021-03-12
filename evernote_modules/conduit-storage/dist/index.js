@@ -15,6 +15,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.extractDiffableIndexConfig = void 0;
 __exportStar(require("./DeclarativeExpr"), exports);
+__exportStar(require("./EvernoteIndexer"), exports);
 __exportStar(require("./GraphIndexTypes"), exports);
 __exportStar(require("./GraphStorageDB"), exports);
 __exportStar(require("./GraphTypes"), exports);

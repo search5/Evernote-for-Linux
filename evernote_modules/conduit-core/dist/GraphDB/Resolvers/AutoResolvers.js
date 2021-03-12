@@ -18,7 +18,10 @@ function flattenEdges(edges, fieldSelection, out) {
     }
     for (const port in edges) {
         const portEdges = edges[port];
-        if (!fieldSelection || port in fieldSelection) {
+        if (!fieldSelection || port in fieldSelection || ResolverHelpers_1.getPortCountName(port) in fieldSelection) {
+            // 1. There is a port field in the selection, the edge count will be auto compute
+            // 2. There is no port field, but there is edge count in the selection.
+            // Then we also add the port field in order to get the edge count auto compute
             out[port] = [];
             for (const child in portEdges) {
                 out[port].push(portEdges[child]);
@@ -264,8 +267,9 @@ function buildFields(autoResolverData, nodeTypes, type, indexer) {
         return fields;
     };
 }
-function buildAutoResolvers(autoResolverData, nodeTypes, indexer, dataResolvers = {}) {
+function buildAutoResolvers(trc, autoResolverData, nodeTypes, indexer, dataResolvers = {}) {
     var _a, _b;
+    conduit_utils_1.traceEventStart(trc, 'buildAutoResolvers');
     const out = {};
     for (const type in nodeTypes) {
         autoResolverData.NodeDataResolvers[type] = dataResolvers[type];
@@ -298,6 +302,7 @@ function buildAutoResolvers(autoResolverData, nodeTypes, indexer, dataResolvers 
             resolve: meResolver,
         };
     }
+    conduit_utils_1.traceEventEnd(trc, 'buildAutoResolvers');
     return out;
 }
 exports.buildAutoResolvers = buildAutoResolvers;

@@ -5,11 +5,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.checkNoteEditPermissionByNoteId = exports.checkNoteEditPermissionByTask = exports.taskCreatePlan = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const TaskConstants_1 = require("../../TaskConstants");
 const NoteContentInfo_1 = require("./NoteContentInfo");
 async function taskCreatePlan(trc, ctx, params) {
-    const containerRef = { id: params.container, type: en_data_model_1.CoreEntityTypes.Note };
+    const containerRef = { id: params.container, type: en_core_entity_types_1.CoreEntityTypes.Note };
     const noteContainerRef = containerRef; // assuming var exists because tasks may go elsewhere in the future
     if (!params.copyOwnerRef) {
         const container = await ctx.fetchEntity(trc, containerRef);
@@ -43,7 +43,9 @@ async function taskCreatePlan(trc, ctx, params) {
         sourceOfChange: params.sourceOfChange,
     }, ctx.userID);
     const plan = {
-        result: taskID,
+        results: {
+            result: taskID,
+        },
         ops: [{
                 changeType: 'Node:CREATE',
                 node: taskEntity,
@@ -54,7 +56,7 @@ async function taskCreatePlan(trc, ctx, params) {
     plan.ops.push({
         changeType: 'Edge:MODIFY',
         edgesToCreate: [{
-                srcID: params.container, srcType: en_data_model_1.CoreEntityTypes.Note, srcPort: 'tasks',
+                srcID: params.container, srcType: en_core_entity_types_1.CoreEntityTypes.Note, srcPort: 'tasks',
                 dstID: taskID, dstType: taskEntity.type, dstPort: 'parent',
             }],
     });
@@ -63,7 +65,7 @@ async function taskCreatePlan(trc, ctx, params) {
         plan.ops.push(...taskGroupUpsertPlan.ops);
     }
     if (ctx.isOptimistic) {
-        const profile = await en_data_model_1.getAccountProfileRef(trc, ctx);
+        const profile = await en_core_entity_types_1.getAccountProfileRef(trc, ctx);
         if (profile) {
             plan.ops.push({
                 changeType: 'Edge:MODIFY',
@@ -89,8 +91,8 @@ async function checkNoteEditPermissionByTask(trc, ctx, task) {
 }
 exports.checkNoteEditPermissionByTask = checkNoteEditPermissionByTask;
 async function checkNoteEditPermissionByNoteId(trc, ctx, noteId) {
-    const permContext = new en_data_model_1.MutationPermissionContext(trc, ctx);
-    const policy = await en_data_model_1.commandPolicyOfNote(noteId, permContext);
+    const permContext = new en_core_entity_types_1.MutationPermissionContext(trc, ctx);
+    const policy = await en_core_entity_types_1.commandPolicyOfNote(noteId, permContext);
     if (!policy.canEditContent) {
         throw new conduit_utils_1.PermissionError('Permission Denied');
     }

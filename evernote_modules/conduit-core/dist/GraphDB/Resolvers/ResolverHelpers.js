@@ -3,7 +3,7 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fromSchema = exports.retrieveAuthorizedToken = exports.validateDB = exports.GenericMutationResultWithData = exports.GenericMutationResult = exports.AutoResolverData = void 0;
+exports.getPortCountName = exports.fromSchema = exports.retrieveAuthorizedToken = exports.validateDB = exports.GenericMutationResultWithData = exports.GenericMutationResult = exports.AutoResolverData = void 0;
 const conduit_view_types_1 = require("conduit-view-types");
 const graphql_1 = require("graphql");
 const DataSchemaGQL_1 = require("../../Types/DataSchemaGQL");
@@ -38,4 +38,8 @@ function fromSchema(name, schemaStr) {
     return graphql_1.isOutputType(schemaType) ? schemaType : undefined;
 }
 exports.fromSchema = fromSchema;
+function getPortCountName(portName) {
+    return `${portName}Count`;
+}
+exports.getPortCountName = getPortCountName;
 //# sourceMappingURL=ResolverHelpers.js.map

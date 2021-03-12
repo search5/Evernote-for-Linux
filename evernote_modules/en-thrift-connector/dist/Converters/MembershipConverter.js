@@ -12,32 +12,32 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MembershipConverter = exports.deleteMembershipHelper = exports.convertSharedNoteMembershipGuidFromService = exports.membershipFromWorkspace = exports.membershipPrivilegeToSharedNotePrivilegeLevel = exports.membershipPrivilegeToWorkspacePrivilege = exports.membershipPrivilegeToSharedNotebookPrivilege = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
-const ThriftTypes_1 = require("../ThriftTypes");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Converters_1 = require("./Converters");
 const Helpers_1 = require("./Helpers");
 const MessageAttachmentConverter_1 = require("./MessageAttachmentConverter");
 const ProfileConverter_1 = require("./ProfileConverter");
 function membershipPrivilegeToShareRelationship(privilege) {
     switch (privilege) {
-        case en_data_model_1.MembershipPrivilege.READ:
-            return ThriftTypes_1.TShareRelationshipPrivilegeLevel.READ_NOTEBOOK_PLUS_ACTIVITY;
-        case en_data_model_1.MembershipPrivilege.EDIT:
-            return ThriftTypes_1.TShareRelationshipPrivilegeLevel.MODIFY_NOTEBOOK_PLUS_ACTIVITY;
-        case en_data_model_1.MembershipPrivilege.MANAGE:
-            return ThriftTypes_1.TShareRelationshipPrivilegeLevel.FULL_ACCESS;
+        case en_core_entity_types_1.MembershipPrivilege.READ:
+            return en_conduit_sync_types_1.TShareRelationshipPrivilegeLevel.READ_NOTEBOOK_PLUS_ACTIVITY;
+        case en_core_entity_types_1.MembershipPrivilege.EDIT:
+            return en_conduit_sync_types_1.TShareRelationshipPrivilegeLevel.MODIFY_NOTEBOOK_PLUS_ACTIVITY;
+        case en_core_entity_types_1.MembershipPrivilege.MANAGE:
+            return en_conduit_sync_types_1.TShareRelationshipPrivilegeLevel.FULL_ACCESS;
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
     }
 }
 function membershipPrivilegeToSharedNotebookPrivilege(privilege) {
     switch (privilege) {
-        case en_data_model_1.MembershipPrivilege.READ:
-            return ThriftTypes_1.TSharedNotebookPrivilegeLevel.READ_NOTEBOOK_PLUS_ACTIVITY;
-        case en_data_model_1.MembershipPrivilege.EDIT:
-            return ThriftTypes_1.TSharedNotebookPrivilegeLevel.MODIFY_NOTEBOOK_PLUS_ACTIVITY;
-        case en_data_model_1.MembershipPrivilege.MANAGE:
-            return ThriftTypes_1.TSharedNotebookPrivilegeLevel.FULL_ACCESS;
+        case en_core_entity_types_1.MembershipPrivilege.READ:
+            return en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.READ_NOTEBOOK_PLUS_ACTIVITY;
+        case en_core_entity_types_1.MembershipPrivilege.EDIT:
+            return en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.MODIFY_NOTEBOOK_PLUS_ACTIVITY;
+        case en_core_entity_types_1.MembershipPrivilege.MANAGE:
+            return en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.FULL_ACCESS;
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
     }
@@ -45,27 +45,27 @@ function membershipPrivilegeToSharedNotebookPrivilege(privilege) {
 exports.membershipPrivilegeToSharedNotebookPrivilege = membershipPrivilegeToSharedNotebookPrivilege;
 function membershipPrivilegeFromSharedNotebookPrivilege(privilege) {
     switch (privilege) {
-        case ThriftTypes_1.TSharedNotebookPrivilegeLevel.READ_NOTEBOOK:
-        case ThriftTypes_1.TSharedNotebookPrivilegeLevel.READ_NOTEBOOK_PLUS_ACTIVITY:
-            return en_data_model_1.MembershipPrivilege.READ;
-        case ThriftTypes_1.TSharedNotebookPrivilegeLevel.MODIFY_NOTEBOOK_PLUS_ACTIVITY:
-        case ThriftTypes_1.TSharedNotebookPrivilegeLevel.GROUP:
-            return en_data_model_1.MembershipPrivilege.EDIT;
-        case ThriftTypes_1.TSharedNotebookPrivilegeLevel.FULL_ACCESS:
-        case ThriftTypes_1.TSharedNotebookPrivilegeLevel.BUSINESS_FULL_ACCESS:
-            return en_data_model_1.MembershipPrivilege.MANAGE;
+        case en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.READ_NOTEBOOK:
+        case en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.READ_NOTEBOOK_PLUS_ACTIVITY:
+            return en_core_entity_types_1.MembershipPrivilege.READ;
+        case en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.MODIFY_NOTEBOOK_PLUS_ACTIVITY:
+        case en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.GROUP:
+            return en_core_entity_types_1.MembershipPrivilege.EDIT;
+        case en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.FULL_ACCESS:
+        case en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.BUSINESS_FULL_ACCESS:
+            return en_core_entity_types_1.MembershipPrivilege.MANAGE;
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
     }
 }
 function membershipPrivilegeToWorkspacePrivilege(privilege) {
     switch (privilege) {
-        case en_data_model_1.MembershipPrivilege.READ:
-            return ThriftTypes_1.TWorkspacePrivilegeLevel.READ;
-        case en_data_model_1.MembershipPrivilege.EDIT:
-            return ThriftTypes_1.TWorkspacePrivilegeLevel.EDIT;
-        case en_data_model_1.MembershipPrivilege.MANAGE:
-            return ThriftTypes_1.TWorkspacePrivilegeLevel.EDIT_AND_MANAGE;
+        case en_core_entity_types_1.MembershipPrivilege.READ:
+            return en_conduit_sync_types_1.TWorkspacePrivilegeLevel.READ;
+        case en_core_entity_types_1.MembershipPrivilege.EDIT:
+            return en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT;
+        case en_core_entity_types_1.MembershipPrivilege.MANAGE:
+            return en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT_AND_MANAGE;
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
     }
@@ -73,24 +73,24 @@ function membershipPrivilegeToWorkspacePrivilege(privilege) {
 exports.membershipPrivilegeToWorkspacePrivilege = membershipPrivilegeToWorkspacePrivilege;
 function membershipPrivilegeFromWorkspacePrivilege(privilege) {
     switch (privilege) {
-        case ThriftTypes_1.TWorkspacePrivilegeLevel.READ:
-            return en_data_model_1.MembershipPrivilege.READ;
-        case ThriftTypes_1.TWorkspacePrivilegeLevel.EDIT:
-            return en_data_model_1.MembershipPrivilege.EDIT;
-        case ThriftTypes_1.TWorkspacePrivilegeLevel.EDIT_AND_MANAGE:
-            return en_data_model_1.MembershipPrivilege.MANAGE;
+        case en_conduit_sync_types_1.TWorkspacePrivilegeLevel.READ:
+            return en_core_entity_types_1.MembershipPrivilege.READ;
+        case en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT:
+            return en_core_entity_types_1.MembershipPrivilege.EDIT;
+        case en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT_AND_MANAGE:
+            return en_core_entity_types_1.MembershipPrivilege.MANAGE;
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
     }
 }
 function membershipPrivilegeToSharedNotePrivilegeLevel(privilege) {
     switch (privilege) {
-        case en_data_model_1.MembershipPrivilege.READ:
-            return ThriftTypes_1.TSharedNotePrivilegeLevel.READ_NOTE;
-        case en_data_model_1.MembershipPrivilege.EDIT:
-            return ThriftTypes_1.TSharedNotePrivilegeLevel.MODIFY_NOTE;
-        case en_data_model_1.MembershipPrivilege.MANAGE:
-            return ThriftTypes_1.TSharedNotePrivilegeLevel.FULL_ACCESS;
+        case en_core_entity_types_1.MembershipPrivilege.READ:
+            return en_conduit_sync_types_1.TSharedNotePrivilegeLevel.READ_NOTE;
+        case en_core_entity_types_1.MembershipPrivilege.EDIT:
+            return en_conduit_sync_types_1.TSharedNotePrivilegeLevel.MODIFY_NOTE;
+        case en_core_entity_types_1.MembershipPrivilege.MANAGE:
+            return en_conduit_sync_types_1.TSharedNotePrivilegeLevel.FULL_ACCESS;
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
     }
@@ -101,10 +101,10 @@ function membershipFromWorkspace(serviceData, parentNode, personalUserID, vaultU
     if (!serviceData.common) {
         throw new Error('Unable to create membership node without a common structure in service data');
     }
-    const recipientType = serviceData.common.recipientType === ThriftTypes_1.TRecipientType.BUSINESS ? en_data_model_1.MembershipRecipientType.BUSINESS : en_data_model_1.MembershipRecipientType.USER;
+    const recipientType = serviceData.common.recipientType === en_conduit_sync_types_1.TRecipientType.BUSINESS ? en_core_entity_types_1.MembershipRecipientType.BUSINESS : en_core_entity_types_1.MembershipRecipientType.USER;
     const node = {
-        type: en_data_model_1.CoreEntityTypes.Membership,
-        id: Converters_1.convertGuidFromService(serviceData.common.guid, en_data_model_1.CoreEntityTypes.Membership),
+        type: en_core_entity_types_1.CoreEntityTypes.Membership,
+        id: Converters_1.convertGuidFromService(serviceData.common.guid, en_core_entity_types_1.CoreEntityTypes.Membership),
         version: 0,
         syncContexts: [],
         localChangeTimestamp: 0,
@@ -112,9 +112,10 @@ function membershipFromWorkspace(serviceData, parentNode, personalUserID, vaultU
         NodeFields: {
             privilege: membershipPrivilegeFromWorkspacePrivilege(serviceData.privilege || 1),
             recipientType,
-            recipientIsMe: recipientType === en_data_model_1.MembershipRecipientType.USER && serviceData.common.recipientId === personalUserID,
+            recipientIsMe: recipientType === en_core_entity_types_1.MembershipRecipientType.USER && serviceData.common.recipientId === personalUserID,
             created: serviceData.common.serviceCreated || 0,
             updated: serviceData.common.serviceUpdated || 0,
+            invitedTime: null,
             internal_sharedNotebookID: null,
         },
         inputs: {
@@ -127,25 +128,25 @@ function membershipFromWorkspace(serviceData, parentNode, personalUserID, vaultU
         },
     };
     conduit_storage_1.addOutputEdgeToNode(node, 'sharer', {
-        id: Converters_1.convertGuidFromService(serviceData.common.sharerUserId, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User),
-        type: en_data_model_1.CoreEntityTypes.Profile,
+        id: Converters_1.convertGuidFromService(serviceData.common.sharerUserId, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User),
+        type: en_core_entity_types_1.CoreEntityTypes.Profile,
         port: null,
     });
-    const ownerID = Converters_1.convertGuidFromService(serviceData.common.entityOwnerId, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User);
+    const ownerID = Converters_1.convertGuidFromService(serviceData.common.entityOwnerId, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
     if (serviceData.common.entityOwnerId !== vaultUserID) {
         // don't count vault user in share count
         updateMembershipParentShareProfiles(parentNode, ownerID);
     }
-    const recipientID = Converters_1.convertGuidFromService(serviceData.common.recipientId, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User);
+    const recipientID = Converters_1.convertGuidFromService(serviceData.common.recipientId, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
     updateMembershipParentShareProfiles(parentNode, recipientID);
     conduit_storage_1.addOutputEdgeToNode(node, 'owner', {
         id: ownerID,
-        type: en_data_model_1.CoreEntityTypes.Profile,
+        type: en_core_entity_types_1.CoreEntityTypes.Profile,
         port: null,
     });
     conduit_storage_1.addOutputEdgeToNode(node, 'recipient', {
         id: recipientID,
-        type: en_data_model_1.CoreEntityTypes.Profile,
+        type: en_core_entity_types_1.CoreEntityTypes.Profile,
         port: null,
     });
     return node;
@@ -153,9 +154,9 @@ function membershipFromWorkspace(serviceData, parentNode, personalUserID, vaultU
 exports.membershipFromWorkspace = membershipFromWorkspace;
 async function updateWorkspaceMembershipPrivilege(trc, params, auth, membershipID, workspaceID, privilege) {
     const inviteRequest = {
-        workspaceGuid: Converters_1.convertGuidToService(workspaceID, en_data_model_1.CoreEntityTypes.Workspace),
+        workspaceGuid: Converters_1.convertGuidToService(workspaceID, en_core_entity_types_1.CoreEntityTypes.Workspace),
         membershipsToUpdate: [{
-                common: { guid: Converters_1.convertGuidToService(membershipID, en_data_model_1.CoreEntityTypes.Membership) },
+                common: { guid: Converters_1.convertGuidToService(membershipID, en_core_entity_types_1.CoreEntityTypes.Membership) },
                 privilege: membershipPrivilegeToWorkspacePrivilege(privilege),
             }],
     };
@@ -165,35 +166,35 @@ async function updateWorkspaceMembershipPrivilege(trc, params, auth, membershipI
 async function removeMembershipFromWorkspace(trc, params, auth, workspaceID, membership) {
     const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
     const inviteRequest = {
-        workspaceGuid: Converters_1.convertGuidToService(workspaceID, en_data_model_1.CoreEntityTypes.Workspace),
-        membershipsToRemove: [Converters_1.convertGuidToService(membership.id, en_data_model_1.CoreEntityTypes.Membership)],
+        workspaceGuid: Converters_1.convertGuidToService(workspaceID, en_core_entity_types_1.CoreEntityTypes.Workspace),
+        membershipsToRemove: [Converters_1.convertGuidToService(membership.id, en_core_entity_types_1.CoreEntityTypes.Membership)],
     };
     await noteStore.manageWorkspaceSharing(trc, auth.token, inviteRequest);
     return null;
 }
 function membershipPrivilegeFromSharedNotePrivilege(privilege) {
     switch (privilege) {
-        case ThriftTypes_1.TSharedNotePrivilegeLevel.READ_NOTE:
-            return en_data_model_1.MembershipPrivilege.READ;
-        case ThriftTypes_1.TSharedNotePrivilegeLevel.MODIFY_NOTE:
-            return en_data_model_1.MembershipPrivilege.EDIT;
-        case ThriftTypes_1.TSharedNotePrivilegeLevel.FULL_ACCESS:
-            return en_data_model_1.MembershipPrivilege.MANAGE;
+        case en_conduit_sync_types_1.TSharedNotePrivilegeLevel.READ_NOTE:
+            return en_core_entity_types_1.MembershipPrivilege.READ;
+        case en_conduit_sync_types_1.TSharedNotePrivilegeLevel.MODIFY_NOTE:
+            return en_core_entity_types_1.MembershipPrivilege.EDIT;
+        case en_conduit_sync_types_1.TSharedNotePrivilegeLevel.FULL_ACCESS:
+            return en_core_entity_types_1.MembershipPrivilege.MANAGE;
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
     }
 }
 function convertSharedNoteMembershipGuidFromService(noteID, identity) {
     let id = '';
-    let type = en_data_model_1.MembershipRecipientType.USER;
+    let type = en_core_entity_types_1.MembershipRecipientType.USER;
     if (identity) {
         if (identity.userId) {
             id = conduit_utils_1.keyStringForUserID(identity.userId);
-            type = en_data_model_1.MembershipRecipientType.USER;
+            type = en_core_entity_types_1.MembershipRecipientType.USER;
         }
         else if (identity.id) {
             id = MessageAttachmentConverter_1.convertIdentityGuidFromService(identity.id);
-            type = en_data_model_1.MembershipRecipientType.IDENTITY;
+            type = en_core_entity_types_1.MembershipRecipientType.IDENTITY;
         }
         else {
             throw new Error('Shared note with no supported recipient found');
@@ -201,7 +202,7 @@ function convertSharedNoteMembershipGuidFromService(noteID, identity) {
     }
     return {
         type,
-        id: Converters_1.convertGuidFromService(`${noteID};${id}`, en_data_model_1.CoreEntityTypes.Membership),
+        id: Converters_1.convertGuidFromService(`${noteID};${id}`, en_core_entity_types_1.CoreEntityTypes.Membership),
     };
 }
 exports.convertSharedNoteMembershipGuidFromService = convertSharedNoteMembershipGuidFromService;
@@ -210,11 +211,12 @@ function updateMembershipParentShareProfiles(node, id) {
     shareProfiles[id] = shareProfiles[id] ? shareProfiles[id] + 1 : 1;
 }
 async function deleteMembershipHelper(trc, params, syncContext, membershipID) {
-    await params.graphTransaction.deleteNode(trc, syncContext, { id: membershipID, type: en_data_model_1.CoreEntityTypes.Membership });
+    await params.graphTransaction.deleteNode(trc, syncContext, { id: membershipID, type: en_core_entity_types_1.CoreEntityTypes.Membership });
 }
 exports.deleteMembershipHelper = deleteMembershipHelper;
 // Note membership:
-function membershipFromSharedNote(params, noteID, serviceData, parentNode) {
+async function membershipFromSharedNote(trc, params, noteID, serviceData, parentNode) {
+    var _a;
     let recipientIsMe = false;
     if (serviceData.recipientIdentity) {
         if (serviceData.recipientIdentity.userId) {
@@ -224,7 +226,7 @@ function membershipFromSharedNote(params, noteID, serviceData, parentNode) {
             const { personalProfile } = params;
             if (personalProfile) {
                 for (const identityID in personalProfile.outputs.relatedIdentities) {
-                    const recipientIdentityId = Converters_1.convertGuidFromService(serviceData.recipientIdentity.id, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.Identity);
+                    const recipientIdentityId = Converters_1.convertGuidFromService(serviceData.recipientIdentity.id, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.Identity);
                     if (recipientIdentityId === personalProfile.outputs.relatedIdentities[identityID].dstID) {
                         recipientIsMe = true;
                         break;
@@ -236,10 +238,19 @@ function membershipFromSharedNote(params, noteID, serviceData, parentNode) {
             throw new Error('Shared note with no supported recipient found');
         }
     }
+    let invitation = null;
+    if (recipientIsMe && serviceData.sharerUserID && serviceData.sharerUserID !== params.personalUserId) {
+        const noteServiceID = Converters_1.convertGuidToService(noteID, 'Note');
+        const invitationID = Converters_1.convertGuidFromService(noteServiceID, 'Invitation');
+        invitation = await params.graphTransaction.getNode(trc, null, { id: invitationID, type: en_core_entity_types_1.CoreEntityTypes.Invitation });
+        if (!invitation) { // this should not happen
+            conduit_utils_1.logger.warn('can not find invitation for memberhip');
+        }
+    }
     const { id: recipientId, type: recipientType } = convertSharedNoteMembershipGuidFromService(noteID, serviceData.recipientIdentity);
     const node = {
         id: recipientId,
-        type: en_data_model_1.CoreEntityTypes.Membership,
+        type: en_core_entity_types_1.CoreEntityTypes.Membership,
         version: 0,
         syncContexts: [],
         localChangeTimestamp: 0,
@@ -250,6 +261,7 @@ function membershipFromSharedNote(params, noteID, serviceData, parentNode) {
             recipientIsMe,
             created: serviceData.serviceCreated || 0,
             updated: serviceData.serviceUpdated || 0,
+            invitedTime: (_a = invitation === null || invitation === void 0 ? void 0 : invitation.NodeFields.created) !== null && _a !== void 0 ? _a : null,
             internal_sharedNotebookID: 0,
         },
         inputs: {
@@ -263,22 +275,22 @@ function membershipFromSharedNote(params, noteID, serviceData, parentNode) {
     };
     if (serviceData.sharerUserID) {
         conduit_storage_1.addOutputEdgeToNode(node, 'sharer', {
-            id: Converters_1.convertGuidFromService(serviceData.sharerUserID, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User),
-            type: en_data_model_1.CoreEntityTypes.Profile,
+            id: Converters_1.convertGuidFromService(serviceData.sharerUserID, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User),
+            type: en_core_entity_types_1.CoreEntityTypes.Profile,
             port: null,
         });
     }
     let recipientProfileID = null;
-    if (recipientType === en_data_model_1.MembershipRecipientType.USER && recipientId !== '') {
-        recipientProfileID = Converters_1.convertGuidFromService(serviceData.recipientIdentity.userId.toString(), en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User);
+    if (recipientType === en_core_entity_types_1.MembershipRecipientType.USER && recipientId !== '') {
+        recipientProfileID = Converters_1.convertGuidFromService(serviceData.recipientIdentity.userId.toString(), en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
     }
-    else if (recipientType === en_data_model_1.MembershipRecipientType.IDENTITY) {
-        recipientProfileID = Converters_1.convertGuidFromService(serviceData.recipientIdentity.id, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.Identity);
+    else if (recipientType === en_core_entity_types_1.MembershipRecipientType.IDENTITY) {
+        recipientProfileID = Converters_1.convertGuidFromService(serviceData.recipientIdentity.id, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.Identity);
     }
     if (recipientProfileID) {
         conduit_storage_1.addOutputEdgeToNode(node, 'recipient', {
             id: recipientProfileID,
-            type: en_data_model_1.CoreEntityTypes.Profile,
+            type: en_core_entity_types_1.CoreEntityTypes.Profile,
             port: null,
         });
         updateMembershipParentShareProfiles(parentNode, recipientProfileID);
@@ -299,7 +311,7 @@ function profileFromSharedNotebook(serviceData) {
             id: serviceData.recipientIdentityId,
             userId: serviceData.recipientUserId,
             contact: {
-                type: ThriftTypes_1.TContactType.EMAIL,
+                type: en_conduit_sync_types_1.TContactType.EMAIL,
                 name: serviceData.email,
             },
         }, ProfileConverter_1.ProfileSourceConfidence.SharedNoteMembership);
@@ -313,25 +325,34 @@ function profileFromSharedNotebook(serviceData) {
     }
     return null;
 }
-function membershipFromSharedNotebook(params, serviceData, parentNode) {
-    let recipientType = en_data_model_1.MembershipRecipientType.USER;
+async function membershipFromSharedNotebook(trc, params, serviceData, parentNode) {
+    var _a;
+    let recipientType = en_core_entity_types_1.MembershipRecipientType.USER;
     let recipientIsMe = false;
     if (serviceData.recipientUserId) {
-        recipientType = en_data_model_1.MembershipRecipientType.USER;
+        recipientType = en_core_entity_types_1.MembershipRecipientType.USER;
         recipientIsMe = serviceData.recipientUserId === params.personalUserId;
     }
     else if (serviceData.recipientIdentityId) {
-        recipientType = en_data_model_1.MembershipRecipientType.IDENTITY;
+        recipientType = en_core_entity_types_1.MembershipRecipientType.IDENTITY;
     }
     else if (serviceData.email) {
-        recipientType = en_data_model_1.MembershipRecipientType.EMAIL;
+        recipientType = en_core_entity_types_1.MembershipRecipientType.EMAIL;
     }
     else {
         throw new Error('Shared notebook with no supported recipient found');
     }
+    let invitation = null;
+    if (recipientIsMe && serviceData.notebookGuid && serviceData.sharerUserId && serviceData.sharerUserId !== params.personalUserId) {
+        const invitationID = Converters_1.convertGuidFromService(serviceData.notebookGuid, 'Invitation');
+        invitation = await params.graphTransaction.getNode(trc, null, { id: invitationID, type: en_core_entity_types_1.CoreEntityTypes.Invitation });
+        if (!invitation) { // should not happen
+            conduit_utils_1.logger.warn('can not find invitation for memberhip');
+        }
+    }
     const node = {
-        id: Converters_1.convertGuidFromService(serviceData.globalId, en_data_model_1.CoreEntityTypes.Membership),
-        type: en_data_model_1.CoreEntityTypes.Membership,
+        id: Converters_1.convertGuidFromService(serviceData.globalId, en_core_entity_types_1.CoreEntityTypes.Membership),
+        type: en_core_entity_types_1.CoreEntityTypes.Membership,
         version: 0,
         syncContexts: [],
         localChangeTimestamp: 0,
@@ -342,6 +363,7 @@ function membershipFromSharedNotebook(params, serviceData, parentNode) {
             recipientIsMe,
             created: serviceData.serviceCreated || 0,
             updated: serviceData.serviceUpdated || 0,
+            invitedTime: (_a = invitation === null || invitation === void 0 ? void 0 : invitation.NodeFields.created) !== null && _a !== void 0 ? _a : null,
             internal_sharedNotebookID: serviceData.id || 0,
         },
         inputs: {
@@ -355,12 +377,12 @@ function membershipFromSharedNotebook(params, serviceData, parentNode) {
     };
     if (serviceData.sharerUserId) {
         conduit_storage_1.addOutputEdgeToNode(node, 'sharer', {
-            id: Converters_1.convertGuidFromService(serviceData.sharerUserId, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User),
-            type: en_data_model_1.CoreEntityTypes.Profile,
+            id: Converters_1.convertGuidFromService(serviceData.sharerUserId, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User),
+            type: en_core_entity_types_1.CoreEntityTypes.Profile,
             port: null,
         });
     }
-    const ownerProfileID = Converters_1.convertGuidFromService(serviceData.userId, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User);
+    const ownerProfileID = Converters_1.convertGuidFromService(serviceData.userId, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
     if (serviceData.userId !== params.vaultUserId) {
         // don't count vault user in share count
         updateMembershipParentShareProfiles(parentNode, ownerProfileID);
@@ -368,24 +390,24 @@ function membershipFromSharedNotebook(params, serviceData, parentNode) {
     if (serviceData.userId) {
         conduit_storage_1.addOutputEdgeToNode(node, 'owner', {
             id: ownerProfileID,
-            type: en_data_model_1.CoreEntityTypes.Profile,
+            type: en_core_entity_types_1.CoreEntityTypes.Profile,
             port: null,
         });
     }
     let recipientID = null;
     if (serviceData.recipientUserId) {
-        recipientID = Converters_1.convertGuidFromService(serviceData.recipientUserId, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User);
+        recipientID = Converters_1.convertGuidFromService(serviceData.recipientUserId, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
     }
     else if (serviceData.recipientIdentityId) {
-        recipientID = Converters_1.convertGuidFromService(serviceData.recipientIdentityId, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.Identity);
+        recipientID = Converters_1.convertGuidFromService(serviceData.recipientIdentityId, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.Identity);
     }
-    else if (recipientType === en_data_model_1.MembershipRecipientType.EMAIL && serviceData.email) {
-        recipientID = Converters_1.convertGuidFromService(serviceData.email, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.Identity);
+    else if (recipientType === en_core_entity_types_1.MembershipRecipientType.EMAIL && serviceData.email) {
+        recipientID = Converters_1.convertGuidFromService(serviceData.email, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.Identity);
     }
     if (recipientID) {
         conduit_storage_1.addOutputEdgeToNode(node, 'recipient', {
             id: recipientID,
-            type: en_data_model_1.CoreEntityTypes.Profile,
+            type: en_core_entity_types_1.CoreEntityTypes.Profile,
             port: null,
         });
         updateMembershipParentShareProfiles(parentNode, recipientID);
@@ -393,9 +415,9 @@ function membershipFromSharedNotebook(params, serviceData, parentNode) {
     return node;
 }
 async function updateSharedNotebookMembershipPrivilege(trc, params, auth, notebookID, privilege, membership) {
-    const isRecipientUser = membership.NodeFields.recipientType === en_data_model_1.MembershipRecipientType.USER;
-    const isRecipientBusiness = membership.NodeFields.recipientType === en_data_model_1.MembershipRecipientType.BUSINESS;
-    const isRecipientIdentity = membership.NodeFields.recipientType === en_data_model_1.MembershipRecipientType.IDENTITY;
+    const isRecipientUser = membership.NodeFields.recipientType === en_core_entity_types_1.MembershipRecipientType.USER;
+    const isRecipientBusiness = membership.NodeFields.recipientType === en_core_entity_types_1.MembershipRecipientType.BUSINESS;
+    const isRecipientIdentity = membership.NodeFields.recipientType === en_core_entity_types_1.MembershipRecipientType.IDENTITY;
     if (!isRecipientUser && !isRecipientBusiness && !isRecipientIdentity) {
         throw new Error('Cannot update share to email');
     }
@@ -403,10 +425,10 @@ async function updateSharedNotebookMembershipPrivilege(trc, params, auth, notebo
     if (!recipientEdge) {
         throw new Error('No recipient edge found');
     }
-    const recipientId = Number(Converters_1.convertGuidToService(recipientEdge.dstID, en_data_model_1.CoreEntityTypes.Profile));
+    const recipientId = Number(Converters_1.convertGuidToService(recipientEdge.dstID, en_core_entity_types_1.CoreEntityTypes.Profile));
     const tPrivilege = membershipPrivilegeToShareRelationship(privilege);
     const managedShares = {
-        notebookGuid: Converters_1.convertGuidToService(notebookID, en_data_model_1.CoreEntityTypes.Notebook),
+        notebookGuid: Converters_1.convertGuidToService(notebookID, en_core_entity_types_1.CoreEntityTypes.Notebook),
         membershipsToUpdate: isRecipientUser || isRecipientBusiness ?
             [{
                     recipientUserId: recipientId,
@@ -415,7 +437,7 @@ async function updateSharedNotebookMembershipPrivilege(trc, params, auth, notebo
         invitationsToCreateOrUpdate: isRecipientIdentity ?
             [{
                     recipientUserIdentity: {
-                        type: ThriftTypes_1.TUserIdentityType.IDENTITYID,
+                        type: en_conduit_sync_types_1.TUserIdentityType.IDENTITYID,
                         longIdentifier: recipientId,
                     },
                     privilege: tPrivilege,
@@ -428,29 +450,29 @@ async function updateSharedNotebookMembershipPrivilege(trc, params, auth, notebo
     }
 }
 async function updateSharedNoteMembershipPrivilege(trc, params, auth, noteID, privilege, membership) {
-    if (membership.NodeFields.recipientType !== en_data_model_1.MembershipRecipientType.USER && membership.NodeFields.recipientType !== en_data_model_1.MembershipRecipientType.IDENTITY) {
+    if (membership.NodeFields.recipientType !== en_core_entity_types_1.MembershipRecipientType.USER && membership.NodeFields.recipientType !== en_core_entity_types_1.MembershipRecipientType.IDENTITY) {
         throw new Error('Only updates to users and identity privileges are allowed');
     }
-    const recipientId = Number(Converters_1.convertGuidToService(conduit_utils_1.firstStashEntry(membership.outputs.recipient).dstID, en_data_model_1.CoreEntityTypes.Profile));
+    const recipientId = Number(Converters_1.convertGuidToService(conduit_utils_1.firstStashEntry(membership.outputs.recipient).dstID, en_core_entity_types_1.CoreEntityTypes.Profile));
     let privilegeOut;
     switch (privilege) {
-        case en_data_model_1.MembershipPrivilege.MANAGE:
-            privilegeOut = ThriftTypes_1.TSharedNotePrivilegeLevel.FULL_ACCESS;
+        case en_core_entity_types_1.MembershipPrivilege.MANAGE:
+            privilegeOut = en_conduit_sync_types_1.TSharedNotePrivilegeLevel.FULL_ACCESS;
             break;
-        case en_data_model_1.MembershipPrivilege.EDIT:
-            privilegeOut = ThriftTypes_1.TSharedNotePrivilegeLevel.MODIFY_NOTE;
+        case en_core_entity_types_1.MembershipPrivilege.EDIT:
+            privilegeOut = en_conduit_sync_types_1.TSharedNotePrivilegeLevel.MODIFY_NOTE;
             break;
-        case en_data_model_1.MembershipPrivilege.READ:
+        case en_core_entity_types_1.MembershipPrivilege.READ:
         default:
-            privilegeOut = ThriftTypes_1.TSharedNotePrivilegeLevel.READ_NOTE;
+            privilegeOut = en_conduit_sync_types_1.TSharedNotePrivilegeLevel.READ_NOTE;
             break;
     }
     const managedShares = {
         noteGuid: noteID,
-        membershipsToUpdate: membership.NodeFields.recipientType === en_data_model_1.MembershipRecipientType.USER ? [
+        membershipsToUpdate: membership.NodeFields.recipientType === en_core_entity_types_1.MembershipRecipientType.USER ? [
             { recipientUserId: recipientId, privilege: privilegeOut }
         ] : undefined,
-        invitationsToUpdate: membership.NodeFields.recipientType === en_data_model_1.MembershipRecipientType.IDENTITY ? [
+        invitationsToUpdate: membership.NodeFields.recipientType === en_core_entity_types_1.MembershipRecipientType.IDENTITY ? [
             { recipientIdentityId: recipientId, privilege: privilegeOut }
         ] : undefined,
     };
@@ -468,30 +490,30 @@ async function removeMembershipFromNotebook(trc, params, auth, notebookID, membe
         throw new Error('No recipient edge found');
     }
     switch (membership.NodeFields.recipientType) {
-        case en_data_model_1.MembershipRecipientType.USER:
-        case en_data_model_1.MembershipRecipientType.BUSINESS:
+        case en_core_entity_types_1.MembershipRecipientType.USER:
+        case en_core_entity_types_1.MembershipRecipientType.BUSINESS:
             unshare = {
-                type: ThriftTypes_1.TUserIdentityType.EVERNOTE_USERID,
-                longIdentifier: Number(Converters_1.convertGuidToService(recipientEdge.dstID, en_data_model_1.CoreEntityTypes.Profile)),
+                type: en_conduit_sync_types_1.TUserIdentityType.EVERNOTE_USERID,
+                longIdentifier: Number(Converters_1.convertGuidToService(recipientEdge.dstID, en_core_entity_types_1.CoreEntityTypes.Profile)),
             };
             break;
-        case en_data_model_1.MembershipRecipientType.IDENTITY:
+        case en_core_entity_types_1.MembershipRecipientType.IDENTITY:
             unshare = {
-                type: ThriftTypes_1.TUserIdentityType.IDENTITYID,
-                longIdentifier: Number(Converters_1.convertGuidToService(recipientEdge.dstID, en_data_model_1.CoreEntityTypes.Profile)),
+                type: en_conduit_sync_types_1.TUserIdentityType.IDENTITYID,
+                longIdentifier: Number(Converters_1.convertGuidToService(recipientEdge.dstID, en_core_entity_types_1.CoreEntityTypes.Profile)),
             };
             break;
-        case en_data_model_1.MembershipRecipientType.EMAIL:
+        case en_core_entity_types_1.MembershipRecipientType.EMAIL:
             unshare = {
-                type: ThriftTypes_1.TUserIdentityType.EMAIL,
-                stringIdentifier: Converters_1.convertGuidToService(recipientEdge.dstID, en_data_model_1.CoreEntityTypes.Profile),
+                type: en_conduit_sync_types_1.TUserIdentityType.EMAIL,
+                stringIdentifier: Converters_1.convertGuidToService(recipientEdge.dstID, en_core_entity_types_1.CoreEntityTypes.Profile),
             };
             break;
         default:
             throw conduit_utils_1.absurd(membership.NodeFields.recipientType, `Unknown recipient type ${membership.NodeFields.recipientType}`);
     }
     const managedShares = {
-        notebookGuid: Converters_1.convertGuidToService(notebookID, en_data_model_1.CoreEntityTypes.Notebook),
+        notebookGuid: Converters_1.convertGuidToService(notebookID, en_core_entity_types_1.CoreEntityTypes.Notebook),
         unshares: [unshare],
     };
     const result = await noteStore.manageNotebookShares(trc, auth.token, managedShares);
@@ -507,19 +529,19 @@ async function removeMembershipFromSharedNote(trc, params, auth, noteID, members
     const unshareEmails = [];
     const recipientId = conduit_utils_1.firstStashEntry(membership.outputs.recipient).dstID;
     switch (membership.NodeFields.recipientType) {
-        case en_data_model_1.MembershipRecipientType.USER:
-            unshareUsers.push(Number(Converters_1.convertGuidToService(recipientId, en_data_model_1.CoreEntityTypes.Profile)));
+        case en_core_entity_types_1.MembershipRecipientType.USER:
+            unshareUsers.push(Number(Converters_1.convertGuidToService(recipientId, en_core_entity_types_1.CoreEntityTypes.Profile)));
             break;
-        case en_data_model_1.MembershipRecipientType.IDENTITY:
-            unshareEmails.push(Number(Converters_1.convertGuidToService(recipientId, en_data_model_1.CoreEntityTypes.Profile)));
+        case en_core_entity_types_1.MembershipRecipientType.IDENTITY:
+            unshareEmails.push(Number(Converters_1.convertGuidToService(recipientId, en_core_entity_types_1.CoreEntityTypes.Profile)));
             break;
-        case en_data_model_1.MembershipRecipientType.BUSINESS:
-        case en_data_model_1.MembershipRecipientType.EMAIL:
+        case en_core_entity_types_1.MembershipRecipientType.BUSINESS:
+        case en_core_entity_types_1.MembershipRecipientType.EMAIL:
         default:
             throw new Error(`Unknown recipient type ${membership.NodeFields.recipientType}`);
     }
     const result = await noteStore.manageNoteShares(trc, auth.token, {
-        noteGuid: Converters_1.convertGuidToService(noteID, en_data_model_1.CoreEntityTypes.Note),
+        noteGuid: Converters_1.convertGuidToService(noteID, en_core_entity_types_1.CoreEntityTypes.Note),
         invitationsToUnshare: unshareEmails.length ? unshareEmails : undefined,
         membershipsToUnshare: unshareUsers.length ? unshareUsers : undefined,
     });
@@ -532,7 +554,7 @@ async function removeMembershipFromSharedNote(trc, params, auth, noteID, members
 }
 class MembershipConverterClass {
     constructor() {
-        this.nodeType = en_data_model_1.CoreEntityTypes.Membership;
+        this.nodeType = en_core_entity_types_1.CoreEntityTypes.Membership;
     }
     convertGuidFromService(guid) {
         return `Membership:${guid}`;
@@ -545,21 +567,21 @@ class MembershipConverterClass {
             throw new Error('parentNode is required in MembershipConverter.convertFromService');
         }
         let node;
-        if (en_data_model_1.isWorkspace(parentNode)) {
+        if (en_core_entity_types_1.isWorkspace(parentNode)) {
             node = membershipFromWorkspace(serviceData, parentNode, params.personalUserId, params.vaultUserId);
         }
-        else if (en_data_model_1.isNotebook(parentNode)) {
+        else if (en_core_entity_types_1.isNotebook(parentNode)) {
             const profile = profileFromSharedNotebook(serviceData);
             profile && await ProfileConverter_1.ProfileConverter.convertFromService(trc, params, syncContext, profile);
-            node = membershipFromSharedNotebook(params, serviceData, parentNode);
+            node = await membershipFromSharedNotebook(trc, params, serviceData, parentNode);
         }
-        else if (en_data_model_1.isNote(parentNode)) {
+        else if (en_core_entity_types_1.isNote(parentNode)) {
             const data = serviceData;
             if (data.recipientIdentity && data.recipientIdentity.userId) {
                 const profile = buildProfileFromServerForSharedNote(data.recipientIdentity.id, data.recipientIdentity.userId);
                 await ProfileConverter_1.ProfileConverter.convertFromService(trc, params, syncContext, profile);
             }
-            node = membershipFromSharedNote(params, parentNode.id, data, parentNode);
+            node = await membershipFromSharedNote(trc, params, parentNode.id, data, parentNode);
         }
         else {
             throw conduit_utils_1.absurd(parentNode, `Invalid parentNode for Membership`);
@@ -575,7 +597,7 @@ class MembershipConverterClass {
     async customToService(trc, params, commandRun, syncContext) {
         switch (commandRun.command) {
             case 'RemoveMembership': {
-                const membership = (await params.graphTransaction.getNode(trc, null, { type: en_data_model_1.CoreEntityTypes.Membership, id: commandRun.params.membership }));
+                const membership = (await params.graphTransaction.getNode(trc, null, { type: en_core_entity_types_1.CoreEntityTypes.Membership, id: commandRun.params.membership }));
                 if (!membership) {
                     return null;
                 }
@@ -585,13 +607,13 @@ class MembershipConverterClass {
                 }
                 const { auth } = await Helpers_1.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, membership);
                 switch (parentEdge.srcType) {
-                    case en_data_model_1.CoreEntityTypes.Workspace: {
+                    case en_core_entity_types_1.CoreEntityTypes.Workspace: {
                         return await removeMembershipFromWorkspace(trc, params, auth, parentEdge.srcID, membership);
                     }
-                    case en_data_model_1.CoreEntityTypes.Notebook: {
+                    case en_core_entity_types_1.CoreEntityTypes.Notebook: {
                         return await removeMembershipFromNotebook(trc, params, auth, parentEdge.srcID, membership);
                     }
-                    case en_data_model_1.CoreEntityTypes.Note: {
+                    case en_core_entity_types_1.CoreEntityTypes.Note: {
                         return await removeMembershipFromSharedNote(trc, params, auth, parentEdge.srcID, membership);
                     }
                     default: {
@@ -609,7 +631,7 @@ class MembershipConverterClass {
     }
     async deleteFromService(trc, params, syncContext, ids) {
         for (const id of ids) {
-            const membership = await params.graphTransaction.getNode(trc, null, { type: en_data_model_1.CoreEntityTypes.Membership, id });
+            const membership = await params.graphTransaction.getNode(trc, null, { type: en_core_entity_types_1.CoreEntityTypes.Membership, id });
             if (!membership) {
                 throw new conduit_utils_1.NotFoundError(id, 'No membership found');
             }
@@ -617,18 +639,18 @@ class MembershipConverterClass {
             if (!parentEdge) {
                 throw new conduit_utils_1.NotFoundError('No parent edge found');
             }
-            if (parentEdge.srcType === en_data_model_1.CoreEntityTypes.Workspace) {
+            if (parentEdge.srcType === en_core_entity_types_1.CoreEntityTypes.Workspace) {
                 const workspace = parentEdge.srcID;
                 const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
                 const utilityStore = params.thriftComm.getUtilityStore(auth.urls.utilityUrl);
-                const workspaceId = Converters_1.convertGuidToService(workspace, en_data_model_1.CoreEntityTypes.Workspace);
+                const workspaceId = Converters_1.convertGuidToService(workspace, en_core_entity_types_1.CoreEntityTypes.Workspace);
                 await utilityStore.leaveWorkspace(trc, auth.token, workspaceId);
             }
         }
         return false;
     }
     async updateToService(trc, params, syncContext, membershipID, diff) {
-        const membershipRef = { id: membershipID, type: en_data_model_1.CoreEntityTypes.Membership };
+        const membershipRef = { id: membershipID, type: en_core_entity_types_1.CoreEntityTypes.Membership };
         const membership = await params.graphTransaction.getNode(trc, null, membershipRef);
         const parentEdge = conduit_utils_1.firstStashEntry(membership.inputs.parent);
         if (!parentEdge) {
@@ -637,15 +659,15 @@ class MembershipConverterClass {
         if (diff.NodeFields && diff.NodeFields.privilege) {
             const { auth } = await Helpers_1.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, membership);
             switch (parentEdge.srcType) {
-                case en_data_model_1.CoreEntityTypes.Workspace: {
+                case en_core_entity_types_1.CoreEntityTypes.Workspace: {
                     await updateWorkspaceMembershipPrivilege(trc, params, auth, membershipRef.id, parentEdge.srcID, diff.NodeFields.privilege);
                     break;
                 }
-                case en_data_model_1.CoreEntityTypes.Notebook: {
+                case en_core_entity_types_1.CoreEntityTypes.Notebook: {
                     await updateSharedNotebookMembershipPrivilege(trc, params, auth, parentEdge.srcID, diff.NodeFields.privilege, membership);
                     break;
                 }
-                case en_data_model_1.CoreEntityTypes.Note: {
+                case en_core_entity_types_1.CoreEntityTypes.Note: {
                     await updateSharedNoteMembershipPrivilege(trc, params, auth, parentEdge.srcID, diff.NodeFields.privilege, membership);
                     break;
                 }
@@ -661,13 +683,13 @@ class MembershipConverterClass {
     }
 }
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Membership)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Membership)
 ], MembershipConverterClass.prototype, "convertFromService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Membership)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Membership)
 ], MembershipConverterClass.prototype, "customToService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Membership)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Membership)
 ], MembershipConverterClass.prototype, "updateToService", null);
 exports.MembershipConverter = new MembershipConverterClass();
 //# sourceMappingURL=MembershipConverter.js.map

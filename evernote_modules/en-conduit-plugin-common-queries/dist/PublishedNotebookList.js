@@ -6,7 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPublishedNotebookPlugin = exports.PublishedNotebookAccessStatusEnum = exports.PublishedNotebookAccessStatusEnumSchema = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const en_thrift_connector_1 = require("en-thrift-connector");
 const graphql_1 = require("graphql");
 exports.PublishedNotebookAccessStatusEnumSchema = ['OPEN', 'MEMBER'];
@@ -59,20 +60,20 @@ async function fetchPublishedNotebooks(thriftComm, context) {
     const publishedNBs = notebooks ? await conduit_utils_1.allSettled(notebooks.map(async (nb) => {
         var _a, _b;
         const notebook = en_thrift_connector_1.notebookObjectFromService(conduit_core_1.VAULT_USER_CONTEXT, nb);
-        const access = ((_a = nb.recipientSettings) === null || _a === void 0 ? void 0 : _a.recipientStatus) !== en_thrift_connector_1.TRecipientStatus.NOT_IN_MY_LIST ?
+        const access = ((_a = nb.recipientSettings) === null || _a === void 0 ? void 0 : _a.recipientStatus) !== en_conduit_sync_types_1.TRecipientStatus.NOT_IN_MY_LIST ?
             PublishedNotebookAccessStatusEnum.MEMBER : PublishedNotebookAccessStatusEnum.OPEN;
         let ownerID;
         if (nb.contact && nb.contact.id) {
-            ownerID = en_thrift_connector_1.convertGuidFromService(nb.contact.id, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User);
+            ownerID = en_thrift_connector_1.convertGuidFromService(nb.contact.id, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
         }
         else {
             const metadata = await context.db.getSyncContextMetadata(context, conduit_core_1.VAULT_USER_CONTEXT);
             if (metadata) {
-                ownerID = en_thrift_connector_1.convertGuidFromService(metadata.userID, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User);
+                ownerID = en_thrift_connector_1.convertGuidFromService(metadata.userID, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
             }
         }
-        const workspaceID = nb.workspaceGuid && en_thrift_connector_1.convertGuidFromService(nb.workspaceGuid, en_data_model_1.CoreEntityTypes.Workspace) || null;
-        const memberships = nb.sharedNotebooks && nb.sharedNotebooks.map(m => en_thrift_connector_1.convertGuidFromService(m.globalId, en_data_model_1.CoreEntityTypes.Membership)) || [];
+        const workspaceID = nb.workspaceGuid && en_thrift_connector_1.convertGuidFromService(nb.workspaceGuid, en_core_entity_types_1.CoreEntityTypes.Workspace) || null;
+        const membersCount = nb.sharedNotebookIds ? nb.sharedNotebookIds.length : 0;
         return {
             id: notebook.id,
             label: notebook.label,
@@ -80,9 +81,8 @@ async function fetchPublishedNotebooks(thriftComm, context) {
             created: notebook.NodeFields.created,
             updated: notebook.NodeFields.updated,
             workspaceID,
-            membersCount: memberships.length,
+            membersCount,
             notesCount: results[1][nb.guid || ''] || 0,
-            memberships,
             accessStatus: access,
             ownerID,
         };
@@ -130,12 +130,12 @@ async function getPublishedNotebookCount(trc, thriftComm, businessAuth) {
     const result = await notestore.findInBusiness(trc, businessAuth.token, query);
     return result.totalNotesByNotebook || {};
 }
-function getPublishedNotebookPlugin(thriftComm) {
+function getPublishedNotebookPlugin() {
     async function resolvePublishedNotebookspace(parent, args, context) {
         conduit_core_1.validateDB(context);
-        const sort = args === null || args === void 0 ? void 0 : args.sort;
-        const filters = (args === null || args === void 0 ? void 0 : args.filters) || [];
-        const list = await getList(thriftComm, context, filters, args === null || args === void 0 ? void 0 : args.limit);
+        const sort = args.sort;
+        const filters = args.filters || [];
+        const list = await getList(context.thriftComm, context, filters, args === null || args === void 0 ? void 0 : args.limit);
         if (sort) {
             return sortPublishedNotebooks(list, sort);
         }
@@ -143,17 +143,17 @@ function getPublishedNotebookPlugin(thriftComm) {
     }
     async function notebookPublishResolver(parent, args = {}, context) {
         conduit_core_1.validateDB(context);
-        const nbID = args === null || args === void 0 ? void 0 : args.notebook;
+        const nbID = args.notebook;
         if (!args || !nbID) {
             throw new conduit_utils_1.MissingParameterError('missing notebook id');
         }
-        const notebook = await context.db.getNode(context, { id: nbID, type: en_data_model_1.CoreEntityTypes.Notebook });
+        const notebook = await context.db.getNode(context, { id: nbID, type: en_core_entity_types_1.CoreEntityTypes.Notebook });
         if (!notebook) {
             throw new conduit_utils_1.NotFoundError(nbID);
         }
         const businessAuth = await getAuthDataForSyncContext(context, conduit_core_1.VAULT_USER_CONTEXT);
         const serviceData = {
-            guid: en_thrift_connector_1.convertGuidToService(nbID, en_data_model_1.CoreEntityTypes.Notebook),
+            guid: en_thrift_connector_1.convertGuidToService(nbID, en_core_entity_types_1.CoreEntityTypes.Notebook),
             name: notebook.label,
             published: true,
             businessNotebook: {
@@ -162,7 +162,7 @@ function getPublishedNotebookPlugin(thriftComm) {
                 notebookDescription: args.description,
             },
         };
-        const notestore = thriftComm.getNoteStore(businessAuth.urls.noteStoreUrl);
+        const notestore = context.thriftComm.getNoteStore(businessAuth.urls.noteStoreUrl);
         await notestore.updateNotebookWithResultSpec(context.trc, businessAuth.token, serviceData, {
             includeNotebookRecipientSettings: false,
             includeNotebookRestrictions: false,
@@ -170,18 +170,18 @@ function getPublishedNotebookPlugin(thriftComm) {
         });
         return { success: true };
     }
-    async function notebookJoinResolver(parent, args = {}, context) {
+    async function notebookJoinResolver(parent, args, context) {
         conduit_core_1.validateDB(context);
         const nbID = args === null || args === void 0 ? void 0 : args.notebook;
         if (!nbID) {
             throw new conduit_utils_1.MissingParameterError('missing notebook id');
         }
-        const serviceGuid = en_thrift_connector_1.convertGuidToService(nbID, en_data_model_1.CoreEntityTypes.Notebook);
+        const serviceGuid = en_thrift_connector_1.convertGuidToService(nbID, en_core_entity_types_1.CoreEntityTypes.Notebook);
         // for setNotebookRecipientSettings had to use personal auth
         const auth = await getAuthDataForSyncContext(context, conduit_core_1.PERSONAL_USER_CONTEXT);
         const authToken = auth.token;
-        const noteStore = thriftComm.getNoteStore(auth.urls.noteStoreUrl);
-        const recipientSettings = new en_thrift_connector_1.TNotebookRecipientSettings({ recipientStatus: en_thrift_connector_1.TRecipientStatus.IN_MY_LIST });
+        const noteStore = context.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
+        const recipientSettings = new en_conduit_sync_types_1.TNotebookRecipientSettings({ recipientStatus: en_conduit_sync_types_1.TRecipientStatus.IN_MY_LIST });
         await noteStore.setNotebookRecipientSettings(context.trc, authToken, serviceGuid, recipientSettings);
         return { success: true };
     }
@@ -199,7 +199,6 @@ function getPublishedNotebookPlugin(thriftComm) {
                         updated: { type: conduit_core_1.schemaToGraphQLType('number') },
                         accessStatus: { type: conduit_core_1.schemaToGraphQLType(exports.PublishedNotebookAccessStatusEnumSchema, 'accessStatus') },
                         membersCount: { type: conduit_core_1.schemaToGraphQLType('number') },
-                        memberships: { type: conduit_core_1.schemaToGraphQLType('ID[]') },
                         ownerID: { type: conduit_core_1.schemaToGraphQLType('ID?') },
                         notesCount: { type: conduit_core_1.schemaToGraphQLType('number') },
                     },
@@ -224,11 +223,11 @@ function getPublishedNotebookPlugin(thriftComm) {
                         type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLEnumType({
                             name: 'privilegeLevel',
                             values: {
-                                READ_NOTEBOOK: { value: en_thrift_connector_1.TSharedNotebookPrivilegeLevel.READ_NOTEBOOK },
-                                MODIFY_NOTEBOOK_PLUS_ACTIVITY: { value: en_thrift_connector_1.TSharedNotebookPrivilegeLevel.MODIFY_NOTEBOOK_PLUS_ACTIVITY },
-                                READ_NOTEBOOK_PLUS_ACTIVITY: { value: en_thrift_connector_1.TSharedNotebookPrivilegeLevel.READ_NOTEBOOK_PLUS_ACTIVITY },
-                                GROUP: { value: en_thrift_connector_1.TSharedNotebookPrivilegeLevel.GROUP },
-                                FULL_ACCESS: { value: en_thrift_connector_1.TSharedNotebookPrivilegeLevel.FULL_ACCESS },
+                                READ_NOTEBOOK: { value: en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.READ_NOTEBOOK },
+                                MODIFY_NOTEBOOK_PLUS_ACTIVITY: { value: en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.MODIFY_NOTEBOOK_PLUS_ACTIVITY },
+                                READ_NOTEBOOK_PLUS_ACTIVITY: { value: en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.READ_NOTEBOOK_PLUS_ACTIVITY },
+                                GROUP: { value: en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.GROUP },
+                                FULL_ACCESS: { value: en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.FULL_ACCESS },
                             },
                         })),
                     },

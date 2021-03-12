@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.syncBetaFeature = exports.BETA_FEATURES_SYNC_PERIOD = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const BetaFeatureConverter_1 = require("../Converters/BetaFeatureConverter");
 const Converters_1 = require("../Converters/Converters");
 const ChunkConversion_1 = require("./ChunkConversion");
@@ -29,8 +29,8 @@ async function syncBetaFeature(trc, params, betaFeaturesIDs) {
         return;
     }
     // Diff existing betaFeatures against ID list in case more got added since last app run.
-    const existingBetaFeatureRefs = await params.syncEngine.graphStorage.getGraphNodeRefsByType(trc, null, en_data_model_1.CoreEntityTypes.BetaFeature);
-    const existingBetaFeatureIDs = existingBetaFeatureRefs.map(ref => parseInt(Converters_1.convertGuidToService(ref.id, en_data_model_1.CoreEntityTypes.BetaFeature), 10));
+    const existingBetaFeatureRefs = await params.syncEngine.graphStorage.getGraphNodeRefsByType(trc, null, en_core_entity_types_1.CoreEntityTypes.BetaFeature);
+    const existingBetaFeatureIDs = existingBetaFeatureRefs.map(ref => parseInt(Converters_1.convertGuidToService(ref.id, en_core_entity_types_1.CoreEntityTypes.BetaFeature), 10));
     const newBetaFeatureIDs = betaFeaturesIDs.filter(id => !existingBetaFeatureIDs.includes(id));
     if (newBetaFeatureIDs.length) {
         // Fill in dummy betaFeature nodes, in case we are offline and the getBetaFeatureStatus call fails.

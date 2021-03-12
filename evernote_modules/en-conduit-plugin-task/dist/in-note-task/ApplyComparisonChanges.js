@@ -38,7 +38,7 @@ async function applyTaskComparisonChanges(context, comparisonResult, sourceOfCha
                         status,
                         sourceOfChange,
                     });
-                    const newTask = await context.db.getNode(context, { id: mutation.result.toString(), type: TaskConstants_1.TaskEntityTypes.Task });
+                    const newTask = await context.db.getNode(context, { id: mutation.results.result.toString(), type: TaskConstants_1.TaskEntityTypes.Task });
                     result.graphDbNode = newTask;
                     break;
                 }

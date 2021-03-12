@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getNoteContentInfoNodeAndEdges = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const en_nsync_connector_1 = require("en-nsync-connector");
 const TaskConstants_1 = require("../TaskConstants");
 const getNoteContentInfoNodeAndEdges = async (trc, instance, context) => {
@@ -18,9 +18,9 @@ const getNoteContentInfoNodeAndEdges = async (trc, instance, context) => {
         return null;
     }
     const noteContentInfo = Object.assign(Object.assign({}, initial), { type: TaskConstants_1.TaskEntityTypes.NoteContentInfo, NodeFields: {
-            created: en_nsync_connector_1.convertLong(instance.created || 0),
-            updated: en_nsync_connector_1.convertLong(instance.updated || 0),
-            taskGroups: instance.taskGroupNoteLevelIDs,
+            created: instance.created,
+            updated: instance.updated,
+            taskGroupNoteLevelIDs: instance.taskGroupNoteLevelIDs,
             sourceOfChange: instance.sourceOfChange || null,
         }, inputs: {
             parent: {},
@@ -39,7 +39,7 @@ const getNoteContentInfoNodeAndEdges = async (trc, instance, context) => {
             }
         }
         edgesToCreate.push({
-            srcType: en_data_model_1.CoreEntityTypes.Note,
+            srcType: en_core_entity_types_1.CoreEntityTypes.Note,
             srcID: (_b = instance.parentEntity) === null || _b === void 0 ? void 0 : _b.id,
             srcPort: 'noteContentInfo',
             dstType: TaskConstants_1.TaskEntityTypes.NoteContentInfo,

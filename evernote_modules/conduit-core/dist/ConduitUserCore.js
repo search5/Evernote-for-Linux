@@ -36,7 +36,7 @@ const noWaitQueryNames = new Set([
     'userSettingsSetBoolean',
 ].concat(Object.keys(TelemetryMutations_1.getTelemetryMutators())));
 class ConduitUserCore {
-    constructor(di, config, getGraph) {
+    constructor(trc, di, config, getGraph) {
         this.di = di;
         this.config = config;
         this.getGraph = getGraph;
@@ -92,14 +92,18 @@ class ConduitUserCore {
                 }
             }
         };
+        conduit_utils_1.traceEventStart(trc, 'ConduitUserCore');
+        conduit_utils_1.traceEventStart(trc, 'PluginsInit');
         config.plugins && pluginManager_1.initPlugins(di, config.plugins, this);
+        conduit_utils_1.traceEventEnd(trc, 'PluginsInit');
         this.indexer = this.di.Indexer(this.nodeTypes, this.indexConfig);
-        this.resolver = new GraphQL_1.GraphQLResolver(Object.assign({ indexer: () => this.indexer, mutatorDefinitions: () => this.mutatorDefinitions, nodeTypes: () => this.nodeTypes, plugins: this.plugins, handleAuthError: async (trc, err, tx) => {
-                return await this.handleAuthError(trc, err, tx);
+        this.resolver = new GraphQL_1.GraphQLResolver(trc, Object.assign({ indexer: () => this.indexer, mutatorDefinitions: () => this.mutatorDefinitions, nodeTypes: () => this.nodeTypes, plugins: this.plugins, handleAuthError: async (trc2, err, tx) => {
+                return await this.handleAuthError(trc2, err, tx);
             }, dataResolvers: () => this.dataResolvers || {}, suppressSyncForQuery: (name) => {
                 const graph = this.getGraph();
                 graph && graph.suppressSyncForQuery(name);
             } }, this.di));
+        conduit_utils_1.traceEventEnd(trc, 'ConduitUserCore');
     }
     aquireReInitLock() {
         this.reinitLock = conduit_utils_1.cancellableSleep(1000 * 10);
@@ -182,22 +186,8 @@ class ConduitUserCore {
         // assumption: queries that need db will be called after GraphDB is initialized.
         const watcher = this.getOrAllocWatcher(query, vars, watcherInfo);
         const { doc, cacheID } = this.resolver.readQuery(query);
-        const context = {
-            db: this.getGraph(),
-            autoResolverData: this.resolver.autoResolverData,
-            trc: gTrcPool.alloc(this.di.getTestEventTracker()),
-            watcher,
-            indexer: this.indexer,
-            clientCredentials: this.config.clientCredentials,
-            nodeTypes: this.nodeTypes,
-            errorManager: this.config.ErrorManager,
-            localSettings: this.config.LocalSettings,
-            offlineContentStrategy: this.config.OfflineContentStrategy,
-            multiUserProvider: this.config.MultiUserProvider,
-            querySelectionFields: {},
-            dataLoaders: {},
-            urlEncoder: this.di.urlEncoder,
-        };
+        const extendedContext = this.di.extendContext ? this.di.extendContext() : {};
+        const context = Object.assign(Object.assign({}, extendedContext), { db: this.getGraph(), autoResolverData: this.resolver.autoResolverData, trc: gTrcPool.alloc(this.di.getTestEventTracker()), watcher, indexer: this.indexer, clientCredentials: this.config.clientCredentials, nodeTypes: this.nodeTypes, errorManager: this.config.ErrorManager, localSettings: this.config.LocalSettings, offlineContentStrategy: this.config.OfflineContentStrategy, multiUserProvider: this.config.MultiUserProvider, querySelectionFields: {}, dataLoaders: {}, urlEncoder: this.di.urlEncoder });
         if (!noWaitQueryNames.has(doc.queryName)) {
             if (await ((_a = context.db) === null || _a === void 0 ? void 0 : _a.waitUntilReady(context.trc))) {
                 conduit_utils_1.logger.info(`Waited for critical sync activities to finish before running: ${doc.queryName}`);

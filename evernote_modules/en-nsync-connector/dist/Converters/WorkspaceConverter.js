@@ -5,8 +5,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getWorkspaceNodesAndEdges = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
-const NSyncTypes_1 = require("../NSyncTypes");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const BaseConverter_1 = require("./BaseConverter");
 const getWorkspaceNodesAndEdges = async (trc, instance, context) => {
     var _a, _b, _c;
@@ -14,7 +14,7 @@ const getWorkspaceNodesAndEdges = async (trc, instance, context) => {
     if (!id) {
         throw new Error('Missing workspace id');
     }
-    const oldNode = await context.tx.getNode(trc, null, { id, type: en_data_model_1.CoreEntityTypes.Workspace });
+    const oldNode = await context.tx.getNode(trc, null, { id, type: en_core_entity_types_1.CoreEntityTypes.Workspace });
     const viewed = (_a = oldNode === null || oldNode === void 0 ? void 0 : oldNode.NodeFields.viewed) !== null && _a !== void 0 ? _a : false;
     const shareCountProfiles = (_b = oldNode === null || oldNode === void 0 ? void 0 : oldNode.NodeFields.internal_shareCountProfiles) !== null && _b !== void 0 ? _b : {};
     const initial = BaseConverter_1.createInitialNode(instance);
@@ -22,21 +22,21 @@ const getWorkspaceNodesAndEdges = async (trc, instance, context) => {
         conduit_utils_1.logger.error('Missing initial values');
         return null;
     }
-    const workspaceType = NSyncTypes_1.NSyncWorkspaceTypeMap[instance.workspaceType];
+    const workspaceType = en_conduit_sync_types_1.NSyncWorkspaceTypeMap[instance.workspaceType];
     if (!workspaceType) {
         throw new Error(`Missing workspace type: ${instance.workspaceType}`);
     }
     let defaultRole = null;
     if (instance.defaultRole) {
-        defaultRole = (_c = NSyncTypes_1.NSyncPrivilegeMap[instance.defaultRole]) !== null && _c !== void 0 ? _c : null;
+        defaultRole = (_c = en_conduit_sync_types_1.NSyncPrivilegeMap[instance.defaultRole]) !== null && _c !== void 0 ? _c : null;
         if (!defaultRole) {
             conduit_utils_1.logger.warn(`Missing defaultRole in map: ${instance.defaultRole}`);
         }
     }
-    const node = Object.assign(Object.assign({}, initial), { type: en_data_model_1.CoreEntityTypes.Workspace, NodeFields: {
-            accessStatus: en_data_model_1.WorkspaceAccessStatusEnum.OPEN,
-            created: NSyncTypes_1.convertLong(instance.created || 0),
-            updated: NSyncTypes_1.convertLong(instance.updated || 0),
+    const node = Object.assign(Object.assign({}, initial), { type: en_core_entity_types_1.CoreEntityTypes.Workspace, NodeFields: {
+            accessStatus: en_core_entity_types_1.WorkspaceAccessStatusEnum.OPEN,
+            created: instance.created,
+            updated: instance.updated,
             description: instance.description || '',
             defaultRole,
             isSample: instance.isSample,

@@ -10,21 +10,21 @@ const SyncState_1 = require("../ThriftQueries/SyncState");
 const Users_1 = require("../ThriftQueries/Users");
 const Workspace_1 = require("../ThriftQueries/Workspace");
 const NoteAttachmentUploader_1 = require("./NoteAttachmentUploader");
-function getThriftPlugin(thriftComm, resourceManager, offlineContentStrategy) {
+function getThriftPlugin(resourceManager, offlineContentStrategy) {
     return {
         name: 'ThriftPlugins',
         defineMutators: () => {
             const mutators = {};
-            Users_1.addUserMutators(thriftComm, mutators);
-            SyncState_1.addSyncStateMutators(thriftComm, mutators);
-            NoteThriftQueries_1.addNoteMutators(thriftComm, mutators, offlineContentStrategy);
+            Users_1.addUserMutators(mutators);
+            SyncState_1.addSyncStateMutators(mutators);
+            NoteThriftQueries_1.addNoteMutators(mutators, offlineContentStrategy);
             MarkedForOffline_1.addMarkedForOfflineMutators(mutators, resourceManager, offlineContentStrategy);
             return mutators;
         },
         defineQueries: () => {
             const queries = {};
-            Workspace_1.addWorkspaceQueries(thriftComm, queries);
-            Users_1.addUserRequestQueries(thriftComm, queries);
+            Workspace_1.addWorkspaceQueries(queries);
+            Users_1.addUserRequestQueries(queries);
             SyncState_1.addSyncStateQueries(queries);
             return queries;
         },

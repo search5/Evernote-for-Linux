@@ -6,10 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.syncMaestroProps = exports.MAESTRO_SYNC_PERIOD = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const MaestroPropsConverter_1 = require("../Converters/MaestroPropsConverter");
 const MaestroHelper_1 = require("../MaestroHelper");
-const ThriftTypes_1 = require("../ThriftTypes");
 const ChunkConversion_1 = require("./ChunkConversion");
 const SyncHelpers_1 = require("./SyncHelpers");
 exports.MAESTRO_SYNC_PERIOD = 12 * conduit_utils_1.MILLIS_IN_ONE_HOUR;
@@ -44,7 +44,7 @@ async function syncMaestroProps(trc, params, clientType, platform, overridingArm
     }
     await params.yieldCheck;
     params.setProgress && await params.setProgress(trc, 0.5);
-    const user = await params.syncEngine.graphStorage.getNode(trc, null, { id: conduit_core_1.PERSONAL_USER_ID, type: en_data_model_1.CoreEntityTypes.User });
+    const user = await params.syncEngine.graphStorage.getNode(trc, null, { id: conduit_core_1.PERSONAL_USER_ID, type: en_core_entity_types_1.CoreEntityTypes.User });
     if (!user) {
         throw new conduit_utils_1.NoUserError('No current user');
     }
@@ -79,12 +79,12 @@ function handleGetProps2Error(err) {
     if (err instanceof conduit_utils_1.ServiceError) {
         switch (err.errorCode) {
             // maestro is disabled
-            case ThriftTypes_1.EDAMErrorCode.UNSUPPORTED_OPERATION:
+            case en_conduit_sync_types_1.EDAMErrorCode.UNSUPPORTED_OPERATION:
                 conduit_utils_1.logger.debug(`Error calling maestroService.getProps2`, err);
                 break;
             // we expect UNKNOWN and INTERNAL_ERROR to be thrown occasionally.
-            case ThriftTypes_1.EDAMErrorCode.UNKNOWN:
-            case ThriftTypes_1.EDAMErrorCode.INTERNAL_ERROR:
+            case en_conduit_sync_types_1.EDAMErrorCode.UNKNOWN:
+            case en_conduit_sync_types_1.EDAMErrorCode.INTERNAL_ERROR:
                 conduit_utils_1.logger.warn(`Error calling maestroService.getProps2`, err);
                 break;
             default:

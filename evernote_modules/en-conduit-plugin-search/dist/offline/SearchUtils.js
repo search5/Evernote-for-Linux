@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SearchTypeConversions = exports.SearchStorageEventType = void 0;
 const conduit_storage_1 = require("conduit-storage");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const en_search_engine_shared_1 = require("en-search-engine-shared");
 const SearchSchemaTypes_1 = require("../SearchSchemaTypes");
 var SearchStorageEventType;
@@ -19,16 +19,16 @@ var SearchStorageEventType;
 class SearchTypeConversions {
     static initializeDocumentTypeToNodeType() {
         const documentTypeToNodeType = new Map();
-        documentTypeToNodeType.set(en_search_engine_shared_1.ENDocumentType.NOTE, en_data_model_1.CoreEntityTypes.Note);
-        documentTypeToNodeType.set(en_search_engine_shared_1.ENDocumentType.MESSAGE, en_data_model_1.CoreEntityTypes.Message);
-        documentTypeToNodeType.set(en_search_engine_shared_1.ENDocumentType.ATTACHMENT, en_data_model_1.CoreEntityTypes.Attachment);
+        documentTypeToNodeType.set(en_search_engine_shared_1.ENDocumentType.NOTE, en_core_entity_types_1.CoreEntityTypes.Note);
+        documentTypeToNodeType.set(en_search_engine_shared_1.ENDocumentType.MESSAGE, en_core_entity_types_1.CoreEntityTypes.Message);
+        documentTypeToNodeType.set(en_search_engine_shared_1.ENDocumentType.ATTACHMENT, en_core_entity_types_1.CoreEntityTypes.Attachment);
         return documentTypeToNodeType;
     }
     static initializNodeTypeToDocumentType() {
         const nodeTypeToDocumentType = new Map();
-        nodeTypeToDocumentType.set(en_data_model_1.CoreEntityTypes.Note, en_search_engine_shared_1.ENDocumentType.NOTE);
-        nodeTypeToDocumentType.set(en_data_model_1.CoreEntityTypes.Message, en_search_engine_shared_1.ENDocumentType.MESSAGE);
-        nodeTypeToDocumentType.set(en_data_model_1.CoreEntityTypes.Attachment, en_search_engine_shared_1.ENDocumentType.ATTACHMENT);
+        nodeTypeToDocumentType.set(en_core_entity_types_1.CoreEntityTypes.Note, en_search_engine_shared_1.ENDocumentType.NOTE);
+        nodeTypeToDocumentType.set(en_core_entity_types_1.CoreEntityTypes.Message, en_search_engine_shared_1.ENDocumentType.MESSAGE);
+        nodeTypeToDocumentType.set(en_core_entity_types_1.CoreEntityTypes.Attachment, en_search_engine_shared_1.ENDocumentType.ATTACHMENT);
         return nodeTypeToDocumentType;
     }
     static initializeSearchExResultTypeToDocumentType() {
@@ -51,6 +51,7 @@ class SearchTypeConversions {
         searchExResultTypeToDocumentType.set(en_search_engine_shared_1.ENSuggestResultType.TAG, SearchSchemaTypes_1.SearchExResultType.TAG);
         searchExResultTypeToDocumentType.set(en_search_engine_shared_1.ENSuggestResultType.AUTHOR, SearchSchemaTypes_1.SearchExResultType.AUTHOR);
         searchExResultTypeToDocumentType.set(en_search_engine_shared_1.ENSuggestResultType.HISTORY, SearchSchemaTypes_1.SearchExResultType.HISTORY);
+        searchExResultTypeToDocumentType.set(en_search_engine_shared_1.ENSuggestResultType.STACK, SearchSchemaTypes_1.SearchExResultType.STACK);
         return searchExResultTypeToDocumentType;
     }
     static initializeSearchStorageEventTypeToStorageChangeType() {

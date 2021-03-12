@@ -12,6 +12,7 @@ const Searcher_1 = require("./offline/Searcher");
 const SearchProcessor_1 = require("./offline/SearchProcessor");
 const SearchStorageChangeReceiver_1 = require("./offline/SearchStorageChangeReceiver");
 const SearchExUtil_1 = require("./SearchExUtil");
+const SearchIndexNotificationChangeReceiver_1 = require("./SearchIndexNotificationChangeReceiver");
 const SearchSchemaTypes_1 = require("./SearchSchemaTypes");
 // Cache to store metadata for shared note(book)s that help conduit demand fetch unsynced shared notes.
 const SEARCH_SHARE_METADATA_TABLE = 'SearchShareMetadata';
@@ -52,7 +53,7 @@ function getShareAcceptMetadataForNote(id) {
     return gSearchShareMetadata.get(SEARCH_SHARE_METADATA_TABLE, id) || null;
 }
 exports.getShareAcceptMetadataForNote = getShareAcceptMetadataForNote;
-function getENSearchPlugin(thriftComm, provideSearchEngine) {
+function getENSearchPlugin(provideSearchEngine, di) {
     async function searchResolver(parent, args, context) {
         if (args.searchStr === null || args.searchStr === undefined) {
             throw new Error('Missing searchStr for searchResolver');
@@ -63,7 +64,7 @@ function getENSearchPlugin(thriftComm, provideSearchEngine) {
             authData = authData.vaultAuth;
         }
         try {
-            return await EnThriftSearch_1.onlineSearch(context.trc, thriftComm, authData, args);
+            return await EnThriftSearch_1.onlineSearch(context.trc, context.thriftComm, authData, args);
         }
         catch (err) {
             if (err instanceof conduit_utils_1.RetryError) { // offline mode
@@ -82,7 +83,7 @@ function getENSearchPlugin(thriftComm, provideSearchEngine) {
             authData = authData.vaultAuth;
         }
         try {
-            return await EnThriftSearch_1.onlineSuggest(context.trc, thriftComm, authData, args);
+            return await EnThriftSearch_1.onlineSuggest(context.trc, context.thriftComm, authData, args);
         }
         catch (err) {
             if (err instanceof conduit_utils_1.RetryError) {
@@ -129,36 +130,39 @@ function getENSearchPlugin(thriftComm, provideSearchEngine) {
             authData = authData.vaultAuth;
         }
         if (args.queryContext && (args.queryContext.text || args.queryContext.url || args.queryContext.noteID)) { // related notes mode is not supported by onlineSearchEx now
-            return await EnThriftSearch_1.onlineRelatedWithExArgs(context.trc, thriftComm, authData, args);
+            return await EnThriftSearch_1.onlineRelatedWithExArgs(context.trc, context.thriftComm, authData, args);
         }
         else {
             const searchExArgs = SearchExUtil_1.selectResultGroups(args, searchExTypes);
             const messageArgs = SearchExUtil_1.selectResultGroup(args, SearchSchemaTypes_1.SearchExResultType.MESSAGE);
             const resultPromises = [];
             if (searchExArgs) {
-                // TODO: restore this to include metadata filtering to AUTO mode
-                // if (gSearcher && await gSearcher.isMetadataQuery(searchExArgs)) {
-                //   // metadata filtering query - offline search is enough
-                //   resultPromises.push(gSearcher.searchExOneType(searchExArgs, SearchExResultType.NOTE));
-                // } else {
-                //   resultPromises.push(onlineSearchEx(context!.trc, thriftComm, authData, searchExArgs));
-                // }
-                resultPromises.push(EnThriftSearch_1.onlineSearchEx(context.trc, thriftComm, authData, searchExArgs, setShareAcceptMetadataForNote));
+                if (gSearcher && await gSearcher.isMetadataQuery(searchExArgs) &&
+                    gSearchStorageProcessor && gSearchStorageProcessor.isInitialIndexationFinished()) {
+                    // metadata filtering query - offline search is enough
+                    resultPromises.push(gSearcher.searchExOneType(searchExArgs, SearchSchemaTypes_1.SearchExResultType.NOTE));
+                }
+                else {
+                    resultPromises.push(EnThriftSearch_1.onlineSearchEx(context.trc, context.thriftComm, authData, searchExArgs, setShareAcceptMetadataForNote));
+                }
             }
             if (messageArgs) {
                 // for messages we prefer offline results whenever they are available
                 const messageRes = gSearcher ?
-                    gSearcher.searchExOneType(messageArgs, SearchSchemaTypes_1.SearchExResultType.MESSAGE) : EnThriftSearch_1.onlineMessageSearch(context.trc, thriftComm, personalAuthData, messageArgs);
+                    gSearcher.searchExOneType(messageArgs, SearchSchemaTypes_1.SearchExResultType.MESSAGE) : EnThriftSearch_1.onlineMessageSearch(context.trc, context.thriftComm, personalAuthData, messageArgs);
                 resultPromises.push(messageRes);
             }
             return await SearchExUtil_1.combineResults(args, resultPromises);
         }
     }
+    // searchExTypes extended with stack.
+    const offlineSearchExTypes = new Set([SearchSchemaTypes_1.SearchExResultType.HISTORY, SearchSchemaTypes_1.SearchExResultType.TEXT, SearchSchemaTypes_1.SearchExResultType.NOTE, SearchSchemaTypes_1.SearchExResultType.NOTEBOOK,
+        SearchSchemaTypes_1.SearchExResultType.WORKSPACE, SearchSchemaTypes_1.SearchExResultType.TAG, SearchSchemaTypes_1.SearchExResultType.AUTHOR, SearchSchemaTypes_1.SearchExResultType.CONTAINS, SearchSchemaTypes_1.SearchExResultType.STACK]);
     // Strictly offline search (online calls are not allowed).
     async function offlineModeSearchEx(args, authData) {
         if (gSearcher) {
             SearchExUtil_1.setDefaults(args);
-            const suggestArgs = SearchExUtil_1.selectResultGroups(args, searchExTypes, 1 /* NAME */);
+            const suggestArgs = SearchExUtil_1.selectResultGroups(args, offlineSearchExTypes, 1 /* NAME */);
             const noteArgs = SearchExUtil_1.selectResultGroup(args, SearchSchemaTypes_1.SearchExResultType.NOTE, 0 /* ALL */);
             const messageArgs = SearchExUtil_1.selectResultGroup(args, SearchSchemaTypes_1.SearchExResultType.MESSAGE, 0 /* ALL */);
             const resultPromises = [];
@@ -184,7 +188,7 @@ function getENSearchPlugin(thriftComm, provideSearchEngine) {
         if (authData.vaultAuth) {
             authData = authData.vaultAuth;
         }
-        const success = await EnThriftSearch_1.sendLogRequest(context.trc, thriftComm, authData, args);
+        const success = await EnThriftSearch_1.sendLogRequest(context.trc, context.thriftComm, authData, args);
         return { success };
     }
     return {
@@ -231,7 +235,7 @@ function getENSearchPlugin(thriftComm, provideSearchEngine) {
          * due to the offline search global variables (the same state will be shared accross all instances)
          */
         defineStorageAccess: (graphDB) => {
-            return new Promise(res => {
+            return new Promise(resolve => {
                 if (provideSearchEngine) {
                     // creates search engine with the provided factory function
                     gSearchEngine = provideSearchEngine(conduit_utils_1.logger);
@@ -245,13 +249,16 @@ function getENSearchPlugin(thriftComm, provideSearchEngine) {
                     gSearchStorageChangeReceiver = new SearchStorageChangeReceiver_1.SearchStorageChangeReceiver(gSearchStorageProcessor);
                     // adds subscription to the GraphDB events for storage event receiver.
                     graphDB.addChangeHandler(gSearchStorageChangeReceiver);
-                    res();
                 }
                 else {
                     // clean up global variables for the proper work of the E2E tests
                     clean();
-                    res();
                 }
+                if (di) {
+                    // add subscription to the GraphDB events for indexation notifications
+                    graphDB.addChangeHandler(new SearchIndexNotificationChangeReceiver_1.SearchIndexNotificationChangeReceiver(di));
+                }
+                resolve();
             });
         },
         destructor: async () => {

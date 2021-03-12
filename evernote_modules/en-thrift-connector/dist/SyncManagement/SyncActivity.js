@@ -17,6 +17,7 @@ var SyncActivityType;
     SyncActivityType["FetchPrebuiltDatabaseActivity"] = "FetchPrebuiltDatabaseActivity";
     SyncActivityType["UserUpdateActivity"] = "UserUpdateActivity";
     SyncActivityType["BootstrapActivity"] = "BootstrapActivity";
+    SyncActivityType["VaultBootstrapActivity"] = "VaultBootstrapActivity";
     SyncActivityType["BetaFeatureSyncActivity"] = "BetaFeatureSyncActivity";
     SyncActivityType["MaestroSyncActivity"] = "MaestroSyncActivity";
     SyncActivityType["PromotionsSyncActivity"] = "PromotionsSyncActivity";

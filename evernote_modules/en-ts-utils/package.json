@@ -1,6 +1,6 @@
 {
   "name": "en-ts-utils",
-  "version": "4.0.1",
+  "version": "4.1.0",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -10,10 +10,12 @@
     "dist"
   ],
   "dependencies": {
+    "long": "^4.0.0",
     "simply-immutable": "^2.1.1"
   },
   "devDependencies": {
     "@types/chai": "^4.2.10",
+    "@types/long": "4.0.0",
     "@types/mocha": "5.2.7",
     "@types/node": "^10.12.2",
     "chai": "^4.2.0",

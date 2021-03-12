@@ -37,7 +37,7 @@ class PluginTokenRefreshManager {
         this.di = di;
         this.backoffManager = new conduit_utils_1.ExponentialBackoffManager(maxBackoffTimeout);
     }
-    async renewAndSaveAuthToken(context, thriftComm) {
+    async renewAndSaveAuthToken(context) {
         if (!validateDBAndKeys(context)) {
             throw new conduit_utils_1.InternalError('No DB Found');
         }
@@ -52,7 +52,7 @@ class PluginTokenRefreshManager {
         const authData = currentAuth.token && Auth.decodeAuthData(currentAuth.token);
         // obtain monolith session token for accounts not on NAP
         if (!authData || !Auth.hasNAPData(authData)) {
-            return await Auth.acquireSessionToken(context.trc, thriftComm, currentAuth);
+            return await Auth.acquireSessionToken(context.trc, context.thriftComm, currentAuth);
         }
         // return current monolith token if Conduit can guarantee the current token won't be expired soon
         if (!Auth.needMonolithTokenRefresh(authData.token)) {

@@ -5,6 +5,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const ENSearchTypes_1 = require("./ENSearchTypes");
 class ENCLuceneHelper {
+    static initializePrimaryToAltFields() {
+        const result = new Map();
+        result.set(ENCLuceneHelper.notebookTextField, ENCLuceneHelper.notebookTextAltField);
+        result.set(ENCLuceneHelper.spaceTextField, ENCLuceneHelper.spaceTextAltField);
+        result.set(ENCLuceneHelper.stackText, ENCLuceneHelper.stackTextAlt);
+        result.set(ENCLuceneHelper.title, ENCLuceneHelper.titleAlt);
+        result.set(ENCLuceneHelper.authorText, ENCLuceneHelper.authorTextAlt);
+        return result;
+    }
     static truncateField(value, limit) {
         let truncatedValue = value;
         if (value.length > limit) {
@@ -14,7 +23,7 @@ class ENCLuceneHelper {
     }
     static createLuceneQuery(query, searchOnlyActiveNotes, documentType) {
         let luceneQuery = '(' + query + ')';
-        if (documentType !== undefined) {
+        if (documentType !== undefined && documentType !== null) {
             luceneQuery += ` AND ${ENCLuceneHelper.typeField}:${documentType}`;
         }
         if (searchOnlyActiveNotes) {
@@ -100,6 +109,12 @@ class ENCLuceneHelper {
             }
             if ((suggestType === null || suggestType === 'title') && document.hasOwnProperty('title')) {
                 const suggest = { type: ENSearchTypes_1.ENSuggestResultType.TITLE, guid: document.guid, value: document.title, score: document.score };
+                if (this.validateSuggest(results, searchWords, suggest)) {
+                    results.push(suggest);
+                }
+            }
+            if ((suggestType === null || suggestType === 'stackText') && document.hasOwnProperty('stack')) {
+                const suggest = { type: ENSearchTypes_1.ENSuggestResultType.STACK, guid: document.stack, value: document.stack, score: document.score };
                 if (this.validateSuggest(results, searchWords, suggest)) {
                     results.push(suggest);
                 }
@@ -197,25 +212,39 @@ ENCLuceneHelper.contentField = 'content';
 ENCLuceneHelper.typeField = 'type';
 ENCLuceneHelper.versionField = 'version';
 ENCLuceneHelper.activeField = 'active';
+// notebook
 ENCLuceneHelper.notebookField = 'notebook';
 ENCLuceneHelper.notebookTextField = 'notebookText';
+ENCLuceneHelper.notebookTextAltField = 'notebookTextAlt';
 ENCLuceneHelper.notebookGuidField = 'nbGuid';
+// stack
 ENCLuceneHelper.stack = 'stack';
+ENCLuceneHelper.stackText = 'stackText';
+ENCLuceneHelper.stackTextAlt = 'stackTextAlt';
+// tag
 ENCLuceneHelper.tagField = 'tag';
 ENCLuceneHelper.tagTextField = 'tagText';
+ENCLuceneHelper.tagTextAltField = 'tagTextAlt';
 ENCLuceneHelper.tagGuidField = 'tagGuid';
+// space
 ENCLuceneHelper.spaceField = 'space';
 ENCLuceneHelper.spaceTextField = 'spaceText';
+ENCLuceneHelper.spaceTextAltField = 'spaceTextAlt';
 ENCLuceneHelper.spaceGuidField = 'spaceGuid';
+// resource
 ENCLuceneHelper.resourceMime = 'resourceMime';
 ENCLuceneHelper.resourceFileName = 'resourceFileName';
 ENCLuceneHelper.created = 'created';
 ENCLuceneHelper.updated = 'updated';
+// note title
 ENCLuceneHelper.title = 'title';
+ENCLuceneHelper.titleAlt = 'titleAlt';
 ENCLuceneHelper.titleRaw = 'titleRaw';
 ENCLuceneHelper.subjectDate = 'subjectDate';
+// author
 ENCLuceneHelper.author = 'author';
 ENCLuceneHelper.authorText = 'authorText';
+ENCLuceneHelper.authorTextAlt = 'authorTextAlt';
 ENCLuceneHelper.creatorId = 'creatorId';
 ENCLuceneHelper.lastEditorId = 'lastEditorId';
 ENCLuceneHelper.source = 'source';
@@ -231,6 +260,7 @@ ENCLuceneHelper.contains = 'contains';
 ENCLuceneHelper.task = 'task';
 ENCLuceneHelper.taskCompleted = 'taskCompleted';
 ENCLuceneHelper.taskNotCompleted = 'taskNotCompleted';
+ENCLuceneHelper.primaryToAltFields = ENCLuceneHelper.initializePrimaryToAltFields();
 ENCLuceneHelper.exists = '_exists_';
 ENCLuceneHelper.maxRecognitionPlainTextSize = 1048576;
 ENCLuceneHelper.maxRecognitionFilesPerNote = 10;

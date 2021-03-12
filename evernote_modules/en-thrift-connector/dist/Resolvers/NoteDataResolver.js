@@ -7,7 +7,8 @@ exports.getNoteDataResolver = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Auth_1 = require("../Auth");
 const Converters_1 = require("../Converters/Converters");
 const Helpers_1 = require("../Converters/Helpers");
@@ -18,7 +19,6 @@ const Helpers_2 = require("../Helpers");
 const LinkedNotebookSync_1 = require("../SyncFunctions/LinkedNotebookSync");
 const SharedNoteSync_1 = require("../SyncFunctions/SharedNoteSync");
 const SyncHelpers_1 = require("../SyncFunctions/SyncHelpers");
-const ThriftTypes_1 = require("../ThriftTypes");
 // these are the fields not available with just metadata
 const NOTE_NON_META_FIELDS = {
     // fields:
@@ -51,7 +51,7 @@ function needsFullData(fieldSelection) {
 function needsContent(fieldSelection) {
     return Boolean(fieldSelection.content && fieldSelection.content.content);
 }
-function getNoteDataResolver(thriftComm, offlineContentStrategy, getSearchShareAcceptMetadata) {
+function getNoteDataResolver(getSearchShareAcceptMetadata) {
     async function NoteDataResolver(context, nodeOrRef, fieldSelection) {
         if (!nodeOrRef || !fieldSelection) {
             return conduit_storage_1.isGraphNode(nodeOrRef) ? nodeOrRef : null;
@@ -119,8 +119,8 @@ function getNoteDataResolver(thriftComm, offlineContentStrategy, getSearchShareA
             // Check existence of note's parent and throw NotFoundError if the note is orphan.
             if (syncContext === conduit_core_1.VAULT_USER_CONTEXT && serviceData.note.notebookGuid) {
                 const backingNbToWs = (await context.db.getSyncState(trc, null, ['workspaces', 'backingNbToWs']) || {});
-                const parentId = backingNbToWs[serviceData.note.notebookGuid] || Converters_1.convertGuidFromService(serviceData.note.notebookGuid, en_data_model_1.CoreEntityTypes.Notebook);
-                const parentType = backingNbToWs[serviceData.note.notebookGuid] ? en_data_model_1.CoreEntityTypes.Workspace : en_data_model_1.CoreEntityTypes.Notebook;
+                const parentId = backingNbToWs[serviceData.note.notebookGuid] || Converters_1.convertGuidFromService(serviceData.note.notebookGuid, en_core_entity_types_1.CoreEntityTypes.Notebook);
+                const parentType = backingNbToWs[serviceData.note.notebookGuid] ? en_core_entity_types_1.CoreEntityTypes.Workspace : en_core_entity_types_1.CoreEntityTypes.Notebook;
                 const parent = await context.db.getNode(context, { id: parentId, type: parentType });
                 if (!parent) {
                     conduit_utils_1.logger.info(`Trying to fetch note ${nodeOrRef.id} but its parent ${parentId} is not found from the local db`);
@@ -141,7 +141,7 @@ function getNoteDataResolver(thriftComm, offlineContentStrategy, getSearchShareA
                 personalUserId,
                 vaultUserId,
                 localSettings,
-                offlineContentStrategy,
+                offlineContentStrategy: context.offlineContentStrategy,
             });
             await NoteConverter_1.NoteConverter.convertFromService(trc, params, syncContext, serviceData.note);
             if (serviceData.notebook && shareNbSyncContext) {
@@ -153,9 +153,9 @@ function getNoteDataResolver(thriftComm, offlineContentStrategy, getSearchShareA
     }
     async function fetchNoteAndNotebook(context, noteID, auth, includeContent, nbGuid) {
         conduit_core_1.validateDB(context);
-        const noteStore = thriftComm.getNoteStore(auth.urls.noteStoreUrl);
-        const serviceGuid = Converters_1.convertGuidToService(noteID, en_data_model_1.CoreEntityTypes.Note);
-        const specs = new ThriftTypes_1.TNoteResultSpec({ includeContent, includeSharedNotes: true });
+        const noteStore = context.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
+        const serviceGuid = Converters_1.convertGuidToService(noteID, en_core_entity_types_1.CoreEntityTypes.Note);
+        const specs = new en_conduit_sync_types_1.TNoteResultSpec({ includeContent, includeSharedNotes: true });
         try {
             let notebook = null;
             if (nbGuid) {
@@ -189,7 +189,7 @@ function getNoteDataResolver(thriftComm, offlineContentStrategy, getSearchShareA
     async function acceptNoteShare(context, noteID, params) {
         const noteGuid = Converters_1.convertGuidToService(noteID, 'Note');
         const invitationID = Converters_1.convertGuidFromService(Converters_1.convertGuidToService(noteID, 'Note'), 'Invitation');
-        const invitation = await params.graphTransaction.getNode(context.trc, null, { id: invitationID, type: en_data_model_1.CoreEntityTypes.Invitation });
+        const invitation = await params.graphTransaction.getNode(context.trc, null, { id: invitationID, type: en_core_entity_types_1.CoreEntityTypes.Invitation });
         if (!invitation) {
             conduit_utils_1.logger.debug(`No invitation exists for ${noteID}.`);
             return null;
@@ -216,7 +216,7 @@ function getNoteDataResolver(thriftComm, offlineContentStrategy, getSearchShareA
             conduit_utils_1.logger.debug(`Demand fetch: note belongs to ws backing notebook. ${backingNbToWs[nbID]}`);
             return null;
         }
-        const notebook = await params.graphTransaction.getNode(context.trc, null, { id: nbID, type: en_data_model_1.CoreEntityTypes.Notebook });
+        const notebook = await params.graphTransaction.getNode(context.trc, null, { id: nbID, type: en_core_entity_types_1.CoreEntityTypes.Notebook });
         if (notebook) {
             conduit_utils_1.logger.debug(`Demand fetch: Shared notebook already present for note ${noteID}`);
             const syncContext = await Helpers_2.getBestSyncContextForNode(context.trc, notebook, context.db.syncContextMetadataProvider, null);
@@ -249,8 +249,8 @@ function getNoteDataResolver(thriftComm, offlineContentStrategy, getSearchShareA
         conduit_core_1.validateDB(context);
         const { db, trc } = context;
         const membershipProvider = async () => {
-            const ownMemberships = await db.queryGraph(context, en_data_model_1.CoreEntityTypes.Membership, 'MembershipsForMeInParent', { parent: nodeRef });
-            return await db.batchGetNodes(context, en_data_model_1.CoreEntityTypes.Membership, ownMemberships.map(idx => idx.id)) || [];
+            const ownMemberships = await db.queryGraph(context, en_core_entity_types_1.CoreEntityTypes.Membership, 'MembershipsForMeInParent', { parent: nodeRef });
+            return await db.batchGetNodes(context, en_core_entity_types_1.CoreEntityTypes.Membership, ownMemberships.map(idx => idx.id)) || [];
         };
         const transactionProvider = async (debugName, func) => {
             await db.transactSyncedStorage(trc, debugName, func);
@@ -275,9 +275,9 @@ function getNoteDataResolver(thriftComm, offlineContentStrategy, getSearchShareA
                 personalUserId,
                 vaultUserId,
                 localSettings,
-                offlineContentStrategy,
+                offlineContentStrategy: context.offlineContentStrategy,
             });
-            const mutatorParams = Object.assign(Object.assign({}, converterParams), { personalAuth, thriftComm });
+            const mutatorParams = Object.assign(Object.assign({}, converterParams), { personalAuth, thriftComm: context.thriftComm });
             // Need to accept both note and nb shares as conduit doesn't know how the note is shared
             // and also to derive best sync context and permissions in case its both.
             // FIXME not great to do this inside a transaction but it's no worse than our existing share accept logic via mutations.
@@ -294,10 +294,10 @@ function getNoteDataResolver(thriftComm, offlineContentStrategy, getSearchShareA
             await applyServiceDataToGraph(context, serviceData, (noteShareData === null || noteShareData === void 0 ? void 0 : noteShareData.syncContext) || nbShareData.syncContext, personalUserId, vaultUserId, nbShareData === null || nbShareData === void 0 ? void 0 : nbShareData.syncContext);
             // update syncContextMetadata with right privilege so that we can choose correct sync context for this note.
             if (noteShareData) {
-                await updateSharedSyncContextMetadataHelper(context, { id: noteID, type: en_data_model_1.CoreEntityTypes.Note }, noteShareData.syncContext, SharedNoteSync_1.isValidSharedNoteMembershipProvider(noteID));
+                await updateSharedSyncContextMetadataHelper(context, { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note }, noteShareData.syncContext, SharedNoteSync_1.isValidSharedNoteMembershipProvider(noteID));
             }
             if (nbShareData && nbShareData.sharedNbGlobalID) {
-                await updateSharedSyncContextMetadataHelper(context, { id: Converters_1.convertGuidFromService(shareMetadata.nbGuid, 'Notebook'), type: en_data_model_1.CoreEntityTypes.Note }, nbShareData.syncContext, LinkedNotebookSync_1.isValidSharedNotebookMembershipProvider(nbShareData.sharedNbGlobalID));
+                await updateSharedSyncContextMetadataHelper(context, { id: Converters_1.convertGuidFromService(shareMetadata.nbGuid, 'Notebook'), type: en_core_entity_types_1.CoreEntityTypes.Note }, nbShareData.syncContext, LinkedNotebookSync_1.isValidSharedNotebookMembershipProvider(nbShareData.sharedNbGlobalID));
             }
         }
         return Boolean(serviceData === null || serviceData === void 0 ? void 0 : serviceData.note);

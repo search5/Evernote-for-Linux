@@ -81,6 +81,7 @@ class SyncManager {
             syncEngine,
             syncManager: this,
             syncEventManager: null,
+            usedPrebuilt: false,
         };
     }
     async destructor(trc) {
@@ -122,12 +123,18 @@ class SyncManager {
         var _a;
         return Boolean((_a = this.activityContext.syncEventManager) === null || _a === void 0 ? void 0 : _a.isEnabled());
     }
+    async onDBClear(trc) {
+        var _a;
+        await ((_a = this.activityContext.syncEventManager) === null || _a === void 0 ? void 0 : _a.onDBClear(trc));
+    }
     async initAuth(trc, auth, startPaused) {
         var _a;
         const isColdStart = Boolean(!this.auth && auth); // Not a refresh and not clearing auth
         this.auth = auth;
+        logger.info('Pause sync to update or remove auth data.');
         await this.pauseSyncing(trc);
         if (auth) {
+            logger.info('Update sync engine auth data and sync activities.');
             if (!Auth.hasNapAuthInfo(auth) || !auth.napAuthInfo.jwt) {
                 logger.warn('Missing NAP JWT');
             }
@@ -145,6 +152,7 @@ class SyncManager {
                 // Don't need to call onSyncStateChange, as NSyncEventManager enables or disables itself in the constructor on the same function
             }
             this.di.emitEvent(conduit_view_types_1.ConduitEvent.START_SYNCING_WITH_AUTH);
+            const activities = [];
             const syncInitialized = await this.activityContext.syncEngine.graphStorage.getSyncState(trc, null, ['syncInitialized']);
             if (!syncInitialized) {
                 await this.activityContext.syncEngine.transact(trc, 'initialDownsync', async (tx) => {
@@ -153,30 +161,34 @@ class SyncManager {
             }
             else {
                 await this.loadActivityQueue(trc);
-                await this.addNSyncInitActivity(trc);
+                activities.push(this.getNSyncInitActivity(trc));
                 if (this.di.downsyncConfig.downsyncMode === conduit_view_types_1.DownsyncMode.LEGACY_FOR_PREBUILT) {
                     if (isColdStart) {
-                        await this.addSchemaMigrationActivity(trc);
-                        await this.addReindexingActivity(trc);
-                        await this.addImmediateIncrementalSync(trc, isColdStart, SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC);
+                        activities.push(this.getSchemaMigrationActivity(trc));
+                        activities.push(this.getReindexingActivity(trc));
+                        activities.push(this.getImmediateIncrementalSync(trc, isColdStart, SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC));
                     }
                 }
                 else {
                     if (isColdStart) {
-                        await this.addSchemaMigrationActivity(trc);
-                        await this.addReindexingActivity(trc);
+                        activities.push(this.getSchemaMigrationActivity(trc));
+                        activities.push(this.getReindexingActivity(trc));
                     }
                     const showLoadingScreen = (_a = this.di.loadingScreenConfig.showDuringIncrementalSyncAfterStartup) !== null && _a !== void 0 ? _a : true;
-                    await this.addImmediateIncrementalSync(trc, isColdStart && showLoadingScreen, SyncActivity_1.SyncActivityPriority.IMMEDIATE);
-                    await this.addActivity(trc, new HybridInitialDownsyncActivity_1.MaestroSyncActivity(this.di, this.activityContext));
-                    await this.addActivity(trc, new HybridInitialDownsyncActivity_1.PromotionsSyncActivity(this.di, this.activityContext));
-                    await this.addContentFetchSyncActivity(trc);
+                    activities.push(this.getImmediateIncrementalSync(trc, isColdStart && showLoadingScreen, SyncActivity_1.SyncActivityPriority.IMMEDIATE));
+                    activities.push(new HybridInitialDownsyncActivity_1.MaestroSyncActivity(this.di, this.activityContext));
+                    activities.push(new HybridInitialDownsyncActivity_1.PromotionsSyncActivity(this.di, this.activityContext));
+                    const contentFetchActivity = await this.getContentFetchSyncActivity(trc);
+                    if (contentFetchActivity) {
+                        activities.push(contentFetchActivity);
+                    }
                 }
             }
-            await this.addActivity(trc, new OfflineSearchIndexActivity_1.OfflineSearchIndexActivity(this.di, this.activityContext));
+            activities.push(new OfflineSearchIndexActivity_1.OfflineSearchIndexActivity(this.di, this.activityContext));
             if (Auth.hasNAPData(auth)) {
-                await this.addActivity(trc, new AccountSessionSyncActivity_1.AccountSessionSyncActivity(this.di, this.activityContext));
+                activities.push(new AccountSessionSyncActivity_1.AccountSessionSyncActivity(this.di, this.activityContext));
             }
+            await this.addActivitiesOnInit(trc, activities);
             await this.activityContext.syncEngine.transact(trc, 'initUserSyncContext', async (graphTransaction) => {
                 await this.activityContext.syncEngine.initUserSyncContext(trc, graphTransaction, conduit_core_1.PERSONAL_USER_CONTEXT, auth);
                 if (auth.vaultAuth) {
@@ -186,9 +198,12 @@ class SyncManager {
             });
         }
         else {
+            logger.info('Remove auth data and clear activity queue.');
             await this.clearActivityQueue(trc);
         }
+        logger.info('Update or remove auth data completed!');
         if (!startPaused) {
+            logger.info('Resume sync after auth updated.');
             await this.resumeSyncing(trc);
         }
     }
@@ -264,7 +279,7 @@ class SyncManager {
         await this.addImmediateActivity(trc, new IncrementalSyncActivity_1.IncrementalSyncActivity(this.di, this.activityContext, SyncActivity_1.SyncActivityPriority.IMMEDIATE), timeout);
     }
     async needImmediateNotesDownsync(trc, args) {
-        const existingActivity = this.findActivityByType(SyncActivity_1.SyncActivityType.NotesFetchActivity);
+        const existingActivity = this.findActivity(trc, SyncActivity_1.SyncActivityType.NotesFetchActivity);
         if (existingActivity && existingActivity.params.priority === SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC) {
             throw new conduit_utils_1.InvalidOperationError('Cannot execute immediateNotesDownsync when initial downsync is in progress');
         }
@@ -282,10 +297,35 @@ class SyncManager {
         return await NoteStoreSync_1.checkNotesSyncAvailable(trc, syncParams);
     }
     async cancelImmediateNotesDownsync(trc) {
-        const activity = this.findActivityByType(SyncActivity_1.SyncActivityType.NotesFetchActivity);
+        await this.abortActivityByType(trc, SyncActivity_1.SyncActivityType.NotesFetchActivity);
+    }
+    async needContentFetchSync(trc) {
+        if (this.activityContext.syncEngine.offlineContentStrategy === conduit_view_types_1.OfflineContentStrategy.NONE) {
+            return false;
+        }
+        const noteIDs = await NotebookConverter_1.getPendingOfflineNoteIDs(trc, this.activityContext.syncEngine.graphStorage);
+        return ((noteIDs || []).length > 0);
+    }
+    async handleImmediateContentFetchSync(trc, args, addImmediateActivity) {
+        if (addImmediateActivity) {
+            // replace any existing background activity with immediate activity.
+            await this.addImmediateActivity(trc, new ContentFetchSyncActivity_1.ContentFetchSyncActivity(this.di, this.activityContext, args), null);
+        }
+        // add new activity back to queue for regular background processing.
+        await this.addActivity(trc, new ContentFetchSyncActivity_1.ContentFetchSyncActivity(this.di, this.activityContext, null));
+    }
+    async immediateContentFetchSync(trc, args) {
+        await this.handleImmediateContentFetchSync(trc, args, true);
+        return await this.needContentFetchSync(trc);
+    }
+    async cancelContentFetchSync(trc) {
+        await this.handleImmediateContentFetchSync(trc, null, false);
+    }
+    async abortActivityByType(trc, type) {
+        const activity = this.findActivity(trc, type);
         if (activity) {
             if (activity.params.priority === SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC) {
-                throw new conduit_utils_1.InvalidOperationError('Cannot execute cancelImmediateNotesDownsync when initial downsync is in progress');
+                throw new conduit_utils_1.InvalidOperationError('Cannot abort initial downsync activities');
             }
             if (this.currentActivity && this.currentActivity === activity) {
                 await this.currentActivity.abort(true);
@@ -307,14 +347,17 @@ class SyncManager {
             this.currentActivity.suppress(gQuerySuppressionTime);
         }
     }
-    async addNSyncInitActivity(trc) {
-        await this.addActivity(trc, new NSyncInitActivity_1.NSyncInitActivity(this.di, this.activityContext, HybridInitialDownsyncActivity_1.FINAL_ACTIVITY_ORDER.NSYNC_INIT_ACTIVITY));
+    getNSyncInitActivity(trc) {
+        return new NSyncInitActivity_1.NSyncInitActivity(this.di, this.activityContext, HybridInitialDownsyncActivity_1.FINAL_ACTIVITY_ORDER.NSYNC_INIT_ACTIVITY);
     }
-    async addSchemaMigrationActivity(trc) {
-        await this.addActivity(trc, new SchemaMigrationActivity_1.SchemaMigrationActivity(this.di, this.activityContext, HybridInitialDownsyncActivity_1.FINAL_ACTIVITY_ORDER.SCHEMA_MIGRATION));
+    getSchemaMigrationActivity(trc) {
+        return new SchemaMigrationActivity_1.SchemaMigrationActivity(this.di, this.activityContext, HybridInitialDownsyncActivity_1.FINAL_ACTIVITY_ORDER.SCHEMA_MIGRATION);
+    }
+    getReindexingActivity(trc) {
+        return new ReindexActivity_1.ReindexActivity(this.di, this.activityContext, HybridInitialDownsyncActivity_1.FINAL_ACTIVITY_ORDER.REINDEX_ACTIVITY);
     }
     async addReindexingActivity(trc, graphTransaction) {
-        await this.addActivity(trc, new ReindexActivity_1.ReindexActivity(this.di, this.activityContext, HybridInitialDownsyncActivity_1.FINAL_ACTIVITY_ORDER.REINDEX_ACTIVITY), graphTransaction);
+        await this.addActivity(trc, this.getReindexingActivity(trc), graphTransaction);
     }
     async onSyncStateChange(trc, skipSyncEventManager) {
         var _a;
@@ -370,31 +413,13 @@ class SyncManager {
             }
         });
     }
-    async addImmediateIncrementalSync(trc, trackProgress, priority, graphTransaction) {
-        const newActivity = new IncrementalSyncActivity_1.IncrementalSyncActivity(this.di, this.activityContext, priority, 0, 0, trackProgress);
-        const now = Date.now();
-        const queue = this.queue.map(a => a.dehydrate());
-        for (let i = 0; i < queue.length; ++i) {
-            const existingDehydrated = queue[i];
-            const existingActivity = this.queue[i];
-            if (existingDehydrated.type === 'IncrementalSyncActivity') {
-                // replaceActivity when `trackProgress` is true to serve accounts that are not NAP and use NSync.
-                // For non-NAP accounts with NSync enabled, conduit might not yet have the JWT, but connection to NSync requires the token.
-                // Conduit has to initiate token expired flow to retrieve such token after a successful login, restarting SyncManager with a new IncrementalSyncActivity added.
-                // We want to replace such activity with one that tracks sync progress.
-                // If all accounts are on NAP, we can remove `trackProgress`.
-                if (existingActivity.params.runAfter > now || trackProgress) {
-                    await this.replaceActivity(trc, existingActivity, newActivity, graphTransaction);
-                }
-                return;
-            }
-        }
-        await this.addActivity(trc, newActivity, graphTransaction);
+    getImmediateIncrementalSync(trc, trackProgress, priority) {
+        return new IncrementalSyncActivity_1.IncrementalSyncActivity(this.di, this.activityContext, priority, 0, 0, trackProgress);
     }
     // No need to add a new content fetch activity if its already in queue or
     // if background note sync hasn't completed. ContentFetchSyncActivity will be
     // added after background note sync completion.
-    async addContentFetchSyncActivity(trc) {
+    async getContentFetchSyncActivity(trc) {
         if (this.activityContext.syncEngine.offlineContentStrategy === conduit_view_types_1.OfflineContentStrategy.NONE) {
             return;
         }
@@ -408,33 +433,15 @@ class SyncManager {
             }
         }
         if (addContentFetchActivity) {
-            await this.addActivity(trc, new ContentFetchSyncActivity_1.ContentFetchSyncActivity(this.di, this.activityContext));
-        }
-    }
-    findActivity(trc, activity) {
-        const dehydrated = activity.dehydrate();
-        const queue = this.queue.map(a => a.dehydrate());
-        for (let i = 0; i < queue.length; ++i) {
-            const existingDehydrated = queue[i];
-            const existingActivity = this.queue[i];
-            if (conduit_utils_1.isEqual(existingDehydrated, dehydrated) && !existingActivity.isRunning()) {
-                return existingActivity;
-            }
+            return new ContentFetchSyncActivity_1.ContentFetchSyncActivity(this.di, this.activityContext, null);
         }
         return null;
     }
-    findActivityByType(activityName) {
-        let activity;
-        if (this.currentActivity && this.currentActivity.params.activityType === activityName) {
-            return this.currentActivity;
-        }
-        for (const a of this.queue) {
-            if (a.params.activityType === activityName) {
-                activity = a;
-                break;
-            }
-        }
-        return activity;
+    findActivityIndex(trc, activityType) {
+        return this.queue.findIndex(a => a.params.activityType === activityType);
+    }
+    findActivity(trc, activityType) {
+        return this.queue.find(a => a.params.activityType === activityType);
     }
     async replaceActivityQueueSyncState(trc, tx) {
         const queue = this.queue.filter(a => !a.params.dontPersist).map(a => a.dehydrate());
@@ -443,10 +450,38 @@ class SyncManager {
     async getActivitiyQueueSyncState(trc) {
         return await this.activityContext.syncEngine.graphStorage.getSyncState(trc, null, ['SyncManager', 'activityQueue']);
     }
+    async addActivitiesOnInit(trc, activities) {
+        logger.debug(`addActivitiesOnInit ${activities.map(a => a.params.activityType)}`);
+        await this.activityContext.syncEngine.transact(trc, 'addActivitiesOnInit', async (tx) => {
+            for (const activity of activities) {
+                const idx = this.findActivityIndex(trc, activity.params.activityType);
+                if (idx >= 0) {
+                    // replace activity if already exists in queue.
+                    this.queue.splice(idx, 1, activity);
+                }
+                else {
+                    this.queue.push(activity);
+                }
+            }
+            this.queue.sort(cmpActivities);
+            // persist pending activities
+            await this.replaceActivityQueueSyncState(trc, tx);
+        });
+    }
     async addActivity(trc, activity, graphTransaction) {
-        const existingActivity = this.findActivity(trc, activity);
+        const activityType = activity.params.activityType;
+        const existingActivity = this.findActivity(trc, activityType);
         if (existingActivity) {
             // already in the queue, replace it
+            if (existingActivity.isRunning()) {
+                if (conduit_utils_1.isEqual(existingActivity.dehydrate(), activity.dehydrate())) {
+                    logger.info(`addActivity: Similar activity ${conduit_utils_1.safeStringify(existingActivity.dehydrate())} is already running. Ignoring new activity.`);
+                    return;
+                }
+                logger.info(`addActivity: ${activityType} already running. Cancelling existing activity to replace with new one.`);
+                // need to cancel otherwise runActivity will replace with old activity if we abort.
+                await existingActivity.abort(true);
+            }
             return await this.replaceActivity(trc, existingActivity, activity, graphTransaction);
         }
         logger.debug('addActivity', activity.params.activityType);
@@ -461,7 +496,7 @@ class SyncManager {
     async replaceActivity(trc, oldActivity, newActivity, graphTransaction) {
         logger.debug('replaceActivity', newActivity.params.activityType);
         await this.activityContext.syncEngine.transact(trc, 'replaceActivity', async (tx) => {
-            const idx = this.queue.indexOf(oldActivity);
+            const idx = this.findActivityIndex(trc, oldActivity.params.activityType);
             if (idx >= 0) {
                 this.queue.splice(idx, 1, newActivity);
             }
@@ -475,12 +510,12 @@ class SyncManager {
     }
     async removeActivity(trc, activity) {
         await this.activityContext.syncEngine.transact(trc, 'removeActivity', async (tx) => {
-            const idx = this.queue.indexOf(activity);
+            const idx = this.findActivityIndex(trc, activity.params.activityType);
             if (idx >= 0) {
                 this.queue.splice(idx, 1);
+                // persist pending activities
+                await this.replaceActivityQueueSyncState(trc, tx);
             }
-            // persist pending activities
-            await this.replaceActivityQueueSyncState(trc, tx);
         }, undefined, MUTEX_TIMEOUT);
     }
     async removeActivitiesByType(trc, types) {
@@ -515,6 +550,11 @@ class SyncManager {
         }
         for (const p of persisted) {
             try {
+                const existing = this.findActivity(trc, p.type);
+                if (existing) {
+                    logger.warn(`Ignoring activity ${conduit_utils_1.safeStringify(p)} as another activity of same type already exists ${conduit_utils_1.safeStringify(existing.dehydrate())}`);
+                    continue;
+                }
                 const activity = SyncActivityHydration_1.hydrateActivity(this.di, this.activityContext, p);
                 this.queue.push(activity);
             }
@@ -571,7 +611,7 @@ class SyncManager {
         let nextTime = Infinity;
         let noIncremental = false;
         for (const activity of this.queue) {
-            if (activity.params.activityType === 'IncrementalSyncActivity') {
+            if (activity.params.activityType === SyncActivity_1.SyncActivityType.IncrementalSyncActivity) {
                 incremental = activity;
             }
             nextTime = Math.min(nextTime, activity.params.runAfter);

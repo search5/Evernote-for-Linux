@@ -95,6 +95,13 @@ class ConduitSQLiteStorage extends conduit_storage_1.SqlStorage {
             await fs_extra_1.default.move(filename, this.databaseFile);
         }
         this.database = await this.openDatabase();
+        try {
+            await this.assertIntegrity();
+        }
+        catch (e) {
+            await this.clearDB();
+            throw new conduit_storage_1.CorruptDBError(e.toString());
+        }
     }
     async openDatabase() {
         try {
@@ -105,6 +112,19 @@ class ConduitSQLiteStorage extends conduit_storage_1.SqlStorage {
         catch (err) {
             this.checkFatalErrorCallback(err);
             throw err;
+        }
+    }
+    async assertIntegrity() {
+        if (!this.database) {
+            return;
+        }
+        // https://www.sqlite.org/pragma.html#pragma_quick_check
+        // sqlite-only integrity check feature. Skipping index consistency and UNIQUE checks.
+        // The pragma can throw error on execution if the database is damaged beyond repair.
+        const [resultSet] = await this.database.executeSql('PRAGMA quick_check;');
+        const res = resultSet.rows.item(0);
+        if (res.quick_check !== 'ok') {
+            throw new Error(`Corrupted db: ${JSON.stringify(res)}`);
         }
     }
     checkFatalErrorCallback(err) {

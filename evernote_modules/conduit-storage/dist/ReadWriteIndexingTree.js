@@ -27,6 +27,7 @@ const conduit_utils_1 = require("conduit-utils");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const ReadonlyIndexingTree_1 = require("./ReadonlyIndexingTree");
 const VALIDATE_KEYS = false;
+const REINDEXING_TIMEBOX = 1000;
 function sumRefChildCounts(refs) {
     let childCount = 0;
     for (const ref of refs) {
@@ -633,6 +634,7 @@ class ReadWriteIndexingTree extends ReadonlyIndexingTree_1.ReadonlyIndexingTree 
         if (!allKeys.length) {
             return;
         }
+        let lastStart = Date.now();
         const sortedValues = allKeys.sort((a, b) => this.comparator(a, b).cmp);
         const leafDataGroups = this.chunkToOrder(sortedValues);
         const nodeLookup = {};
@@ -647,6 +649,10 @@ class ReadWriteIndexingTree extends ReadonlyIndexingTree_1.ReadonlyIndexingTree 
             return leaf;
         });
         for (let i = 0; i < leafNodes.length; ++i) {
+            if (Date.now() - lastStart > REINDEXING_TIMEBOX) {
+                await conduit_utils_1.sleep(50);
+                lastStart = Date.now();
+            }
             const prev = leafNodes[i - 1];
             const next = leafNodes[i + 1];
             leafNodes[i].prev = prev ? prev.id : undefined;
@@ -654,8 +660,16 @@ class ReadWriteIndexingTree extends ReadonlyIndexingTree_1.ReadonlyIndexingTree 
         }
         let lastLevel = leafNodes;
         while (lastLevel.length > 1) {
+            if (Date.now() - lastStart > REINDEXING_TIMEBOX) {
+                await conduit_utils_1.sleep(50);
+                lastStart = Date.now();
+            }
             const nextLevel = this.makeInnerNodes(lastLevel, nodeLookup);
             for (const node of lastLevel) {
+                if (Date.now() - lastStart > REINDEXING_TIMEBOX) {
+                    await conduit_utils_1.sleep(50);
+                    lastStart = Date.now();
+                }
                 nodeLookup[node.id] = node;
                 await this.setTreeNode(trc, node);
             }

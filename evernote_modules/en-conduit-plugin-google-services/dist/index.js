@@ -3,7 +3,7 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getGoogleServicesPlugin = void 0;
+exports.getGoogleServicesPlugin = exports.transformOAuthToServiceCredential = void 0;
 const conduit_core_1 = require("conduit-core");
 const en_thrift_connector_1 = require("en-thrift-connector");
 const GoogleDrive_1 = require("./GoogleDrive");
@@ -36,7 +36,8 @@ function transformOAuthToServiceCredential(credential) {
     };
     return gapiCredential;
 }
-function getGoogleServicesPlugin(thriftComms, httpClient) {
+exports.transformOAuthToServiceCredential = transformOAuthToServiceCredential;
+function getGoogleServicesPlugin(httpClient) {
     async function getGoogleApiCredentialResolver(parent, args, context) {
         conduit_core_1.validateDB(context, 'Must be authenticated to retrieve Google API credentials.');
         if (!httpClient) {
@@ -59,7 +60,7 @@ function getGoogleServicesPlugin(thriftComms, httpClient) {
         //   API Keys to Conduit.
         // Get EN Auth Token, then ask Thrift for scoped OAuth credentials.
         const authToken = await conduit_core_1.retrieveAuthorizedToken(context);
-        const googleOAuth = await en_thrift_connector_1.getScopedGoogleOAuthCredential(context.trc, thriftComms, authToken || '', thriftService);
+        const googleOAuth = await en_thrift_connector_1.getScopedGoogleOAuthCredential(context.trc, context.thriftComm, authToken || '', thriftService);
         const gapiCredential = transformOAuthToServiceCredential(googleOAuth);
         return gapiCredential;
     }
@@ -74,7 +75,7 @@ function getGoogleServicesPlugin(thriftComms, httpClient) {
         const googleFileIds = args.resourceIds;
         // Get EN Auth Token, then ask Thrift for scoped OAuth credentials.
         const authToken = await conduit_core_1.retrieveAuthorizedToken(context);
-        const googleOAuth = await en_thrift_connector_1.getScopedGoogleOAuthCredential(context.trc, thriftComms, authToken || '', GoogleServicesTypes_1.GoogleScopes.drive.scope);
+        const googleOAuth = await en_thrift_connector_1.getScopedGoogleOAuthCredential(context.trc, context.thriftComm, authToken || '', GoogleServicesTypes_1.GoogleScopes.drive.scope);
         const gapiCredential = transformOAuthToServiceCredential(googleOAuth);
         // Make Google Drive API Request
         const driveFiles = await GoogleDrive_1.getFiles(context.trc, httpClient, gapiCredential.accessToken, googleFileIds);
@@ -97,7 +98,7 @@ function getGoogleServicesPlugin(thriftComms, httpClient) {
         serviceId: 1,
         oAuthVersion: 2,
       };
-      const resultCredential: OAuthCredential = await setOAuthCredential(context.trc, thriftComms, authToken || '', newCreds);
+      const resultCredential: OAuthCredential = await setOAuthCredential(context.trc, context.thriftComm, authToken || '', newCreds);
   
       return resultCredential;
     }

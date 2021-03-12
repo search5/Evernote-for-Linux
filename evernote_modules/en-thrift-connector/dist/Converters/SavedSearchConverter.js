@@ -12,11 +12,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SavedSearchConverter = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Converters_1 = require("./Converters");
 class SavedSearchConverterClass {
     constructor() {
-        this.nodeType = en_data_model_1.CoreEntityTypes.SavedSearch;
+        this.nodeType = en_core_entity_types_1.CoreEntityTypes.SavedSearch;
     }
     convertGuidFromService(guid) {
         return guid;
@@ -26,8 +26,8 @@ class SavedSearchConverterClass {
     }
     async convertFromService(trc, params, syncContext, serviceData) {
         const search = {
-            id: Converters_1.convertGuidFromService(serviceData.guid, en_data_model_1.CoreEntityTypes.SavedSearch),
-            type: en_data_model_1.CoreEntityTypes.SavedSearch,
+            id: Converters_1.convertGuidFromService(serviceData.guid, en_core_entity_types_1.CoreEntityTypes.SavedSearch),
+            type: en_core_entity_types_1.CoreEntityTypes.SavedSearch,
             version: serviceData.updateSequenceNum || 0,
             syncContexts: [],
             localChangeTimestamp: 0,
@@ -58,12 +58,12 @@ class SavedSearchConverterClass {
     async updateToService(trc, params, syncContext, searchID, diff) {
         const auth = params.personalAuth;
         const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
-        const currSearch = await params.graphTransaction.getNode(trc, null, { id: searchID, type: en_data_model_1.CoreEntityTypes.SavedSearch });
+        const currSearch = await params.graphTransaction.getNode(trc, null, { id: searchID, type: en_core_entity_types_1.CoreEntityTypes.SavedSearch });
         if (!currSearch) {
             throw new conduit_utils_1.NotFoundError(searchID, `Missing saved search ${searchID} from local graph storage`);
         }
         const serviceData = {
-            guid: Converters_1.convertGuidToService(searchID, en_data_model_1.CoreEntityTypes.SavedSearch),
+            guid: Converters_1.convertGuidToService(searchID, en_core_entity_types_1.CoreEntityTypes.SavedSearch),
             query: currSearch.NodeFields.query,
             name: currSearch.label,
         };
@@ -87,9 +87,9 @@ class SavedSearchConverterClass {
         const auth = params.personalAuth;
         const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
         for (const id of ids) {
-            const serviceGuid = Converters_1.convertGuidToService(id, en_data_model_1.CoreEntityTypes.SavedSearch);
+            const serviceGuid = Converters_1.convertGuidToService(id, en_core_entity_types_1.CoreEntityTypes.SavedSearch);
             await noteStore.expungeSearch(trc, auth.token, serviceGuid);
-            await params.graphTransaction.deleteNode(trc, conduit_core_1.PERSONAL_USER_CONTEXT, { id, type: en_data_model_1.CoreEntityTypes.SavedSearch });
+            await params.graphTransaction.deleteNode(trc, conduit_core_1.PERSONAL_USER_CONTEXT, { id, type: en_core_entity_types_1.CoreEntityTypes.SavedSearch });
         }
         return true;
     }
@@ -99,16 +99,16 @@ class SavedSearchConverterClass {
     }
 }
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.SavedSearch)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.SavedSearch)
 ], SavedSearchConverterClass.prototype, "convertFromService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.SavedSearch)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.SavedSearch)
 ], SavedSearchConverterClass.prototype, "createOnService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.SavedSearch)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.SavedSearch)
 ], SavedSearchConverterClass.prototype, "updateToService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.SavedSearch)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.SavedSearch)
 ], SavedSearchConverterClass.prototype, "deleteFromService", null);
 exports.SavedSearchConverter = new SavedSearchConverterClass();
 //# sourceMappingURL=SavedSearchConverter.js.map

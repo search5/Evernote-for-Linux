@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import glob
 import os.path
 import requests
@@ -25,7 +26,7 @@ for entry in files:
 
     if r.status_code != 404:
         shutil.rmtree(entry)
-        #print('삭제함', entry)
+        print('삭제함', entry)
         #pass
 
 # print(private_registry)

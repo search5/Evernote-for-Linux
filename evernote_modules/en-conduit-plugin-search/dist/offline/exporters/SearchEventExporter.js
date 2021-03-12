@@ -4,7 +4,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SearchEventExporter = void 0;
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 /**
  * Perfroms import / export operations from / to external database for events.
  *
@@ -12,7 +12,7 @@ const en_data_model_1 = require("en-data-model");
  */
 class SearchEventExporter {
     constructor() {
-        this.entryTypes = [en_data_model_1.CoreEntityTypes.Note, en_data_model_1.CoreEntityTypes.Message];
+        this.entryTypes = [en_core_entity_types_1.CoreEntityTypes.Note, en_core_entity_types_1.CoreEntityTypes.Message];
     }
     setUserID(userID) {
         this.userID = userID;

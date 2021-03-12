@@ -3,49 +3,24 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.noteImportPlugin = exports.getSyncContextForContainer = void 0;
+exports.noteImport = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const graphql_1 = require("graphql");
-const CONTAINER_TYPES = [en_data_model_1.CoreEntityTypes.Notebook, en_data_model_1.CoreEntityTypes.Workspace];
-async function getSyncContextForContainer(context, container) {
-    conduit_core_1.validateDB(context);
-    if (!container) {
-        return (await context.db.isBusinessAccount(context.trc)) ? conduit_core_1.VAULT_USER_CONTEXT : conduit_core_1.PERSONAL_USER_CONTEXT;
-    }
-    const permContext = new en_data_model_1.GraphQLPermissionContext(context);
-    for (const type of CONTAINER_TYPES) {
-        const { syncContext, node } = await context.db.getNodeWithContext(context, { id: container, type });
-        if (node && syncContext) {
-            let policy = null;
-            if (type === en_data_model_1.CoreEntityTypes.Notebook) {
-                policy = await en_data_model_1.commandPolicyOfNotebook(container, permContext);
-            }
-            else if (type === en_data_model_1.CoreEntityTypes.Workspace) {
-                policy = await en_data_model_1.commandPolicyOfSpace(container, permContext);
-            }
-            if (policy && !policy.canCreateNote) {
-                throw new conduit_utils_1.PermissionError('Not allowed to create notes in the target container');
-            }
-            return syncContext;
-        }
-    }
-    throw new conduit_utils_1.NotFoundError(container, 'Container not found');
-}
-exports.getSyncContextForContainer = getSyncContextForContainer;
+const Helpers_1 = require("./Helpers");
 async function noteImportResolver(parent, args, context, info) {
     var _a;
     conduit_core_1.validateDB(context);
     // find syncContext and userID to use
-    const syncContext = await getSyncContextForContainer(context, args.container);
+    const syncContext = await Helpers_1.getSyncContextForContainer(context, args.container);
     const syncContextMetadata = await context.db.getSyncContextMetadata(context, syncContext);
     if (!syncContextMetadata) {
         throw new conduit_utils_1.NotFoundError(syncContext, 'SyncContextMetadata not found');
     }
     const userID = syncContextMetadata.userID;
     // generate noteID and seed
-    const noteGenID = conduit_core_1.GuidGenerator.generateID(userID, en_data_model_1.CoreEntityTypes.Note);
+    const noteGenID = conduit_core_1.GuidGenerator.generateID(userID, en_core_entity_types_1.CoreEntityTypes.Note);
     noteGenID.push(userID.toString());
     const noteID = noteGenID[1];
     // stage attachments for upload and build the attachment data for noteImportInternal
@@ -53,7 +28,7 @@ async function noteImportResolver(parent, args, context, info) {
     const attachmentDatas = [];
     const attachmentsByHash = new Set();
     for (const attachment of args.attachments || []) {
-        const stageParams = Object.assign(Object.assign({}, attachment), { parentID: noteID, parentType: en_data_model_1.CoreEntityTypes.Note });
+        const stageParams = Object.assign(Object.assign({}, attachment), { parentID: noteID, parentType: en_core_entity_types_1.CoreEntityTypes.Note });
         const hashAndSize = await fileUploader.getHashAndSize(context.trc, stageParams);
         // dedupe attachments by hash, as the service keys them by hash and won't allow duplicates
         if (!attachmentsByHash.has(hashAndSize.hash)) {
@@ -108,7 +83,7 @@ async function noteImportResolver(parent, args, context, info) {
     };
     const mutation = await context.db.runMutator(context.trc, 'noteImportInternal', mutatorParams);
     return {
-        noteID: mutation.result,
+        noteID: mutation.results.result,
         attachmentHashes: attachmentDatas.map(attachment => attachment.hash),
     };
 }
@@ -131,7 +106,7 @@ const TasksExportDataSchema = new graphql_1.GraphQLInputObjectType({
         taskGroupNoteLevelIDs: { type: new graphql_1.GraphQLList(graphql_1.GraphQLString) },
     },
 });
-exports.noteImportPlugin = {
+exports.noteImport = {
     type: conduit_core_1.schemaToGraphQLType({
         noteID: 'ID',
         attachmentHashes: 'string[]',

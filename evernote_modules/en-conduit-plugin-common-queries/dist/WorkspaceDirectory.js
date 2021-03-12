@@ -7,7 +7,8 @@ exports.workspaceDirectoryPlugin = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const en_thrift_connector_1 = require("en-thrift-connector");
 const graphql_1 = require("graphql");
 const gWorkspaceListFetch = {};
@@ -87,7 +88,7 @@ async function fetchAndCacheWorkspaceDirectory(thriftComm, context, userID, para
     const personalAuth = await getAuthDataForSyncContext(context, conduit_core_1.PERSONAL_USER_CONTEXT);
     const businessAuth = await getAuthDataForSyncContext(context, conduit_core_1.VAULT_USER_CONTEXT);
     const utilityStore = thriftComm.getUtilityStore(businessAuth.urls.utilityUrl);
-    const spec = new en_thrift_connector_1.TWorkspaceResponseSpec({
+    const spec = new en_conduit_sync_types_1.TWorkspaceResponseSpec({
         includeMemberships: true,
         includeWorkspaceRestrictions: true,
         includeAccessInfo: true,
@@ -99,7 +100,7 @@ async function fetchAndCacheWorkspaceDirectory(thriftComm, context, userID, para
         includeWorkspacesWithoutMembership: true,
         sorting: convertSortToService(((_a = params.sorts) === null || _a === void 0 ? void 0 : _a.length) ? params.sorts[0] : undefined),
         limit: params.limit,
-        includedWorkspaceGuids: (_b = params.includedWorkspaceGuids) === null || _b === void 0 ? void 0 : _b.map(e => en_thrift_connector_1.convertGuidToService(e, en_data_model_1.CoreEntityTypes.Workspace)),
+        includedWorkspaceGuids: (_b = params.includedWorkspaceGuids) === null || _b === void 0 ? void 0 : _b.map(e => en_thrift_connector_1.convertGuidToService(e, en_core_entity_types_1.CoreEntityTypes.Workspace)),
     };
     const result = await utilityStore.listWorkspacesWithResultSpec(context.trc, businessAuth.token, spec, filter);
     const workspaces = result.map(e => {
@@ -111,14 +112,14 @@ async function fetchAndCacheWorkspaceDirectory(thriftComm, context, userID, para
             context.db.prefillNodeFetch(context, membership);
             conduit_storage_1.addOutputEdgeToNode(workspace, 'memberships', {
                 id: membership.id,
-                type: en_data_model_1.CoreEntityTypes.Membership,
+                type: en_core_entity_types_1.CoreEntityTypes.Membership,
                 port: null,
             });
         }
         if (e.workspace && e.workspace.contactId) {
             conduit_storage_1.addOutputEdgeToNode(workspace, 'manager', {
-                id: en_thrift_connector_1.convertGuidFromService(e.workspace.contactId, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User),
-                type: en_data_model_1.CoreEntityTypes.Profile,
+                id: en_thrift_connector_1.convertGuidFromService(e.workspace.contactId, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User),
+                type: en_core_entity_types_1.CoreEntityTypes.Profile,
                 port: null,
             });
         }
@@ -180,48 +181,46 @@ async function getList(thriftComm, context, filters, params) {
     const filteredWorkspaces = filterWorkspaces(gWorkspaceListResult[userID].workspaces, filters);
     return limit && filters.length ? filteredWorkspaces.slice(0, limit) : filteredWorkspaces;
 }
-function workspaceDirectoryPlugin(thriftComm) {
-    async function resolveWorkspaceDirectory(parent, args, context) {
-        conduit_core_1.validateDB(context);
-        const filters = (args === null || args === void 0 ? void 0 : args.filters) || [];
-        let sorts = args === null || args === void 0 ? void 0 : args.sorts;
-        const limit = args === null || args === void 0 ? void 0 : args.limit;
-        const includedWorkspaceGuids = args === null || args === void 0 ? void 0 : args.includedWorkspaceGuids;
-        const accessSortIdx = (sorts || []).findIndex(e => e.field === 'accessStatus');
-        let accessSort;
-        if (accessSortIdx >= 0) {
-            // Remove the non-service sort
-            accessSort = sorts.splice(accessSortIdx, 1)[0];
-        }
-        const params = {
-            limit,
-            includedWorkspaceGuids,
-            sorts,
-        };
-        const list = await getList(thriftComm, context, filters, params);
-        if (!sorts) {
-            sorts = [];
-        }
-        if (accessSort || (sorts && sorts.length > 1)) {
-            // If multiple sorts were passed we need to sort the server returned results
-            // because the server can only handle one sort at a time
-            if (accessSort) {
-                // Add the non-service sort back to the sorts
-                sorts.splice(accessSortIdx, 0, accessSort);
-            }
-            return context.indexer.sort(en_data_model_1.CoreEntityTypes.Workspace, list, sorts);
-        }
-        else {
-            return list;
-        }
+async function resolveWorkspaceDirectory(parent, args, context) {
+    conduit_core_1.validateDB(context);
+    const filters = args.filters || [];
+    let sorts = args.sorts;
+    const limit = args.limit;
+    const includedWorkspaceGuids = args.includedWorkspaceGuids;
+    const accessSortIdx = (sorts || []).findIndex(e => e.field === 'accessStatus');
+    let accessSort;
+    if (accessSortIdx >= 0) {
+        // Remove the non-service sort
+        accessSort = sorts.splice(accessSortIdx, 1)[0];
     }
-    return (autoResolverData) => {
-        return {
-            type: new graphql_1.GraphQLList(autoResolverData.NodeGraphQLTypes.Workspace),
-            args: buildArgs(),
-            resolve: resolveWorkspaceDirectory,
-        };
+    const params = {
+        limit,
+        includedWorkspaceGuids,
+        sorts,
     };
+    const list = await getList(context.thriftComm, context, filters, params);
+    if (!sorts) {
+        sorts = [];
+    }
+    if (accessSort || (sorts && sorts.length > 1)) {
+        // If multiple sorts were passed we need to sort the server returned results
+        // because the server can only handle one sort at a time
+        if (accessSort) {
+            // Add the non-service sort back to the sorts
+            sorts.splice(accessSortIdx, 0, accessSort);
+        }
+        return context.indexer.sort(en_core_entity_types_1.CoreEntityTypes.Workspace, list, sorts);
+    }
+    else {
+        return list;
+    }
 }
+const workspaceDirectoryPlugin = (autoResolverData) => {
+    return {
+        type: new graphql_1.GraphQLList(autoResolverData.NodeGraphQLTypes.Workspace),
+        args: buildArgs(),
+        resolve: resolveWorkspaceDirectory,
+    };
+};
 exports.workspaceDirectoryPlugin = workspaceDirectoryPlugin;
 //# sourceMappingURL=WorkspaceDirectory.js.map

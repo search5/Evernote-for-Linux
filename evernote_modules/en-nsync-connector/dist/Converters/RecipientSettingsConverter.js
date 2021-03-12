@@ -4,7 +4,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getRecipientSettingsNodesAndEdges = void 0;
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const simply_immutable_1 = require("simply-immutable");
 const BaseConverter_1 = require("./BaseConverter");
 const StackConverter_1 = require("./StackConverter");
@@ -23,8 +23,8 @@ const getRecipientSettingsNodesAndEdges = async (trc, instance, context) => {
     if (!notebookID) {
         throw new Error('Missing id on recipient settings');
     }
-    const ref = { id: notebookID, type: en_data_model_1.CoreEntityTypes.Notebook };
-    let notebook = context.eventManager.getProcessingEntity(ref.id, en_data_model_1.CoreEntityTypes.Notebook);
+    const ref = { id: notebookID, type: en_core_entity_types_1.CoreEntityTypes.Notebook };
+    let notebook = context.eventManager.getProcessingEntity(ref.id, en_core_entity_types_1.CoreEntityTypes.Notebook);
     if (!notebook) {
         notebook = await context.tx.getNode(trc, null, ref);
     }

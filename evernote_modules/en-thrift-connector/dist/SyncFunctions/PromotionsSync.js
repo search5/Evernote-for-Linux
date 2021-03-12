@@ -4,7 +4,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.syncPromotions = exports.PROMOTIONS_SYNC_PERIOD = void 0;
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Converters_1 = require("../Converters/Converters");
 const PromotionConverter_1 = require("../Converters/PromotionConverter");
 const ChunkConversion_1 = require("./ChunkConversion");
@@ -16,8 +16,8 @@ async function syncPromotions(trc, params, promotionIDs) {
         return;
     }
     // Diff existing promotions against ID list in case more got added since last app run.
-    const existingPromotionsRefs = await params.syncEngine.graphStorage.getGraphNodeRefsByType(trc, null, en_data_model_1.CoreEntityTypes.Promotion);
-    const existingPromotionsIDs = existingPromotionsRefs.map(ref => Converters_1.convertGuidToService(ref.id, en_data_model_1.CoreEntityTypes.Promotion));
+    const existingPromotionsRefs = await params.syncEngine.graphStorage.getGraphNodeRefsByType(trc, null, en_core_entity_types_1.CoreEntityTypes.Promotion);
+    const existingPromotionsIDs = existingPromotionsRefs.map(ref => Converters_1.convertGuidToService(ref.id, en_core_entity_types_1.CoreEntityTypes.Promotion));
     const newPromotionIDs = promotionIDs.filter(id => !existingPromotionsIDs.includes(id));
     if (newPromotionIDs.length) {
         // Fill in dummy promotion nodes, in case we are offline and the getPromotionStatus call fails.

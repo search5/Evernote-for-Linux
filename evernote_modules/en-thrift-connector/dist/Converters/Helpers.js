@@ -7,10 +7,10 @@ exports.checkUserConnection = exports.ensureIsExternal = exports.makeConverterPa
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Auth_1 = require("../Auth");
 const Helpers_1 = require("../Helpers");
-const ThriftTypes_1 = require("../ThriftTypes");
 const Converters_1 = require("./Converters");
 const NotebookConverter_1 = require("./NotebookConverter");
 function stripUndefined(val) {
@@ -137,8 +137,8 @@ async function getAuthAndSyncContextForNode(trc, graphStorage, authCache, node) 
 exports.getAuthAndSyncContextForNode = getAuthAndSyncContextForNode;
 async function makeConverterParams(args) {
     const { graphTransaction, trc, personalUserId } = args;
-    const profileID = Converters_1.convertGuidFromService(personalUserId, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User);
-    const personalProfile = await graphTransaction.getNode(trc, null, { id: profileID, type: en_data_model_1.CoreEntityTypes.Profile });
+    const profileID = Converters_1.convertGuidFromService(personalUserId, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
+    const personalProfile = await graphTransaction.getNode(trc, null, { id: profileID, type: en_core_entity_types_1.CoreEntityTypes.Profile });
     let offlineNbs;
     if (args.offlineContentStrategy === conduit_view_types_1.OfflineContentStrategy.SELECTIVE) {
         // offlineNbs is stored in local settings if content strategy is SELECTIVE
@@ -164,7 +164,7 @@ async function ensureIsExternal(trc, params, syncContext, item) {
         const prev = await params.graphTransaction.getNode(trc, null, item);
         // if we have a previous node and it's in the process of being updated (node does not have the current sync context)
         if (prev && !prev.syncContexts.includes(syncContext)) {
-            if (prev.syncContexts[0].match(en_data_model_1.EXTERNAL_CONTEXT_REGEX)) {
+            if (prev.syncContexts[0].match(Helpers_1.EXTERNAL_CONTEXT_REGEX)) {
                 item.NodeFields.isExternal = true;
             }
         }
@@ -172,26 +172,26 @@ async function ensureIsExternal(trc, params, syncContext, item) {
 }
 exports.ensureIsExternal = ensureIsExternal;
 async function checkUserConnection(trc, params, contact) {
-    if (contact.type !== ThriftTypes_1.TContactType.EVERNOTE) {
+    if (contact.type !== en_conduit_sync_types_1.TContactType.EVERNOTE) {
         throw Error(`${contact.id}: Contact must be an Evernote User`);
     }
     if (contact.id === null || contact.id === undefined) {
         throw Error('Contact must have User ID');
     }
-    const profile = await params.graphTransaction.getNode(trc, null, { id: Converters_1.convertGuidFromService(contact.id, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User), type: en_data_model_1.CoreEntityTypes.Profile });
+    const profile = await params.graphTransaction.getNode(trc, null, { id: Converters_1.convertGuidFromService(contact.id, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User), type: en_core_entity_types_1.CoreEntityTypes.Profile });
     if (!profile) {
         throw new Error(`Profile does not exist for user id ${contact.id}`);
     }
     if (profile.NodeFields.isSameBusiness) {
         return true; // accounts in a same business are always connected.
     }
-    const idns = Object.keys(profile.outputs.relatedIdentities).map(idn => Number(Converters_1.convertGuidToService(profile.outputs.relatedIdentities[idn].dstID, en_data_model_1.CoreEntityTypes.Profile)));
+    const idns = Object.keys(profile.outputs.relatedIdentities).map(idn => Number(Converters_1.convertGuidToService(profile.outputs.relatedIdentities[idn].dstID, en_core_entity_types_1.CoreEntityTypes.Profile)));
     if (idns.length === 0) {
         return false; // no way to check connections without identity ids.
     }
     const userStore = params.thriftComm.getUserStore(params.personalAuth.urls.userStoreUrl);
     let connected = false;
-    const chunkedArray = conduit_utils_1.chunkArray(idns, ThriftTypes_1.EDAM_CONNECTED_IDENTITY_REQUEST_MAX);
+    const chunkedArray = conduit_utils_1.chunkArray(idns, en_conduit_sync_types_1.EDAM_CONNECTED_IDENTITY_REQUEST_MAX);
     for (const chunk of chunkedArray) {
         if (chunk.length === 0) {
             continue;

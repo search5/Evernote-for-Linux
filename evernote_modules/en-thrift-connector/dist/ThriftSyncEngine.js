@@ -27,7 +27,7 @@ const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const Auth = __importStar(require("./Auth"));
 const AccountLimitsConverter_1 = require("./Converters/AccountLimitsConverter");
@@ -147,11 +147,13 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
     }
     async initAuth(trc, authStr, startSync = true, updateBeforeStart) {
         if (authStr === this.authStr) {
+            conduit_utils_1.logger.info('Auth not change. Resume sync.');
             await this.syncManager.resumeSyncing(trc);
             return;
         }
         this.setAuth(authStr);
         if (authStr && updateBeforeStart) {
+            conduit_utils_1.logger.info('SyncEngine: Updating user information for sync');
             this.locale = await this.transact(trc, 'initAuth filling user data', updateBeforeStart);
         }
         await this.syncManager.initAuth(trc, this.auth, !startSync);
@@ -161,6 +163,9 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
     }
     isEventServiceEnabled() {
         return this.syncManager.isEventServiceEnabled();
+    }
+    onDBClear(trc) {
+        return this.syncManager.onDBClear(trc);
     }
     async startSyncing(trc) {
         if (!this.auth) {
@@ -194,6 +199,15 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
     }
     async cancelImmediateNotesDownsync(trc) {
         await this.syncManager.cancelImmediateNotesDownsync(trc);
+    }
+    async needContentFetchSync(trc) {
+        return await this.syncManager.needContentFetchSync(trc);
+    }
+    async immediateContentFetchSync(trc, args) {
+        return await this.syncManager.immediateContentFetchSync(trc, args);
+    }
+    async cancelContentFetchSync(trc) {
+        return await this.syncManager.cancelContentFetchSync(trc);
     }
     isReadyForMutations() {
         if (!this.auth) {
@@ -307,7 +321,7 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
             }
             return napTokenRefreshResult.data;
         }
-        if (res.err instanceof Auth.RevalidateShareError && res.err.type === en_data_model_1.CoreEntityTypes.Notebook) {
+        if (res.err instanceof Auth.RevalidateShareError && res.err.type === en_core_entity_types_1.CoreEntityTypes.Notebook) {
             if (await this.refreshSharedNotebookAuth(trc, res.err.shareGuid, syncContext, tx)) {
                 // SharedNotebook access is still valid, just needed to refresh the auth token
                 throw new conduit_utils_1.RetryError('reauthenticated to SharedNotebook', 0, conduit_utils_1.RetryErrorReason.AUTH_UPDATED);
@@ -315,7 +329,7 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
             // lost access to SharedNotebook, return null to indicate that the original AuthError is still correct
             return null;
         }
-        if (res.err instanceof Auth.RevalidateShareError && res.err.type === en_data_model_1.CoreEntityTypes.Note) {
+        if (res.err instanceof Auth.RevalidateShareError && res.err.type === en_core_entity_types_1.CoreEntityTypes.Note) {
             if (await this.refreshSharedNoteAuth(trc, res.err.shareGuid, tx)) {
                 throw new conduit_utils_1.RetryError('reauthenticated to SharedNote', 0, conduit_utils_1.RetryErrorReason.AUTH_UPDATED);
             }
@@ -339,7 +353,7 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
             if (sharedNotebook) {
                 // authentication succeeded, update stored auth token
                 await graphTransaction.updateSyncState(trc, syncStatePath, {
-                    notebookGuid: Converters_1.convertGuidFromService(sharedNotebook.notebookGuid, en_data_model_1.CoreEntityTypes.Notebook),
+                    notebookGuid: Converters_1.convertGuidFromService(sharedNotebook.notebookGuid, en_core_entity_types_1.CoreEntityTypes.Notebook),
                     authStr: sharedNotebook.authStr,
                 });
                 return true;
@@ -347,7 +361,7 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
             // notebook permissions revoked, cleanup share state and associated LinkedNotebooks
             await graphTransaction.deleteSyncState(trc, syncStatePath);
             shareState.linkedNotebook.guid && await LinkedNotebookSync_1.deleteLinkedNotebookContext(trc, graphTransaction, shareState.linkedNotebook.guid);
-            await graphTransaction.deleteNode(trc, conduit_core_1.PERSONAL_USER_CONTEXT, { id: Converters_1.convertGuidFromService(shareState.guid, en_data_model_1.CoreEntityTypes.Invitation), type: en_data_model_1.CoreEntityTypes.Invitation });
+            await graphTransaction.deleteNode(trc, conduit_core_1.PERSONAL_USER_CONTEXT, { id: Converters_1.convertGuidFromService(shareState.guid, en_core_entity_types_1.CoreEntityTypes.Invitation), type: en_core_entity_types_1.CoreEntityTypes.Invitation });
             await LinkedNotebookHelpers_1.expungeLinkedNotebooksOnService(trc, graphTransaction, this.thriftComm, this.auth, shareState.guid);
             return false;
         }, tx);

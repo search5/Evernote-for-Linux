@@ -24,7 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createWidgetIndexConfig = exports.widgetTypeDef = exports.WidgetFormFactorSchema = void 0;
 const conduit_storage_1 = require("conduit-storage");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const BoardConstants_1 = require("../BoardConstants");
 const Utilities = __importStar(require("../Utilities"));
 exports.WidgetFormFactorSchema = {
@@ -40,11 +40,12 @@ exports.widgetTypeDef = {
     schema: {
         boardType: BoardConstants_1.boardTypes,
         isEnabled: 'boolean',
+        softDelete: 'boolean?',
         widgetType: BoardConstants_1.widgetTypes,
         mobile: exports.WidgetFormFactorSchema,
         desktop: exports.WidgetFormFactorSchema,
         selectedTab: [...BoardConstants_1.AllTabsValues, '?'],
-        content: en_data_model_1.BlobV2SchemaWithContent,
+        content: en_core_entity_types_1.BlobV2SchemaWithContent,
         created: 'timestamp',
         updated: 'timestamp',
     },
@@ -62,7 +63,7 @@ exports.widgetTypeDef = {
             constraint: conduit_storage_1.EdgeConstraint.OPTIONAL,
             type: conduit_storage_1.EdgeType.LINK,
             to: {
-                type: en_data_model_1.CoreEntityTypes.Note,
+                type: en_core_entity_types_1.CoreEntityTypes.Note,
                 constraint: conduit_storage_1.EdgeConstraint.MANY,
                 denormalize: 'contentHandler',
             },
@@ -75,22 +76,34 @@ const createWidgetIndexConfig = (di) => {
     return conduit_storage_1.buildNodeIndexConfiguration(exports.widgetTypeDef, {
         indexResolvers: {
             parent: conduit_storage_1.getIndexByResolverForEdge(exports.widgetTypeDef, ['edges', 'parent']),
+            contentProvider: conduit_storage_1.getIndexByResolverForEdge(exports.widgetTypeDef, ['edges', 'contentProvider']),
             mobile_sortWeight: conduit_storage_1.getIndexByResolverForPrimitives(exports.widgetTypeDef, ['NodeFields', 'mobile', 'sortWeight']),
             desktop_sortWeight: conduit_storage_1.getIndexByResolverForPrimitives(exports.widgetTypeDef, ['NodeFields', 'desktop', 'sortWeight']),
             created: conduit_storage_1.getIndexByResolverForPrimitives(exports.widgetTypeDef, ['NodeFields', 'created']),
             widgetType: conduit_storage_1.getIndexByResolverForPrimitives(exports.widgetTypeDef, ['NodeFields', 'widgetType']),
+            isEnabled: conduit_storage_1.getIndexByResolverForPrimitives(exports.widgetTypeDef, ['NodeFields', 'isEnabled']),
+            selectedTab: conduit_storage_1.getIndexByResolverForPrimitives(exports.widgetTypeDef, ['NodeFields', 'selectedTab']),
             isSupportedV2: {
                 schemaType: 'boolean',
                 resolver: async (trc, node, _) => {
                     const widgetType = node.NodeFields.widgetType;
-                    let isSupported = Boolean(BoardConstants_1.WidgetType[widgetType]) && Boolean(BoardConstants_1.BoardType[node.NodeFields.boardType]);
+                    let visibleToClients = Boolean(BoardConstants_1.WidgetType[widgetType]) && Boolean(BoardConstants_1.BoardType[node.NodeFields.boardType]);
                     if (widgetType === BoardConstants_1.WidgetType.Calendar && !schemaFeatures.calendar) {
-                        isSupported = false;
+                        visibleToClients = false;
                     }
                     else if (widgetType === BoardConstants_1.WidgetType.Tasks && !schemaFeatures.tasks) {
-                        isSupported = false;
+                        visibleToClients = false;
                     }
-                    return [isSupported];
+                    /*
+                     * We could add a second index for this; however, the overall ideay is the same.
+                     *  Show this widget to the clients?
+                     *  This seems more perfomant in the end.
+                     *  Only run this logic if the supported calculation above results in true, otherwise we will inappropriately override it.
+                     */
+                    if (visibleToClients) {
+                        visibleToClients = !node.NodeFields.softDelete;
+                    }
+                    return [visibleToClients];
                 },
                 graphqlPath: ['isSupported'],
                 isUnSyncedField: true,
@@ -114,7 +127,7 @@ const createWidgetIndexConfig = (di) => {
                         },
                     },
                 },
-                includeFields: ['widgetType'],
+                includeFields: ['widgetType', 'isEnabled', 'selectedTab', 'contentProvider', 'mobile_sortWeight', 'desktop_sortWeight'],
             },
         },
     });

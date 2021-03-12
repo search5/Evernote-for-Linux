@@ -4,7 +4,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.convertGuidToService = exports.convertGuidFromService = exports.getNodeConverter = exports.testResetConverters = exports.testOverrideConverters = void 0;
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const BetaFeatureConverter_1 = require("./BetaFeatureConverter");
 const InvitationConverter_1 = require("./InvitationConverter");
 const MembershipConverter_1 = require("./MembershipConverter");
@@ -57,13 +57,13 @@ function getNodeConverter(nodeType) {
 }
 exports.getNodeConverter = getNodeConverter;
 function convertGuidFromService(guid, type, source) {
-    if (type === en_data_model_1.CoreEntityTypes.Profile) {
+    if (type === en_core_entity_types_1.CoreEntityTypes.Profile) {
         if (!source) {
             throw new Error('Must provide a source type for converting Profile guids');
         }
         return ProfileConverter_1.convertProfileGuidFromService(source, String(guid));
     }
-    if (type === en_data_model_1.CoreEntityTypes.User) {
+    if (type === en_core_entity_types_1.CoreEntityTypes.User) {
         throw new Error('TUserID cannot be converted from service');
     }
     const converter = getNodeConverter(type);
@@ -79,7 +79,7 @@ function convertGuidToService(nodeID, type) {
         return nodeID;
     }
     const guid = converter.convertGuidToService(nodeID);
-    if (type === en_data_model_1.CoreEntityTypes.User) {
+    if (type === en_core_entity_types_1.CoreEntityTypes.User) {
         throw new Error('User nodeID cannot be converted to service');
     }
     return guid;

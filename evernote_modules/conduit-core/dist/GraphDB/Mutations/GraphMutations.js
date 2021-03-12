@@ -125,6 +125,63 @@ async function cancelNotesDownsyncResolver(_, args, context) {
     await context.db.cancelImmediateNotesDownsync(context.trc);
     return res;
 }
+async function immediateContentFetchResolver(_, args, context) {
+    if (!context || !context.db) {
+        conduit_utils_1.logger.debug('Missing graphql context or db');
+        return { success: true, needsSync: false };
+    }
+    let needsSync = await context.db.needContentFetchSync(context.trc);
+    if (needsSync) {
+        const wait = args.wait || false;
+        const p = context.db.immediateContentFetchSync(context.trc, args);
+        if (wait) {
+            needsSync = await p;
+        }
+        else {
+            p.catch(err => conduit_utils_1.logger.error('StartContentFetch error ', err));
+        }
+    }
+    return { success: true, needsSync };
+}
+async function cancelContentFetchResolver(_, args, context) {
+    const res = { success: true };
+    if (!context || !context.db) {
+        conduit_utils_1.logger.debug('Missing graphql context or db');
+        return res;
+    }
+    await context.db.cancelContentFetchSync(context.trc);
+    return res;
+}
+async function forceUpsyncResolver(_, args, context) {
+    const defaultResult = { success: false };
+    if (!context || !context.db) {
+        conduit_utils_1.logger.debug('Missing graphql context or db');
+        return defaultResult;
+    }
+    let pending = 0;
+    let retryCount = 0;
+    const retry = args.retry ? args.retry : 5;
+    while (retryCount++ < retry) {
+        try {
+            const res = await context.db.flushRemoteMutations();
+            pending = res.pending;
+            if (!pending) {
+                return { success: true };
+            }
+        }
+        catch (err) {
+            if (!(err instanceof conduit_utils_1.RetryError)) {
+                throw err;
+            }
+        }
+        await conduit_utils_1.sleep(200);
+        pending = 1;
+    }
+    if (pending) {
+        throw new Error('Failed to flush remote mutations');
+    }
+    return { success: true };
+}
 function getGraphMutators() {
     const out = {};
     out.ClearGraph = {
@@ -161,6 +218,23 @@ function getGraphMutators() {
         args: DataSchemaGQL_1.schemaToGraphQLArgs({}),
         type: ResolverHelpers_1.GenericMutationResult,
         resolve: cancelNotesDownsyncResolver,
+    };
+    out.ImmediateContentFetchSync = {
+        args: DataSchemaGQL_1.schemaToGraphQLArgs({ wait: 'boolean?', maxTime: 'int?', maxResources: 'int?' }),
+        type: DataSchemaGQL_1.schemaToGraphQLType({ success: 'boolean', needsSync: 'boolean' }, 'StartContentFetchResult', false),
+        resolve: immediateContentFetchResolver,
+    };
+    out.CancelImmediateContentFetchSync = {
+        args: DataSchemaGQL_1.schemaToGraphQLArgs({}),
+        type: ResolverHelpers_1.GenericMutationResult,
+        resolve: cancelContentFetchResolver,
+    };
+    out.ForceUpsync = {
+        args: DataSchemaGQL_1.schemaToGraphQLArgs({
+            retry: 'number?',
+        }),
+        type: ResolverHelpers_1.GenericMutationResult,
+        resolve: forceUpsyncResolver,
     };
     return out;
 }

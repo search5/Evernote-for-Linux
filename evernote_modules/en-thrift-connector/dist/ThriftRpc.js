@@ -24,9 +24,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateThriftBackoffManager = exports.wrapThriftCall = void 0;
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const ThriftExceptions = __importStar(require("evernote-thrift/node/transport/Exceptions"));
 const Auth_1 = require("./Auth");
-const ThriftTypes_1 = require("./ThriftTypes");
 const SHAPE_HEADER_NAME = 'X-EN-SHAPE';
 const UPGRADE_REQUIRED_CODE = '426';
 const SHAPE_BLOCKED_CODE = '429';
@@ -42,50 +42,50 @@ const gTrcPool = new conduit_utils_1.AsyncTracePool('ThriftRpc');
 let thriftBackoffManager = new conduit_utils_1.ExponentialBackoffManager(16000);
 function handleEdamErrorCode(errorCode, authenticationToken, fnName, parameter, message, rateLimitDuration) {
     switch (errorCode) {
-        case ThriftTypes_1.EDAMErrorCode.SHARD_UNAVAILABLE:
+        case en_conduit_sync_types_1.EDAMErrorCode.SHARD_UNAVAILABLE:
             return new conduit_utils_1.RetryError('SHARD_UNAVAILABLE', 15000);
-        case ThriftTypes_1.EDAMErrorCode.PERMISSION_DENIED:
+        case en_conduit_sync_types_1.EDAMErrorCode.PERMISSION_DENIED:
             // Deactivated Business User - Login with Password
             if (parameter === DEACTIVATED_BUSINESS_ACCOUNT_PARAMETER) {
                 return new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.BUSINESS_ACCOUNT_DEACTIVATED, authenticationToken, parameter || undefined);
             }
             return new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.PERMISSION_DENIED, authenticationToken, parameter || undefined);
-        case ThriftTypes_1.EDAMErrorCode.INVALID_AUTH:
+        case en_conduit_sync_types_1.EDAMErrorCode.INVALID_AUTH:
             return new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.INVALID_AUTH, authenticationToken, parameter || undefined);
-        case ThriftTypes_1.EDAMErrorCode.AUTH_EXPIRED:
+        case en_conduit_sync_types_1.EDAMErrorCode.AUTH_EXPIRED:
             if (parameter === PASSWORD_RESET_REQUIRED_PARAM) {
                 return new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.PASSWORD_RESET_REQUIRED, authenticationToken, parameter || undefined);
             }
             return new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.AUTH_EXPIRED, authenticationToken, parameter || undefined);
-        case ThriftTypes_1.EDAMErrorCode.BUSINESS_SECURITY_LOGIN_REQUIRED:
+        case en_conduit_sync_types_1.EDAMErrorCode.BUSINESS_SECURITY_LOGIN_REQUIRED:
             return new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.BUSINESS_SECURITY_LOGIN_REQUIRED, authenticationToken, parameter || undefined);
-        case ThriftTypes_1.EDAMErrorCode.SSO_AUTHENTICATION_REQUIRED:
+        case en_conduit_sync_types_1.EDAMErrorCode.SSO_AUTHENTICATION_REQUIRED:
             return new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.SSO_AUTHENTICATION_REQUIRED, authenticationToken, parameter || undefined);
-        case ThriftTypes_1.EDAMErrorCode.DATA_REQUIRED:
+        case en_conduit_sync_types_1.EDAMErrorCode.DATA_REQUIRED:
             if (parameter === 'authenticationToken' && authenticationToken === '') {
                 // On web, when cookie is not present or cookie expires, service returns DATA_REQUIRED error instead of INVALID_AUTH
                 // We should treat this case as INVALID_AUTH and return AuthError instead of ServiceError.
                 return new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.INVALID_AUTH, authenticationToken, parameter || undefined);
             }
             return new conduit_utils_1.ServiceError('DATA_REQUIRED', parameter || '', message || undefined, errorCode);
-        case ThriftTypes_1.EDAMErrorCode.ACCOUNT_CLEAR:
+        case en_conduit_sync_types_1.EDAMErrorCode.ACCOUNT_CLEAR:
             // Deactivated Business User - Login with SSO
             // In Thrift Document, This error code is thrown only for deactivated business accounts.
             // 'businessUserStatus' is passed as parameter here like PERMISSION_DENIED.
             return new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.BUSINESS_ACCOUNT_DEACTIVATED, authenticationToken, parameter || undefined);
-        case ThriftTypes_1.EDAMErrorCode.LIMIT_REACHED:
+        case en_conduit_sync_types_1.EDAMErrorCode.LIMIT_REACHED:
             return new conduit_utils_1.ServiceError('LIMIT_REACHED', parameter || '', message || undefined, errorCode);
-        case ThriftTypes_1.EDAMErrorCode.QUOTA_REACHED:
+        case en_conduit_sync_types_1.EDAMErrorCode.QUOTA_REACHED:
             return new conduit_utils_1.ServiceError('QUOTA_REACHED', parameter || '', message || undefined, errorCode);
-        case ThriftTypes_1.EDAMErrorCode.RATE_LIMIT_REACHED:
+        case en_conduit_sync_types_1.EDAMErrorCode.RATE_LIMIT_REACHED:
             return new conduit_utils_1.RetryError('RATE_LIMIT_REACHED', (rateLimitDuration || 1) * 1000);
-        case ThriftTypes_1.EDAMErrorCode.DEVICE_LIMIT_REACHED:
+        case en_conduit_sync_types_1.EDAMErrorCode.DEVICE_LIMIT_REACHED:
             return new conduit_utils_1.ServiceError('DEVICE_LIMIT_REACHED', parameter || '', message || undefined, errorCode);
-        case ThriftTypes_1.EDAMErrorCode.DATA_CONFLICT:
+        case en_conduit_sync_types_1.EDAMErrorCode.DATA_CONFLICT:
             return new conduit_utils_1.ServiceError('DATA_CONFLICT', parameter || '', message || undefined, errorCode);
-        case ThriftTypes_1.EDAMErrorCode.DATA_REQUIRED:
+        case en_conduit_sync_types_1.EDAMErrorCode.DATA_REQUIRED:
             return new conduit_utils_1.ServiceError('DATA_REQUIRED', parameter || '', message || undefined, errorCode);
-        case ThriftTypes_1.EDAMErrorCode.BAD_DATA_FORMAT:
+        case en_conduit_sync_types_1.EDAMErrorCode.BAD_DATA_FORMAT:
             if (parameter === 'authenticationToken') { // Something wrong with token. we have to make user login again.
                 return new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.BAD_AUTH_TOKEN, authenticationToken);
             }
@@ -147,21 +147,21 @@ function wrapThriftError(err, fnName, authenticationToken, argAuthToken, args) {
         return err;
     }
     // handle the EDAM error types
-    if (err instanceof ThriftTypes_1.EDAMUserException) {
+    if (err instanceof en_conduit_sync_types_1.EDAMUserException) {
         const wrapped = handleEdamErrorCode(err.errorCode, authenticationToken, fnName, err.parameter, undefined, undefined);
         if (wrapped) {
             return wrapped;
         }
         return new conduit_utils_1.ServiceError('EDAMUserException', err.parameter || '', `errorCode=${err.errorCode} parameter=${err.parameter}`, err.errorCode);
     }
-    if (err instanceof ThriftTypes_1.EDAMSystemException) {
+    if (err instanceof en_conduit_sync_types_1.EDAMSystemException) {
         const wrapped = handleEdamErrorCode(err.errorCode, authenticationToken, fnName, undefined, err.message, err.rateLimitDuration);
         if (wrapped) {
             return wrapped;
         }
         return new conduit_utils_1.ServiceError('EDAMSystemException', '', `errorCode=${err.errorCode} message=${err.message} rateLimitDuration=${err.rateLimitDuration}`, err.errorCode);
     }
-    if (err instanceof ThriftTypes_1.EDAMNotFoundException) {
+    if (err instanceof en_conduit_sync_types_1.EDAMNotFoundException) {
         return new conduit_utils_1.ServiceError('EDAMNotFoundException', err.identifier || '', `identifier=${err.identifier} key=${err.key}`);
     }
     return new conduit_utils_1.ServiceError(errToString(err, 'Unknown Thrift error'), '', undefined, err.errorCode);

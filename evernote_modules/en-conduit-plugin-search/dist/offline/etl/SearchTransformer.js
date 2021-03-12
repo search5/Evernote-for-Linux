@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SearchTransformer = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const en_search_engine_shared_1 = require("en-search-engine-shared");
 const en_thrift_connector_1 = require("en-thrift-connector");
 const SearchUtils_1 = require("../SearchUtils");
@@ -21,7 +21,7 @@ class SearchTransformer {
             for (const tagNode of tagNodes) {
                 if (tagNode) {
                     labels.push(tagNode.label);
-                    tagGuids.push(en_thrift_connector_1.convertGuidToService(tagNode.id, en_data_model_1.CoreEntityTypes.Tag));
+                    tagGuids.push(en_thrift_connector_1.convertGuidToService(tagNode.id, en_core_entity_types_1.CoreEntityTypes.Tag));
                 }
             }
         }
@@ -31,13 +31,13 @@ class SearchTransformer {
         if (!containerInfo || !containerInfo.notebook) {
             return undefined;
         }
-        return { notebookGuid: en_thrift_connector_1.convertGuidToService(containerInfo.notebook.id, en_data_model_1.CoreEntityTypes.Notebook), label: containerInfo.notebook.label };
+        return { notebookGuid: en_thrift_connector_1.convertGuidToService(containerInfo.notebook.id, en_core_entity_types_1.CoreEntityTypes.Notebook), label: containerInfo.notebook.label };
     }
     transformWorkspace(containerInfo) {
         if (!containerInfo || !containerInfo.workspace) {
             return undefined;
         }
-        return { workspaceGuid: en_thrift_connector_1.convertGuidToService(containerInfo.workspace.id, en_data_model_1.CoreEntityTypes.Workspace), workspace: containerInfo.workspace.label };
+        return { workspaceGuid: en_thrift_connector_1.convertGuidToService(containerInfo.workspace.id, en_core_entity_types_1.CoreEntityTypes.Workspace), workspace: containerInfo.workspace.label };
     }
     transformAttachment(attachment, transformedAttachments) {
         if (attachment.recognitionData) {
@@ -86,9 +86,9 @@ class SearchTransformer {
             const workspace = this.transformWorkspace(event.containerInfo);
             // transforms tags
             const tags = this.transformTags(event.tags);
-            const tguid = en_thrift_connector_1.convertGuidToService(noteNode.id, en_data_model_1.CoreEntityTypes.Note);
-            const creatorId = event.creatorId ? en_thrift_connector_1.convertGuidToService(event.creatorId, en_data_model_1.CoreEntityTypes.Profile) : undefined;
-            const lastEditorId = event.lastEditorId ? en_thrift_connector_1.convertGuidToService(event.lastEditorId, en_data_model_1.CoreEntityTypes.Profile) : undefined;
+            const tguid = en_thrift_connector_1.convertGuidToService(noteNode.id, en_core_entity_types_1.CoreEntityTypes.Note);
+            const creatorId = event.creatorId ? en_thrift_connector_1.convertGuidToService(event.creatorId, en_core_entity_types_1.CoreEntityTypes.Profile) : undefined;
+            const lastEditorId = event.lastEditorId ? en_thrift_connector_1.convertGuidToService(event.lastEditorId, en_core_entity_types_1.CoreEntityTypes.Profile) : undefined;
             const document = {
                 guid: tguid,
                 content: (_a = event.enmlContent) !== null && _a !== void 0 ? _a : '',
@@ -132,7 +132,7 @@ class SearchTransformer {
             const messageNode = event.data.shift();
             // TODO the "as any" cast below is because a refactor exposed a type problem here; tguid for a message is a number but is getting shoved
             // into a field that is supposed to be a string. Search team needs to fix this.
-            const tguid = en_thrift_connector_1.convertGuidToService(messageNode.id, en_data_model_1.CoreEntityTypes.Message);
+            const tguid = en_thrift_connector_1.convertGuidToService(messageNode.id, en_core_entity_types_1.CoreEntityTypes.Message);
             const document = {
                 guid: tguid, content: messageNode.label, type: en_search_engine_shared_1.ENDocumentType.MESSAGE, version: 0, active: true,
             };
@@ -155,7 +155,7 @@ class SearchTransformer {
                 results.push({ guid: tguid, type: eventType });
             }
             else {
-                const transformResult = event.nodeRef.type === en_data_model_1.CoreEntityTypes.Note ? await this.transformNote(event) : await this.transformMessage(event);
+                const transformResult = event.nodeRef.type === en_core_entity_types_1.CoreEntityTypes.Note ? await this.transformNote(event) : await this.transformMessage(event);
                 if (transformResult) {
                     results.push(transformResult);
                 }

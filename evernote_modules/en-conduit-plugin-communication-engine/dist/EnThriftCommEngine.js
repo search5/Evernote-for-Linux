@@ -4,13 +4,13 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.syncMessages = void 0;
-const en_thrift_connector_1 = require("en-thrift-connector");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 async function syncMessages(trc, thriftComm, auth, args) {
     const commEngine = thriftComm.getCommunicationEngine(auth.urls.communicationEngineUrl);
     const { guid, supportedPlacements, locale, clientType, uiLanguage, commEngineJsVersion, nativeClientVersion, events, } = args;
-    const messageRequest = new en_thrift_connector_1.TCommEngineMessageRequest({
+    const messageRequest = new en_conduit_sync_types_1.TCommEngineMessageRequest({
         guid,
-        knownMessages: args.knownMessages ? args.knownMessages.map((key) => new en_thrift_connector_1.TCommEngineInAppMessageIdentifier({
+        knownMessages: args.knownMessages ? args.knownMessages.map((key) => new en_conduit_sync_types_1.TCommEngineInAppMessageIdentifier({
             key,
         })) : null,
         supportedPlacements,

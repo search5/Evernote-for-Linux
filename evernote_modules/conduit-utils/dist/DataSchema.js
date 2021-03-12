@@ -5,6 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.inferSchemaFieldType = exports.validateSchemaValue = exports.validateSchemaType = exports.getSchemaDefaults = exports.getSchemaTypeDefaultValue = exports.fieldForceRequired = exports.fieldTypeToCore = exports.fieldTypeIsEnum = exports.fieldTypeIsObject = exports.fieldMapTypeToCore = exports.fieldIsMapType = exports.fieldArrayTypeToCore = exports.fieldIsArrayType = exports.fieldTypeToNonNull = exports.isNullableEnum = exports.fieldIsNullable = void 0;
 const en_ts_utils_1 = require("en-ts-utils");
+const index_1 = require("./index");
 function fieldIsNullable(fieldType) {
     return fieldType.slice(-1) === '?';
 }
@@ -230,6 +231,7 @@ function validateSchemaType(fieldType, path, value, objectStrictCheck = true) {
 }
 exports.validateSchemaType = validateSchemaType;
 function validateSchemaValue(fieldValidation, path, value) {
+    var _a, _b;
     switch (typeof value) {
         case 'object': {
             if (Array.isArray(value)) {
@@ -247,11 +249,12 @@ function validateSchemaValue(fieldValidation, path, value) {
         case 'number': {
             const validationBlock = fieldValidation[path];
             if (validationBlock) {
+                const fieldName = (_a = validationBlock.debugName) !== null && _a !== void 0 ? _a : path;
                 if (validationBlock.min && value < validationBlock.min) {
-                    throw new Error(`Validation Failed: ${path} to low`);
+                    throw new index_1.MalformedDataError(`Validation Failed: ${fieldName} too low`);
                 }
                 if (validationBlock.max && value > validationBlock.max) {
-                    throw new Error(`Validation Failed: ${path} to high`);
+                    throw new index_1.MalformedDataError(`Validation Failed: ${fieldName} too high`);
                 }
             }
             break;
@@ -260,14 +263,15 @@ function validateSchemaValue(fieldValidation, path, value) {
             const validationBlock = fieldValidation[path];
             const len = value.length;
             if (validationBlock) {
+                const fieldName = (_b = validationBlock.debugName) !== null && _b !== void 0 ? _b : path;
                 if (validationBlock.min && validationBlock.min > len) {
-                    throw new Error(`Validation Failed: ${path} to short`);
+                    throw new index_1.MalformedDataError(`Validation Failed: ${fieldName} too short`);
                 }
                 if (validationBlock.max && validationBlock.max < len) {
-                    throw new Error(`Validation Failed: ${path} to long`);
+                    throw new index_1.MalformedDataError(`Validation Failed: ${fieldName} too long`);
                 }
                 if (validationBlock.regex && !validationBlock.regex.exec(value)) {
-                    throw new Error(`Validation Failed: ${path} invalid characters`);
+                    throw new index_1.MalformedDataError(`Validation Failed: ${fieldName} invalid characters`);
                 }
             }
             break;

@@ -6,17 +6,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ThriftRemoteMutationExecutor = exports.generateCustomID = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Converters_1 = require("./Converters/Converters");
 const Helpers_1 = require("./Helpers");
 const ThriftGraphInterface_1 = require("./ThriftGraphInterface");
 const logger = conduit_utils_1.createLogger('conduit:ThriftRemoteMutationExecutor');
 function generateCustomID(nodeType, fields, parent) {
-    if (nodeType === en_data_model_1.CoreEntityTypes.Stack && fields && fields.label) {
-        return Converters_1.convertGuidFromService(fields.label, en_data_model_1.CoreEntityTypes.Stack);
+    if (nodeType === en_core_entity_types_1.CoreEntityTypes.Stack && fields && fields.label) {
+        return Converters_1.convertGuidFromService(fields.label, en_core_entity_types_1.CoreEntityTypes.Stack);
     }
-    else if (nodeType === en_data_model_1.CoreEntityTypes.Shortcut && parent) {
-        return Converters_1.convertGuidFromService(parent.id, en_data_model_1.CoreEntityTypes.Shortcut);
+    else if (nodeType === en_core_entity_types_1.CoreEntityTypes.Shortcut && parent) {
+        return Converters_1.convertGuidFromService(parent.id, en_core_entity_types_1.CoreEntityTypes.Shortcut);
     }
     return null;
 }
@@ -46,17 +46,20 @@ class ThriftRemoteMutationExecutor extends conduit_core_1.RemoteMutationExecutor
         }
         return await this.mutationEngine.runMutation(trc, this.graph, false, userID, vaultUserID, mutation);
     }
-    async runMutations(trc, authData, userID, vaultUserID, mutations, opts) {
+    async runMutations(trc, authData, userID, vaultUserID, mutations, opts, ret) {
         if (!this.mutationEngine) {
             throw new Error('No mutation engine');
         }
         // apply mutations
-        const errors = {};
-        const batchTimestamps = {};
+        let latestUpsync = 0;
         let abortForRetry = false;
         for (const mutation of mutations) {
+            const mutationTimestamp = Date.now();
             if (abortForRetry || opts.stopConsumer) {
-                errors[mutation.mutationID] = new conduit_utils_1.RetryError(opts.stopConsumer ? 'stopping execution because stopConsumer is true' : 'abort after previous RetryError', 0);
+                ret.mutationResults[mutation.mutationID] = {
+                    timestamp: mutationTimestamp,
+                    error: new conduit_utils_1.RetryError(opts.stopConsumer ? 'stopping execution because stopConsumer is true' : 'abort after previous RetryError', 0),
+                };
                 continue;
             }
             const res = await conduit_utils_1.withError(this.runMutation(trc, userID, vaultUserID, mutation, opts.isFlush));
@@ -66,7 +69,10 @@ class ThriftRemoteMutationExecutor extends conduit_core_1.RemoteMutationExecutor
                 logger.info(`handleAuthError ${res.err instanceof conduit_utils_1.RetryError ? 'refreshed auth. retrying mutation' : `auth still valid err ${res.err}`} ${mutation.name}`);
             }
             if (res.err) {
-                errors[mutation.mutationID] = res.err;
+                ret.mutationResults[mutation.mutationID] = {
+                    timestamp: mutationTimestamp,
+                    error: res.err,
+                };
                 if (res.err instanceof conduit_utils_1.RetryError) {
                     abortForRetry = true;
                     logger.debug('Got retryable error on mutation', { name: mutation.name });
@@ -75,19 +81,15 @@ class ThriftRemoteMutationExecutor extends conduit_core_1.RemoteMutationExecutor
                     logger.error('Error response for mutation', { name: mutation.name, err: res.err });
                 }
             }
-            if (!Object.keys(errors).length) {
-                await this.graph.replaceSyncState(trc, 'updateSyncTime', ['lastSyncTime'], Date.now());
-            }
-            if (res.data !== undefined) {
-                batchTimestamps[mutation.mutationID] = res.data;
+            else {
+                latestUpsync = mutationTimestamp;
+                ret.mutationResults[mutation.mutationID] = Object.assign({ timestamp: mutationTimestamp }, res.data);
             }
         }
-        return {
-            batchTimestamps,
-            errors,
-            retryError: (abortForRetry || opts.stopConsumer) ?
-                new conduit_utils_1.RetryError(opts.stopConsumer ? 'stopping execution because stopConsumer is true' : 'abort after previous RetryError', 0) : null,
-        };
+        if (!ret.retryError && (abortForRetry || opts.stopConsumer)) {
+            ret.retryError = new conduit_utils_1.RetryError(opts.stopConsumer ? 'stopping execution because stopConsumer is true' : 'abort after previous RetryError', 0);
+        }
+        return latestUpsync;
     }
 }
 exports.ThriftRemoteMutationExecutor = ThriftRemoteMutationExecutor;

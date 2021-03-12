@@ -89,6 +89,7 @@ var SearchExResultType;
     /** Various attributes that note may posses. Include attachemnt types, named entities (eg phone number) etc */
     SearchExResultType["CONTAINS"] = "contains_filter";
     SearchExResultType["MESSAGE"] = "message_filter";
+    SearchExResultType["STACK"] = "stack_filter";
 })(SearchExResultType = exports.SearchExResultType || (exports.SearchExResultType = {}));
 /** Type of SearchEx result */
 const GraphQLSearchExResultType = new graphql_1.GraphQLEnumType({
@@ -106,6 +107,7 @@ const GraphQLSearchExResultType = new graphql_1.GraphQLEnumType({
         /** Various attributes that note may posses. Include attachemnt types, named entities (eg phone number) etc */
         CONTAINS: { value: SearchExResultType.CONTAINS },
         MESSAGE: { value: SearchExResultType.MESSAGE },
+        STACK: { value: SearchExResultType.STACK },
     },
 });
 const GraphQLSearchExSortOrder = new graphql_1.GraphQLEnumType({

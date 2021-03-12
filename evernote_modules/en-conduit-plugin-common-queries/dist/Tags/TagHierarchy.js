@@ -13,7 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.tagHierarchyPlugin = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const graphql_1 = require("graphql");
 function buildArgs() {
     const filterType = conduit_core_1.schemaToGraphQLType(['label', 'isBusiness', 'isPersonal', 'isShared', 'rootID', '?'], `TagHierarchyFilterField`);
@@ -43,6 +43,9 @@ function buildArgs() {
     return {
         filters,
         sorts,
+        includeEmptyBusinessTags: {
+            type: conduit_core_1.schemaToGraphQLType('boolean?'),
+        },
     };
 }
 function addOriginToTagFromContext(tag, syncContext) {
@@ -77,7 +80,7 @@ function buildHierarchyFromLookup(noParentTags, hasParentTags, lookup, context, 
         return t[e.field];
     });
     const comparator = (a, b) => {
-        return context.indexer.compareKeysFactory(en_data_model_1.CoreEntityTypes.Tag, index)(transform(a), transform(b)).cmp;
+        return context.indexer.compareKeysFactory(en_core_entity_types_1.CoreEntityTypes.Tag, index)(transform(a), transform(b)).cmp;
     };
     for (let i = hasParentTags.length - 1; i >= 0; i--) {
         const tag = hasParentTags[i];
@@ -157,7 +160,7 @@ async function buildHierarchyForNodeRecursive(context, root, indentationLevel = 
     var _a;
     const list = [convertTagToHierarchy(root, indentationLevel)];
     const childEdgeIDs = Object.keys(root.outputs.children).map(e => root.outputs.children[e].dstID);
-    const childTags = await ((_a = context.db) === null || _a === void 0 ? void 0 : _a.batchGetNodes(context, en_data_model_1.CoreEntityTypes.Tag, childEdgeIDs));
+    const childTags = await ((_a = context.db) === null || _a === void 0 ? void 0 : _a.batchGetNodes(context, en_core_entity_types_1.CoreEntityTypes.Tag, childEdgeIDs));
     if (childTags) {
         for (const tag of childTags) {
             if (!tag) {
@@ -170,7 +173,7 @@ async function buildHierarchyForNodeRecursive(context, root, indentationLevel = 
 }
 async function buildHierarchyForNode(context, rootID) {
     conduit_core_1.validateDB(context);
-    const root = await context.db.getNode(context, { id: rootID, type: en_data_model_1.CoreEntityTypes.Tag });
+    const root = await context.db.getNode(context, { id: rootID, type: en_core_entity_types_1.CoreEntityTypes.Tag });
     if (!root) {
         throw new conduit_utils_1.NotFoundError(rootID, `Could not find root tag for hierarchy`);
     }
@@ -190,12 +193,12 @@ async function tagHierarchyResolver(parent, args, context, info) {
             string: 'anything',
         },
     };
-    const indexToUse = context.indexer.indexForQuery(en_data_model_1.CoreEntityTypes.Tag, [parentFilter], args.sorts || [], [], ['label', 'refsCount', 'syncContext']);
+    const indexToUse = context.indexer.indexForQuery(en_core_entity_types_1.CoreEntityTypes.Tag, [parentFilter], args.sorts || [], [], ['label', 'refsCount', 'syncContext']);
     if (!indexToUse) {
         throw new Error('Failed to find index for TagsHierarchy query, should not happen');
     }
     // CON-718. Requested always filter tags which isBusiness is true and refsCount is 0.
-    const filtersForQuery = await context.db.isBusinessAccount(context.trc) ? [{ field: 'refsCount', min: { int: 1 } }] : [];
+    const filtersForQuery = await context.db.isBusinessAccount(context.trc) && !args.includeEmptyBusinessTags ? [{ field: 'refsCount', min: { int: 1 } }] : [];
     let list;
     const rootFilterIndex = args.filters && args.filters.findIndex(e => e.field === 'rootID');
     const rootFilter = rootFilterIndex !== undefined && rootFilterIndex >= 0 && args.filters.splice(rootFilterIndex, 1).pop();
@@ -206,15 +209,15 @@ async function tagHierarchyResolver(parent, args, context, info) {
         list = await buildHierarchyForNode(context, rootFilter.match.string);
     }
     else {
-        const tree = await context.db.readonlyIndexingTreeForTypeAndIndex(context.trc, en_data_model_1.CoreEntityTypes.Tag, indexToUse);
-        const iterator = await context.indexer.getIterator(context.trc, context.watcher, tree, en_data_model_1.CoreEntityTypes.Tag, indexToUse, filtersForQuery, args.sorts || [], false, undefined);
+        const tree = await context.db.readonlyIndexingTreeForTypeAndIndex(context.trc, en_core_entity_types_1.CoreEntityTypes.Tag, indexToUse);
+        const iterator = await context.indexer.getIterator(context.trc, context.watcher, tree, en_core_entity_types_1.CoreEntityTypes.Tag, indexToUse, filtersForQuery, args.sorts || [], false, undefined);
         if (!iterator) {
             throw new Error('Unable to retrieve iterator');
         }
         const noParentTags = [];
         const hasParentTags = [];
         const lookup = {};
-        const fieldStripper = context.indexer.indexedValuesFromKeyFactory(en_data_model_1.CoreEntityTypes.Tag, indexToUse, true);
+        const fieldStripper = context.indexer.indexedValuesFromKeyFactory(en_core_entity_types_1.CoreEntityTypes.Tag, indexToUse, true);
         try {
             for (var iterator_1 = __asyncValues(iterator), iterator_1_1; iterator_1_1 = await iterator_1.next(), !iterator_1_1.done;) {
                 const key = iterator_1_1.value;

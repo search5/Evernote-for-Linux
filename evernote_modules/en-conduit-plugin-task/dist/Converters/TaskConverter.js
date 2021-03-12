@@ -5,12 +5,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getTaskNodeAndEdges = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const en_nsync_connector_1 = require("en-nsync-connector");
 const TaskConstants_1 = require("../TaskConstants");
 const ScheduledNotificationConverter_1 = require("./ScheduledNotificationConverter");
 const getTaskNodeAndEdges = async (trc, instance, context) => {
-    var _a, _b, _c;
+    var _a, _b, _c, _d, _e, _f, _g;
     const nodesToUpsert = [];
     const edgesToCreate = [];
     const edgesToDelete = [];
@@ -19,19 +20,19 @@ const getTaskNodeAndEdges = async (trc, instance, context) => {
         return null;
     }
     const task = Object.assign(Object.assign({}, initial), { type: TaskConstants_1.TaskEntityTypes.Task, NodeFields: {
-            created: en_nsync_connector_1.convertLong(instance.created || 0),
-            updated: en_nsync_connector_1.convertLong(instance.updated || 0),
-            dueDate: !conduit_utils_1.isNullish(instance.dueDate) ? en_nsync_connector_1.convertLong(instance.dueDate) : null,
-            dueDateUIOption: instance.dueDateUIOption || null,
-            timeZone: instance.timeZone || null,
+            created: instance.created,
+            updated: instance.updated,
+            dueDate: (_a = instance.dueDate) !== null && _a !== void 0 ? _a : null,
+            dueDateUIOption: (_b = instance.dueDateUIOption) !== null && _b !== void 0 ? _b : null,
+            timeZone: (_c = instance.timeZone) !== null && _c !== void 0 ? _c : null,
             status: instance.status,
             inNote: instance.inNote,
             flag: instance.flag,
             sortWeight: instance.sortWeight,
             noteLevelID: instance.noteLevelID,
-            statusUpdated: !conduit_utils_1.isNullish(instance.statusUpdated) ? en_nsync_connector_1.convertLong(instance.statusUpdated) : null,
+            statusUpdated: (_d = instance.statusUpdated) !== null && _d !== void 0 ? _d : null,
             taskGroupNoteLevelID: instance.taskGroupNoteLevelID,
-            sourceOfChange: (_a = instance.sourceOfChange) !== null && _a !== void 0 ? _a : null,
+            sourceOfChange: (_e = instance.sourceOfChange) !== null && _e !== void 0 ? _e : null,
         }, inputs: {
             parent: {},
         }, outputs: {
@@ -44,25 +45,25 @@ const getTaskNodeAndEdges = async (trc, instance, context) => {
     nodesToUpsert.push(task);
     const { creator, lastEditor } = instance;
     if (creator) {
-        const creatorProfileId = convertGuidFromService(creator, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User);
+        const creatorProfileId = convertGuidFromService(creator, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
         edgesToCreate.push({
-            dstType: en_data_model_1.CoreEntityTypes.Profile,
+            dstType: en_core_entity_types_1.CoreEntityTypes.Profile,
             dstID: creatorProfileId,
             dstPort: null,
             srcType: task.type, srcID: task.id, srcPort: 'creator',
         });
     }
     if (lastEditor) {
-        const lastEditorProfileId = convertGuidFromService(lastEditor, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User);
+        const lastEditorProfileId = convertGuidFromService(lastEditor, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
         edgesToCreate.push({
-            dstType: en_data_model_1.CoreEntityTypes.Profile,
+            dstType: en_core_entity_types_1.CoreEntityTypes.Profile,
             dstID: lastEditorProfileId,
             dstPort: null,
             srcType: task.type, srcID: task.id, srcPort: 'lastEditor',
         });
     }
-    const parentID = (_b = instance.parentEntity) === null || _b === void 0 ? void 0 : _b.id;
-    const parentType = en_nsync_connector_1.entityTypeAsNodeType(context.eventManager, (_c = instance.parentEntity) === null || _c === void 0 ? void 0 : _c.type, en_data_model_1.CoreEntityTypes.Note);
+    const parentID = (_f = instance.parentEntity) === null || _f === void 0 ? void 0 : _f.id;
+    const parentType = en_conduit_sync_types_1.entityTypeAsNodeType(context.eventManager.di, (_g = instance.parentEntity) === null || _g === void 0 ? void 0 : _g.type, en_core_entity_types_1.CoreEntityTypes.Note);
     if (parentID && parentType) {
         const currentTask = await context.tx.getNode(trc, null, { type: TaskConstants_1.TaskEntityTypes.Task, id: task.id });
         const currentParentEdge = conduit_utils_1.firstStashEntry(currentTask === null || currentTask === void 0 ? void 0 : currentTask.inputs.parent);

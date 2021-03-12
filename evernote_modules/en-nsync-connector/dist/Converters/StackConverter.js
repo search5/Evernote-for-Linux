@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getStackEntity = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 function generateStackID(name) {
     return `Stack:${name}`;
 }
@@ -33,7 +33,7 @@ function createNewStack(name) {
         label: name,
         syncContexts: [],
         version: 0,
-        type: en_data_model_1.CoreEntityTypes.Stack,
+        type: en_core_entity_types_1.CoreEntityTypes.Stack,
         NodeFields: {},
         inputs: {},
         outputs: {
@@ -60,29 +60,29 @@ async function getStackEntity(trc, stackName, notebook, tx) {
         let existingStack = null;
         if (oldStackName) {
             const oldStackID = generateStackID(oldStackName);
-            const oldStack = await tx.getNode(trc, null, { id: oldStackID, type: en_data_model_1.CoreEntityTypes.Stack });
+            const oldStack = await tx.getNode(trc, null, { id: oldStackID, type: en_core_entity_types_1.CoreEntityTypes.Stack });
             if (!oldStack) {
                 throw new Error('Old Stack does not exist');
             }
             if (Object.keys(oldStack.outputs.notebooks).length <= 1) {
-                nodesToDelete.push({ id: oldStackID, type: en_data_model_1.CoreEntityTypes.Stack });
+                nodesToDelete.push({ id: oldStackID, type: en_core_entity_types_1.CoreEntityTypes.Stack });
             }
             else {
                 edgesToDelete.push({
-                    dstID: notebook.id, dstType: en_data_model_1.CoreEntityTypes.Notebook, dstPort: 'stack',
+                    dstID: notebook.id, dstType: en_core_entity_types_1.CoreEntityTypes.Notebook, dstPort: 'stack',
                 });
             }
         }
         if (stackName) {
             const stackID = generateStackID(stackName);
-            existingStack = await tx.getNode(trc, null, { id: stackID, type: en_data_model_1.CoreEntityTypes.Stack });
+            existingStack = await tx.getNode(trc, null, { id: stackID, type: en_core_entity_types_1.CoreEntityTypes.Stack });
             const stack = existingStack !== null && existingStack !== void 0 ? existingStack : createNewStack(stackName);
             if (!existingStack) {
                 nodesToUpsert.push(stack);
             }
             edgesToCreate.push({
-                srcID: stack.id, srcType: en_data_model_1.CoreEntityTypes.Stack, srcPort: 'notebooks',
-                dstID: notebook.id, dstType: en_data_model_1.CoreEntityTypes.Notebook, dstPort: 'stack',
+                srcID: stack.id, srcType: en_core_entity_types_1.CoreEntityTypes.Stack, srcPort: 'notebooks',
+                dstID: notebook.id, dstType: en_core_entity_types_1.CoreEntityTypes.Notebook, dstPort: 'stack',
             });
         }
     }

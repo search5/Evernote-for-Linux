@@ -11,12 +11,12 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PromotionConverter = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Converters_1 = require("./Converters");
 const Helpers_1 = require("./Helpers");
 class PromotionConverterClass {
     constructor() {
-        this.nodeType = en_data_model_1.CoreEntityTypes.Promotion;
+        this.nodeType = en_core_entity_types_1.CoreEntityTypes.Promotion;
     }
     convertGuidFromService(guid) {
         return ('Promotion:' + guid);
@@ -26,8 +26,8 @@ class PromotionConverterClass {
     }
     async convertFromService(trc, params, syncContext, serviceData) {
         const search = {
-            id: Converters_1.convertGuidFromService(serviceData.promotionId, en_data_model_1.CoreEntityTypes.Promotion),
-            type: en_data_model_1.CoreEntityTypes.Promotion,
+            id: Converters_1.convertGuidFromService(serviceData.promotionId, en_core_entity_types_1.CoreEntityTypes.Promotion),
+            type: en_core_entity_types_1.CoreEntityTypes.Promotion,
             version: 1,
             syncContexts: [],
             localChangeTimestamp: 0,
@@ -48,9 +48,9 @@ class PromotionConverterClass {
     }
     async updateToService(trc, params, syncContext, promotionID, diff) {
         const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
-        const promotionId = Converters_1.convertGuidToService(promotionID, en_data_model_1.CoreEntityTypes.Promotion);
+        const promotionId = Converters_1.convertGuidToService(promotionID, en_core_entity_types_1.CoreEntityTypes.Promotion);
         const utilityStore = params.thriftComm.getUtilityStore(auth.urls.utilityUrl);
-        const currPromotion = await params.graphTransaction.getNode(trc, null, { id: promotionID, type: en_data_model_1.CoreEntityTypes.Promotion });
+        const currPromotion = await params.graphTransaction.getNode(trc, null, { id: promotionID, type: en_core_entity_types_1.CoreEntityTypes.Promotion });
         let changed = false;
         if (diff.NodeFields && diff.NodeFields.optedOut && (!currPromotion || !currPromotion.NodeFields.optedOut)) {
             await utilityStore.promotionOptedOut(trc, auth.token, promotionId);
@@ -62,7 +62,7 @@ class PromotionConverterClass {
         }
         if (changed) {
             // sync cycle is very infrequent for promotions, so go fetch the authoritative data immediately
-            const promotions = await utilityStore.getPromotionStatus(trc, auth.token, [Converters_1.convertGuidToService(promotionID, en_data_model_1.CoreEntityTypes.Promotion)]);
+            const promotions = await utilityStore.getPromotionStatus(trc, auth.token, [Converters_1.convertGuidToService(promotionID, en_core_entity_types_1.CoreEntityTypes.Promotion)]);
             await this.convertFromService(trc, params, syncContext, promotions[0]);
         }
         return true;
@@ -75,16 +75,16 @@ class PromotionConverterClass {
     }
 }
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Promotion)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Promotion)
 ], PromotionConverterClass.prototype, "convertFromService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Promotion)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Promotion)
 ], PromotionConverterClass.prototype, "createOnService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Promotion)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Promotion)
 ], PromotionConverterClass.prototype, "updateToService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Promotion)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Promotion)
 ], PromotionConverterClass.prototype, "deleteFromService", null);
 exports.PromotionConverter = new PromotionConverterClass();
 //# sourceMappingURL=PromotionConverter.js.map

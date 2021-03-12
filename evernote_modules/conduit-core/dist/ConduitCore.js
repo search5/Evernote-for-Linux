@@ -28,7 +28,6 @@ const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const ConduitUserCore_1 = require("./ConduitUserCore");
-const ConduitVersion_1 = require("./ConduitVersion");
 const ErrorManager_1 = require("./ErrorManager");
 const GraphDB_1 = require("./GraphDB/GraphDB");
 const LocalSettings_1 = require("./LocalSettings");
@@ -113,7 +112,8 @@ class ConduitCore {
         }
     }
     async init() {
-        conduit_utils_1.logger.info(`Using Conduit Core v${ConduitVersion_1.CONDUIT_VERSION} and DB v${GraphDB_1.SYNC_DB_VERSION}`);
+        conduit_utils_1.logger.info(`Using Conduit Core v${conduit_view_types_1.CONDUIT_VERSION} and DB v${GraphDB_1.SYNC_DB_VERSION}`);
+        conduit_utils_1.traceEventStart(this.trc, 'ConduitCoreInit');
         this.localSettings = new LocalSettings_1.LocalSettings(Object.assign(Object.assign({}, this.di), { WatchTree: this.watchTree }));
         await this.localSettings.init(this.trc);
         await this.di.hostResolver.init(this.trc, this.localSettings, this.config.etncHostInformation);
@@ -146,7 +146,7 @@ class ConduitCore {
                         }
                         catch (e) {
                             if (!(e instanceof conduit_utils_1.RetryError) || i === N_RETRIES - 1) {
-                                conduit_utils_1.logger.fatal('UNDEAD GRAPH IS BORN! ', e);
+                                conduit_utils_1.logger.fatal(`Fatal error: Failed to destroy old graph after ${N_RETRIES} retries.`, e);
                                 this.di.emitEvent && this.di.emitEvent(conduit_view_types_1.ConduitEvent.FATAL_ERROR);
                                 break;
                             }
@@ -176,7 +176,7 @@ class ConduitCore {
                 await this.emptyUserDatabases(trc, userIDs);
             }, WatchTree: this.watchTree }));
         const coreUserConfig = Object.assign(Object.assign({}, this.config), { ErrorManager: this.errorManager, LocalSettings: this.localSettings, OfflineContentStrategy: this.di.offlineContentStrategy, MultiUserProvider: this.multiUserManager, WatchTree: this.watchTree });
-        this.userCore = new ConduitUserCore_1.ConduitUserCore(this.di, coreUserConfig, () => this.graph);
+        this.userCore = new ConduitUserCore_1.ConduitUserCore(this.trc, this.di, coreUserConfig, () => this.graph);
         // multiUserManager depends on userCore
         await this.multiUserManager.init(this.trc, Boolean(this.config.noSetActiveAccountOnStart));
         // attempt to login and populate auth data on start with token in persistent storage.
@@ -193,6 +193,7 @@ class ConduitCore {
                 conduit_utils_1.logger.info('Expected error: unable to auto login. ', e);
             }
         }
+        conduit_utils_1.traceEventEnd(this.trc, 'ConduitCoreInit');
     }
     getSchema() {
         if (!this.userCore) {
@@ -262,12 +263,6 @@ class ConduitCore {
     }
     emitEvent(event, data) {
         this.eventEmitter && this.eventEmitter.emitEvent(event, data);
-    }
-    remoteMutationsNeedFlush(dependentGuids) {
-        if (!this.graph) {
-            throw new Error('Conduit not initialized');
-        }
-        return this.graph.remoteMutationsNeedFlush(dependentGuids);
     }
     async startUpload(params) {
         if (!this.graph) {
@@ -398,6 +393,12 @@ class ConduitCore {
             throw new Error('Conduit not initialized');
         }
         return this.localSettings;
+    }
+    markDependencySynced(trc, depKey, depVersion) {
+        if (!this.graph) {
+            throw new Error('Conduit not initialized');
+        }
+        return this.graph.markDependencySynced(trc, depKey, depVersion);
     }
     async initGraph(userID, extra) {
         if (!this.multiUserManager || !this.errorManager || !this.localSettings) {
@@ -565,6 +566,13 @@ function conduitDIProxy(getConduit, eventCallback) {
                 throw new Error('Conduit not initialized');
             }
             return conduit.getLocalSettings();
+        },
+        markDependencySynced: (trc, depKey, depVersion) => {
+            const conduit = getConduit();
+            if (!conduit) {
+                throw new Error('Conduit not initialized');
+            }
+            return conduit.markDependencySynced(trc, depKey, depVersion);
         },
     };
 }

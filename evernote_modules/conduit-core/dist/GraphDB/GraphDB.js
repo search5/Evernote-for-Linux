@@ -20,15 +20,12 @@ const dataloader_1 = __importDefault(require("dataloader"));
 const FileUploader_1 = require("../FileUploader");
 const index_1 = require("../index");
 const LocalMutationExecutor_1 = require("../LocalMutationExecutor");
-const MutationRollup_1 = require("../MutationRollup");
 const GraphMutationTypes_1 = require("../Types/GraphMutationTypes");
+const MutationManager_1 = require("./MutationManager");
 exports.SYNC_DB_VERSION = 15; // vkumar2: CON-1080 adding attributes to Attachment
 const REMOTE_MUTATION_BUFFER = 500;
 const DOWNSYNC_BUFFER = 200;
 const SYNC_PAUSED_RETRY_TIME = 1000 * 60;
-const CORRUPT_MUTATIONS_TABLE = 'CorruptMutations';
-const OPTIMISTIC_MUTATIONS_TABLE = 'OptimisticMutations';
-const REMOTE_MUTATIONS_TABLE = 'RemoteMutations';
 const gTrcPool = new conduit_utils_1.AsyncTracePool('GraphDB');
 function getDataLoader(context, type, loader) {
     if (!context.dataLoaders[type]) {
@@ -40,16 +37,6 @@ function getDataLoader(context, type, loader) {
     }
     return context.dataLoaders[type];
 }
-function validateMutation(m, def) {
-    try {
-        conduit_utils_1.validateSchemaType(def.requiredParams, 'root', m.params, false);
-        return conduit_utils_1.getTypeOf(m.timestamp) === 'number' && conduit_utils_1.getTypeOf(m.guids) === 'object';
-    }
-    catch (e) {
-        conduit_utils_1.logger.warn('Invalid mutation: ', e);
-        return false;
-    }
-}
 class GraphDB extends conduit_storage_1.StorageEventEmitter {
     constructor(di, userID, maxBackoffTimeout = 16000) {
         super();
@@ -60,12 +47,10 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
         this.tokenUpdate = null;
         this.destructorPromise = null;
         this.orchestratorMutex = new conduit_utils_1.RankedMutex('GraphDB Orchestrator', 10000);
-        this.optimisticMutations = [];
         this.downsyncEvents = [];
         this.queuedOptimisticMutationRerun = false;
         this.authBackoff = {};
         this.activeAuthRevalidations = {};
-        this.lastRemoteMutationUpsyncTimestamp = 0;
         this.lastDownsyncTimestamp = 0;
         this.batchGetNodesInternal = (context, type, ids) => {
             if (!this.isInitialized) {
@@ -100,16 +85,6 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
                 return this.runRemoteMutationsInternal(trc, mutations, opts);
             });
         };
-        this.fetchNodeField = async (trc, nodeRef, fieldName) => {
-            const node = await this.remoteStorageOverlay.getNode(trc, null, nodeRef);
-            if (!node) {
-                return null;
-            }
-            if (fieldName === 'label' || fieldName === 'id') {
-                return node[fieldName];
-            }
-            return conduit_utils_1.walkObjectPath(node, fieldName.split('.'), null);
-        };
         this.onSyncStorageChange = (event) => {
             if (this.isDestroyed) {
                 return;
@@ -128,7 +103,7 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
                     this.lastDownsyncTimestamp = event.value;
                 }
             }
-            if (!this.optimisticMutations.length) {
+            if (!this.mutationManager.hasOptimisticMutations()) {
                 this.emitChanges([event]);
                 return;
             }
@@ -148,8 +123,8 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
         // tslint:disable:variable-name
         // poke a hole for testing
         this._test = {
-            optimisticMutations: () => {
-                return this.optimisticMutations;
+            optimisticMutationsCount: () => {
+                return this.mutationManager.getOptimisticMutations().length;
             },
             onSyncStorageChange: (event) => {
                 return this.onSyncStorageChange(event);
@@ -173,11 +148,13 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
         });
     }
     async initInternal(trc, startSync, update) {
+        conduit_utils_1.logger.info('Initializing GraphDB');
         this.remoteSyncedGraphStorage = await this.di.GraphStorageDB(trc, GraphDB.DB_NAMES.RemoteGraph, exports.SYNC_DB_VERSION),
             this.remoteSyncedGraphStorage.addChangeHandler(this.onSyncStorageChange);
         this.initOverlay();
         this.localKeyValStorage = await this.di.KeyValStorage(trc, GraphDB.DB_NAMES.LocalStorage);
         this.localKeyValStorage.addChangeHandler(this);
+        this.mutationManager = new MutationManager_1.MutationManager(this.localKeyValStorage);
         this.ephemeralState = new conduit_storage_1.KeyValOverlay(this.localKeyValStorage, true);
         this.ephemeralState.addChangeHandler(this);
         this.memKeyValStorage = await this.di.KeyValStorageMem(trc, 'MemoryStorage');
@@ -375,12 +352,7 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
             // returns the number of mutations upsynced
             return await this.flushRemoteMutations();
         }
-        return {
-            completed: 0,
-            pending: 0,
-            optimistic: this.optimisticMutations.length,
-            optimisticNames: this.optimisticMutations.map(mutation => mutation.name),
-        };
+        return Object.assign({ completed: 0, pending: 0 }, this.mutationManager.getOptimisticMutationInfo());
     }
     async forceStopDownsync(trc) {
         await this.syncEngine.disableSyncing(trc);
@@ -397,6 +369,15 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
     async cancelImmediateNotesDownsync(trc) {
         await this.syncEngine.cancelImmediateNotesDownsync(trc);
     }
+    async needContentFetchSync(trc) {
+        return await this.syncEngine.needContentFetchSync(trc);
+    }
+    async immediateContentFetchSync(trc, args) {
+        return await this.syncEngine.immediateContentFetchSync(trc, args);
+    }
+    async cancelContentFetchSync(trc) {
+        return await this.syncEngine.cancelContentFetchSync(trc);
+    }
     async forceStopUpsync() {
         await this.remoteMutationConsumer.stopConsumer();
     }
@@ -409,38 +390,12 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
     async getAllSyncContexts(trc, watcher) {
         return await this.remoteStorageOverlay.getAllSyncContexts(trc, watcher);
     }
-    async loadMutationsFromTable(trc, tableName) {
-        const mutationIDs = await this.localKeyValStorage.getKeys(trc, null, tableName);
-        const mutations = [];
-        const mutationDefs = this.getMutators();
-        for (const mutationID of mutationIDs) {
-            const mutation = await this.localKeyValStorage.getValidatedValue(trc, null, tableName, mutationID, conduit_storage_1.validateIsObject);
-            if (!mutation) {
-                continue;
-            }
-            const mutationDef = mutationDefs[mutation.name];
-            if (mutationDef && validateMutation(mutation, mutationDef)) {
-                mutations.push(mutation);
-            }
-            else {
-                if (!mutationDef) {
-                    conduit_utils_1.logger.warn(`Unable to find definition of mutation "${mutation.name}"`);
-                }
-                await this.localKeyValStorage.transact(trc, 'moveCorruptMutations', async (db) => {
-                    await db.setValue(trc, CORRUPT_MUTATIONS_TABLE, mutationID, mutation);
-                    await db.removeValue(trc, tableName, mutationID);
-                });
-            }
-        }
-        mutations.sort((a, b) => a.timestamp - b.timestamp);
-        return mutations;
-    }
     async loadPersistedMutations() {
         const changeEvents = [];
         await gTrcPool.runTraced(this.di.getTestEventTracker(), async (trc) => {
             await this.orchestratorMutex.runInMutex(trc, 'loadPersistedMutations', async () => {
-                this.optimisticMutations = await this.loadMutationsFromTable(trc, OPTIMISTIC_MUTATIONS_TABLE);
-                const remoteMutations = await this.loadMutationsFromTable(trc, REMOTE_MUTATIONS_TABLE);
+                const mutatorDefs = this.getMutators();
+                const remoteMutations = await this.mutationManager.loadMutations(trc, mutatorDefs);
                 this.remoteMutationConsumer.push(...remoteMutations);
                 await this.rerunOptimisticMutations(trc, changeEvents, false);
             });
@@ -453,6 +408,7 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
             conduit_utils_1.logger.warn('startSyncing called without an activated user');
             return;
         }
+        conduit_utils_1.logger.info(`Start syncing for the user ${auth.userID}`);
         const fixed = await this.syncEngine.fixupAuth(trc, auth);
         if (fixed) {
             // setAuthTokenAndState will call initAuth
@@ -495,6 +451,7 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
             if (resourceManager) {
                 await resourceManager.deleteCacheForUser(trc, conduit_utils_1.keyStringForUserID(userID));
             }
+            await this.syncEngine.onDBClear(trc);
             await conduit_storage_1.flushBackgroundWrites(trc);
             await this.resetOverlay(trc);
             await this.syncEngine.initAuth(trc, null);
@@ -622,23 +579,9 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
     getMutators() {
         return this.localMutationExecutor.getMutators();
     }
-    remoteMutationsNeedFlush(dependentGuids) {
-        for (const mutation of this.optimisticMutations) {
-            for (const type in mutation.guids) {
-                const ops = mutation.guids[type];
-                if (ops.length > 0 && ops[0].length > 1 && dependentGuids.includes(ops[0][1])) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
     async flushRemoteMutations() {
         const res = await this.remoteMutationConsumer.flush();
-        this.optimisticMutations.forEach(mut => {
-            conduit_utils_1.logger.warn(mut.name);
-        });
-        return Object.assign(Object.assign({}, res), { optimistic: this.optimisticMutations.length, optimisticNames: this.optimisticMutations.map(mutation => mutation.name) });
+        return Object.assign(Object.assign({}, res), this.mutationManager.getOptimisticMutationInfo());
     }
     async runMutator(trc, name, params) {
         const mutatorDef = this.localMutationExecutor.getMutators()[name];
@@ -665,26 +608,21 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
         const mutation = await this.orchestratorMutex.runInMutex(trc, 'runMutatorOptimistic', async () => {
             const clientValues = await this.getMutatorClientValues(trc);
             return await this.localMutationExecutor.runMutator(trc, this.remoteStorageOverlay, clientValues, this.userID, this.syncEngine.getVaultUserID(), name, params);
-        });
-        await this.localKeyValStorage.transact(trc, 'GraphDB.runMutatorOptimistic', async (db) => {
-            await db.setValue(trc, OPTIMISTIC_MUTATIONS_TABLE, mutation.mutationID, mutation);
-            await db.setValue(trc, REMOTE_MUTATIONS_TABLE, mutation.mutationID, mutation);
-        });
-        this.optimisticMutations.push(mutation);
+        }, undefined, conduit_utils_1.MutexPriority.HIGH);
+        await this.mutationManager.addMutation(trc, mutation);
         this.remoteMutationConsumer.push(mutation);
         return mutation;
     }
-    async runBatch(trc, type, auth, userID, vaultUserID, mutations, opts, lastRun) {
-        if (lastRun.retryError) {
-            const retryErrors = {};
+    async runBatch(trc, type, auth, userID, vaultUserID, mutations, opts, ret) {
+        const timestamp = Date.now();
+        if (ret.retryError) {
             for (const mutation of mutations) {
-                retryErrors[mutation.mutationID] = new conduit_utils_1.RetryError(lastRun.retryError.message, lastRun.retryError.timeout, lastRun.retryError.reason);
+                ret.mutationResults[mutation.mutationID] = {
+                    timestamp,
+                    error: new conduit_utils_1.RetryError(ret.retryError.message, ret.retryError.timeout, ret.retryError.reason),
+                };
             }
-            return {
-                errors: Object.assign(Object.assign({}, lastRun.errors), retryErrors),
-                batchTimestamps: lastRun.batchTimestamps,
-                retryError: lastRun.retryError,
-            };
+            return;
         }
         if (type === GraphMutationTypes_1.MutatorRemoteExecutorType.CommandService && !this.remoteMutationExecutor[type].isAvailable()) {
             // TODO: CON-2017 - Do something to preserve these mutations.
@@ -693,45 +631,42 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
                 conduit_utils_1.logger.error(mutation.name, mutation.params);
             });
             conduit_utils_1.logger.error(`END OF DATA LOSS`);
-            const serviceNotActiveErrors = {};
             for (const mutation of mutations) {
-                serviceNotActiveErrors[mutation.mutationID] = new conduit_utils_1.ServiceNotActiveError(type);
+                ret.mutationResults[mutation.mutationID] = {
+                    timestamp,
+                    error: new conduit_utils_1.ServiceNotActiveError(type),
+                };
             }
-            return {
-                errors: Object.assign(Object.assign({}, lastRun.errors), serviceNotActiveErrors),
-                batchTimestamps: lastRun.batchTimestamps,
-                retryError: lastRun.retryError,
-            };
+            return;
         }
-        const { errors, batchTimestamps, retryError } = await this.remoteMutationExecutor[type].runMutations(trc, auth, userID, vaultUserID, mutations, opts);
-        return {
-            errors: Object.assign(Object.assign({}, lastRun.errors), errors),
-            batchTimestamps: Object.assign(Object.assign({}, lastRun.batchTimestamps), batchTimestamps),
-            retryError: lastRun.retryError || retryError,
-        };
+        const latestUpsync = await this.remoteMutationExecutor[type].runMutations(trc, auth, userID, vaultUserID, mutations, opts, ret);
+        if (latestUpsync) {
+            await this.remoteSyncedGraphStorage.transact(trc, 'updateSyncTime', async (tx) => {
+                await tx.replaceSyncState(trc, ['lastSyncTime'], latestUpsync);
+            });
+        }
     }
     async runMutations(trc, auth, userID, vaultUserID, mutations, opts) {
         let batch = [];
         let currentType = GraphMutationTypes_1.MutatorRemoteExecutorType.Thrift;
-        let lastRun = {
-            errors: {},
-            batchTimestamps: {},
+        const ret = {
+            mutationResults: {},
             retryError: null,
         };
         for (const mutation of mutations) {
             const def = this.di.getMutatorDefs()[mutation.name];
             const type = def.type || GraphMutationTypes_1.MutatorRemoteExecutorType.Thrift;
             if (type !== currentType && batch.length) {
-                lastRun = await this.runBatch(trc, currentType, auth, userID, vaultUserID, batch, opts, lastRun);
+                await this.runBatch(trc, currentType, auth, userID, vaultUserID, batch, opts, ret);
                 batch = [];
             }
             currentType = type;
             batch.push(mutation);
         }
         if (batch.length) {
-            lastRun = await this.runBatch(trc, currentType, auth, userID, vaultUserID, batch, opts, lastRun);
+            await this.runBatch(trc, currentType, auth, userID, vaultUserID, batch, opts, ret);
         }
-        return lastRun;
+        return ret;
     }
     async runMutatorRemoteOnly(trc, name, params) {
         conduit_utils_1.logger.debug('GraphDB.runMutatorRemoteOnly', name);
@@ -752,7 +687,7 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
             }
             break;
         }
-        return await this.orchestratorMutex.runInMutex(trc, 'runMutatorRemoteOnly', async () => {
+        const ret = await this.orchestratorMutex.runInMutex(trc, 'runMutatorRemoteOnly', async () => {
             // run mutator against a temporary overlay (just to generate guids and fill in the Mutation struct)
             const tempOverlay = this.remoteStorageOverlay.createOverlay(false);
             const clientValues = await this.getMutatorClientValues(trc);
@@ -768,166 +703,70 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
             }
             // run mutation remotely and wait for the result
             const mutation = mutationRes.data;
-            const { errors } = await this.runMutations(trc, auth.token, this.userID, vaultUserID, [mutation], { isFlush: true, stopConsumer: false });
-            if (errors[mutation.mutationID]) {
-                throw errors[mutation.mutationID];
+            const { mutationResults } = await this.runMutations(trc, auth.token, this.userID, vaultUserID, [mutation], { isFlush: true, stopConsumer: false });
+            const res = mutationResults[mutation.mutationID];
+            const error = GraphMutationTypes_1.mutationUpsyncError(res);
+            if (error) {
+                throw error;
             }
-            // force a downsync, just like in runRemoteMutations()
+            // force a downsync, as there is no roundtrip detection
             try {
                 await this.syncEngine.forceDownsyncUpdate(trc, 5000);
             }
             catch (err) {
                 conduit_utils_1.logger.warn('forceDownsync failed', err);
             }
-            return mutation;
-        });
-    }
-    async preprocessRemoteMutations(trc, remoteMutations) {
-        const { changes, mutations, errors } = MutationRollup_1.rollupPendingMutations(remoteMutations, this.di.getMutatorDefs());
-        if (errors.length) {
-            conduit_utils_1.logger.error('rollupPendingMutations errors: ', errors);
-        }
-        if (!Object.keys(changes).length) {
-            // early out if nothing changed
-            return mutations;
-        }
-        // apply changes
-        await this.localKeyValStorage.transact(trc, 'GraphDB.preprocessRemoteMutations', async (db) => {
-            for (const mutationID in changes) {
-                const m = changes[mutationID];
-                const oIdx = this.optimisticMutations.findIndex(om => om.mutationID === mutationID);
-                if (m) {
-                    await db.setValue(trc, REMOTE_MUTATIONS_TABLE, mutationID, m);
-                    if (oIdx >= 0) {
-                        await db.setValue(trc, OPTIMISTIC_MUTATIONS_TABLE, mutationID, m);
-                        this.optimisticMutations[oIdx] = m;
-                    }
-                }
-                else {
-                    await db.removeValue(trc, REMOTE_MUTATIONS_TABLE, mutationID);
-                    if (oIdx >= 0) {
-                        await db.removeValue(trc, OPTIMISTIC_MUTATIONS_TABLE, mutationID);
-                        this.optimisticMutations.splice(oIdx, 1);
-                    }
-                }
+            if (GraphMutationTypes_1.isMutationUpsyncSuccess(res) && res.results) {
+                mutation.results = res.results;
             }
-        });
-        return mutations;
+            return mutation;
+        }, undefined, conduit_utils_1.MutexPriority.HIGH);
+        // wait for optimistic mutations to roundtrip, so that there are no overlays that might be preventing the underlying data changes
+        // caused by this remote-only mutation to be seen by clients
+        for (let i = 0; i < 10 && this.mutationManager.hasOptimisticMutations(); ++i) {
+            // just need to sleep, the forceDownsyncUpdate() above should have already triggered a downsync so we're just waiting for
+            // the roundtrip detction to clear out the overlay
+            await conduit_utils_1.sleep(200);
+        }
+        return ret;
     }
     async runRemoteMutationsInternal(trc, mutationsIn, opts) {
         if (this.isDestroyed) {
             return mutationsIn;
         }
-        const mutations = await this.preprocessRemoteMutations(trc, mutationsIn);
+        const mutatorDefs = this.getMutators();
+        const mutations = await this.mutationManager.rollupForUpsync(trc, mutatorDefs, mutationsIn);
         conduit_utils_1.logger.debug('GraphDB.runRemoteMutations', { count: mutations.length, opts });
         const auth = await this.getAuthTokenAndState(trc, null);
         if (!(auth === null || auth === void 0 ? void 0 : auth.token) || auth.state !== conduit_view_types_1.AuthState.Authorized) {
             throw new Error('not authorized');
         }
-        const { batchTimestamps, errors } = await this.runMutations(trc, auth.token, this.userID, this.syncEngine.getVaultUserID(), mutations, opts);
-        // handle errors coming back from runMutations
-        const { successMutations, retryMutations, failedMutations } = conduit_utils_1.multiSplitArray(mutations, m => {
-            const e = errors[m.mutationID];
-            if (e instanceof conduit_utils_1.RetryError) {
-                return 'retryMutations';
-            }
-            if (e) {
-                return 'failedMutations';
-            }
-            return 'successMutations';
-        });
-        await this.localKeyValStorage.transact(trc, 'GraphDB.runRemoteMutations', async (db) => {
-            for (const m of (successMutations || [])) {
-                await db.removeValue(trc, REMOTE_MUTATIONS_TABLE, m.mutationID);
-                if (batchTimestamps[m.mutationID] !== undefined) {
-                    m.commandServiceTimestamp = batchTimestamps[m.mutationID];
-                }
-                else if (m.clearedWithMutationTracker) {
-                    m.clearedWithMutationTracker = false;
-                }
-                // mark as retry because we already ran it; in case of an error after this transaction the DataConsumer will rerun the mutations
-                m.isRetry = true;
-                // persist any changes to mutation
-                const index = this.optimisticMutations.findIndex(om => om.mutationID === m.mutationID);
-                if (index >= 0) {
-                    this.optimisticMutations[index] = m; // update the cached optimistic mutation since preprocess now clones mutations
-                    await db.setValue(trc, OPTIMISTIC_MUTATIONS_TABLE, m.mutationID, m); // save mutation with new timestamp
-                }
-                else {
-                    conduit_utils_1.logger.error('Mutation should still be in optimistic list. This should never happen');
-                }
-            }
-            for (const m of (failedMutations || [])) {
-                await db.removeValue(trc, REMOTE_MUTATIONS_TABLE, m.mutationID);
-                await db.removeValue(trc, OPTIMISTIC_MUTATIONS_TABLE, m.mutationID);
-                const oIdx = this.optimisticMutations.findIndex(om => om.mutationID === m.mutationID);
-                if (oIdx >= 0) {
-                    this.optimisticMutations.splice(oIdx, 1);
-                }
-                const err = errors[m.mutationID];
+        const { mutationResults } = await this.runMutations(trc, auth.token, this.userID, this.syncEngine.getVaultUserID(), mutations, opts);
+        const { retryMutations, failedMutations } = await this.mutationManager.processMutationUpsyncResults(trc, mutations, mutationResults);
+        // report errors coming back from runMutations
+        if (failedMutations) {
+            for (const m of failedMutations) {
+                const err = GraphMutationTypes_1.mutationUpsyncError(mutationResults[m.mutationID]);
                 if (!err) {
-                    throw new Error('missing error in failed mutation');
+                    throw new conduit_utils_1.InternalError('missing error in failed mutation');
                 }
                 await this.di.addError(trc, err, m);
             }
-            if (retryMutations && retryMutations.length) {
-                // mutation may have been run by the server successfully but interrupted on response,
-                // so mark for correct handling on retry
-                const m = retryMutations[0];
-                m.isRetry = true;
-                await db.setValue(trc, REMOTE_MUTATIONS_TABLE, m.mutationID, m);
-            }
-        });
+        }
         if (this.isDestroyed) {
             return retryMutations || [];
         }
-        if (successMutations || failedMutations) {
-            // We need to keep optimistic mutation list separate from pending remote mutation list and clear things
-            // out as they are seen in onDownsyncChanges. For now, force a downsync here since we don't have Thrift
-            // support for identifying which mutations were seen in a downsync.
+        if (failedMutations && failedMutations.length) {
+            // rerun optimistic mutations immediately to correct the mispredicts caused by the failed remote execution
             const changeEvents = [];
-            this.lastRemoteMutationUpsyncTimestamp = Date.now();
-            await conduit_utils_1.withError(this.orchestratorMutex.runInMutex(trc, 'runRemoteMutations', async () => {
-                if (this.isDestroyed) {
-                    return;
-                }
-                if (failedMutations) {
-                    // rerun optimistic mutations immediately to correct the mispredicts caused by the failed remote execution
+            await conduit_utils_1.withError(this.orchestratorMutex.runInMutex(trc, 'runRemoteMutations.rerunOptimisticMutations', async () => {
+                if (!this.isDestroyed) {
                     await this.rerunOptimisticMutations(trc, changeEvents, true);
-                }
-                try {
-                    await this.syncEngine.forceDownsyncUpdate(trc, 5000);
-                }
-                catch (err) {
-                    conduit_utils_1.logger.warn('forceDownsync failed', err);
                 }
             }));
             this.emitChanges(changeEvents);
         }
         return retryMutations || [];
-    }
-    async clearRoundTrippedOptimisticMutations(trc) {
-        if (this.lastDownsyncTimestamp < this.lastRemoteMutationUpsyncTimestamp) {
-            // we haven't seen the right downsync yet
-            return;
-        }
-        await this.localKeyValStorage.transact(trc, 'GraphDB.clearRoundTrippedOptimisticMutations', async (db) => {
-            const nsyncEnabled = this.syncEngine.isEventServiceEnabled();
-            const lastTrackerTimestamp = this.di.MutationTrackerNodeRef ? await this.fetchNodeField(trc, this.di.MutationTrackerNodeRef, 'NodeFields.updated') || 0 : Date.now();
-            while (this.optimisticMutations.length) {
-                const m = this.optimisticMutations[0];
-                // Mutation has yet to run, don't clear
-                if ((await db.hasKey(trc, null, REMOTE_MUTATIONS_TABLE, m.mutationID))) {
-                    break;
-                }
-                // Check if mutation pushed to command service, and if we have gotten the change back
-                if (nsyncEnabled && m.clearedWithMutationTracker && (m.commandServiceTimestamp === null || m.commandServiceTimestamp > lastTrackerTimestamp)) {
-                    break;
-                }
-                await db.removeValue(trc, OPTIMISTIC_MUTATIONS_TABLE, m.mutationID);
-                this.optimisticMutations.splice(0, 1);
-            }
-        });
     }
     async rerunOptimisticMutations(trc, changeEvents, shouldTimeboxYield) {
         if (this.isDestroyed) {
@@ -943,7 +782,8 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
             const undoEvents = this.remoteStorageOverlay.generateUndoEvents();
             changeEvents.unshift(...undoEvents);
             newOverlay.addChangeHandler(addChangeEvent);
-            await this.localMutationExecutor.runMutations(trc, newOverlay, this.userID, this.syncEngine.getVaultUserID(), this.optimisticMutations, shouldTimeboxYield);
+            const optimisticMutations = this.mutationManager.getOptimisticMutations();
+            await this.localMutationExecutor.runMutations(trc, newOverlay, this.userID, this.syncEngine.getVaultUserID(), optimisticMutations, shouldTimeboxYield);
             newOverlay.removeChangeHandler(addChangeEvent);
             await this.resetOverlay(trc, newOverlay);
         }
@@ -965,12 +805,12 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
             // buffer to allow more sync changes to roll in
             await conduit_utils_1.sleep(DOWNSYNC_BUFFER);
             return await conduit_utils_1.logIfSlow('GraphDB:onDownsyncChanges', 10000, async (loggerArgs) => {
-                loggerArgs.optimisticMutations = this.optimisticMutations.length;
+                loggerArgs.optimisticMutations = this.mutationManager.hasOptimisticMutations();
                 // pause syncing
                 await this.syncEngine.stopSyncing(trc);
                 loggerArgs.stopSyncingDone = true;
                 // remove optimistic mutations that we ran remotely
-                await this.clearRoundTrippedOptimisticMutations(trc);
+                await this.mutationManager.clearRoundTrippedOptimisticMutations(trc, this.remoteSyncedGraphStorage, this.lastDownsyncTimestamp);
                 loggerArgs.clearRoundTrippedMutationsDone = true;
                 // change events fire async, so wait for anything remaining from pausing syncing
                 await conduit_utils_1.sleep(10);
@@ -1029,18 +869,7 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
         return this.di.isBusinessAccount(trc);
     }
     async hasPendingMutations(trc, watcher) {
-        const remoteMutationKeys = await this.localKeyValStorage.getKeys(trc, watcher, REMOTE_MUTATIONS_TABLE);
-        watcher && await this.localKeyValStorage.getKeys(trc, watcher, OPTIMISTIC_MUTATIONS_TABLE);
-        let largestTimestamp = 0;
-        for (const m of this.optimisticMutations) {
-            if (m.commandServiceTimestamp && m.commandServiceTimestamp > largestTimestamp) {
-                largestTimestamp = m.commandServiceTimestamp;
-            }
-        }
-        return {
-            result: Boolean(remoteMutationKeys.length),
-            largestTimestamp,
-        };
+        return await this.mutationManager.hasPendingMutations(trc, watcher);
     }
     /**
      * Provides access to the local key value storage to plugins
@@ -1056,6 +885,9 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
             this.notificationManager = this.di.NotificationManager();
         }
         return this.notificationManager;
+    }
+    markDependencySynced(trc, depKey, depVersion) {
+        return this.mutationManager.markDependencySynced(trc, depKey, depVersion);
     }
     destructed() {
         return this.isDestroyed;

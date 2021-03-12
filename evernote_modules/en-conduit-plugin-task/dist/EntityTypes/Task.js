@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.taskIndexConfig = exports.taskTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const TaskConstants_1 = require("../TaskConstants");
 exports.taskTypeDef = {
     name: TaskConstants_1.TaskEntityTypes.Task,
@@ -32,7 +32,7 @@ exports.taskTypeDef = {
             constraint: conduit_storage_1.EdgeConstraint.OPTIONAL,
             type: conduit_storage_1.EdgeType.ANCESTRY,
             from: {
-                type: en_data_model_1.CoreEntityTypes.Note,
+                type: en_core_entity_types_1.CoreEntityTypes.Note,
                 constraint: conduit_storage_1.EdgeConstraint.MANY,
                 denormalize: 'tasks',
             },
@@ -40,12 +40,12 @@ exports.taskTypeDef = {
         creator: {
             constraint: conduit_storage_1.EdgeConstraint.REQUIRED,
             type: conduit_storage_1.EdgeType.LINK,
-            to: en_data_model_1.CoreEntityTypes.Profile,
+            to: en_core_entity_types_1.CoreEntityTypes.Profile,
         },
         lastEditor: {
             constraint: conduit_storage_1.EdgeConstraint.REQUIRED,
             type: conduit_storage_1.EdgeType.LINK,
-            to: en_data_model_1.CoreEntityTypes.Profile,
+            to: en_core_entity_types_1.CoreEntityTypes.Profile,
         },
     },
 };

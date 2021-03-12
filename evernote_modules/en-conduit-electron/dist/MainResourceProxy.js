@@ -7,10 +7,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.setupExternalUrlFetchingIPC = exports.setupContentFetchingIPC = exports.registerResourceHandler = exports.registerResourceSchemePrivileges = exports.getResource = exports.decodeResourceUrl = exports.deleteCacheForUser = exports.fetchExternalResource = exports.fetchResource = exports.cacheResourceToDisk = void 0;
+const conduit_auth_shared_1 = require("conduit-auth-shared");
 const conduit_utils_1 = require("conduit-utils");
 const electron_1 = require("electron");
 const en_conduit_electron_shared_1 = require("en-conduit-electron-shared");
-const en_thrift_connector_1 = require("en-thrift-connector");
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
 const sanitize_filename_1 = __importDefault(require("sanitize-filename"));
@@ -34,13 +34,7 @@ async function getAuthHeaderFromCookie(trc, encodedCookieStr) {
     if (!token) {
         throw new Error(`${tokenKey} does not exist in secure storage, the user is unauthenticated`);
     }
-    const authData = en_thrift_connector_1.decodeAuthData(token);
-    if (en_thrift_connector_1.hasNapAuthInfo(authData)) {
-        return Object.assign({ cookie: `auth="${authData.token}"` }, en_thrift_connector_1.QuasarMinusAuthHandler.getAuthHeaders(authData));
-    }
-    return {
-        cookie: `auth="${authData.token}"`,
-    };
+    return conduit_auth_shared_1.authHeadersFromAuthString(token, true);
 }
 function handleResourceRequest(request, callback) {
     getResource(request.url).then(resource => {

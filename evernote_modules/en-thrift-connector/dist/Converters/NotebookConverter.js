@@ -28,20 +28,22 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NotebookConverter = exports.convertNotebookFromServiceImpl = exports.notebookObjectFromService = exports.initPendingOfflineNoteSyncStates = exports.updateContentDownloadForNote = exports.updateContentDownloadForNotebook = exports.resetOfflineNbsSyncStateOnInit = exports.deletePendingOfflineNotebookSyncState = exports.deletePendingOfflineNoteSyncState = exports.updatePendingOfflineNoteSyncState = exports.getPendingOfflineNoteIDs = exports.getPendingOfflineNote = exports.updateOfflineNbsInLocalSettings = exports.getOfflineNbsFromLocalSettings = exports.OfflineEntityDownloadState = void 0;
+exports.NotebookConverter = exports.convertNotebookFromServiceImpl = exports.notebookObjectFromService = exports.notebookSetRecipientSettingsWrapper = exports.initPendingOfflineNoteSyncStates = exports.updateContentDownloadForNote = exports.updateContentDownloadForNotebook = exports.resetOfflineNbsSyncStateOnInit = exports.deletePendingOfflineNotebookSyncState = exports.deletePendingOfflineNoteSyncState = exports.updatePendingOfflineNoteSyncState = exports.getPendingOfflineNoteIDs = exports.getPendingOfflineNote = exports.updateOfflineNbsInLocalSettings = exports.getOfflineNbsFromLocalSettings = exports.OfflineEntityDownloadState = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const simply_immutable_1 = require("simply-immutable");
-const ThriftTypes_1 = require("../ThriftTypes");
+const Helpers_1 = require("../Helpers");
 const AccountLimitsConverter = __importStar(require("./AccountLimitsConverter"));
 const Converters_1 = require("./Converters");
-const Helpers_1 = require("./Helpers");
+const Helpers_2 = require("./Helpers");
 const InvitationConverter_1 = require("./InvitationConverter");
 const LinkedNotebookHelpers_1 = require("./LinkedNotebookHelpers");
 const MembershipConverter_1 = require("./MembershipConverter");
+const MessageConverter_1 = require("./MessageConverter");
 const ProfileConverter_1 = require("./ProfileConverter");
 const ShortcutConverter_1 = require("./ShortcutConverter");
 const WorkspaceConverter_1 = require("./WorkspaceConverter");
@@ -91,7 +93,7 @@ async function deletePendingOfflineNoteSyncState(trc, tx, noteID) {
 }
 exports.deletePendingOfflineNoteSyncState = deletePendingOfflineNoteSyncState;
 async function deletePendingOfflineNotebookSyncState(trc, tx, notebookID, syncContext) {
-    const noteIDs = await getNotebookNoteIDs(trc, tx, { id: notebookID, type: en_data_model_1.CoreEntityTypes.Notebook });
+    const noteIDs = await getNotebookNoteIDs(trc, tx, { id: notebookID, type: en_core_entity_types_1.CoreEntityTypes.Notebook });
     for (const noteID of noteIDs) {
         await tx.deleteCustomSyncState(trc, PENDING_OFFLINE_NOTES_KEY, noteID);
     }
@@ -134,14 +136,14 @@ async function getNotebookNoteIDs(trc, tx, ref) {
         return [];
     }
     return Object.values(notebook.outputs.children).concat(Object.values(notebook.outputs.childrenInTrash))
-        .filter(edge => edge.dstType === en_data_model_1.CoreEntityTypes.Note)
+        .filter(edge => edge.dstType === en_core_entity_types_1.CoreEntityTypes.Note)
         .map(edge => edge.dstID);
 }
 async function updateContentDownloadForNotebook(trc, tx, notebookID, contentDownloaded) {
     if (contentDownloaded === undefined) {
         conduit_utils_1.traceEventStart(trc, 'computeContentDownloaded');
         contentDownloaded = true;
-        const noteIDs = await getNotebookNoteIDs(trc, tx, { id: notebookID, type: en_data_model_1.CoreEntityTypes.Notebook });
+        const noteIDs = await getNotebookNoteIDs(trc, tx, { id: notebookID, type: en_core_entity_types_1.CoreEntityTypes.Notebook });
         for (const noteID of noteIDs) {
             if (await tx.hasCustomSyncStateKey(trc, null, PENDING_OFFLINE_NOTES_KEY, noteID)) {
                 contentDownloaded = false;
@@ -150,12 +152,12 @@ async function updateContentDownloadForNotebook(trc, tx, notebookID, contentDown
         }
         conduit_utils_1.traceEventEnd(trc, 'computeContentDownloaded');
     }
-    await tx.updateNodeDeferred(trc, { id: notebookID, type: en_data_model_1.CoreEntityTypes.Notebook }, ['NodeFields', 'contentDownloaded'], contentDownloaded);
+    await tx.updateNodeDeferred(trc, { id: notebookID, type: en_core_entity_types_1.CoreEntityTypes.Notebook }, ['NodeFields', 'contentDownloaded'], contentDownloaded);
 }
 exports.updateContentDownloadForNotebook = updateContentDownloadForNotebook;
 async function updateContentDownloadForNote(trc, tx, syncContext, noteID, value) {
     conduit_utils_1.traceTestCounts(trc, { updateContentDownloadForNote: 1 });
-    await tx.updateNode(trc, syncContext, { id: noteID, type: en_data_model_1.CoreEntityTypes.Note }, {
+    await tx.updateNode(trc, syncContext, { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note }, {
         NodeFields: {
             contentDownloaded: value,
         },
@@ -165,7 +167,7 @@ exports.updateContentDownloadForNote = updateContentDownloadForNote;
 async function initPendingOfflineNoteSyncStates(trc, tx, offlineContentStrategy, localSettings, userID) {
     if (offlineContentStrategy === conduit_view_types_1.OfflineContentStrategy.EVERYTHING) {
         // NOTE: this includes dummy nodes, but that's ok because downsyncNote() will clean it up properly
-        const allNoteRefs = await tx.getGraphNodeRefsByType(trc, null, en_data_model_1.CoreEntityTypes.Note);
+        const allNoteRefs = await tx.getGraphNodeRefsByType(trc, null, en_core_entity_types_1.CoreEntityTypes.Note);
         for (const noteRef of allNoteRefs) {
             await updatePendingOfflineNoteSyncState(trc, tx, noteRef.id, {
                 needsInit: true,
@@ -176,7 +178,7 @@ async function initPendingOfflineNoteSyncStates(trc, tx, offlineContentStrategy,
     else if (offlineContentStrategy === conduit_view_types_1.OfflineContentStrategy.SELECTIVE) {
         const notebooks = await getOfflineNbsFromLocalSettings(trc, localSettings, userID) || {};
         for (const notebookID in notebooks) {
-            const noteIDs = await getNotebookNoteIDs(trc, tx, { id: notebookID, type: en_data_model_1.CoreEntityTypes.Notebook });
+            const noteIDs = await getNotebookNoteIDs(trc, tx, { id: notebookID, type: en_core_entity_types_1.CoreEntityTypes.Notebook });
             for (const noteID of noteIDs) {
                 await updatePendingOfflineNoteSyncState(trc, tx, noteID, {
                     needsInit: true,
@@ -188,31 +190,33 @@ async function initPendingOfflineNoteSyncStates(trc, tx, offlineContentStrategy,
 }
 exports.initPendingOfflineNoteSyncStates = initPendingOfflineNoteSyncStates;
 async function shareNotebookWithContacts(trc, params, syncContext, syncContextMetadata, createParams, notebookName, contacts, splitMessages) {
+    var _a;
     if (!params.personalAuth) {
         throw new Error('Personal auth token needed');
     }
     if (!syncContextMetadata || !syncContextMetadata.userID) {
         throw new Error(`Unable to find owningUserID for syncContext ${syncContext}`);
     }
-    const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+    const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
     const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
     const messageStore = params.thriftComm.getMessageStore(params.personalAuth.urls.messageStoreUrl);
-    const notebookGuid = Converters_1.convertGuidToService(createParams.notebook, en_data_model_1.CoreEntityTypes.Notebook);
+    const notebookGuid = Converters_1.convertGuidToService(createParams.notebook, en_core_entity_types_1.CoreEntityTypes.Notebook);
     const messageThreads = [];
     const shareTemplate = {
         notebookGuid,
         recipientContacts: contacts,
         privilege: MembershipConverter_1.membershipPrivilegeToSharedNotebookPrivilege(createParams.privilege),
     };
+    const messageBody = MessageConverter_1.validateAndCreateMessageBody((_a = createParams.message) !== null && _a !== void 0 ? _a : '');
     if (splitMessages) {
         for (const contact of contacts) {
             messageThreads.push({
                 message: {
-                    body: `<msg>${createParams.message}</msg>`,
+                    body: messageBody,
                     attachments: [{
-                            type: ThriftTypes_1.TMessageAttachmentType.NOTEBOOK,
+                            type: en_conduit_sync_types_1.TMessageAttachmentType.NOTEBOOK,
                             title: notebookName,
-                            guid: Converters_1.convertGuidToService(createParams.notebook, en_data_model_1.CoreEntityTypes.Notebook),
+                            guid: Converters_1.convertGuidToService(createParams.notebook, en_core_entity_types_1.CoreEntityTypes.Notebook),
                             shardId: auth.shard,
                             userId: syncContextMetadata.userID,
                         }],
@@ -225,11 +229,11 @@ async function shareNotebookWithContacts(trc, params, syncContext, syncContextMe
     else {
         messageThreads.push({
             message: {
-                body: `<msg>${createParams.message}</msg>`,
+                body: messageBody,
                 attachments: [{
-                        type: ThriftTypes_1.TMessageAttachmentType.NOTEBOOK,
+                        type: en_conduit_sync_types_1.TMessageAttachmentType.NOTEBOOK,
                         title: notebookName,
-                        guid: Converters_1.convertGuidToService(createParams.notebook, en_data_model_1.CoreEntityTypes.Notebook),
+                        guid: Converters_1.convertGuidToService(createParams.notebook, en_core_entity_types_1.CoreEntityTypes.Notebook),
                         shardId: auth.shard,
                         userId: syncContextMetadata.userID,
                     }],
@@ -250,7 +254,7 @@ async function shareNotebookWithContacts(trc, params, syncContext, syncContextMe
                 for (const share of result.matchingShares) {
                     if (share.serviceCreated === share.serviceUpdated) {
                         if (splitMessages) {
-                            if (message.participants[0].type === ThriftTypes_1.TContactType.EMAIL) {
+                            if (message.participants[0].type === en_conduit_sync_types_1.TContactType.EMAIL) {
                                 if (share.email !== message.participants[0].id) {
                                     continue;
                                 }
@@ -263,7 +267,7 @@ async function shareNotebookWithContacts(trc, params, syncContext, syncContextMe
                         }
                         // This user created this share, but was unable to send the invite message, roll back the share.
                         sharesToRevoke.push({
-                            type: ThriftTypes_1.TUserIdentityType.IDENTITYID,
+                            type: en_conduit_sync_types_1.TUserIdentityType.IDENTITYID,
                             longIdentifier: share.recipientIdentityId,
                         });
                     }
@@ -283,18 +287,33 @@ async function shareNotebookWithContacts(trc, params, syncContext, syncContextMe
     }
     return result.matchingShares || [];
 }
+async function notebookSetRecipientSettingsWrapper(trc, noteStore, syncContextMetadata, auth, personalAuth, nbGuid, recipientSettings, curNotebook) {
+    // for business user, we need to use personal user auth token for setNotebookRecipientSettings call
+    const authToken = (syncContextMetadata.isVaultUser || syncContextMetadata.sharedNotebookGlobalID) && personalAuth ? personalAuth.token : auth.token;
+    const resp = await noteStore.setNotebookRecipientSettings(trc, authToken, nbGuid, recipientSettings);
+    if (syncContextMetadata.isVaultUser && resp && resp.inWorkspace && conduit_utils_1.isNullish(resp.workspaceGuid)) {
+        // HACK: PI-484 setNotebookRecipientSettings doesn't return workspaceGuid even for notebooks that belong to ws. So, fill it in manually.
+        const parentEdge = conduit_utils_1.firstStashEntry(curNotebook.inputs.parent);
+        const wsID = parentEdge ? parentEdge.srcID : null;
+        if (wsID) {
+            resp.workspaceGuid = Converters_1.convertGuidToService(wsID, en_core_entity_types_1.CoreEntityTypes.Workspace);
+        }
+    }
+    return resp;
+}
+exports.notebookSetRecipientSettingsWrapper = notebookSetRecipientSettingsWrapper;
 function notebookObjectFromService(syncContext, serviceData, nbsMarkedOffline) {
     var _a, _b, _c, _d;
     // inWorkspace field is not set on service side, so have to mimic what Ion does.
     // if user has access to nb but not to parent ws, worskpaceGuid will be null. So, have to derive inWorkspace based on restrictions.
-    const nbInWorkspace = ((_b = (_a = serviceData.restrictions) === null || _a === void 0 ? void 0 : _a.canMoveToContainerRestrictions) === null || _b === void 0 ? void 0 : _b.canMoveToContainer) === ThriftTypes_1.TCanMoveToContainerStatus.INSUFFICIENT_CONTAINER_PRIVILEGE || false;
-    const isExternal = Boolean(syncContext.match(en_data_model_1.EXTERNAL_CONTEXT_REGEX));
+    const nbInWorkspace = ((_b = (_a = serviceData.restrictions) === null || _a === void 0 ? void 0 : _a.canMoveToContainerRestrictions) === null || _b === void 0 ? void 0 : _b.canMoveToContainer) === en_conduit_sync_types_1.TCanMoveToContainerStatus.INSUFFICIENT_CONTAINER_PRIVILEGE || false;
+    const isExternal = Boolean(syncContext.match(Helpers_1.EXTERNAL_CONTEXT_REGEX));
     const reminderNotifyEmail = serviceData.recipientSettings ? ((_c = serviceData.recipientSettings.reminderNotifyEmail) !== null && _c !== void 0 ? _c : false) : false;
     const reminderNotifyInApp = serviceData.recipientSettings ? ((_d = serviceData.recipientSettings.reminderNotifyInApp) !== null && _d !== void 0 ? _d : false) : false;
-    const nbId = Converters_1.convertGuidFromService(serviceData.guid, en_data_model_1.CoreEntityTypes.Notebook);
+    const nbId = Converters_1.convertGuidFromService(serviceData.guid, en_core_entity_types_1.CoreEntityTypes.Notebook);
     const notebook = {
         id: nbId,
-        type: en_data_model_1.CoreEntityTypes.Notebook,
+        type: en_core_entity_types_1.CoreEntityTypes.Notebook,
         version: serviceData.updateSequenceNum || 0,
         syncContexts: [],
         localChangeTimestamp: 0,
@@ -336,34 +355,34 @@ async function notebookFromService(trc, params, syncContext, serviceData) {
     const notebook = notebookObjectFromService(syncContext, serviceData, params.nbsMarkedOffline);
     if (serviceData.workspaceGuid) {
         conduit_storage_1.addInputEdgeToNode(notebook, 'parent', {
-            id: Converters_1.convertGuidFromService(serviceData.workspaceGuid, en_data_model_1.CoreEntityTypes.Workspace),
+            id: Converters_1.convertGuidFromService(serviceData.workspaceGuid, en_core_entity_types_1.CoreEntityTypes.Workspace),
             port: 'children',
-            type: en_data_model_1.CoreEntityTypes.Workspace,
+            type: en_core_entity_types_1.CoreEntityTypes.Workspace,
         });
     }
     const stack = serviceData.recipientSettings && serviceData.recipientSettings.stack ? serviceData.recipientSettings.stack : serviceData.stack;
     if (stack) {
         conduit_storage_1.addInputEdgeToNode(notebook, 'stack', {
-            id: Converters_1.convertGuidFromService(stack, en_data_model_1.CoreEntityTypes.Stack),
+            id: Converters_1.convertGuidFromService(stack, en_core_entity_types_1.CoreEntityTypes.Stack),
             port: 'notebooks',
-            type: en_data_model_1.CoreEntityTypes.Stack,
+            type: en_core_entity_types_1.CoreEntityTypes.Stack,
         });
     }
     if (serviceData.contact && serviceData.contact.id) {
         await ProfileConverter_1.ProfileConverter.convertFromService(trc, params, syncContext, ProfileConverter_1.profileFromUser(serviceData.contact));
         conduit_storage_1.addOutputEdgeToNode(notebook, 'creator', {
-            id: Converters_1.convertGuidFromService(serviceData.contact.id, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User),
+            id: Converters_1.convertGuidFromService(serviceData.contact.id, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User),
             port: null,
-            type: en_data_model_1.CoreEntityTypes.Profile,
+            type: en_core_entity_types_1.CoreEntityTypes.Profile,
         });
     }
     else {
         const metadata = await params.graphTransaction.getSyncContextMetadata(trc, null, syncContext);
         if (metadata) {
             conduit_storage_1.addOutputEdgeToNode(notebook, 'creator', {
-                id: Converters_1.convertGuidFromService(metadata.userID, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User),
+                id: Converters_1.convertGuidFromService(metadata.userID, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User),
                 port: null,
-                type: en_data_model_1.CoreEntityTypes.Profile,
+                type: en_core_entity_types_1.CoreEntityTypes.Profile,
             });
         }
     }
@@ -373,8 +392,8 @@ async function updateStackInGraph(trc, params, serviceData) {
     const serviceStack = serviceData.recipientSettings && serviceData.recipientSettings.stack ? serviceData.recipientSettings.stack : serviceData.stack;
     if (serviceStack) {
         const stack = {
-            id: Converters_1.convertGuidFromService(serviceStack, en_data_model_1.CoreEntityTypes.Stack),
-            type: en_data_model_1.CoreEntityTypes.Stack,
+            id: Converters_1.convertGuidFromService(serviceStack, en_core_entity_types_1.CoreEntityTypes.Stack),
+            type: en_core_entity_types_1.CoreEntityTypes.Stack,
             version: serviceData.updateSequenceNum || 0,
             syncContexts: [],
             localChangeTimestamp: 0,
@@ -394,12 +413,12 @@ async function getCurrentShareIDs(trc, params, oldNotebook) {
     const oldMembershipEdges = oldNotebook ? oldNotebook.outputs.memberships : {};
     for (const key in oldMembershipEdges) {
         const edge = oldMembershipEdges[key];
-        if (edge.dstType === en_data_model_1.CoreEntityTypes.Membership) {
-            const membership = await params.graphTransaction.getNode(trc, null, { id: edge.dstID, type: en_data_model_1.CoreEntityTypes.Membership });
+        if (edge.dstType === en_core_entity_types_1.CoreEntityTypes.Membership) {
+            const membership = await params.graphTransaction.getNode(trc, null, { id: edge.dstID, type: en_core_entity_types_1.CoreEntityTypes.Membership });
             if (membership) {
                 out.push({
                     sharedNotebookID: membership.NodeFields.internal_sharedNotebookID,
-                    globalShareID: Converters_1.convertGuidToService(edge.dstID, en_data_model_1.CoreEntityTypes.Membership),
+                    globalShareID: Converters_1.convertGuidToService(edge.dstID, en_core_entity_types_1.CoreEntityTypes.Membership),
                 });
             }
         }
@@ -417,12 +436,12 @@ async function deleteOldSharesFromGraph(trc, params, syncContext, serviceData, n
     const currentShares = await getCurrentShareIDs(trc, params, oldNotebook);
     for (const share of currentShares) {
         if (!serviceData.sharedNotebookIds || serviceData.sharedNotebookIds.indexOf(share.sharedNotebookID) === -1) {
-            await MembershipConverter_1.deleteMembershipHelper(trc, params, syncContext, Converters_1.convertGuidFromService(share.globalShareID, en_data_model_1.CoreEntityTypes.Membership));
+            await MembershipConverter_1.deleteMembershipHelper(trc, params, syncContext, Converters_1.convertGuidFromService(share.globalShareID, en_core_entity_types_1.CoreEntityTypes.Membership));
         }
     }
 }
 async function updateNotebookWsPreferencesToService(trc, params, syncContext, notebookID, noteStore, fields) {
-    const nodeRefs = await params.graphTransaction.traverseGraph(trc, null, { id: notebookID, type: en_data_model_1.CoreEntityTypes.Notebook }, [{ edge: ['inputs', 'parent'], type: en_data_model_1.CoreEntityTypes.Workspace }]);
+    const nodeRefs = await params.graphTransaction.traverseGraph(trc, null, { id: notebookID, type: en_core_entity_types_1.CoreEntityTypes.Notebook }, [{ edge: ['inputs', 'parent'], type: en_core_entity_types_1.CoreEntityTypes.Workspace }]);
     if (!nodeRefs.length) {
         throw new conduit_utils_1.NotFoundError(notebookID, 'Workspace node not found for notebook');
     }
@@ -439,7 +458,7 @@ async function convertNotebookFromServiceImpl(trc, params, syncContext, serviceD
         }
     }
     const notebook = await notebookFromService(trc, params, syncContext, serviceData);
-    await Helpers_1.ensureIsExternal(trc, params, syncContext, notebook);
+    await Helpers_2.ensureIsExternal(trc, params, syncContext, notebook);
     const syncContextMetadata = await params.graphTransaction.getSyncContextMetadata(trc, null, syncContext);
     if (!syncContextMetadata) {
         throw new conduit_utils_1.NotFoundError(syncContext, `Missing syncContextMetadata ${syncContext}`);
@@ -447,7 +466,7 @@ async function convertNotebookFromServiceImpl(trc, params, syncContext, serviceD
     const isDefaultNotebook = ((syncContextMetadata.isUser && serviceData.defaultNotebook) ||
         ((syncContextMetadata.isVaultUser || syncContextMetadata.sharedNotebookGlobalID)
             && serviceData.recipientSettings
-            && serviceData.recipientSettings.recipientStatus === ThriftTypes_1.TRecipientStatus.IN_MY_LIST_AND_DEFAULT_NOTEBOOK));
+            && serviceData.recipientSettings.recipientStatus === en_conduit_sync_types_1.TRecipientStatus.IN_MY_LIST_AND_DEFAULT_NOTEBOOK));
     if (isDefaultNotebook || serviceData.userNotebook) {
         const edgesToDelete = [];
         const edgesToCreate = [];
@@ -457,12 +476,12 @@ async function convertNotebookFromServiceImpl(trc, params, syncContext, serviceD
             // and not clear it when we legit sync the notebook; instead let the next default notebook replace the edge manually
             edgesToDelete.push({
                 srcID: conduit_core_1.PERSONAL_USER_ID,
-                srcType: en_data_model_1.CoreEntityTypes.User,
+                srcType: en_core_entity_types_1.CoreEntityTypes.User,
                 srcPort: 'defaultNotebook',
             });
             edgesToCreate.push({
                 srcID: conduit_core_1.PERSONAL_USER_ID,
-                srcType: en_data_model_1.CoreEntityTypes.User,
+                srcType: en_core_entity_types_1.CoreEntityTypes.User,
                 srcPort: 'defaultNotebook',
                 dstID: notebook.id,
                 dstType: notebook.type,
@@ -473,12 +492,12 @@ async function convertNotebookFromServiceImpl(trc, params, syncContext, serviceD
             // see comment above for default notebook
             edgesToDelete.push({
                 srcID: conduit_core_1.PERSONAL_USER_ID,
-                srcType: en_data_model_1.CoreEntityTypes.User,
+                srcType: en_core_entity_types_1.CoreEntityTypes.User,
                 srcPort: 'userNotebook',
             });
             edgesToCreate.push({
                 srcID: conduit_core_1.PERSONAL_USER_ID,
-                srcType: en_data_model_1.CoreEntityTypes.User,
+                srcType: en_core_entity_types_1.CoreEntityTypes.User,
                 srcPort: 'userNotebook',
                 dstID: notebook.id,
                 dstType: notebook.type,
@@ -506,7 +525,7 @@ async function convertNotebookFromServiceImpl(trc, params, syncContext, serviceD
 exports.convertNotebookFromServiceImpl = convertNotebookFromServiceImpl;
 class NotebookConverterClass {
     constructor() {
-        this.nodeType = en_data_model_1.CoreEntityTypes.Notebook;
+        this.nodeType = en_core_entity_types_1.CoreEntityTypes.Notebook;
     }
     convertGuidFromService(guid) {
         return guid;
@@ -524,14 +543,14 @@ class NotebookConverterClass {
         }
     }
     async createOnService(trc, params, syncContext, notebook, serviceGuidSeed, remoteFields) {
-        const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+        const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
         const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
         const serviceData = {
             seed: serviceGuidSeed,
             name: notebook.label,
         };
         if (remoteFields.workspaceID) {
-            serviceData.workspaceGuid = Converters_1.convertGuidToService(remoteFields.workspaceID, en_data_model_1.CoreEntityTypes.Workspace);
+            serviceData.workspaceGuid = Converters_1.convertGuidToService(remoteFields.workspaceID, en_core_entity_types_1.CoreEntityTypes.Workspace);
         }
         const resp = await noteStore.createNotebook(trc, auth.token, serviceData);
         await exports.NotebookConverter.convertFromService(trc, params, syncContext, resp);
@@ -544,15 +563,15 @@ class NotebookConverterClass {
                     throw new Error('Personal auth token needed');
                 }
                 const createParams = commandRun.params;
-                const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+                const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
                 const syncContextMetadata = await params.graphTransaction.getSyncContextMetadata(trc, null, syncContext);
                 const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
-                const notebook = await noteStore.getNotebook(trc, auth.token, Converters_1.convertGuidToService(createParams.notebook, en_data_model_1.CoreEntityTypes.Notebook));
+                const notebook = await noteStore.getNotebook(trc, auth.token, Converters_1.convertGuidToService(createParams.notebook, en_core_entity_types_1.CoreEntityTypes.Notebook));
                 if (!syncContextMetadata || !syncContextMetadata.userID) {
                     throw new conduit_utils_1.NotFoundError(syncContext, 'Unable to find owningUserID for syncContext');
                 }
                 if (!notebook) {
-                    throw new conduit_utils_1.NotFoundError(Converters_1.convertGuidToService(createParams.notebook, en_data_model_1.CoreEntityTypes.Notebook), 'Unable to find notebook');
+                    throw new conduit_utils_1.NotFoundError(Converters_1.convertGuidToService(createParams.notebook, en_core_entity_types_1.CoreEntityTypes.Notebook), 'Unable to find notebook');
                 }
                 const contacts = [];
                 const emailContacts = [];
@@ -566,16 +585,16 @@ class NotebookConverterClass {
                     if (emailAndID.email) {
                         emailContacts.push({
                             id: emailAndID.email,
-                            type: ThriftTypes_1.TContactType.EMAIL,
+                            type: en_conduit_sync_types_1.TContactType.EMAIL,
                         });
                         // prefer email as id fails if users are not connected
                     }
                     else if (emailAndID.profileID) {
                         const contactWithUserId = {
-                            id: Converters_1.convertGuidToService(emailAndID.profileID, en_data_model_1.CoreEntityTypes.Profile),
-                            type: ThriftTypes_1.TContactType.EVERNOTE,
+                            id: Converters_1.convertGuidToService(emailAndID.profileID, en_core_entity_types_1.CoreEntityTypes.Profile),
+                            type: en_conduit_sync_types_1.TContactType.EVERNOTE,
                         };
-                        const connectionCheckResult = await Helpers_1.checkUserConnection(trc, params, contactWithUserId);
+                        const connectionCheckResult = await Helpers_2.checkUserConnection(trc, params, contactWithUserId);
                         if (connectionCheckResult) {
                             contacts.push(contactWithUserId);
                         }
@@ -591,23 +610,23 @@ class NotebookConverterClass {
                     createParams.emails.forEach(email => {
                         emailContacts.push({
                             id: email,
-                            type: ThriftTypes_1.TContactType.EMAIL,
+                            type: en_conduit_sync_types_1.TContactType.EMAIL,
                         });
                     });
                 }
                 let allShares = [];
                 if (contacts.length) {
                     allShares = allShares.concat(await shareNotebookWithContacts(trc, params, syncContext, syncContextMetadata, createParams, notebook.name, contacts, false));
-                    await AccountLimitsConverter.updateNodeTypeCount(trc, params.graphTransaction, syncContext, en_data_model_1.CoreEntityTypes.Notebook, contacts.length, 'userNoteAndNotebookSharesSentCount');
+                    await AccountLimitsConverter.updateNodeTypeCount(trc, params.graphTransaction, syncContext, en_core_entity_types_1.CoreEntityTypes.Notebook, contacts.length, 'userNoteAndNotebookSharesSentCount');
                 }
                 if (emailContacts.length) {
                     allShares = allShares.concat(await shareNotebookWithContacts(trc, params, syncContext, syncContextMetadata, createParams, notebook.name, emailContacts, true));
-                    await AccountLimitsConverter.updateNodeTypeCount(trc, params.graphTransaction, syncContext, en_data_model_1.CoreEntityTypes.Notebook, emailContacts.length, 'userNoteAndNotebookSharesSentCount');
+                    await AccountLimitsConverter.updateNodeTypeCount(trc, params.graphTransaction, syncContext, en_core_entity_types_1.CoreEntityTypes.Notebook, emailContacts.length, 'userNoteAndNotebookSharesSentCount');
                 }
                 if (allShares.length) {
                     return {
-                        id: Converters_1.convertGuidFromService(allShares[0].globalId, en_data_model_1.CoreEntityTypes.Membership),
-                        type: en_data_model_1.CoreEntityTypes.Membership,
+                        id: Converters_1.convertGuidFromService(allShares[0].globalId, en_core_entity_types_1.CoreEntityTypes.Membership),
+                        type: en_core_entity_types_1.CoreEntityTypes.Membership,
                     };
                 }
                 // Contrary to createOrUpdateSharedNotes(), createOrUpdateNotebookShares() doesn't
@@ -621,7 +640,7 @@ class NotebookConverterClass {
                     throw new Error('Unable to leave notebook without personal auth token');
                 }
                 const nbID = commandRun.params.notebook;
-                const node = await params.graphTransaction.getNode(trc, null, { id: nbID, type: en_data_model_1.CoreEntityTypes.Notebook });
+                const node = await params.graphTransaction.getNode(trc, null, { id: nbID, type: en_core_entity_types_1.CoreEntityTypes.Notebook });
                 if (!node) {
                     throw new conduit_utils_1.NotFoundError(nbID, 'Unable to leave a not found notebook');
                 }
@@ -641,10 +660,10 @@ class NotebookConverterClass {
                 }
                 const authToken = params.personalAuth.token;
                 const noteStore = params.thriftComm.getNoteStore(noteStoreUrl);
-                const recipientSettings = new ThriftTypes_1.TNotebookRecipientSettings({ recipientStatus: ThriftTypes_1.TRecipientStatus.NOT_IN_MY_LIST });
+                const recipientSettings = new en_conduit_sync_types_1.TNotebookRecipientSettings({ recipientStatus: en_conduit_sync_types_1.TRecipientStatus.NOT_IN_MY_LIST });
                 await noteStore.setNotebookRecipientSettings(trc, authToken, serviceGuid, recipientSettings);
-                const shortcutID = Converters_1.convertGuidFromService(`Notebook:${nbID}`, en_data_model_1.CoreEntityTypes.Shortcut);
-                const shortcut = await params.graphTransaction.getNode(trc, null, { id: shortcutID, type: en_data_model_1.CoreEntityTypes.Shortcut });
+                const shortcutID = Converters_1.convertGuidFromService(`Notebook:${nbID}`, en_core_entity_types_1.CoreEntityTypes.Shortcut);
+                const shortcut = await params.graphTransaction.getNode(trc, null, { id: shortcutID, type: en_core_entity_types_1.CoreEntityTypes.Shortcut });
                 if (shortcut) {
                     await ShortcutConverter_1.updateShortcutsToService(trc, params, [], [shortcutID]);
                 }
@@ -659,11 +678,11 @@ class NotebookConverterClass {
             }
             case 'NotebookAcceptShare': {
                 const nbID = commandRun.params.notebook;
-                const node = await params.graphTransaction.getNode(trc, null, { id: nbID, type: en_data_model_1.CoreEntityTypes.Notebook });
+                const node = await params.graphTransaction.getNode(trc, null, { id: nbID, type: en_core_entity_types_1.CoreEntityTypes.Notebook });
                 if (!node) {
                     throw new conduit_utils_1.NotFoundError(nbID, 'Notebook not found in graph');
                 }
-                const sharedNotebookGlobalID = LinkedNotebookHelpers_1.convertPartialNbGuidToSharedNbGuid(Converters_1.convertGuidToService(nbID, en_data_model_1.CoreEntityTypes.Notebook));
+                const sharedNotebookGlobalID = LinkedNotebookHelpers_1.convertPartialNbGuidToSharedNbGuid(Converters_1.convertGuidToService(nbID, en_core_entity_types_1.CoreEntityTypes.Notebook));
                 const { noteStoreUrl, shardId } = node.NodeFields.internal_linkedNotebookParams;
                 const shareData = await InvitationConverter_1.acceptSharedNotebook(trc, params, syncContext, {
                     shareName: node.label,
@@ -673,32 +692,44 @@ class NotebookConverterClass {
                 });
                 return shareData.notebookID;
             }
+            case 'NotebookUnpublish': {
+                const nbID = commandRun.params.notebook;
+                const node = await params.graphTransaction.getNode(trc, null, { id: nbID, type: en_core_entity_types_1.CoreEntityTypes.Notebook });
+                if (!node) {
+                    throw new conduit_utils_1.NotFoundError(nbID, 'Notebook not found in graph');
+                }
+                const serviceGuid = exports.NotebookConverter.convertGuidToService(nbID);
+                const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+                const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
+                await noteStore.unpublishNotebook(trc, auth.token, serviceGuid, false);
+                return null;
+            }
             default:
                 throw new Error(`Unknown customToService command for Notebook ${commandRun.command}`);
         }
     }
     async deleteFromService(trc, params, syncContext, ids) {
-        const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+        const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
         const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
         for (const id of ids) {
-            const serviceGuid = Converters_1.convertGuidToService(id, en_data_model_1.CoreEntityTypes.Notebook);
+            const serviceGuid = Converters_1.convertGuidToService(id, en_core_entity_types_1.CoreEntityTypes.Notebook);
             await noteStore.expungeNotebook(trc, auth.token, serviceGuid);
         }
         return false;
     }
     async updateToService(trc, params, _, notebookID, diff) {
-        const curNotebook = await params.graphTransaction.getNode(trc, null, { id: notebookID, type: en_data_model_1.CoreEntityTypes.Notebook });
+        const curNotebook = await params.graphTransaction.getNode(trc, null, { id: notebookID, type: en_core_entity_types_1.CoreEntityTypes.Notebook });
         if (!curNotebook) {
             throw new conduit_utils_1.NotFoundError(notebookID, `Missing notebook ${notebookID} from local graph storage`);
         }
-        const { auth, syncContext } = await Helpers_1.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, curNotebook);
+        const { auth, syncContext } = await Helpers_2.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, curNotebook);
         const syncContextMetadata = await params.graphTransaction.getSyncContextMetadata(trc, null, syncContext);
         if (!syncContextMetadata) {
             throw new conduit_utils_1.NotFoundError(syncContext, `Missing syncContextMetadata ${syncContext}`);
         }
         const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
         const serviceData = {
-            guid: Converters_1.convertGuidToService(notebookID, en_data_model_1.CoreEntityTypes.Notebook),
+            guid: Converters_1.convertGuidToService(notebookID, en_core_entity_types_1.CoreEntityTypes.Notebook),
         };
         if (diff.hasOwnProperty('label')) {
             serviceData.name = diff.label;
@@ -706,7 +737,7 @@ class NotebookConverterClass {
         if (serviceData.hasOwnProperty('name')) {
             // special case for renaming, because the service has a bug
             const usn = await noteStore.renameNotebook(trc, auth.token, serviceData.guid, serviceData.name);
-            await params.graphTransaction.updateNode(trc, syncContext, { id: notebookID, type: en_data_model_1.CoreEntityTypes.Notebook }, {
+            await params.graphTransaction.updateNode(trc, syncContext, { id: notebookID, type: en_core_entity_types_1.CoreEntityTypes.Notebook }, {
                 version: usn,
                 label: serviceData.name,
             });
@@ -718,15 +749,11 @@ class NotebookConverterClass {
         let resp = null;
         let skipShare = false;
         if (diff.NodeFields && (diff.NodeFields.hasOwnProperty('reminderNotifyEmail') || diff.NodeFields.hasOwnProperty('reminderNotifyInApp'))) {
-            const recipientSettings = new ThriftTypes_1.TNotebookRecipientSettings({
+            const recipientSettings = new en_conduit_sync_types_1.TNotebookRecipientSettings({
                 reminderNotifyEmail: diff.NodeFields ? diff.NodeFields.reminderNotifyEmail : null,
                 reminderNotifyInApp: diff.NodeFields ? diff.NodeFields.reminderNotifyInApp : null,
             });
-            // for business user, we need to use personal user auth token for setNotebookRecipientSettings call
-            const authToken = (syncContextMetadata.isVaultUser || syncContextMetadata.sharedNotebookGlobalID) && params.personalAuth
-                ? params.personalAuth.token :
-                auth.token;
-            resp = await noteStore.setNotebookRecipientSettings(trc, authToken, serviceData.guid, recipientSettings);
+            resp = await notebookSetRecipientSettingsWrapper(trc, noteStore, syncContextMetadata, auth, params.personalAuth, serviceData.guid, recipientSettings, curNotebook);
             skipShare = true;
         }
         if (Object.keys(serviceData).filter(k => k !== 'reminderNotifyEmail' && k !== 'reminderNotifyInApp').length > 1) {
@@ -747,7 +774,7 @@ class NotebookConverterClass {
         switch (change.changeType) {
             case 'Node:CREATE': {
                 if (err instanceof conduit_utils_1.ServiceError) {
-                    if (err.errorKey === 'Notebook.name' && err.errorCode === ThriftTypes_1.EDAMErrorCode.DATA_CONFLICT) {
+                    if (err.errorKey === 'Notebook.name' && err.errorCode === en_conduit_sync_types_1.EDAMErrorCode.DATA_CONFLICT) {
                         // Duplicate nodes, rename it, and try again!
                         return simply_immutable_1.replaceImmutable(change, ['node', 'label'], `${change.node.label} (${Date.now().toString().slice(-6)})`);
                     }
@@ -756,7 +783,7 @@ class NotebookConverterClass {
             }
             case 'Node:UPDATE': {
                 if (err instanceof conduit_utils_1.ServiceError) {
-                    if (err.errorKey === 'Notebook.name' && err.errorCode === ThriftTypes_1.EDAMErrorCode.DATA_CONFLICT) {
+                    if (err.errorKey === 'Notebook.name' && err.errorCode === en_conduit_sync_types_1.EDAMErrorCode.DATA_CONFLICT) {
                         // Duplicate nodes, rename it, and try again!
                         return simply_immutable_1.replaceImmutable(change, ['node', 'label'], `${change.node.label} (${Date.now().toString().slice(-6)})`);
                     }
@@ -767,17 +794,17 @@ class NotebookConverterClass {
         return null;
     }
     async applyEdgeChangesToService(trc, params, _, notebookID, changes) {
-        const curNotebook = await params.graphTransaction.getNode(trc, null, { id: notebookID, type: en_data_model_1.CoreEntityTypes.Notebook });
+        const curNotebook = await params.graphTransaction.getNode(trc, null, { id: notebookID, type: en_core_entity_types_1.CoreEntityTypes.Notebook });
         if (!curNotebook) {
             throw new conduit_utils_1.NotFoundError(notebookID, `Missing notebook ${notebookID} from local graph storage`);
         }
-        const { auth, syncContext } = await Helpers_1.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, curNotebook);
+        const { auth, syncContext } = await Helpers_2.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, curNotebook);
         const syncContextMetadata = await params.graphTransaction.getSyncContextMetadata(trc, null, syncContext);
         if (!syncContextMetadata) {
             throw new conduit_utils_1.NotFoundError(syncContext, `Missing syncContextMetadata ${syncContext}`);
         }
         const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
-        const nbGuid = Converters_1.convertGuidToService(notebookID, en_data_model_1.CoreEntityTypes.Notebook);
+        const nbGuid = Converters_1.convertGuidToService(notebookID, en_core_entity_types_1.CoreEntityTypes.Notebook);
         let recipientSettings;
         let resp;
         let partialNbServiceData = null;
@@ -803,15 +830,15 @@ class NotebookConverterClass {
             else if (newParent && oldParent && newParent.id === oldParent.id && newParent.type === oldParent.type) {
                 // no change
             }
-            else if (!newParent && oldParent && oldParent.type === en_data_model_1.CoreEntityTypes.Workspace) {
+            else if (!newParent && oldParent && oldParent.type === en_core_entity_types_1.CoreEntityTypes.Workspace) {
                 // remove from workspace
                 const utilityStore = params.thriftComm.getUtilityStore(auth.urls.utilityUrl);
                 await utilityStore.moveNotebookToAccount(trc, auth.token, nbGuid);
                 resp = await noteStore.getNotebook(trc, auth.token, nbGuid);
             }
-            else if (newParent && newParent.type === en_data_model_1.CoreEntityTypes.Workspace) {
+            else if (newParent && newParent.type === en_core_entity_types_1.CoreEntityTypes.Workspace) {
                 // move to workspace
-                serviceData.workspaceGuid = Converters_1.convertGuidToService(newParent.id, en_data_model_1.CoreEntityTypes.Workspace);
+                serviceData.workspaceGuid = Converters_1.convertGuidToService(newParent.id, en_core_entity_types_1.CoreEntityTypes.Workspace);
                 if (!oldParent) {
                     // TODO moveNotebookBetweenAccounts to move from account to workspace?
                 }
@@ -825,7 +852,7 @@ class NotebookConverterClass {
                 }
                 else if (syncContextMetadata.isVaultUser || syncContextMetadata.sharedNotebookGlobalID) {
                     // Shared notebook requires empty string for the stack name field to be removed from stack
-                    recipientSettings = new ThriftTypes_1.TNotebookRecipientSettings({ stack: '' });
+                    recipientSettings = new en_conduit_sync_types_1.TNotebookRecipientSettings({ stack: '' });
                 }
                 else {
                     serviceData.stack = null;
@@ -833,10 +860,10 @@ class NotebookConverterClass {
             }
             for (const edge of stackChanges.creates) {
                 const { id: stackID, type } = conduit_storage_1.getEdgeConnection(edge, notebookID);
-                if (type !== en_data_model_1.CoreEntityTypes.Stack) {
+                if (type !== en_core_entity_types_1.CoreEntityTypes.Stack) {
                     continue;
                 }
-                const stackNode = await params.graphTransaction.getNode(trc, null, { id: stackID, type: en_data_model_1.CoreEntityTypes.Stack });
+                const stackNode = await params.graphTransaction.getNode(trc, null, { id: stackID, type: en_core_entity_types_1.CoreEntityTypes.Stack });
                 if (!stackNode) {
                     throw new conduit_utils_1.NotFoundError(stackID, `stack node not found`);
                 }
@@ -844,7 +871,7 @@ class NotebookConverterClass {
                     partialNbServiceData = await LinkedNotebookHelpers_1.updateStackToServiceForPartialNb(trc, params, curNotebook, stackNode.label);
                 }
                 else if (syncContextMetadata.isVaultUser || syncContextMetadata.sharedNotebookGlobalID) {
-                    recipientSettings = new ThriftTypes_1.TNotebookRecipientSettings({ stack: stackNode.label });
+                    recipientSettings = new en_conduit_sync_types_1.TNotebookRecipientSettings({ stack: stackNode.label });
                 }
                 else {
                     serviceData.stack = stackNode.label;
@@ -860,9 +887,7 @@ class NotebookConverterClass {
             skipShare = true;
         }
         if (recipientSettings) {
-            // for business user, we need to use personal user auth token for setNotebookRecipientSettings call
-            const authToken = (syncContextMetadata.isVaultUser || syncContextMetadata.sharedNotebookGlobalID) && params.personalAuth ? params.personalAuth.token : auth.token;
-            resp = await noteStore.setNotebookRecipientSettings(trc, authToken, nbGuid, recipientSettings);
+            resp = await notebookSetRecipientSettingsWrapper(trc, noteStore, syncContextMetadata, auth, params.personalAuth, nbGuid, recipientSettings, curNotebook);
             skipShare = true;
         }
         if (Object.keys(serviceData).length > 1) {
@@ -882,28 +907,28 @@ class NotebookConverterClass {
     }
 }
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Notebook)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Notebook)
 ], NotebookConverterClass.prototype, "convertFromService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Notebook)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Notebook)
 ], NotebookConverterClass.prototype, "onDelete", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Notebook)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Notebook)
 ], NotebookConverterClass.prototype, "createOnService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Notebook)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Notebook)
 ], NotebookConverterClass.prototype, "customToService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Notebook)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Notebook)
 ], NotebookConverterClass.prototype, "deleteFromService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Notebook)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Notebook)
 ], NotebookConverterClass.prototype, "updateToService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Notebook)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Notebook)
 ], NotebookConverterClass.prototype, "handleErrorToService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Notebook)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Notebook)
 ], NotebookConverterClass.prototype, "applyEdgeChangesToService", null);
 exports.NotebookConverter = new NotebookConverterClass();
 //# sourceMappingURL=NotebookConverter.js.map

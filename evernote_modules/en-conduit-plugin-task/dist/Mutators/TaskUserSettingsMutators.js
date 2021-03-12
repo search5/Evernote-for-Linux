@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.taskUserSettingsUpsert = exports.taskUserSettingsSetDefaultTaskNote = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const TaskConstants_1 = require("../TaskConstants");
 const TaskUtils_1 = require("../TaskUtils");
 const Task_1 = require("./Helpers/Task");
@@ -41,9 +41,10 @@ exports.taskUserSettingsSetDefaultTaskNote = {
     optionalParams: {
         pinDefaultTaskNote: 'boolean',
     },
+    resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     execute: async (trc, ctx, params) => {
         const ops = [];
-        const nodeRef = { id: params.noteID, type: en_data_model_1.CoreEntityTypes.Note };
+        const nodeRef = { id: params.noteID, type: en_core_entity_types_1.CoreEntityTypes.Note };
         const taskUserSettingsID = TaskUtils_1.getTaskUserSettingsByMutationContext(ctx);
         const note = await ctx.fetchEntity(trc, nodeRef);
         if (!note) {
@@ -66,13 +67,15 @@ exports.taskUserSettingsSetDefaultTaskNote = {
             });
         }
         const plan = {
-            result: taskUserSettingsID,
+            results: {
+                result: taskUserSettingsID,
+            },
             ops: [...ops,
                 {
                     changeType: 'Edge:MODIFY',
                     edgesToCreate: [{
                             srcID: taskUserSettingsID, srcType: TaskConstants_1.TaskEntityTypes.TaskUserSettings, srcPort: 'defaultTaskNote',
-                            dstID: note.id, dstType: en_data_model_1.CoreEntityTypes.Note, dstPort: 'taskUserSettingsForDefaultNote',
+                            dstID: note.id, dstType: en_core_entity_types_1.CoreEntityTypes.Note, dstPort: 'taskUserSettingsForDefaultNote',
                         }],
                 }, {
                     changeType: 'Node:UPDATE',
@@ -92,6 +95,7 @@ exports.taskUserSettingsUpsert = {
         defaultReminder: 'boolean',
         defaultRemindersOffsets: 'number[]',
     },
+    resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     execute: async (trc, ctx, params) => {
         const ops = [];
         const taskUserSettingsID = TaskUtils_1.getTaskUserSettingsByMutationContext(ctx);
@@ -104,7 +108,9 @@ exports.taskUserSettingsUpsert = {
             await ensureTaskUserSettingsID(trc, ctx);
         }
         return {
-            result: taskUserSettingsID,
+            results: {
+                result: taskUserSettingsID,
+            },
             ops: [...ops,
                 {
                     changeType: 'Node:UPDATE',

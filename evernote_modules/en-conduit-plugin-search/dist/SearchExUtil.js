@@ -5,23 +5,25 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getLocalSearchMode = exports.getSearchString = exports.emptyResultGroup = exports.emptySearchExResult = exports.combineResults = exports.findResultSpec = exports.selectResultGroup = exports.selectResultGroups = exports.setDefaults = exports.composeSearchFilterString = exports.objectIDToServiceGuid = exports.serviceGuidToObjectID = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const en_thrift_connector_1 = require("en-thrift-connector");
 const SearchSchemaTypes_1 = require("./SearchSchemaTypes");
 function serviceGuidToObjectID(guid, type) {
     switch (type) {
         case SearchSchemaTypes_1.SearchExResultType.NOTE:
-            return en_thrift_connector_1.convertGuidFromService(guid, en_data_model_1.CoreEntityTypes.Note);
+            return en_thrift_connector_1.convertGuidFromService(guid, en_core_entity_types_1.CoreEntityTypes.Note);
         case SearchSchemaTypes_1.SearchExResultType.NOTEBOOK:
-            return en_thrift_connector_1.convertGuidFromService(guid, en_data_model_1.CoreEntityTypes.Notebook);
+            return en_thrift_connector_1.convertGuidFromService(guid, en_core_entity_types_1.CoreEntityTypes.Notebook);
         case SearchSchemaTypes_1.SearchExResultType.WORKSPACE:
-            return en_thrift_connector_1.convertGuidFromService(guid, en_data_model_1.CoreEntityTypes.Workspace);
+            return en_thrift_connector_1.convertGuidFromService(guid, en_core_entity_types_1.CoreEntityTypes.Workspace);
         case SearchSchemaTypes_1.SearchExResultType.TAG:
-            return en_thrift_connector_1.convertGuidFromService(guid, en_data_model_1.CoreEntityTypes.Tag);
+            return en_thrift_connector_1.convertGuidFromService(guid, en_core_entity_types_1.CoreEntityTypes.Tag);
         case SearchSchemaTypes_1.SearchExResultType.AUTHOR:
-            return en_thrift_connector_1.convertGuidFromService(guid, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User);
+            return en_thrift_connector_1.convertGuidFromService(guid, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
         case SearchSchemaTypes_1.SearchExResultType.MESSAGE:
-            return en_thrift_connector_1.convertGuidFromService(guid, en_data_model_1.CoreEntityTypes.Message);
+            return en_thrift_connector_1.convertGuidFromService(guid, en_core_entity_types_1.CoreEntityTypes.Message);
+        case SearchSchemaTypes_1.SearchExResultType.STACK:
+            return en_thrift_connector_1.convertGuidFromService(guid, en_core_entity_types_1.CoreEntityTypes.Stack);
         default:
             return guid; // other types do not represent nodes
     }
@@ -30,22 +32,32 @@ exports.serviceGuidToObjectID = serviceGuidToObjectID;
 function objectIDToServiceGuid(id, type) {
     switch (type) {
         case SearchSchemaTypes_1.SearchExResultType.NOTE:
-            return en_thrift_connector_1.convertGuidToService(id, en_data_model_1.CoreEntityTypes.Note);
+            return en_thrift_connector_1.convertGuidToService(id, en_core_entity_types_1.CoreEntityTypes.Note);
         case SearchSchemaTypes_1.SearchExResultType.NOTEBOOK:
-            return en_thrift_connector_1.convertGuidToService(id, en_data_model_1.CoreEntityTypes.Notebook);
+            return en_thrift_connector_1.convertGuidToService(id, en_core_entity_types_1.CoreEntityTypes.Notebook);
         case SearchSchemaTypes_1.SearchExResultType.WORKSPACE:
-            return en_thrift_connector_1.convertGuidToService(id, en_data_model_1.CoreEntityTypes.Workspace);
+            return en_thrift_connector_1.convertGuidToService(id, en_core_entity_types_1.CoreEntityTypes.Workspace);
         case SearchSchemaTypes_1.SearchExResultType.TAG:
-            return en_thrift_connector_1.convertGuidToService(id, en_data_model_1.CoreEntityTypes.Tag);
+            return en_thrift_connector_1.convertGuidToService(id, en_core_entity_types_1.CoreEntityTypes.Tag);
         case SearchSchemaTypes_1.SearchExResultType.AUTHOR:
-            return en_thrift_connector_1.convertGuidToService(id, en_data_model_1.CoreEntityTypes.Profile).toString();
+            return en_thrift_connector_1.convertGuidToService(id, en_core_entity_types_1.CoreEntityTypes.Profile).toString();
         case SearchSchemaTypes_1.SearchExResultType.MESSAGE:
-            return en_thrift_connector_1.convertGuidToService(id, en_data_model_1.CoreEntityTypes.Message).toString();
+            return en_thrift_connector_1.convertGuidToService(id, en_core_entity_types_1.CoreEntityTypes.Message).toString();
+        case SearchSchemaTypes_1.SearchExResultType.STACK:
+            return en_thrift_connector_1.convertGuidToService(id, en_core_entity_types_1.CoreEntityTypes.Stack);
         default:
             return id; // other types do not represent nodes
     }
 }
 exports.objectIDToServiceGuid = objectIDToServiceGuid;
+/**
+ * Escapes quotes in the stack name. Other special characters are escaped in the query parser.
+ *
+ * @param stackName name of the stack
+ */
+function escapeStack(stackName) {
+    return stackName.replace(/"/g, '\\"');
+}
 function composeSearchFilterString(serviceGuid, type) {
     switch (type) {
         case SearchSchemaTypes_1.SearchExResultType.NOTE:
@@ -58,6 +70,8 @@ function composeSearchFilterString(serviceGuid, type) {
             return 'tagGuid:"' + serviceGuid + '"';
         case SearchSchemaTypes_1.SearchExResultType.AUTHOR:
             return 'creatorId:"' + serviceGuid + '"';
+        case SearchSchemaTypes_1.SearchExResultType.STACK:
+            return 'stack:"' + escapeStack(serviceGuid) + '"';
         default:
             return serviceGuid;
     }

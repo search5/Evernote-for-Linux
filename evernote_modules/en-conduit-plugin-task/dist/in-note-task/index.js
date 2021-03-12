@@ -7,17 +7,14 @@ exports.inNoteTaskApplyChanges = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const graphql_1 = require("graphql");
-const SyncInNoteTasks_1 = require("./old-version/SyncInNoteTasks");
-const SyncInNoteTasks_2 = require("./SyncInNoteTasks");
+const SyncInNoteTasks_1 = require("./SyncInNoteTasks");
 async function resolver(parent, args, context) {
     if (!args) {
         throw new conduit_utils_1.MissingParameterError('Missing args for inNoteTaskApplyChanges');
     }
+    // let's check if noteID is not an empty string
     if (!args.noteID) {
         throw new conduit_utils_1.MissingParameterError('Missing noteID from args in inNoteTaskApplyChanges');
-    }
-    if (!args.taskGroupList) {
-        throw new conduit_utils_1.MissingParameterError('Missing taskGroupList from args in inNoteTaskApplyChanges');
     }
     if (!args.sourceOfChange) {
         conduit_utils_1.logger.warn('sourceOfChange needs to be passed on inNoteTaskApplyChanges');
@@ -25,17 +22,12 @@ async function resolver(parent, args, context) {
     if (!context) {
         conduit_utils_1.logger.warn('context needs to be passed on inNoteTaskApplyChanges');
     }
-    if (args.loadedTaskGroupList) {
-        await SyncInNoteTasks_2.syncInNoteTasks({
-            noteID: args.noteID,
-            taskGroupList: args.taskGroupList,
-            loadedTaskGroupList: args.loadedTaskGroupList,
-            sourceOfChange: args.sourceOfChange,
-        }, context);
-    }
-    else {
-        await SyncInNoteTasks_1.oldSyncInNoteTasksResolver(parent, args, context);
-    }
+    await SyncInNoteTasks_1.syncInNoteTasks({
+        noteID: args.noteID,
+        taskGroupList: args.taskGroupList,
+        loadedTaskGroupList: args.loadedTaskGroupList,
+        sourceOfChange: args.sourceOfChange,
+    }, context);
     return {
         success: true,
     };
@@ -76,8 +68,8 @@ const TaskGroupInput = new graphql_1.GraphQLInputObjectType({
 exports.inNoteTaskApplyChanges = {
     args: {
         noteID: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-        taskGroupList: { type: new graphql_1.GraphQLList(TaskGroupInput) },
-        loadedTaskGroupList: { type: new graphql_1.GraphQLList(TaskGroupInput) },
+        taskGroupList: { type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(TaskGroupInput)) },
+        loadedTaskGroupList: { type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(TaskGroupInput)) },
         sourceOfChange: { type: graphql_1.GraphQLString },
     },
     type: conduit_core_1.GenericMutationResult,

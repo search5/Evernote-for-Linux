@@ -4,7 +4,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateBlobToService = exports.updateBlobToGraph = exports.fillBlobCache = exports.hasBlobChanged = exports.convertBlobFieldsFromService = void 0;
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Helpers_1 = require("./Helpers");
 const NoteConverter_1 = require("./NoteConverter");
 function convertBlobFieldsFromService(serviceData) {
@@ -61,7 +61,7 @@ async function updateBlobToGraph(trc, graphTransaction, serviceData, nodeRef, bl
 exports.updateBlobToGraph = updateBlobToGraph;
 async function updateBlobToService(trc, params, node, syncContext, blobName, remoteFields, blobData) {
     // Assuming we will want to support updating more blobs in the future?
-    if (node.type === en_data_model_1.CoreEntityTypes.Note && blobName === 'content') {
+    if (node.type === en_core_entity_types_1.CoreEntityTypes.Note && blobName === 'content') {
         await NoteConverter_1.updateNoteContentToService(trc, params, node.id, syncContext, remoteFields, blobData.content, blobData.hash);
         return true;
     }

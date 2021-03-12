@@ -41,6 +41,7 @@ exports.reminderCreate = {
         noteLevelID: 'string',
         sourceOfChange: 'string',
     },
+    resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
         var _a, _b;
         paramsOut.noteLevelID = (_a = paramsIn.noteLevelID) !== null && _a !== void 0 ? _a : conduit_utils_1.uuid();
@@ -52,7 +53,7 @@ exports.reminderCreate = {
         if (!task) {
             // it could happen in conflict situations and we should simply ignore it.
             return {
-                result: null,
+                results: {},
                 ops: [],
             };
         }
@@ -71,7 +72,9 @@ exports.reminderCreate = {
             status: TaskConstants_1.ReminderStatus.active,
         }, ctx.userID);
         const plan = {
-            result: reminderID,
+            results: {
+                result: reminderID,
+            },
             ops: [{
                     changeType: 'Node:CREATE',
                     node: reminderEntity,
@@ -84,7 +87,7 @@ exports.reminderCreate = {
                         }],
                 }],
         };
-        const muteSn = task.NodeFields.status === TaskConstants_1.TaskStatus.completed;
+        const muteSn = reminderEntity.NodeFields.status === TaskConstants_1.ReminderStatus.muted;
         ScheduledNotificationHelpers_1.addScheduledNotificationCreateOps(trc, ctx, reminderEntity, taskRef, plan.ops, muteSn);
         return plan;
     },
@@ -102,12 +105,12 @@ exports.reminderDelete = {
         if (!reminder) {
             // it could happen in conflict situations and we should simply ignore it
             return {
-                result: null,
+                results: {},
                 ops: [],
             };
         }
         const plan = {
-            result: null,
+            results: {},
             ops: [
                 {
                     changeType: 'Node:DELETE',
@@ -147,7 +150,7 @@ exports.reminderUpdate = {
         if (!reminder) {
             // it could happen in conflict situations and we should simply ignore it.
             return {
-                result: null,
+                results: {},
                 ops: [],
             };
         }
@@ -165,7 +168,7 @@ exports.reminderUpdate = {
             sourceOfChange: params.sourceOfChange,
         };
         const plan = {
-            result: null,
+            results: {},
             ops: [
                 {
                     changeType: 'Node:UPDATE',

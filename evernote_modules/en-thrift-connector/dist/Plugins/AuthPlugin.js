@@ -26,12 +26,12 @@ exports.getAuthPlugin = exports.loginWithCookies = exports.setLoginAuthData = ex
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const graphql_1 = require("graphql");
 const Auth = __importStar(require("../Auth"));
 const AccountLimitsConverter_1 = require("../Converters/AccountLimitsConverter");
 const UserConverter_1 = require("../Converters/UserConverter");
 const ThriftSyncEngine_1 = require("../ThriftSyncEngine");
-const ThriftTypes_1 = require("../ThriftTypes");
 const AuthStateEnum = Object.keys(conduit_view_types_1.AuthState);
 AuthStateEnum.__enumName = 'AuthStateEnum';
 const LoginResultGQL = conduit_core_1.schemaToGraphQLType({
@@ -168,7 +168,7 @@ function setDeviceTelemetryDimensions(deviceId) {
         conduit_utils_1.setDimension('deviceId', deviceId);
     }
 }
-async function activateAccount(thriftComm, context, auth) {
+async function activateAccount(context, auth) {
     if (!validateMUPAndKeys(context)) {
         return;
     }
@@ -178,7 +178,7 @@ async function activateAccount(thriftComm, context, auth) {
     else {
         // if user is already signed in, let them sign in again.
         // avoid edge case like "if user already signs in and their auth is expired, allow them to sign in."
-        await setLoginAuthData(thriftComm, context, auth, context.clientCredentials.deviceIdentifier);
+        await setLoginAuthData(context.thriftComm, context, auth, context.clientCredentials.deviceIdentifier);
     }
 }
 async function loginWithCookies(context, thriftComm, serviceHost, userSlot = null, deviceIdentifier) {
@@ -190,13 +190,14 @@ async function loginWithCookies(context, thriftComm, serviceHost, userSlot = nul
     return auth;
 }
 exports.loginWithCookies = loginWithCookies;
-function getAuthPlugin(thriftComm, httpClient, tokenRefreshManager, deviceIdentifier) {
+function getAuthPlugin(httpClient, tokenRefreshManager, deviceIdentifier) {
     async function getLoginInfoResolver(_, args, context) {
         if (validateMUPAndKeys(context)) {
             if (!args || !args.serviceHost || (!args.usernameOrEmail && !args.tokenPayload)) {
                 throw new Error('Missing arguments for getLoginInfo');
             }
-            return Auth.getLoginInfo(context.trc, thriftComm, args.serviceHost, args.externalServiceHost || args.serviceHost, args.clientName, args.usernameOrEmail, args.tokenPayload);
+            const extHost = args.externalServiceHost || args.serviceHost;
+            return Auth.getLoginInfo(context.trc, context.thriftComm, args.serviceHost, extHost, args.clientName, args.usernameOrEmail, args.tokenPayload);
         }
     }
     async function retryLoginAfterLegacyError(trc, thriftCommInterface, defaultHost, credentials, error) {
@@ -235,8 +236,8 @@ function getAuthPlugin(thriftComm, httpClient, tokenRefreshManager, deviceIdenti
     async function loginResolver(_, args, context) {
         var _a;
         if (validateMUPAndKeys(context)) {
-            const auth = await Auth.login(context.trc, thriftComm, args.serviceHost, args.externalServiceHost || args.serviceHost, Object.assign(Object.assign({}, context.clientCredentials), { usernameOrEmail: args.email, password: args.password }), (_a = args.allowFacadeAsPersonal) !== null && _a !== void 0 ? _a : false);
-            await activateAccount(thriftComm, context, auth);
+            const auth = await Auth.login(context.trc, context.thriftComm, args.serviceHost, args.externalServiceHost || args.serviceHost, Object.assign(Object.assign({}, context.clientCredentials), { usernameOrEmail: args.email, password: args.password }), (_a = args.allowFacadeAsPersonal) !== null && _a !== void 0 ? _a : false);
+            await activateAccount(context, auth);
             return toGraphQL(auth);
         }
     }
@@ -247,7 +248,7 @@ function getAuthPlugin(thriftComm, httpClient, tokenRefreshManager, deviceIdenti
         if (!args.serviceHost) {
             throw new Error('Missing serviceHost!');
         }
-        const auth = await loginWithCookies(context, thriftComm, args.serviceHost, args.userSlot, deviceIdentifier);
+        const auth = await loginWithCookies(context, context.thriftComm, args.serviceHost, args.userSlot, deviceIdentifier);
         if (!auth) {
             throw new Error('Unable to login with cookies');
         }
@@ -259,17 +260,17 @@ function getAuthPlugin(thriftComm, httpClient, tokenRefreshManager, deviceIdenti
             let auth1 = null;
             let auth2 = null;
             try {
-                auth1 = await Auth.login(context.trc, thriftComm, args.serviceHost, args.externalServiceHost || args.serviceHost, Object.assign(Object.assign({}, context.clientCredentials), { exchangeToken: args.token1 }), false);
+                auth1 = await Auth.login(context.trc, context.thriftComm, args.serviceHost, args.externalServiceHost || args.serviceHost, Object.assign(Object.assign({}, context.clientCredentials), { exchangeToken: args.token1 }), false);
             }
             catch (error) {
-                auth1 = await retryLoginAfterLegacyError(context.trc, thriftComm, args.serviceHost, Object.assign(Object.assign({}, context.clientCredentials), { exchangeToken: args.token1 }), error);
+                auth1 = await retryLoginAfterLegacyError(context.trc, context.thriftComm, args.serviceHost, Object.assign(Object.assign({}, context.clientCredentials), { exchangeToken: args.token1 }), error);
             }
             if (args.token2) {
                 try {
-                    auth2 = await Auth.login(context.trc, thriftComm, args.serviceHost, args.externalServiceHost || args.serviceHost, Object.assign(Object.assign({}, context.clientCredentials), { exchangeToken: args.token2 }), false);
+                    auth2 = await Auth.login(context.trc, context.thriftComm, args.serviceHost, args.externalServiceHost || args.serviceHost, Object.assign(Object.assign({}, context.clientCredentials), { exchangeToken: args.token2 }), false);
                 }
                 catch (error) {
-                    auth2 = await retryLoginAfterLegacyError(context.trc, thriftComm, args.serviceHost, Object.assign(Object.assign({}, context.clientCredentials), { exchangeToken: args.token2 }), error);
+                    auth2 = await retryLoginAfterLegacyError(context.trc, context.thriftComm, args.serviceHost, Object.assign(Object.assign({}, context.clientCredentials), { exchangeToken: args.token2 }), error);
                 }
             }
             if (auth2) {
@@ -287,7 +288,7 @@ function getAuthPlugin(thriftComm, httpClient, tokenRefreshManager, deviceIdenti
                 await context.multiUserProvider.setAuthTokenAndState(context.trc, loginData2);
                 await context.multiUserProvider.setCurrentUser(context.trc, loginData2.userID, false, auth2.state === conduit_view_types_1.AuthState.Authorized ? {
                     noSync: true,
-                    update: auth2.token ? genUpdate(context.trc, thriftComm, auth2.token, auth2.user, auth2.vaultUser) : undefined,
+                    update: auth2.token ? genUpdate(context.trc, context.thriftComm, auth2.token, auth2.user, auth2.vaultUser) : undefined,
                 } : undefined);
                 await context.multiUserProvider.setUserInfo(context.trc, {
                     userID: conduit_utils_1.keyStringForUserID(loginData2.userID),
@@ -306,7 +307,7 @@ function getAuthPlugin(thriftComm, httpClient, tokenRefreshManager, deviceIdenti
                 await context.multiUserProvider.setAuthTokenAndState(context.trc, loginData1);
                 await context.multiUserProvider.setCurrentUser(context.trc, loginData1.userID, false, auth1.state === conduit_view_types_1.AuthState.Authorized ? {
                     noSync: false,
-                    update: auth1.token ? genUpdate(context.trc, thriftComm, auth1.token, auth1.user, auth1.vaultUser) : undefined,
+                    update: auth1.token ? genUpdate(context.trc, context.thriftComm, auth1.token, auth1.user, auth1.vaultUser) : undefined,
                 } : undefined);
                 await context.multiUserProvider.setUserInfo(context.trc, {
                     userID: conduit_utils_1.keyStringForUserID(loginData1.userID),
@@ -318,15 +319,15 @@ function getAuthPlugin(thriftComm, httpClient, tokenRefreshManager, deviceIdenti
                 });
             }
             else {
-                await setLoginAuthData(thriftComm, context, auth1, context.clientCredentials.deviceIdentifier);
+                await setLoginAuthData(context.thriftComm, context, auth1, context.clientCredentials.deviceIdentifier);
             }
             return toGraphQL(auth1);
         }
     }
     async function loginWithSSOResolver(_, args, context) {
         if (validateMUPAndKeys(context)) {
-            const auth = await Auth.login(context.trc, thriftComm, args.serviceHost, args.externalServiceHost || args.serviceHost, Object.assign(Object.assign({}, context.clientCredentials), { usernameOrEmail: args.email, ssoLoginToken: args.ssoLoginToken }), false);
-            await activateAccount(thriftComm, context, auth);
+            const auth = await Auth.login(context.trc, context.thriftComm, args.serviceHost, args.externalServiceHost || args.serviceHost, Object.assign(Object.assign({}, context.clientCredentials), { usernameOrEmail: args.email, ssoLoginToken: args.ssoLoginToken }), false);
+            await activateAccount(context, auth);
             return toGraphQL(auth);
         }
     }
@@ -336,11 +337,11 @@ function getAuthPlugin(thriftComm, httpClient, tokenRefreshManager, deviceIdenti
             if (!Auth.SERVICE_PROVIDER_STRING_TO_ENUM.hasOwnProperty(serviceProvider)) {
                 throw new Error('Unknown service provider');
             }
-            const auth = await Auth.login(context.trc, thriftComm, args.serviceHost, args.externalServiceHost || args.serviceHost, Object.assign(Object.assign({}, context.clientCredentials), { openIdCredential: {
+            const auth = await Auth.login(context.trc, context.thriftComm, args.serviceHost, args.externalServiceHost || args.serviceHost, Object.assign(Object.assign({}, context.clientCredentials), { openIdCredential: {
                     tokenPayload: args.tokenPayload,
                     serviceProvider: Auth.SERVICE_PROVIDER_STRING_TO_ENUM[serviceProvider],
                 } }), false);
-            await activateAccount(thriftComm, context, auth);
+            await activateAccount(context, auth);
             return toGraphQL(auth);
         }
     }
@@ -348,18 +349,18 @@ function getAuthPlugin(thriftComm, httpClient, tokenRefreshManager, deviceIdenti
         var _a;
         if (validateMUPAndKeys(context)) {
             const slot = args.userSlot === undefined ? null : args.userSlot;
-            const auth = await Auth.loginWithServiceToken(context.trc, thriftComm, args.serviceHost, args.externalServiceHost || args.serviceHost, args.token || '', slot, (_a = args.allowFacadeAsPersonal) !== null && _a !== void 0 ? _a : false);
+            const auth = await Auth.loginWithServiceToken(context.trc, context.thriftComm, args.serviceHost, args.externalServiceHost || args.serviceHost, args.token || '', slot, (_a = args.allowFacadeAsPersonal) !== null && _a !== void 0 ? _a : false);
             if (!auth) {
                 throw new Error('Login with token failed, possibly offline');
             }
-            await activateAccount(thriftComm, context, auth);
+            await activateAccount(context, auth);
             return toGraphQL(auth);
         }
     }
     async function loginWithTwoFactorResolver(_, args, context) {
         if (validateMUPAndKeys(context)) {
-            const auth = await Auth.loginWithTwoFactor(context.trc, thriftComm, args.serviceHost, args.externalServiceHost || args.serviceHost, args.secondFactorTempToken, Object.assign(Object.assign({}, context.clientCredentials), { oneTimeCode: args.oneTimeCode }));
-            await activateAccount(thriftComm, context, auth);
+            const auth = await Auth.loginWithTwoFactor(context.trc, context.thriftComm, args.serviceHost, args.externalServiceHost || args.serviceHost, args.secondFactorTempToken, Object.assign(Object.assign({}, context.clientCredentials), { oneTimeCode: args.oneTimeCode }));
+            await activateAccount(context, auth);
             return toGraphQL(auth);
         }
     }
@@ -402,14 +403,14 @@ function getAuthPlugin(thriftComm, httpClient, tokenRefreshManager, deviceIdenti
                 await context.multiUserProvider.setCurrentUser(context.trc, null, true);
                 newUserID = null;
             }
-            const serviceRes = (currentAuth === null || currentAuth === void 0 ? void 0 : currentAuth.token) ? await Auth.invalidateAuthToken(context.trc, currentAuth.token, thriftComm, httpClient, (_a = context.clientCredentials) !== null && _a !== void 0 ? _a : null)
+            const serviceRes = (currentAuth === null || currentAuth === void 0 ? void 0 : currentAuth.token) ? await Auth.invalidateAuthToken(context.trc, currentAuth.token, context.thriftComm, httpClient, (_a = context.clientCredentials) !== null && _a !== void 0 ? _a : null)
                 : { success: true };
             conduit_utils_1.logger.info('Client logging out', args.reason);
             return Object.assign(Object.assign({}, serviceRes), { currentUserID: newUserID });
         }
     }
     async function sessionTokenResolver(_, args, context) {
-        return tokenRefreshManager.renewAndSaveAuthToken(context, thriftComm);
+        return tokenRefreshManager.renewAndSaveAuthToken(context);
     }
     async function userSignupResolver(_, args, context) {
         if (validateMUPAndKeys(context)) {
@@ -420,11 +421,11 @@ function getAuthPlugin(thriftComm, httpClient, tokenRefreshManager, deviceIdenti
             if (oAuthProvider && !Auth.SERVICE_PROVIDER_STRING_TO_ENUM.hasOwnProperty(oAuthProvider)) {
                 throw new Error('Unknown service provider');
             }
-            const auth = await Auth.userSignupandLogin(context.trc, thriftComm, httpClient, args.serviceHost, args.externalServiceHost || args.serviceHost, Object.assign(Object.assign({}, context.clientCredentials), { usernameOrEmail: args.email, password: args.password, openIdCredential: {
+            const auth = await Auth.userSignupandLogin(context.trc, context.thriftComm, httpClient, args.serviceHost, args.externalServiceHost || args.serviceHost, Object.assign(Object.assign({}, context.clientCredentials), { usernameOrEmail: args.email, password: args.password, openIdCredential: {
                     tokenPayload: args.tokenPayload,
-                    serviceProvider: oAuthProvider ? Auth.SERVICE_PROVIDER_STRING_TO_ENUM[oAuthProvider] : ThriftTypes_1.TServiceProvider.GOOGLE,
+                    serviceProvider: oAuthProvider ? Auth.SERVICE_PROVIDER_STRING_TO_ENUM[oAuthProvider] : en_conduit_sync_types_1.TServiceProvider.GOOGLE,
                 } }));
-            await activateAccount(thriftComm, context, auth);
+            await activateAccount(context, auth);
             return toGraphQL(auth);
         }
     }
@@ -436,13 +437,13 @@ function getAuthPlugin(thriftComm, httpClient, tokenRefreshManager, deviceIdenti
         if (!httpClient) {
             throw new conduit_utils_1.InternalError('No HttpClient');
         }
-        const authResult = await Auth.loginWithNAP(context.trc, thriftComm, args, context.clientCredentials, httpClient);
-        await setLoginAuthData(thriftComm, context, authResult, (_a = context.clientCredentials) === null || _a === void 0 ? void 0 : _a.deviceIdentifier);
+        const authResult = await Auth.loginWithNAP(context.trc, context.thriftComm, args, context.clientCredentials, httpClient);
+        await setLoginAuthData(context.thriftComm, context, authResult, (_a = context.clientCredentials) === null || _a === void 0 ? void 0 : _a.deviceIdentifier);
         return toGraphQL(authResult);
     }
-    async function getThriftUtilityEndpoint(trc, serviceHost, token) {
-        const userStore = thriftComm.getUserStore(`${serviceHost}/edam/user`);
-        const urls = await userStore.getUserUrls(trc, token);
+    async function getThriftUtilityEndpoint(context, serviceHost, token) {
+        const userStore = context.thriftComm.getUserStore(`${serviceHost}/edam/user`);
+        const urls = await userStore.getUserUrls(context.trc, token);
         if (!urls.utilityUrl) {
             throw new Error('Unable to find api endpoint');
         }
@@ -450,15 +451,15 @@ function getAuthPlugin(thriftComm, httpClient, tokenRefreshManager, deviceIdenti
     }
     async function twoFactorAuthSendCodeResolver(_, args, context) {
         if (context) {
-            const thriftUtilityUrl = await getThriftUtilityEndpoint(context.trc, args.serviceHost, args.token);
-            const utilityStore = thriftComm.getUtilityStore(thriftUtilityUrl);
+            const thriftUtilityUrl = await getThriftUtilityEndpoint(context, args.serviceHost, args.token);
+            const utilityStore = context.thriftComm.getUtilityStore(thriftUtilityUrl);
             return await utilityStore.sendOneTimeCode(context.trc, args.token, args.sendToBackupPhone, args.textMsgTemplate, args.useVoice);
         }
     }
     async function twoFactorAuthMaskedPhoneNumbersResolver(_, args, context) {
         if (context) {
-            const thriftUtilityUrl = await getThriftUtilityEndpoint(context.trc, args.serviceHost, args.token);
-            const utilityStore = thriftComm.getUtilityStore(thriftUtilityUrl);
+            const thriftUtilityUrl = await getThriftUtilityEndpoint(context, args.serviceHost, args.token);
+            const utilityStore = context.thriftComm.getUtilityStore(thriftUtilityUrl);
             const res = await utilityStore.getMasked2FAMobileNumbers(context.trc, args.token);
             return {
                 primary: res.AUTH_TWOFACTOR_MOBILE,

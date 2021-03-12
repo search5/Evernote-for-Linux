@@ -24,9 +24,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addInitialDownsyncActivities = exports.NSyncInitialDownsyncActivity = exports.NotesFetchActivity = exports.PromotionsSyncActivity = exports.MaestroSyncActivity = exports.BetaFeatureSyncActivity = exports.NotesCountFetchActivity = exports.FINAL_ACTIVITY_ORDER = exports.INITIAL_DOWNSYNC_CHUNK_TIMEBOX = void 0;
 const conduit_core_1 = require("conduit-core");
+const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Auth = __importStar(require("../Auth"));
 const NotebookConverter_1 = require("../Converters/NotebookConverter");
 const BetaFeatureSync_1 = require("../SyncFunctions/BetaFeatureSync");
@@ -128,12 +129,21 @@ class FetchPrebuiltDatabaseActivity extends SyncActivity_1.SyncActivity {
         if (importRes.err) {
             // don't throw the error, just log it and fall back to normal sync
             conduit_utils_1.logger.error('Error trying to import prebuilt DB', importRes.err);
+            if (importRes.err instanceof conduit_storage_1.CorruptDBError) {
+                conduit_utils_1.recordEvent({
+                    category: 'account',
+                    action: 'sync',
+                    label: 'corrupted-db',
+                });
+            }
             if (this.di.cleanupTempFile) {
                 await this.di.cleanupTempFile(trc, downloadedFilename);
             }
             await this.setProgress(trc, 1);
             return;
         }
+        // Let activites know if this DB has been loaded from a prebuilt database
+        this.context.usedPrebuilt = true;
         // reinstate syncProgressType value which gets overriden by importRemoteGraphDatabase.
         await SyncHelpers_1.updateSyncProgressType(trc, this.context.syncEngine, conduit_view_types_1.SyncProgressType.INITIAL_DOWNSYNC);
         conduit_utils_1.traceTestCounts(trc, { importRemoteGraphDatabase: 1 });
@@ -149,7 +159,7 @@ class FetchPrebuiltDatabaseActivity extends SyncActivity_1.SyncActivity {
                 await NotebookConverter_1.initPendingOfflineNoteSyncStates(trc, tx, syncEngine.offlineContentStrategy, syncEngine.localSettings, syncEngine.userId);
             });
             // and kickoff content fetch in the background
-            await this.context.syncManager.addActivity(trc, new ContentFetchSyncActivity_1.ContentFetchSyncActivity(this.di, this.context));
+            await this.context.syncManager.addActivity(trc, new ContentFetchSyncActivity_1.ContentFetchSyncActivity(this.di, this.context, null));
         }
         if (this.di.loadingScreenConfig.showDuringIncrementalSyncAfterPrebuilt) {
             const incremental = new IncrementalSyncActivity_1.IncrementalSyncActivity(this.di, this.context, SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC, FINAL_ACTIVITY_ORDER.INCREMENTAL_SYNC, undefined, true);
@@ -159,6 +169,7 @@ class FetchPrebuiltDatabaseActivity extends SyncActivity_1.SyncActivity {
         await this.context.syncManager.removeActivitiesByType(trc, [
             SyncActivity_1.SyncActivityType.SchemaMigrationCompleteActivity,
             SyncActivity_1.SyncActivityType.BootstrapActivity,
+            SyncActivity_1.SyncActivityType.VaultBootstrapActivity,
             SyncActivity_1.SyncActivityType.NotesCountFetchActivity,
             SyncActivity_1.SyncActivityType.NotesFetchActivity,
             SyncActivity_1.SyncActivityType.BackgroundNoteSyncActivity,
@@ -192,7 +203,7 @@ class UserUpdateActivity extends SyncActivity_1.SyncActivity {
         // 1. logged in and have an empty DB; the login process already added the user to the graph
         // 2. the DB was cleared for some other reason (DB version mismatch or mutation)
         // In case 1 we don't need to do anything, so check that first:
-        if (await syncEngine.graphStorage.getNode(trc, null, { id: conduit_core_1.PERSONAL_USER_ID, type: en_data_model_1.CoreEntityTypes.User })) {
+        if (await syncEngine.graphStorage.getNode(trc, null, { id: conduit_core_1.PERSONAL_USER_ID, type: en_core_entity_types_1.CoreEntityTypes.User })) {
             return;
         }
         // For case 2, fetch user and vault user from the service and convert to graph nodes
@@ -254,7 +265,7 @@ class BootstrapActivity extends SyncActivity_1.SyncActivity {
     get progressBucketSize() { return 10000; }
     constructor(di, context, forVault, shouldBootstrapNotes, subpriority = 0, timeout = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.BootstrapActivity,
+            activityType: forVault ? SyncActivity_1.SyncActivityType.VaultBootstrapActivity : SyncActivity_1.SyncActivityType.BootstrapActivity,
             priority: SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC,
             subpriority,
             runAfter: Date.now() + timeout,
@@ -271,6 +282,14 @@ class BootstrapActivity extends SyncActivity_1.SyncActivity {
 }
 SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.BootstrapActivity, (di, context, p, timeout) => {
     return new BootstrapActivity(di, context, p.options.forVault, p.options.shouldBootstrapNotes, p.subpriority, timeout);
+});
+class VaultBootstrapActivity extends BootstrapActivity {
+    constructor(di, context, shouldBootstrapNotes, subpriority = 0, timeout = 0) {
+        super(di, context, true, shouldBootstrapNotes, subpriority, timeout);
+    }
+}
+SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.VaultBootstrapActivity, (di, context, p, timeout) => {
+    return new VaultBootstrapActivity(di, context, p.options.shouldBootstrapNotes, p.subpriority, timeout);
 });
 /*********************************************************/
 class BetaFeatureSyncActivity extends SyncActivity_1.SyncActivity {
@@ -569,8 +588,6 @@ class NSyncInitialDownsyncActivity extends SyncActivity_1.SyncActivity {
         }
         const syncParams = this.initParams('personal', 'initialDownsync', exports.INITIAL_DOWNSYNC_CHUNK_TIMEBOX);
         if (syncEventManager.isEnabled()) {
-            await syncEventManager.clearBackoff(trc);
-            await syncEventManager.clearConnectionInfo(trc);
             await new Promise((resolve, reject) => {
                 syncEventManager.setMessageConsumer(msg => {
                     switch (msg.type) {
@@ -592,6 +609,7 @@ class NSyncInitialDownsyncActivity extends SyncActivity_1.SyncActivity {
                     }
                 });
             });
+            await syncEventManager.flush(trc, syncParams);
         }
         syncParams.setProgress && await syncParams.setProgress(trc, 1); // TODO: move syncParams into downsync and make progress granular
     }
@@ -622,7 +640,7 @@ async function addInitialDownsyncActivities(trc, di, context, tx) {
     }
     const shouldBootstrapNotes = isDownsyncMode(conduit_view_types_1.DownsyncMode.LEGACY, conduit_view_types_1.DownsyncMode.LEGACY_FOR_PREBUILT);
     if (hasVault) {
-        await context.syncManager.addActivity(trc, new BootstrapActivity(di, context, true, shouldBootstrapNotes, order++), tx);
+        await context.syncManager.addActivity(trc, new VaultBootstrapActivity(di, context, shouldBootstrapNotes, order++), tx);
     }
     await context.syncManager.addActivity(trc, new BootstrapActivity(di, context, false, shouldBootstrapNotes, order++), tx);
     await context.syncManager.addActivity(trc, new NSyncInitActivity_1.NSyncInitActivity(di, context, order++), tx);

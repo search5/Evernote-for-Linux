@@ -6,10 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.FileResolverDI = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Auth_1 = require("../Auth");
-const BlobWithContent = conduit_core_1.schemaToGraphQLType(Object.assign(Object.assign({}, en_data_model_1.BlobV2Schema), { content: 'string?' }), 'File', false);
-const BlobWithoutContent = conduit_core_1.schemaToGraphQLType(Object.assign({}, en_data_model_1.BlobV2Schema), 'FileWithoutContent', false);
+const BlobWithContent = conduit_core_1.schemaToGraphQLType(Object.assign(Object.assign({}, en_core_entity_types_1.BlobV2Schema), { content: 'string?' }), 'File', false);
+const BlobWithoutContent = conduit_core_1.schemaToGraphQLType(Object.assign({}, en_core_entity_types_1.BlobV2Schema), 'FileWithoutContent', false);
 async function resolveUrl(hostResolver, urlEncoder, context, node, blobName, overrideUrlHost) {
     if (!node.NodeFields[blobName].path) {
         return null;

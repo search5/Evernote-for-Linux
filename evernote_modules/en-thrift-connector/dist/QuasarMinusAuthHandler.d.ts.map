@@ -1,1 +1,0 @@
-{"version":3,"file":"QuasarMinusAuthHandler.d.ts","sourceRoot":"","sources":["../src/QuasarMinusAuthHandler.ts"],"names":[],"mappings":"AAMA,OAAO,EAAE,QAAQ,EAAkB,MAAM,QAAQ,CAAC;AAKlD,UAAU,+BAA+B;IACvC,cAAc,CAAC,QAAQ,EAAE,QAAQ,GAAG;QAAE,aAAa,EAAE,MAAM,CAAC;QAAC,oBAAoB,EAAE,MAAM,CAAC;KAAE,CAAC;CAC9F;AAED,eAAO,MAAM,sBAAsB,EAAE,+BAkBpC,CAAC"}

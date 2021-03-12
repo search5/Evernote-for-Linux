@@ -14,6 +14,12 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
@@ -378,6 +384,7 @@ class MultiUserManager {
         // Change current to no user.
         // Handles logout.
         if (unsafeID === null) {
+            conduit_utils_1.logger.info('Releasing the current user information');
             await this.multiUserStore.transact(trc, 'MUM.setCurrentUser', async (db) => {
                 await db.setValue(trc, CURRENT_USER_TABLE, CURRENT_USER_KEY, {
                     userID: null,
@@ -398,6 +405,7 @@ class MultiUserManager {
         const id = await this.assertValidUserAuthToken(trc, unsafeID);
         const multiUser = await this.multiUserStore.getValue(trc, null, MULTI_USER_TABLE, conduit_utils_1.keyStringForUserID(id));
         const prefixInDB = multiUser && multiUser.prefix;
+        conduit_utils_1.logger.info(`Starting a new user session with User ID ${id}`);
         // new start (so we have no stored user nor prefix)
         // Handles new login
         if (!prefixInDB) {
@@ -434,6 +442,7 @@ class MultiUserManager {
                 });
                 // switching user on logout. Need to remove current user from the user db.
                 if (currentUserID && logout) {
+                    conduit_utils_1.logger.info(`Removing the information of the current user ${currentUserID}`);
                     await db.removeValue(trc, MULTI_USER_TABLE, conduit_utils_1.keyStringForUserID(currentUserID));
                 }
             });
@@ -478,5 +487,8 @@ class MultiUserManager {
         });
     }
 }
+__decorate([
+    conduit_utils_1.traceAsync('MultiUserManager')
+], MultiUserManager.prototype, "init", null);
 exports.MultiUserManager = MultiUserManager;
 //# sourceMappingURL=MultiUserManager.js.map

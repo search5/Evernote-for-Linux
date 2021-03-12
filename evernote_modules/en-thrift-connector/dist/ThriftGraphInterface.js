@@ -26,13 +26,13 @@ exports.ThriftGraphInterface = exports.ErrorWithCleanup = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_nsync_connector_1 = require("en-nsync-connector");
 const Auth = __importStar(require("./Auth"));
 const BlobConverter = __importStar(require("./Converters/BlobConverter"));
 const Converters_1 = require("./Converters/Converters");
 const Helpers_1 = require("./Converters/Helpers");
 const Helpers_2 = require("./Helpers");
-const index_1 = require("./index");
 const MAX_ATTEMPTS = 5;
 // Internal conduit error used to identify any cleanup for a failed mutation.
 // Should be used with care as it could lead to data inconsistencies if mutation succeeds partially.
@@ -45,7 +45,7 @@ class ErrorWithCleanup extends Error {
 }
 exports.ErrorWithCleanup = ErrorWithCleanup;
 function isGuidInUseError(err) {
-    return Boolean(err instanceof conduit_utils_1.ServiceError && err.errorCode === index_1.EDAMErrorCode.DATA_CONFLICT && err.errorKey.match(/\w+\.guid/));
+    return Boolean(err instanceof conduit_utils_1.ServiceError && err.errorCode === en_conduit_sync_types_1.EDAMErrorCode.DATA_CONFLICT && err.errorKey.match(/\w+\.guid/));
 }
 function isCommandRun(change) {
     return change.command !== undefined;
@@ -78,14 +78,17 @@ class ThriftGraphInterface {
             });
         };
         this.runExecutionPlan = async (trc, mutation, plan) => {
-            let { mutationTimestamp } = await this.runExecutionPlanInternal(trc, mutation, plan.ops, undefined);
+            let deps = null;
+            const { deps: earlySyncChanges } = await this.runExecutionPlanInternal(trc, mutation, plan.ops, deps);
+            deps = conduit_core_1.mergeMutationDependencies(deps, earlySyncChanges);
             if (plan.lateOps) {
-                mutationTimestamp = (await this.runExecutionPlanInternal(trc, mutation, plan.lateOps, mutationTimestamp)).mutationTimestamp;
+                const { deps: lateSyncChanges } = await this.runExecutionPlanInternal(trc, mutation, plan.lateOps, deps);
+                deps = conduit_core_1.mergeMutationDependencies(deps, lateSyncChanges);
             }
-            return mutationTimestamp;
+            return deps;
         };
         this.runRemoteCommand = async (trc, mutation, command) => {
-            const { result } = await this.runExecutionPlanInternal(trc, mutation, [command], undefined);
+            const { result } = await this.runExecutionPlanInternal(trc, mutation, [command], null);
             return result;
         };
         this.fetchEntity = async (trc, nodeRef) => {
@@ -166,11 +169,10 @@ class ThriftGraphInterface {
             edgeConverter,
         };
     }
-    async processChangeWithRetry(trc, mutation, mutatorParams, change) {
+    async processChangeWithRetry(trc, mutation, mutatorParams, change, deps) {
         let converter = null;
         let currentChange = change;
         let attempt = 0;
-        let lastTimestamp;
         let result = null;
         while (attempt < MAX_ATTEMPTS) {
             try {
@@ -277,7 +279,8 @@ class ThriftGraphInterface {
                         break;
                     }
                     case 'Custom': {
-                        lastTimestamp = await this.config.dispatchCustomCommand(trc, mutatorParams.personalAuth, mutation, currentChange.commandName, currentChange.params);
+                        const newDeps = await this.config.dispatchCustomCommand(trc, mutatorParams.personalAuth, mutation, currentChange.commandName, currentChange.params);
+                        deps = conduit_core_1.mergeMutationDependencies(deps, newDeps);
                         break;
                     }
                     default:
@@ -319,9 +322,9 @@ class ThriftGraphInterface {
             }
             attempt++;
         }
-        return { lastTimestamp, result };
+        return { result, deps };
     }
-    async runExecutionPlanInternal(trc, mutation, changes, mutationTimestamp) {
+    async runExecutionPlanInternal(trc, mutation, changes, deps) {
         var _a;
         let errWithCleanup;
         const authCache = {};
@@ -361,7 +364,7 @@ class ThriftGraphInterface {
                     offlineContentStrategy: this.config.offlineContentStrategy,
                 });
                 const mutatorParams = Object.assign(Object.assign({}, params), { personalAuth, thriftComm: this.config.thriftComm });
-                const mutationRes = await conduit_utils_1.withError(this.processChangeWithRetry(trc, mutation, mutatorParams, change));
+                const mutationRes = await conduit_utils_1.withError(this.processChangeWithRetry(trc, mutation, mutatorParams, change, deps));
                 if (mutationRes.err) {
                     if (mutationRes.err instanceof ErrorWithCleanup) {
                         // break here but don't throw error to make sure transaction changes go through
@@ -373,23 +376,18 @@ class ThriftGraphInterface {
                         throw mutationRes.err;
                     }
                 }
-                if (mutationRes.data) {
-                    if (mutationRes.data.lastTimestamp !== undefined) {
-                        mutationTimestamp = (mutationTimestamp || 0) > (mutationRes.data.lastTimestamp || 0) ? mutationTimestamp : mutationRes.data.lastTimestamp;
-                    }
+                else {
                     if (mutationRes.data.result) {
                         result = mutationRes.data.result;
                     }
+                    deps = conduit_core_1.mergeMutationDependencies(deps, mutationRes.data.deps);
                 }
             }
         });
         if (errWithCleanup instanceof ErrorWithCleanup) {
             throw errWithCleanup.actualErr;
         }
-        return {
-            mutationTimestamp,
-            result,
-        };
+        return { result, deps };
     }
     async fetchEntities(trc, nodeType, ids) {
         if (!ids.length) {

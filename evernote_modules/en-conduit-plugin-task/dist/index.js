@@ -25,7 +25,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getENTaskPlugin = exports.parseAndValidateTasksExportData = exports.getTaskUserSettingsIdByUserId = exports.getTasksExportData = exports.notificationManagerSNUtilityDI = exports.notificationDataExtractor = exports.ScheduledNotificationType = exports.NotificationActionNames = exports.getDependencyRefsForSN = exports.genScheduledNotificationId = exports.genTasksDataCreateOps = exports.getNoteContentInfoIDByNoteID = exports.NOTIFICATION_DEFAULT_TITLE = void 0;
+exports.getENTaskPlugin = exports.genScheduledNotificationId = exports.parseAndValidateTasksExportData = exports.getTaskUserSettingsIdByUserId = exports.getTasksExportData = exports.genTasksDataCreateOps = exports.getNoteContentInfoIDByNoteID = void 0;
 const conduit_core_1 = require("conduit-core");
 const NoteContentInfoConverter_1 = require("./Converters/NoteContentInfoConverter");
 const ReminderConverter_1 = require("./Converters/ReminderConverter");
@@ -35,7 +35,6 @@ const NoteContentInfoDataResolver_1 = require("./DataResolvers/NoteContentInfoDa
 const DefaultTaskNote_1 = require("./DefaultTaskNote");
 const NoteContentInfo_1 = require("./EntityTypes/NoteContentInfo");
 const Reminder_1 = require("./EntityTypes/Reminder");
-const ScheduledNotification_1 = require("./EntityTypes/ScheduledNotification");
 const Task_1 = require("./EntityTypes/Task");
 const TaskUserSettings_1 = require("./EntityTypes/TaskUserSettings");
 const GetTaskUserSettingsQuery_1 = require("./GetTaskUserSettingsQuery");
@@ -49,28 +48,17 @@ const ScheduledNotificationRules_1 = require("./Rules/ScheduledNotificationRules
 const TaskDeleteContainmentRules_1 = require("./Rules/TaskDeleteContainmentRules");
 const TaskConstants_1 = require("./TaskConstants");
 const TaskGroupResolver_1 = require("./TaskGroupResolver");
-var ScheduledNotification_2 = require("./EntityTypes/ScheduledNotification");
-Object.defineProperty(exports, "NOTIFICATION_DEFAULT_TITLE", { enumerable: true, get: function () { return ScheduledNotification_2.NOTIFICATION_DEFAULT_TITLE; } });
 var NoteContentInfo_2 = require("./Mutators/Helpers/NoteContentInfo");
 Object.defineProperty(exports, "getNoteContentInfoIDByNoteID", { enumerable: true, get: function () { return NoteContentInfo_2.getNoteContentInfoIDByNoteID; } });
 var NoteContentInfo_3 = require("./Mutators/Helpers/NoteContentInfo");
 Object.defineProperty(exports, "genTasksDataCreateOps", { enumerable: true, get: function () { return NoteContentInfo_3.genTasksDataCreateOps; } });
-var ScheduledNotificationUtils_1 = require("./ScheduledNotifications/ScheduledNotificationUtils");
-Object.defineProperty(exports, "genScheduledNotificationId", { enumerable: true, get: function () { return ScheduledNotificationUtils_1.genScheduledNotificationId; } });
-Object.defineProperty(exports, "getDependencyRefsForSN", { enumerable: true, get: function () { return ScheduledNotificationUtils_1.getDependencyRefsForSN; } });
-var ScheduledNotificationConstants_1 = require("./ScheduledNotifications/ScheduledNotificationConstants");
-Object.defineProperty(exports, "NotificationActionNames", { enumerable: true, get: function () { return ScheduledNotificationConstants_1.NotificationActionNames; } });
-Object.defineProperty(exports, "ScheduledNotificationType", { enumerable: true, get: function () { return ScheduledNotificationConstants_1.ScheduledNotificationType; } });
-var notificationDataExtractor_1 = require("./ScheduledNotifications/notificationDataExtractor");
-Object.defineProperty(exports, "notificationDataExtractor", { enumerable: true, get: function () { return notificationDataExtractor_1.notificationDataExtractor; } });
-var notificationManagerSNUtilityDI_1 = require("./ScheduledNotifications/notificationManagerSNUtilityDI");
-Object.defineProperty(exports, "notificationManagerSNUtilityDI", { enumerable: true, get: function () { return notificationManagerSNUtilityDI_1.notificationManagerSNUtilityDI; } });
-__exportStar(require("./ScheduledNotifications/Types"), exports);
 __exportStar(require("./TaskConstants"), exports);
 var TaskUtils_1 = require("./TaskUtils");
 Object.defineProperty(exports, "getTasksExportData", { enumerable: true, get: function () { return TaskUtils_1.getTasksExportData; } });
 Object.defineProperty(exports, "getTaskUserSettingsIdByUserId", { enumerable: true, get: function () { return TaskUtils_1.getTaskUserSettingsIdByUserId; } });
 Object.defineProperty(exports, "parseAndValidateTasksExportData", { enumerable: true, get: function () { return TaskUtils_1.parseAndValidateTasksExportData; } });
+var ScheduledNotificationUtils_1 = require("./ScheduledNotifications/ScheduledNotificationUtils");
+Object.defineProperty(exports, "genScheduledNotificationId", { enumerable: true, get: function () { return ScheduledNotificationUtils_1.genScheduledNotificationId; } });
 var NSyncEntityType;
 (function (NSyncEntityType) {
     NSyncEntityType[NSyncEntityType["NOTE_CONTENT_INFO"] = 14] = "NOTE_CONTENT_INFO";
@@ -105,6 +93,7 @@ function getENTaskPlugin() {
                     description: 'Getting the TaskUserSetting for the current user.',
                 },
                 ['Note.taskGroups']: TaskGroupResolver_1.TaskGroupResolver,
+                ['NoteContentInfo.taskGroups']: TaskGroupResolver_1.NoteContentInfoTaskGroupsResolver,
             };
             return queries;
         },
@@ -120,10 +109,6 @@ function getENTaskPlugin() {
                     typeDef: Reminder_1.reminderTypeDef,
                     indexConfig: Reminder_1.reminderIndexConfig,
                     nsyncConverters: { [NSyncEntityType.REMINDER]: ReminderConverter_1.getReminderNodeAndEdges },
-                },
-                [TaskConstants_1.TaskEntityTypes.ScheduledNotification]: {
-                    typeDef: ScheduledNotification_1.scheduledNotificationTypeDef,
-                    indexConfig: ScheduledNotification_1.scheduledNotificationIndexConfig,
                 },
                 [TaskConstants_1.TaskEntityTypes.Task]: {
                     typeDef: Task_1.taskTypeDef,

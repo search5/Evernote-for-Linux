@@ -6,8 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.addUserMutators = exports.addUserRequestQueries = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_view_types_1 = require("conduit-view-types");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const Auth_1 = require("../Auth");
-const ThriftTypes_1 = require("../ThriftTypes");
 const TSD_VARIATION_ENUM = [
     'DIALOG_VAR1',
     'FULLSCREEN1BUTTON_DISMISS',
@@ -31,32 +31,32 @@ const TSD_VARIATION_ENUM = [
     'TEST_UNSUPPORTED',
 ];
 const TSD_TYPE_THRIFT_TO_ENUM = {
-    [ThriftTypes_1.TTsdType.REGULAR_TSD]: 'REGULAR_TSD',
-    [ThriftTypes_1.TTsdType.TARGETED_UPSELL]: 'TARGETED_UPSELL',
+    [en_conduit_sync_types_1.TTsdType.REGULAR_TSD]: 'REGULAR_TSD',
+    [en_conduit_sync_types_1.TTsdType.TARGETED_UPSELL]: 'TARGETED_UPSELL',
 };
 const TSD_VARIATION_THRIFT_TO_ENUM = {
-    [ThriftTypes_1.TTsdVariation.DIALOG_VAR1]: 'DIALOG_VAR1',
-    [ThriftTypes_1.TTsdVariation.FULLSCREEN1BUTTON_DISMISS]: 'FULLSCREEN1BUTTON_DISMISS',
-    [ThriftTypes_1.TTsdVariation.FULLSCREEN1BUTTON_NODISMISS]: 'FULLSCREEN1BUTTON_NODISMISS',
-    [ThriftTypes_1.TTsdVariation.FULLSCREEN1BUTTON_TIERPATH]: 'FULLSCREEN1BUTTON_TIERPATH',
-    [ThriftTypes_1.TTsdVariation.FULLSCREEN1BUTTON_VAR2]: 'FULLSCREEN1BUTTON_VAR2',
-    [ThriftTypes_1.TTsdVariation.FULLSCREEN3BUTTONS_DEFAULT]: 'FULLSCREEN3BUTTONS_DEFAULT',
-    [ThriftTypes_1.TTsdVariation.FULLSCREEN3BUTTONS_DISMISS]: 'FULLSCREEN3BUTTONS_DISMISS',
-    [ThriftTypes_1.TTsdVariation.FULLSCREEN3BUTTONS_NODISMISS]: 'FULLSCREEN3BUTTONS_NODISMISS',
-    [ThriftTypes_1.TTsdVariation.FULLSCREEN3BUTTONS_BEFOREFLE]: 'FULLSCREEN3BUTTONS_BEFOREFLE',
-    [ThriftTypes_1.TTsdVariation.MODAL_DEFAULT]: 'MODAL_DEFAULT',
-    [ThriftTypes_1.TTsdVariation.NOTIFICATION_ASPIRATIONAL]: 'NOTIFICATION_ASPIRATIONAL',
-    [ThriftTypes_1.TTsdVariation.NOTIFICATION_STORAGE]: 'NOTIFICATION_STORAGE',
-    [ThriftTypes_1.TTsdVariation.SHEET_ASPIRATIONAL]: 'SHEET_ASPIRATIONAL',
-    [ThriftTypes_1.TTsdVariation.SHEET_STORAGE]: 'SHEET_STORAGE',
-    [ThriftTypes_1.TTsdVariation.BANNER_LEARNMORE]: 'BANNER_LEARNMORE',
-    [ThriftTypes_1.TTsdVariation.BANNER_UPGRADE]: 'BANNER_UPGRADE',
-    [ThriftTypes_1.TTsdVariation.FULLSCREEN_SINGLESDAY]: 'FULLSCREEN_SINGLESDAY',
-    [ThriftTypes_1.TTsdVariation.FULLSCREEN_DISCOUNT]: 'FULLSCREEN_DISCOUNT',
-    [ThriftTypes_1.TTsdVariation.FULLSCREEN_NEWYEAR]: 'FULLSCREEN_NEWYEAR',
-    [ThriftTypes_1.TTsdVariation.TEST_UNSUPPORTED]: 'TEST_UNSUPPORTED',
+    [en_conduit_sync_types_1.TTsdVariation.DIALOG_VAR1]: 'DIALOG_VAR1',
+    [en_conduit_sync_types_1.TTsdVariation.FULLSCREEN1BUTTON_DISMISS]: 'FULLSCREEN1BUTTON_DISMISS',
+    [en_conduit_sync_types_1.TTsdVariation.FULLSCREEN1BUTTON_NODISMISS]: 'FULLSCREEN1BUTTON_NODISMISS',
+    [en_conduit_sync_types_1.TTsdVariation.FULLSCREEN1BUTTON_TIERPATH]: 'FULLSCREEN1BUTTON_TIERPATH',
+    [en_conduit_sync_types_1.TTsdVariation.FULLSCREEN1BUTTON_VAR2]: 'FULLSCREEN1BUTTON_VAR2',
+    [en_conduit_sync_types_1.TTsdVariation.FULLSCREEN3BUTTONS_DEFAULT]: 'FULLSCREEN3BUTTONS_DEFAULT',
+    [en_conduit_sync_types_1.TTsdVariation.FULLSCREEN3BUTTONS_DISMISS]: 'FULLSCREEN3BUTTONS_DISMISS',
+    [en_conduit_sync_types_1.TTsdVariation.FULLSCREEN3BUTTONS_NODISMISS]: 'FULLSCREEN3BUTTONS_NODISMISS',
+    [en_conduit_sync_types_1.TTsdVariation.FULLSCREEN3BUTTONS_BEFOREFLE]: 'FULLSCREEN3BUTTONS_BEFOREFLE',
+    [en_conduit_sync_types_1.TTsdVariation.MODAL_DEFAULT]: 'MODAL_DEFAULT',
+    [en_conduit_sync_types_1.TTsdVariation.NOTIFICATION_ASPIRATIONAL]: 'NOTIFICATION_ASPIRATIONAL',
+    [en_conduit_sync_types_1.TTsdVariation.NOTIFICATION_STORAGE]: 'NOTIFICATION_STORAGE',
+    [en_conduit_sync_types_1.TTsdVariation.SHEET_ASPIRATIONAL]: 'SHEET_ASPIRATIONAL',
+    [en_conduit_sync_types_1.TTsdVariation.SHEET_STORAGE]: 'SHEET_STORAGE',
+    [en_conduit_sync_types_1.TTsdVariation.BANNER_LEARNMORE]: 'BANNER_LEARNMORE',
+    [en_conduit_sync_types_1.TTsdVariation.BANNER_UPGRADE]: 'BANNER_UPGRADE',
+    [en_conduit_sync_types_1.TTsdVariation.FULLSCREEN_SINGLESDAY]: 'FULLSCREEN_SINGLESDAY',
+    [en_conduit_sync_types_1.TTsdVariation.FULLSCREEN_DISCOUNT]: 'FULLSCREEN_DISCOUNT',
+    [en_conduit_sync_types_1.TTsdVariation.FULLSCREEN_NEWYEAR]: 'FULLSCREEN_NEWYEAR',
+    [en_conduit_sync_types_1.TTsdVariation.TEST_UNSUPPORTED]: 'TEST_UNSUPPORTED',
 };
-function addUserRequestQueries(thriftComm, out) {
+function addUserRequestQueries(out) {
     async function userGetTsdEligibilityResolver(parent, args, context) {
         conduit_core_1.validateDB(context);
         if (!args) {
@@ -67,7 +67,7 @@ function addUserRequestQueries(thriftComm, out) {
             throw new Error('Not logged in');
         }
         const auth = Auth_1.decodeAuthData(authState.token);
-        const store = thriftComm.getUtilityStore(auth.urls.utilityUrl);
+        const store = context.thriftComm.getUtilityStore(auth.urls.utilityUrl);
         const res = await store.getTsdEligibility(context.trc, auth.token, {
             numSessionsLast7Days: args.numSessionsLast7Days,
             numSessionsLast30Days: args.numSessionsLast30Days,
@@ -97,7 +97,7 @@ function addUserRequestQueries(thriftComm, out) {
     };
 }
 exports.addUserRequestQueries = addUserRequestQueries;
-function addUserMutators(thriftComm, out) {
+function addUserMutators(out) {
     async function userAssociateWithOpenIDResolver(_, args, context) {
         conduit_core_1.validateDB(context);
         const authState = await context.db.getAuthTokenAndState(context.trc, null);
@@ -111,8 +111,8 @@ function addUserMutators(thriftComm, out) {
             throw new Error('No token payload');
         }
         let prov;
-        if (!args.provider || Auth_1.SERVICE_PROVIDER_STRING_TO_ENUM[args.provider] === ThriftTypes_1.TServiceProvider.GOOGLE) {
-            prov = ThriftTypes_1.TServiceProvider.GOOGLE;
+        if (!args.provider || Auth_1.SERVICE_PROVIDER_STRING_TO_ENUM[args.provider] === en_conduit_sync_types_1.TServiceProvider.GOOGLE) {
+            prov = en_conduit_sync_types_1.TServiceProvider.GOOGLE;
         }
         else {
             throw new Error('Only google supported as service provider for now');
@@ -122,7 +122,7 @@ function addUserMutators(thriftComm, out) {
             serviceProvider: prov,
         };
         const auth = Auth_1.decodeAuthData(authState.token);
-        const utilityStore = thriftComm.getUtilityStore(auth.urls.utilityUrl);
+        const utilityStore = context.thriftComm.getUtilityStore(auth.urls.utilityUrl);
         await utilityStore.associateOpenIDWithUser(context.trc, auth.token, credential);
         return { success: true };
     }

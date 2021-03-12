@@ -33,15 +33,17 @@ const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const Auth_1 = require("../Auth");
-const ThriftTypes_1 = require("../ThriftTypes");
+const Helpers_1 = require("../Helpers");
 const AccountLimitsConverter = __importStar(require("./AccountLimitsConverter"));
 const BlobConverter_1 = require("./BlobConverter");
 const Converters_1 = require("./Converters");
-const Helpers_1 = require("./Helpers");
+const Helpers_2 = require("./Helpers");
 const MembershipConverter_1 = require("./MembershipConverter");
+const MessageConverter_1 = require("./MessageConverter");
 const NotebookConverter_1 = require("./NotebookConverter");
 const ProfileConverter_1 = require("./ProfileConverter");
 const ResourceConverter_1 = require("./ResourceConverter");
@@ -52,19 +54,20 @@ async function shareNoteWithContacts(trc, params, syncContext, syncContextMetada
     if (!syncContextMetadata || !syncContextMetadata.userID) {
         throw new Error(`Unable to find owningUserID for syncContext ${syncContext}`);
     }
-    const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+    const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
     const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
     const messageStore = params.thriftComm.getMessageStore(params.personalAuth.urls.messageStoreUrl);
     const messageThreads = [];
+    const messageBody = MessageConverter_1.validateAndCreateMessageBody(inviteParams.message);
     if (splitMessages) {
         for (const contact of contacts) {
             messageThreads.push({
                 message: {
-                    body: `<msg>${inviteParams.message}</msg>`,
+                    body: messageBody,
                     attachments: [{
-                            type: ThriftTypes_1.TMessageAttachmentType.NOTE,
+                            type: en_conduit_sync_types_1.TMessageAttachmentType.NOTE,
                             title,
-                            guid: Converters_1.convertGuidToService(inviteParams.note, en_data_model_1.CoreEntityTypes.Note),
+                            guid: Converters_1.convertGuidToService(inviteParams.note, en_core_entity_types_1.CoreEntityTypes.Note),
                             shardId: auth.shard,
                             userId: syncContextMetadata.userID,
                         }],
@@ -77,11 +80,11 @@ async function shareNoteWithContacts(trc, params, syncContext, syncContextMetada
     else {
         messageThreads.push({
             message: {
-                body: `<msg>${inviteParams.message}</msg>`,
+                body: messageBody,
                 attachments: [{
-                        type: ThriftTypes_1.TMessageAttachmentType.NOTE,
+                        type: en_conduit_sync_types_1.TMessageAttachmentType.NOTE,
                         title,
-                        guid: Converters_1.convertGuidToService(inviteParams.note, en_data_model_1.CoreEntityTypes.Note),
+                        guid: Converters_1.convertGuidToService(inviteParams.note, en_core_entity_types_1.CoreEntityTypes.Note),
                         shardId: auth.shard,
                         userId: syncContextMetadata.userID,
                     }],
@@ -91,7 +94,7 @@ async function shareNoteWithContacts(trc, params, syncContext, syncContextMetada
         });
     }
     const shareTemplate = {
-        noteGuid: Converters_1.convertGuidToService(inviteParams.note, en_data_model_1.CoreEntityTypes.Note),
+        noteGuid: Converters_1.convertGuidToService(inviteParams.note, en_core_entity_types_1.CoreEntityTypes.Note),
         recipientContacts: contacts,
         privilege: inviteParams.privilege,
     };
@@ -109,7 +112,7 @@ async function shareNoteWithContacts(trc, params, syncContext, syncContextMetada
                     // This call created the share, but was unable to send the invite message. Roll back the share.
                     if (splitMessages) {
                         // Only the problem one should get removed
-                        if (share.recipientIdentity.contact.type === ThriftTypes_1.TContactType.EMAIL) {
+                        if (share.recipientIdentity.contact.type === en_conduit_sync_types_1.TContactType.EMAIL) {
                             if (share.recipientIdentity.contact.id === message.participants[0].id) {
                                 invitationsToUnshare.push(share.recipientIdentity.id);
                             }
@@ -121,7 +124,7 @@ async function shareNoteWithContacts(trc, params, syncContext, syncContextMetada
                         }
                     }
                     else {
-                        if (share.recipientIdentity.contact.type === ThriftTypes_1.TContactType.EMAIL) {
+                        if (share.recipientIdentity.contact.type === en_conduit_sync_types_1.TContactType.EMAIL) {
                             invitationsToUnshare.push(share.recipientIdentity.id);
                         }
                         else {
@@ -148,23 +151,23 @@ async function shareNoteWithContacts(trc, params, syncContext, syncContextMetada
 function noteFromService(trc, params, syncContext, syncContextMetadata, serviceData, contentDownloaded = false) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
     const limits = serviceData.limits || {};
-    const noteID = Converters_1.convertGuidFromService(serviceData.guid, en_data_model_1.CoreEntityTypes.Note);
+    const noteID = Converters_1.convertGuidFromService(serviceData.guid, en_core_entity_types_1.CoreEntityTypes.Note);
     const contentBlobData = {
         bodyHash: serviceData.contentHash,
         size: serviceData.contentLength,
         body: serviceData.content,
     };
-    const isExternal = Boolean(syncContext.match(en_data_model_1.EXTERNAL_CONTEXT_REGEX));
+    const isExternal = Boolean(syncContext.match(Helpers_1.EXTERNAL_CONTEXT_REGEX));
     const note = {
         id: noteID,
-        type: en_data_model_1.CoreEntityTypes.Note,
+        type: en_core_entity_types_1.CoreEntityTypes.Note,
         version: serviceData.updateSequenceNum || 0,
         syncContexts: [],
         localChangeTimestamp: 0,
         label: serviceData.title || 'Untitled',
         NodeFields: {
             isMetadata: Boolean(serviceData.isMetadata),
-            isUntitled: Boolean(((_a = serviceData.attributes) === null || _a === void 0 ? void 0 : _a.noteTitleQuality) === ThriftTypes_1.EDAM_NOTE_TITLE_QUALITY_UNTITLED),
+            isUntitled: Boolean(((_a = serviceData.attributes) === null || _a === void 0 ? void 0 : _a.noteTitleQuality) === en_conduit_sync_types_1.EDAM_NOTE_TITLE_QUALITY_UNTITLED),
             deleted: serviceData.deleted || null,
             created: serviceData.created || 0,
             updated: serviceData.updated || 0,
@@ -239,8 +242,8 @@ function noteFromService(trc, params, syncContext, syncContextMetadata, serviceD
     const creatorId = ((_t = serviceData.attributes) === null || _t === void 0 ? void 0 : _t.creatorId) || syncContextMetadata.userID;
     if (creatorId !== null) {
         conduit_storage_1.addOutputEdgeToNode(note, 'creator', {
-            id: Converters_1.convertGuidFromService(creatorId, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User),
-            type: en_data_model_1.CoreEntityTypes.Profile,
+            id: Converters_1.convertGuidFromService(creatorId, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User),
+            type: en_core_entity_types_1.CoreEntityTypes.Profile,
             port: null,
         });
     }
@@ -249,52 +252,52 @@ function noteFromService(trc, params, syncContext, syncContextMetadata, serviceD
     }
     if (serviceData.attributes && serviceData.attributes.lastEditorId) {
         conduit_storage_1.addOutputEdgeToNode(note, 'lastEditor', {
-            id: Converters_1.convertGuidFromService(serviceData.attributes.lastEditorId, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User),
-            type: en_data_model_1.CoreEntityTypes.Profile,
+            id: Converters_1.convertGuidFromService(serviceData.attributes.lastEditorId, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User),
+            type: en_core_entity_types_1.CoreEntityTypes.Profile,
             port: null,
         });
     }
     if (serviceData.notebookGuid) {
         const port = note.NodeFields.deleted ? 'childrenInTrash' : 'children';
-        const notebookID = Converters_1.convertGuidFromService(serviceData.notebookGuid, en_data_model_1.CoreEntityTypes.Notebook);
+        const notebookID = Converters_1.convertGuidFromService(serviceData.notebookGuid, en_core_entity_types_1.CoreEntityTypes.Notebook);
         const wsId = params.backingNbToWs[notebookID];
         if (wsId) {
             // note belongs to backing nb of a workspace. Add direct link to ws instead
             conduit_storage_1.addInputEdgeToNode(note, 'parent', {
                 id: wsId,
                 port,
-                type: en_data_model_1.CoreEntityTypes.Workspace,
+                type: en_core_entity_types_1.CoreEntityTypes.Workspace,
             });
         }
         else {
             conduit_storage_1.addInputEdgeToNode(note, 'parent', {
                 id: notebookID,
                 port,
-                type: en_data_model_1.CoreEntityTypes.Notebook,
+                type: en_core_entity_types_1.CoreEntityTypes.Notebook,
             });
         }
     }
     if (serviceData.attributes && serviceData.attributes.conflictSourceNoteGuid) {
         conduit_storage_1.addInputEdgeToNode(note, 'sourceNote', {
-            id: Converters_1.convertGuidFromService(serviceData.attributes.conflictSourceNoteGuid, en_data_model_1.CoreEntityTypes.Note),
+            id: Converters_1.convertGuidFromService(serviceData.attributes.conflictSourceNoteGuid, en_core_entity_types_1.CoreEntityTypes.Note),
             port: null,
-            type: en_data_model_1.CoreEntityTypes.Note,
+            type: en_core_entity_types_1.CoreEntityTypes.Note,
         });
     }
     const refsPort = serviceData.deleted ? 'refsInTrash' : 'refs';
     for (const tagGuid of (serviceData.tagGuids || [])) {
         conduit_storage_1.addOutputEdgeToNode(note, 'tags', {
-            id: Converters_1.convertGuidFromService(tagGuid, en_data_model_1.CoreEntityTypes.Tag),
+            id: Converters_1.convertGuidFromService(tagGuid, en_core_entity_types_1.CoreEntityTypes.Tag),
             port: refsPort,
-            type: en_data_model_1.CoreEntityTypes.Tag,
+            type: en_core_entity_types_1.CoreEntityTypes.Tag,
         });
     }
     return note;
 }
 async function fetchNoteWithContentFromService(trc, thriftComm, auth, noteID) {
     const noteStore = thriftComm.getNoteStore(auth.urls.noteStoreUrl);
-    const serviceGuid = Converters_1.convertGuidToService(noteID, en_data_model_1.CoreEntityTypes.Note);
-    const specs = new ThriftTypes_1.TNoteResultSpec({ includeContent: true });
+    const serviceGuid = Converters_1.convertGuidToService(noteID, en_core_entity_types_1.CoreEntityTypes.Note);
+    const specs = new en_conduit_sync_types_1.TNoteResultSpec({ includeContent: true });
     return await noteStore.getNoteWithResultSpec(trc, auth.token, serviceGuid, specs);
 }
 async function fetchAndCacheNoteContentData(trc, thriftComm, auth, noteID, syncContext, db, localSettings, offlineContentStrategy) {
@@ -304,7 +307,7 @@ async function fetchAndCacheNoteContentData(trc, thriftComm, auth, noteID, syncC
         const personalUserId = personalMetadata ? personalMetadata.userID : conduit_utils_1.NullUserID;
         const vaultMetadata = await graphTransaction.getSyncContextMetadata(trc, null, conduit_core_1.VAULT_USER_CONTEXT);
         const vaultUserId = vaultMetadata ? vaultMetadata.userID : conduit_utils_1.NullUserID;
-        const params = await Helpers_1.makeConverterParams({
+        const params = await Helpers_2.makeConverterParams({
             trc,
             graphTransaction,
             personalUserId,
@@ -326,7 +329,7 @@ async function getOrFetchNoteContentData(trc, params, auth, curNote, syncContext
     return serviceData.content;
 }
 async function getNoteServiceNotebookGuid(trc, params, noteID) {
-    const note = await params.graphTransaction.getNode(trc, null, { id: noteID, type: en_data_model_1.CoreEntityTypes.Note });
+    const note = await params.graphTransaction.getNode(trc, null, { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note });
     if (!note) {
         throw new conduit_utils_1.NotFoundError(noteID, 'note not found');
     }
@@ -334,17 +337,17 @@ async function getNoteServiceNotebookGuid(trc, params, noteID) {
     if (!parentEdge) {
         throw new Error('note has no parent');
     }
-    if (parentEdge.srcType === en_data_model_1.CoreEntityTypes.Workspace) {
+    if (parentEdge.srcType === en_core_entity_types_1.CoreEntityTypes.Workspace) {
         const nbId = await params.graphTransaction.getSyncState(trc, null, ['workspaces', 'wsToBackingNb', parentEdge.srcID]);
         if (nbId) {
-            return Converters_1.convertGuidToService(nbId, en_data_model_1.CoreEntityTypes.Notebook);
+            return Converters_1.convertGuidToService(nbId, en_core_entity_types_1.CoreEntityTypes.Notebook);
         }
         else {
             throw new conduit_utils_1.NotFoundError(parentEdge.srcID, `Missing workspace to backing nb mapping ${parentEdge.srcID}`);
         }
     }
-    if (parentEdge.srcType === en_data_model_1.CoreEntityTypes.Notebook) {
-        return Converters_1.convertGuidToService(parentEdge.srcID, en_data_model_1.CoreEntityTypes.Notebook);
+    if (parentEdge.srcType === en_core_entity_types_1.CoreEntityTypes.Notebook) {
+        return Converters_1.convertGuidToService(parentEdge.srcID, en_core_entity_types_1.CoreEntityTypes.Notebook);
     }
     throw new Error('unhandled note parent type: ' + parentEdge.srcType);
 }
@@ -355,9 +358,9 @@ async function backupNoteOnConflict(trc, params, noteRef) {
     if (!noteNode) {
         throw new conduit_utils_1.NotFoundError(noteRef.id, 'Note not found');
     }
-    const { auth, syncContext } = await Helpers_1.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, noteNode);
+    const { auth, syncContext } = await Helpers_2.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, noteNode);
     const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
-    const noteGuid = Converters_1.convertGuidToService(noteRef.id, en_data_model_1.CoreEntityTypes.Note);
+    const noteGuid = Converters_1.convertGuidToService(noteRef.id, en_core_entity_types_1.CoreEntityTypes.Note);
     const notebookGuid = await getNoteServiceNotebookGuid(trc, params, noteRef.id);
     let noteCopy = await noteStore.copyNote(trc, auth.token, noteGuid, notebookGuid);
     noteCopy.attributes = noteCopy.attributes || {};
@@ -367,20 +370,21 @@ async function backupNoteOnConflict(trc, params, noteRef) {
     await convertNoteFromServiceImpl(trc, params, syncContext, noteCopy, { skipShares: true });
 }
 async function convertNoteFromServiceImpl(trc, params, syncContext, serviceData, option = { skipShares: false }) {
+    var _a, _b;
     const syncContextMetadata = await params.graphTransaction.getSyncContextMetadata(trc, null, syncContext);
     if (!syncContextMetadata) {
         throw new Error(`no SyncContextMetadata found for syncContext ${syncContext}`);
     }
-    const nbID = serviceData.notebookGuid ? Converters_1.convertGuidFromService(serviceData.notebookGuid, en_data_model_1.CoreEntityTypes.Notebook) : undefined;
+    const nbID = serviceData.notebookGuid ? Converters_1.convertGuidFromService(serviceData.notebookGuid, en_core_entity_types_1.CoreEntityTypes.Notebook) : undefined;
     const isNbOffline = nbID && (params.offlineContentStrategy === conduit_view_types_1.OfflineContentStrategy.EVERYTHING || params.nbsMarkedOffline && params.nbsMarkedOffline[nbID]);
     let contentDownloaded = false;
     if (isNbOffline) {
-        const noteID = Converters_1.convertGuidFromService(serviceData.guid, en_data_model_1.CoreEntityTypes.Note);
+        const noteID = Converters_1.convertGuidFromService(serviceData.guid, en_core_entity_types_1.CoreEntityTypes.Note);
         const currentSyncState = await NotebookConverter_1.getPendingOfflineNote(trc, params.graphTransaction, noteID);
         contentDownloaded = conduit_utils_1.isStashEmpty(currentSyncState);
     }
     let note = noteFromService(trc, params, syncContext, syncContextMetadata, serviceData, contentDownloaded);
-    await Helpers_1.ensureIsExternal(trc, params, syncContext, note);
+    await Helpers_2.ensureIsExternal(trc, params, syncContext, note);
     const prevNote = await params.graphTransaction.replaceNodeAndEdges(trc, syncContext, note);
     if (prevNote && prevNote.version > note.version) {
         // new note data is out of date and did not get stored, so don't do any of the membership and attachment reconciliation
@@ -389,6 +393,18 @@ async function convertNoteFromServiceImpl(trc, params, syncContext, serviceData,
     if (note.NodeFields.isMetadata && !prevNote) {
         // skip further processing for metadata notes
         return !prevNote;
+    }
+    if (option.editSequenceNumber !== undefined) {
+        await params.graphTransaction.setNodeCachedField(trc, note, 'content.editSequenceNumber', option.editSequenceNumber, {});
+    }
+    else if (prevNote && prevNote.NodeFields.content.hash !== note.NodeFields.content.hash) {
+        const editSequenceNumber = ((_b = (_a = prevNote.CacheFields) === null || _a === void 0 ? void 0 : _a['content.editSequenceNumber']) !== null && _b !== void 0 ? _b : 0) + 1;
+        await params.graphTransaction.setNodeCachedField(trc, note, 'content.editSequenceNumber', editSequenceNumber, {});
+        en_core_entity_types_1.NoteConflictLogger.logEvent(note.id, 'note_content_changed_remote', {
+            usn: serviceData.updateSequenceNum,
+            hash: note.NodeFields.content.hash,
+            editSequenceNumber,
+        });
     }
     const membershipIDs = !option.skipShares ? await updateSharesForNote(trc, params, syncContext, serviceData, note) : {};
     // updateSharesForNote will update internal_shareCountProfiles based on shares. So, we need to update Note again
@@ -424,12 +440,12 @@ async function convertNoteFromServiceImpl(trc, params, syncContext, serviceData,
         }
         // delete removed active attachments (do NOT remove inactive attachments, as we added those through
         // uploading and want to keep them until they are activated)
-        const newAttachmentIDs = resources.map(r => Converters_1.convertGuidFromService(r.guid, en_data_model_1.CoreEntityTypes.Attachment));
+        const newAttachmentIDs = resources.map(r => Converters_1.convertGuidFromService(r.guid, en_core_entity_types_1.CoreEntityTypes.Attachment));
         const oldAttachmentEdges = Object.values(prevNote.outputs.attachments);
         for (const edge of oldAttachmentEdges) {
             const oldAttachmentID = edge.dstID;
             if (!newAttachmentIDs.includes(oldAttachmentID)) {
-                await params.graphTransaction.deleteNode(trc, syncContext, { id: oldAttachmentID, type: en_data_model_1.CoreEntityTypes.Attachment });
+                await params.graphTransaction.deleteNode(trc, syncContext, { id: oldAttachmentID, type: en_core_entity_types_1.CoreEntityTypes.Attachment });
             }
         }
     }
@@ -452,12 +468,12 @@ async function getNotebookGuid(trc, params, note) {
     if (!notebookEdge) {
         return null;
     }
-    if (notebookEdge.srcType === en_data_model_1.CoreEntityTypes.Workspace) {
+    if (notebookEdge.srcType === en_core_entity_types_1.CoreEntityTypes.Workspace) {
         // lookup backing notebook for workspace
         const workspaceID = notebookEdge.srcID;
         const nbId = await params.graphTransaction.getSyncState(trc, null, ['workspaces', 'wsToBackingNb', workspaceID]);
         if (nbId) {
-            return Converters_1.convertGuidToService(nbId, en_data_model_1.CoreEntityTypes.Notebook);
+            return Converters_1.convertGuidToService(nbId, en_core_entity_types_1.CoreEntityTypes.Notebook);
         }
         else {
             throw new conduit_utils_1.NotFoundError(workspaceID, 'workspace to backing nb mapping not found');
@@ -465,13 +481,13 @@ async function getNotebookGuid(trc, params, note) {
     }
     return Converters_1.convertGuidToService(notebookEdge.srcID, notebookEdge.srcType);
 }
-async function updateNote(trc, params, curNote, noteServiceData, hashUpdate) {
+async function updateNote(trc, params, curNote, noteServiceData, hashUpdate, editSequenceNumber) {
     if (noteServiceData.hasOwnProperty('notebookGuid') && noteServiceData.notebookGuid === await getNotebookGuid(trc, params, curNote)) {
         // no change
         delete noteServiceData.notebookGuid;
     }
     if (noteServiceData.tagGuids) {
-        const curTagGuids = new Set(Object.values(curNote.outputs.tags || {}).map(edge => Converters_1.convertGuidToService(edge.dstID, en_data_model_1.CoreEntityTypes.Tag)));
+        const curTagGuids = new Set(Object.values(curNote.outputs.tags || {}).map(edge => Converters_1.convertGuidToService(edge.dstID, en_core_entity_types_1.CoreEntityTypes.Tag)));
         const newTagGuids = new Set(noteServiceData.tagGuids);
         if (conduit_utils_1.setEquals(curTagGuids, newTagGuids)) {
             // no change
@@ -479,40 +495,47 @@ async function updateNote(trc, params, curNote, noteServiceData, hashUpdate) {
         }
     }
     if (conduit_utils_1.isStashEmpty(noteServiceData)) {
-        // no change
+        // no change to upsync
+        if (editSequenceNumber !== undefined) {
+            await params.graphTransaction.setNodeCachedField(trc, curNote, 'content.editSequenceNumber', editSequenceNumber, {});
+        }
         return;
     }
-    noteServiceData.guid = Converters_1.convertGuidToService(curNote.id, en_data_model_1.CoreEntityTypes.Note);
+    noteServiceData.guid = Converters_1.convertGuidToService(curNote.id, en_core_entity_types_1.CoreEntityTypes.Note);
     noteServiceData.updateSequenceNum = curNote.version;
     if (!noteServiceData.hasOwnProperty('title')) {
         // The Thrift API requires the title to be set for all updateNote calls for no good reason
         noteServiceData.title = curNote.label;
     }
-    const { auth, syncContext } = await Helpers_1.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, curNote);
+    const { auth, syncContext } = await Helpers_2.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, curNote);
     const utilityStore = params.thriftComm.getUtilityStore(auth.urls.utilityUrl);
     const res = await utilityStore.updateNoteIfUsnMatches(trc, auth.token, noteServiceData, hashUpdate !== null && hashUpdate !== void 0 ? hashUpdate : {});
+    conduit_utils_1.traceTestCounts(trc, {
+        'NoteConverter.updateNote': 1,
+        'NoteConverter.updateNote.success': res.updated ? 1 : 0,
+    });
     const resNote = res.note;
     if (!res.updated) {
         // usn mismatch between local and remote, apply new note data back to local graph and retry (using handleErrorToService mechanism)
         if (resNote) {
             const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
-            const specs = new ThriftTypes_1.TNoteResultSpec({ includeContent: true, includeSharedNotes: true });
+            const specs = new en_conduit_sync_types_1.TNoteResultSpec({ includeContent: true, includeSharedNotes: true });
             const latestNote = await noteStore.getNoteWithResultSpec(trc, auth.token, noteServiceData.guid, specs);
             await convertNoteFromServiceImpl(trc, params, syncContext, latestNote);
         }
-        en_data_model_1.NoteConflictLogger.logEvent(curNote.id, 'usn_mismatch', {
+        en_core_entity_types_1.NoteConflictLogger.logEvent(curNote.id, 'usn_mismatch', {
             noteInResponse: Boolean(resNote),
             reqUsn: noteServiceData.updateSequenceNum,
             resUsn: resNote === null || resNote === void 0 ? void 0 : resNote.updateSequenceNum,
-            resHash: Helpers_1.convertHashFromService(resNote === null || resNote === void 0 ? void 0 : resNote.contentHash),
+            resHash: Helpers_2.convertHashFromService(resNote === null || resNote === void 0 ? void 0 : resNote.contentHash),
         });
-        throw new conduit_utils_1.ConflictError(curNote.id, en_data_model_1.CoreEntityTypes.Note, resNote ? 'NotePresent' : 'NoteAbsent');
+        throw new conduit_utils_1.ConflictError(curNote.id, en_core_entity_types_1.CoreEntityTypes.Note, resNote ? 'NotePresent' : 'NoteAbsent');
     }
     if (resNote) {
-        en_data_model_1.NoteConflictLogger.logEvent(curNote.id, 'note_upsynced', {
+        en_core_entity_types_1.NoteConflictLogger.logEvent(curNote.id, 'note_upsynced', {
             reqUsn: noteServiceData.updateSequenceNum,
             resUsn: resNote.updateSequenceNum,
-            resHash: Helpers_1.convertHashFromService(resNote.contentHash),
+            resHash: Helpers_2.convertHashFromService(resNote.contentHash),
         });
         if (noteServiceData.content) {
             // shove result blob data back into our synced graph storage (so we don't refetch it)
@@ -524,21 +547,21 @@ async function updateNote(trc, params, curNote, noteServiceData, hashUpdate) {
             await BlobConverter_1.updateBlobToGraph(trc, params.graphTransaction, contentBlobData, curNote, 'content', syncContext);
         }
         // not converting shares into memberships because updateNoteIfUsnMatches does not return existing shares.
-        await convertNoteFromServiceImpl(trc, params, syncContext, resNote, { skipShares: true });
+        await convertNoteFromServiceImpl(trc, params, syncContext, resNote, { skipShares: true, editSequenceNumber });
     }
     else {
-        en_data_model_1.NoteConflictLogger.logEvent(curNote.id, 'no_note_resp', {
+        en_core_entity_types_1.NoteConflictLogger.logEvent(curNote.id, 'no_note_resp', {
             reqUsn: noteServiceData.updateSequenceNum,
         });
     }
 }
 async function updateNoteContentToService(trc, params, noteID, syncContext, remoteFields, content, hash) {
-    const noteRef = { id: noteID, type: en_data_model_1.CoreEntityTypes.Note };
+    const noteRef = { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note };
     const curNote = await params.graphTransaction.getNode(trc, null, noteRef);
     if (!curNote) {
         throw new conduit_utils_1.NotFoundError(noteRef.id, `Missing note ${noteRef.id} from local graph storage`);
     }
-    const noteServiceData = {
+    let noteServiceData = {
         content,
         updated: remoteFields.updated,
     };
@@ -551,16 +574,16 @@ async function updateNoteContentToService(trc, params, noteID, syncContext, remo
             (curNote.NodeFields.content.hash === hash));
         if (!contentIsInExpectedState) {
             hadConflict = true;
-            en_data_model_1.NoteConflictLogger.logEvent(noteRef.id, 'conflict_detected', {
+            en_core_entity_types_1.NoteConflictLogger.logEvent(noteRef.id, 'conflict_detected', {
                 clientPrevNoteHash: remoteFields.prevNoteHash,
                 mutatorPrevNoteHash: remoteFields.graphPrevNoteHash,
                 actualNoteHash: curNote.NodeFields.content.hash,
                 actualNoteSize: curNote.NodeFields.content.size,
             });
-            en_data_model_1.NoteConflictLogger.dumpEventsForKey('warn', noteRef.id);
+            en_core_entity_types_1.NoteConflictLogger.dumpEventsForKey('warn', noteRef.id);
             try {
                 await backupNoteOnConflict(trc, params, noteRef);
-                conduit_utils_1.recordEvent({ category: 'note', action: 'merge_conflict', noteGuid: noteServiceData.guid });
+                conduit_utils_1.recordEvent({ category: 'note', action: 'merge_conflict', noteID: noteRef.id });
             }
             catch (err) {
                 conduit_utils_1.logger.error('Failed to copy note on content hash conflict', err);
@@ -570,11 +593,15 @@ async function updateNoteContentToService(trc, params, noteID, syncContext, remo
     let hashDiff = remoteFields.hashDiff;
     if (!hashDiff || hadConflict) {
         // diff resource hashes in new content against old content to get the resourcesUpdate
-        const { auth } = await Helpers_1.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, curNote);
+        const { auth } = await Helpers_2.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, curNote);
         const oldContent = await getOrFetchNoteContentData(trc, params, auth, curNote, syncContext);
         hashDiff = conduit_core_1.extractResourceHashDiff(oldContent, content);
     }
-    await updateNote(trc, params, curNote, noteServiceData, conduit_core_1.hashDiffToResourceUpdate(hashDiff));
+    if (curNote.NodeFields.content.hash === hash) {
+        // noop, skip upsync (but still let updateNote modify editSequenceNumber if it needs to)
+        noteServiceData = {};
+    }
+    await updateNote(trc, params, curNote, noteServiceData, conduit_core_1.hashDiffToResourceUpdate(hashDiff), remoteFields.editSequenceNumber);
 }
 exports.updateNoteContentToService = updateNoteContentToService;
 function getNoteShareUrl(host, shard, noteID, secret) {
@@ -592,11 +619,11 @@ function fillNoteAttributes(serviceData, attributesChanges, isUntitled, creatorU
     const attributes = curNote ? SimplyImmutable.deepUpdateImmutable(curNote.NodeFields.Attributes, attributesChanges) : attributesChanges;
     const serviceAttributes = {};
     serviceAttributes.subjectDate = attributes.subjectDate;
-    serviceAttributes.noteTitleQuality = isUntitled ? ThriftTypes_1.EDAM_NOTE_TITLE_QUALITY_UNTITLED : null;
+    serviceAttributes.noteTitleQuality = isUntitled ? en_conduit_sync_types_1.EDAM_NOTE_TITLE_QUALITY_UNTITLED : null;
     serviceAttributes.contentClass = attributes.contentClass;
     const sEdge = curNote && conduit_utils_1.firstStashEntry(curNote.inputs.sourceNote);
     const sourceNoteID = sEdge ? sEdge.srcID : null;
-    serviceAttributes.conflictSourceNoteGuid = sourceNoteID ? Converters_1.convertGuidToService(sourceNoteID, en_data_model_1.CoreEntityTypes.Note) : null;
+    serviceAttributes.conflictSourceNoteGuid = sourceNoteID ? Converters_1.convertGuidToService(sourceNoteID, en_core_entity_types_1.CoreEntityTypes.Note) : null;
     if (attributes.Location) {
         serviceAttributes.latitude = attributes.Location.latitude;
         serviceAttributes.longitude = attributes.Location.longitude;
@@ -617,7 +644,7 @@ function fillNoteAttributes(serviceData, attributesChanges, isUntitled, creatorU
     if (attributes.Editor) {
         serviceAttributes.author = attributes.Editor.author;
         serviceAttributes.creatorId = creatorUserId;
-        serviceAttributes.lastEditorId = lastEditorId ? Number(Converters_1.convertGuidToService(lastEditorId, en_data_model_1.CoreEntityTypes.Profile)) : null;
+        serviceAttributes.lastEditorId = lastEditorId ? Number(Converters_1.convertGuidToService(lastEditorId, en_core_entity_types_1.CoreEntityTypes.Profile)) : null;
         serviceAttributes.lastEditedBy = attributes.Editor.lastEditedBy;
     }
     if (attributes.Source) {
@@ -649,7 +676,7 @@ async function deleteOldSharesForNote(trc, params, syncContext, newIDs, oldNote)
 }
 class NoteConverterClass {
     constructor() {
-        this.nodeType = en_data_model_1.CoreEntityTypes.Note;
+        this.nodeType = en_core_entity_types_1.CoreEntityTypes.Note;
     }
     convertGuidFromService(guid) {
         return guid;
@@ -664,34 +691,34 @@ class NoteConverterClass {
         switch (commandRun.command) {
             case 'setShare': {
                 const shareParams = commandRun.params;
-                const noteNode = await params.graphTransaction.getNode(trc, null, { id: shareParams.note, type: en_data_model_1.CoreEntityTypes.Note });
+                const noteNode = await params.graphTransaction.getNode(trc, null, { id: shareParams.note, type: en_core_entity_types_1.CoreEntityTypes.Note });
                 if (!noteNode) {
                     throw new conduit_utils_1.NotFoundError(shareParams.note, 'Note not found');
                 }
-                const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+                const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
                 const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
                 if (shareParams.enable) {
-                    const secret = await noteStore.shareNote(trc, auth.token, Converters_1.convertGuidToService(shareParams.note, en_data_model_1.CoreEntityTypes.Note));
+                    const secret = await noteStore.shareNote(trc, auth.token, Converters_1.convertGuidToService(shareParams.note, en_core_entity_types_1.CoreEntityTypes.Note));
                     const shareUrl = getNoteShareUrl(auth.urlHost, auth.shard, shareParams.note, secret);
-                    const note = await noteStore.getNote(trc, auth.token, Converters_1.convertGuidToService(shareParams.note, en_data_model_1.CoreEntityTypes.Note), false, false, false, false);
+                    const note = await noteStore.getNote(trc, auth.token, Converters_1.convertGuidToService(shareParams.note, en_core_entity_types_1.CoreEntityTypes.Note), false, false, false, false);
                     if (note.attributes && note.attributes.shareDate) {
-                        await params.graphTransaction.updateNode(trc, syncContext, { type: en_data_model_1.CoreEntityTypes.Note, id: shareParams.note }, {
+                        await params.graphTransaction.updateNode(trc, syncContext, { type: en_core_entity_types_1.CoreEntityTypes.Note, id: shareParams.note }, {
                             NodeFields: {
                                 Attributes: { Share: { shareDate: note.attributes.shareDate } },
                             },
                         });
-                        await params.graphTransaction.setNodeCachedField(trc, { type: en_data_model_1.CoreEntityTypes.Note, id: shareParams.note }, 'shareUrl', shareUrl, { 'Attributes.Share.shareDate': note.attributes.shareDate });
+                        await params.graphTransaction.setNodeCachedField(trc, { type: en_core_entity_types_1.CoreEntityTypes.Note, id: shareParams.note }, 'shareUrl', shareUrl, { 'Attributes.Share.shareDate': note.attributes.shareDate });
                     }
                     return shareUrl;
                 }
                 else {
-                    await noteStore.stopSharingNote(trc, auth.token, Converters_1.convertGuidToService(shareParams.note, en_data_model_1.CoreEntityTypes.Note));
-                    await params.graphTransaction.updateNode(trc, syncContext, { type: en_data_model_1.CoreEntityTypes.Note, id: shareParams.note }, {
+                    await noteStore.stopSharingNote(trc, auth.token, Converters_1.convertGuidToService(shareParams.note, en_core_entity_types_1.CoreEntityTypes.Note));
+                    await params.graphTransaction.updateNode(trc, syncContext, { type: en_core_entity_types_1.CoreEntityTypes.Note, id: shareParams.note }, {
                         NodeFields: {
                             Attributes: { Share: { shareDate: null } },
                         },
                     });
-                    await params.graphTransaction.setNodeCachedField(trc, { type: en_data_model_1.CoreEntityTypes.Note, id: shareParams.note }, 'shareUrl', null, { 'Attributes.Share.shareDate': null });
+                    await params.graphTransaction.setNodeCachedField(trc, { type: en_core_entity_types_1.CoreEntityTypes.Note, id: shareParams.note }, 'shareUrl', null, { 'Attributes.Share.shareDate': null });
                 }
                 return null;
             }
@@ -701,21 +728,21 @@ class NoteConverterClass {
                 }
                 const inviteMutationParams = commandRun.params;
                 const inviteParams = Object.assign(Object.assign({}, inviteMutationParams), { privilege: MembershipConverter_1.membershipPrivilegeToSharedNotePrivilegeLevel(inviteMutationParams.privilege) });
-                const noteNode = await params.graphTransaction.getNode(trc, null, { id: inviteParams.note, type: en_data_model_1.CoreEntityTypes.Note });
+                const noteNode = await params.graphTransaction.getNode(trc, null, { id: inviteParams.note, type: en_core_entity_types_1.CoreEntityTypes.Note });
                 if (!noteNode) {
                     throw new conduit_utils_1.NotFoundError(inviteParams.note, 'Note not found');
                 }
-                const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+                const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
                 const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
                 const syncContextMetadata = await params.graphTransaction.getSyncContextMetadata(trc, null, syncContext);
-                const note = await noteStore.getNote(trc, auth.token, Converters_1.convertGuidToService(inviteParams.note, en_data_model_1.CoreEntityTypes.Note), false, false, false, false);
+                const note = await noteStore.getNote(trc, auth.token, Converters_1.convertGuidToService(inviteParams.note, en_core_entity_types_1.CoreEntityTypes.Note), false, false, false, false);
                 const contacts = [];
                 const emailContacts = [];
                 if (!syncContextMetadata || !syncContextMetadata.userID) {
                     throw new Error(`Unable to find owningUserID for syncContext ${syncContext}`);
                 }
                 if (!note) {
-                    throw new conduit_utils_1.NotFoundError(Converters_1.convertGuidToService(inviteParams.note, en_data_model_1.CoreEntityTypes.Note), `Unable to find note`);
+                    throw new conduit_utils_1.NotFoundError(Converters_1.convertGuidToService(inviteParams.note, en_core_entity_types_1.CoreEntityTypes.Note), `Unable to find note`);
                 }
                 const profileIDs = inviteParams.profileIDs || [];
                 if (inviteParams.userIDs) {
@@ -728,16 +755,16 @@ class NoteConverterClass {
                         if (emailAndID.email) {
                             emailContacts.push({
                                 id: emailAndID.email,
-                                type: ThriftTypes_1.TContactType.EMAIL,
+                                type: en_conduit_sync_types_1.TContactType.EMAIL,
                             });
                             // prefer email as id fails if users are not connected
                         }
                         else if (emailAndID.profileID) {
                             const contactWithUserId = {
-                                id: Converters_1.convertGuidToService(emailAndID.profileID, en_data_model_1.CoreEntityTypes.Profile),
-                                type: ThriftTypes_1.TContactType.EVERNOTE,
+                                id: Converters_1.convertGuidToService(emailAndID.profileID, en_core_entity_types_1.CoreEntityTypes.Profile),
+                                type: en_conduit_sync_types_1.TContactType.EVERNOTE,
                             };
-                            const connectionCheckResult = await Helpers_1.checkUserConnection(trc, params, contactWithUserId);
+                            const connectionCheckResult = await Helpers_2.checkUserConnection(trc, params, contactWithUserId);
                             if (connectionCheckResult) {
                                 contacts.push(contactWithUserId);
                             }
@@ -754,23 +781,23 @@ class NoteConverterClass {
                     for (const email of inviteParams.emails) {
                         emailContacts.push({
                             id: email,
-                            type: ThriftTypes_1.TContactType.EMAIL,
+                            type: en_conduit_sync_types_1.TContactType.EMAIL,
                         });
                     }
                 }
                 let allShares = [];
                 if (contacts.length) {
                     allShares = allShares.concat(await shareNoteWithContacts(trc, params, syncContext, syncContextMetadata, inviteParams, note.title || 'Untitled Note', contacts, false));
-                    await AccountLimitsConverter.updateNodeTypeCount(trc, params.graphTransaction, syncContext, en_data_model_1.CoreEntityTypes.Notebook, contacts.length, 'userNoteAndNotebookSharesSentCount');
+                    await AccountLimitsConverter.updateNodeTypeCount(trc, params.graphTransaction, syncContext, en_core_entity_types_1.CoreEntityTypes.Notebook, contacts.length, 'userNoteAndNotebookSharesSentCount');
                 }
                 if (emailContacts.length) {
                     allShares = allShares.concat(await shareNoteWithContacts(trc, params, syncContext, syncContextMetadata, inviteParams, note.title || 'Untitled Note', emailContacts, true));
-                    await AccountLimitsConverter.updateNodeTypeCount(trc, params.graphTransaction, syncContext, en_data_model_1.CoreEntityTypes.Notebook, emailContacts.length, 'userNoteAndNotebookSharesSentCount');
+                    await AccountLimitsConverter.updateNodeTypeCount(trc, params.graphTransaction, syncContext, en_core_entity_types_1.CoreEntityTypes.Notebook, emailContacts.length, 'userNoteAndNotebookSharesSentCount');
                 }
                 if (allShares.length) {
                     return {
                         id: MembershipConverter_1.convertSharedNoteMembershipGuidFromService(inviteParams.note, allShares[0].recipientIdentity).id,
-                        type: en_data_model_1.CoreEntityTypes.Membership,
+                        type: en_core_entity_types_1.CoreEntityTypes.Membership,
                     };
                 }
                 // Contrary to createOrUpdateNotebookSharesc(), reateOrUpdateSharedNotes()
@@ -781,15 +808,28 @@ class NoteConverterClass {
             }
             case 'sendByEmail': {
                 const commandParams = commandRun.params;
-                const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+                const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
                 const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
                 await noteStore.emailNote(trc, auth.token, {
-                    guid: Converters_1.convertGuidToService(commandParams.note, en_data_model_1.CoreEntityTypes.Note),
+                    guid: Converters_1.convertGuidToService(commandParams.note, en_core_entity_types_1.CoreEntityTypes.Note),
                     toAddresses: commandParams.toEmails,
                     ccAddresses: commandParams.ccEmails,
                     subject: commandParams.subject,
                     message: commandParams.message,
                 });
+                return null;
+            }
+            case 'noteSetAppData': {
+                const commandParams = commandRun.params;
+                const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+                const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
+                const guid = Converters_1.convertGuidToService(commandParams.id, en_core_entity_types_1.CoreEntityTypes.Note);
+                if (commandParams.value !== null) {
+                    await noteStore.setNoteApplicationDataEntry(trc, auth.token, guid, commandParams.key, commandParams.value);
+                }
+                else {
+                    await noteStore.unsetNoteApplicationDataEntry(trc, auth.token, guid, commandParams.key);
+                }
                 return null;
             }
             default:
@@ -803,15 +843,15 @@ class NoteConverterClass {
             const err = res.err;
             if (err instanceof conduit_utils_1.ServiceError && err.errorType === 'DATA_CONFLICT' && err.errorKey === 'Note.guid' && err.errorCode === 10) {
                 // guid is already in use, probably this is a retry
-                const guid = Converters_1.convertGuidToService(noteID, en_data_model_1.CoreEntityTypes.Note);
+                const guid = Converters_1.convertGuidToService(noteID, en_core_entity_types_1.CoreEntityTypes.Note);
                 return await noteStore.getNote(trc, auth.token, guid, true, true, false, false);
             }
             else {
                 throw err;
             }
         }
-        en_data_model_1.NoteConflictLogger.logEvent(noteID, 'note_created', {
-            respHash: Helpers_1.convertHashFromService(res.data.contentHash),
+        en_core_entity_types_1.NoteConflictLogger.logEvent(noteID, 'note_created', {
+            respHash: Helpers_2.convertHashFromService(res.data.contentHash),
         });
         // shove content string into service response so it gets cached in the content blob
         res.data.content = serviceData.content;
@@ -821,50 +861,50 @@ class NoteConverterClass {
         if (!noteID) {
             return undefined;
         }
-        const note = await params.graphTransaction.getNode(trc, null, { id: noteID, type: en_data_model_1.CoreEntityTypes.Note });
+        const note = await params.graphTransaction.getNode(trc, null, { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note });
         if (!note) {
             return undefined;
         }
-        const { auth } = await Helpers_1.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, note);
+        const { auth } = await Helpers_2.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, note);
         const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
-        const { data: applicationData } = await conduit_utils_1.withError(noteStore.getNoteApplicationData(trc, auth.token, Converters_1.convertGuidToService(note.id, en_data_model_1.CoreEntityTypes.Note)));
+        const { data: applicationData } = await conduit_utils_1.withError(noteStore.getNoteApplicationData(trc, auth.token, Converters_1.convertGuidToService(note.id, en_core_entity_types_1.CoreEntityTypes.Note)));
         return applicationData;
     }
     async createOnService(trc, params, syncContext, note, serviceGuidSeed, remoteFields, blobs) {
         var _a;
-        const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+        const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
         const serviceData = {
             seed: serviceGuidSeed,
             title: note.label || 'Untitled',
-            content: ((_a = blobs === null || blobs === void 0 ? void 0 : blobs.content) === null || _a === void 0 ? void 0 : _a.content) || en_data_model_1.DEFAULT_NOTE_CONTENT,
+            content: ((_a = blobs === null || blobs === void 0 ? void 0 : blobs.content) === null || _a === void 0 ? void 0 : _a.content) || en_core_entity_types_1.DEFAULT_NOTE_CONTENT,
             active: !note.NodeFields.deleted,
             created: note.NodeFields.created,
             updated: note.NodeFields.updated,
         };
         fillNoteAttributes(serviceData, note.NodeFields.Attributes, note.NodeFields.isUntitled, auth.userID);
         if (remoteFields.notebookID) {
-            serviceData.notebookGuid = Converters_1.convertGuidToService(remoteFields.notebookID, en_data_model_1.CoreEntityTypes.Notebook);
+            serviceData.notebookGuid = Converters_1.convertGuidToService(remoteFields.notebookID, en_core_entity_types_1.CoreEntityTypes.Notebook);
         }
         else if (remoteFields.workspaceID) {
             // lookup backing notebook for workspace
             const nbId = await params.graphTransaction.getSyncState(trc, null, ['workspaces', 'wsToBackingNb', remoteFields.workspaceID]);
             if (nbId) {
-                serviceData.notebookGuid = Converters_1.convertGuidToService(nbId, en_data_model_1.CoreEntityTypes.Notebook);
+                serviceData.notebookGuid = Converters_1.convertGuidToService(nbId, en_core_entity_types_1.CoreEntityTypes.Notebook);
             }
             else {
                 throw new conduit_utils_1.NotFoundError(remoteFields.workspaceID, 'workspace to backing nb mapping not found');
             }
         }
         if (remoteFields.tagIDs.length) {
-            serviceData.tagGuids = remoteFields.tagIDs.map(id => Converters_1.convertGuidToService(id, en_data_model_1.CoreEntityTypes.Tag));
+            serviceData.tagGuids = remoteFields.tagIDs.map(id => Converters_1.convertGuidToService(id, en_core_entity_types_1.CoreEntityTypes.Tag));
         }
         const resp = await this.createOrGetNote(trc, params.thriftComm, auth, serviceData, note.id);
-        if (resp.guid !== Converters_1.convertGuidToService(note.id, en_data_model_1.CoreEntityTypes.Note)) {
+        if (resp.guid !== Converters_1.convertGuidToService(note.id, en_core_entity_types_1.CoreEntityTypes.Note)) {
             throw new conduit_utils_1.InternalError(`Service generated a different guid than Conduit: ${note.id} vs ${resp.guid}`);
         }
         await convertNoteFromServiceImpl(trc, params, syncContext, resp);
         if (remoteFields.attachmentHashes.length) {
-            const curNote = await params.graphTransaction.getNode(trc, null, { id: note.id, type: en_data_model_1.CoreEntityTypes.Note });
+            const curNote = await params.graphTransaction.getNode(trc, null, { id: note.id, type: en_core_entity_types_1.CoreEntityTypes.Note });
             if (!curNote) {
                 throw new conduit_utils_1.InternalError(`Failed to fetch newly created note from the graph right after upsyncing it: ${note.id}`);
             }
@@ -874,7 +914,7 @@ class NoteConverterClass {
             }, {
                 activateResourcesWithBodyHashes: remoteFields.attachmentHashes,
                 deactivateResourcesWithBodyHashes: [],
-            });
+            }, 0);
         }
         // if a sourceNoteID is specified and no applicationData is passed in, do a last-minute best-effort fetch of the source note applicationData to apply here
         const applicationData = remoteFields.applicationData || await this.fetchNoteApplicationData(trc, params, remoteFields.sourceNoteID);
@@ -888,17 +928,17 @@ class NoteConverterClass {
         return true;
     }
     async deleteFromService(trc, params, syncContext, noteIDs) {
-        const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+        const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
         const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
         // expungeNotes thrift call recommends deleting 100 notes or less in each call.
         const batchNoteIDs = conduit_utils_1.chunkArray(noteIDs, 100);
         for (const noteIDChunk of batchNoteIDs) {
-            await noteStore.expungeNotes(trc, auth.token, noteIDChunk.map(id => Converters_1.convertGuidToService(id, en_data_model_1.CoreEntityTypes.Note)));
+            await noteStore.expungeNotes(trc, auth.token, noteIDChunk.map(id => Converters_1.convertGuidToService(id, en_core_entity_types_1.CoreEntityTypes.Note)));
         }
         return false;
     }
     async updateToService(trc, params, syncContext, noteID, diff) {
-        const noteRef = { id: noteID, type: en_data_model_1.CoreEntityTypes.Note };
+        const noteRef = { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note };
         const curNote = await params.graphTransaction.getNode(trc, null, noteRef);
         if (!curNote) {
             throw new conduit_utils_1.NotFoundError(noteRef.id, `Missing note ${noteRef.id} from local graph storage`);
@@ -933,7 +973,7 @@ class NoteConverterClass {
             fillNoteAttributes(serviceData, attributesChanges, isUntitled, (syncContextMetadata === null || syncContextMetadata === void 0 ? void 0 : syncContextMetadata.userID) || conduit_utils_1.NullUserID, curNote);
         }
         if (hasChanges) {
-            await updateNote(trc, params, curNote, serviceData, null);
+            await updateNote(trc, params, curNote, serviceData, null, undefined);
         }
         return true;
     }
@@ -951,7 +991,7 @@ class NoteConverterClass {
                     if (err.errorCode === conduit_utils_1.AuthErrorCode.PERMISSION_DENIED) {
                         // Request has failed because of insufficient privileges for the container.
                         // Attempt to fallback to a container that we have create privileges in...
-                        const user = await params.graphTransaction.getNode(trc, null, { type: en_data_model_1.CoreEntityTypes.User, id: conduit_core_1.PERSONAL_USER_ID });
+                        const user = await params.graphTransaction.getNode(trc, null, { type: en_core_entity_types_1.CoreEntityTypes.User, id: conduit_core_1.PERSONAL_USER_ID });
                         if (!user) {
                             throw new Error('User not found');
                         }
@@ -969,7 +1009,7 @@ class NoteConverterClass {
                             catch (e) {
                                 // There was an issue creating the note in the default notebook, fallback to the user notebook.
                                 conduit_utils_1.logger.error(e);
-                                if (user.NodeFields.serviceLevel !== en_data_model_1.ServiceLevel.BUSINESS) {
+                                if (user.NodeFields.serviceLevel !== en_core_entity_types_1.ServiceLevel.BUSINESS) {
                                     // It should be unrealistic for a non-business user to loose access to their default notebook.
                                     throw new Error('Personal user has no default notebook!');
                                 }
@@ -992,7 +1032,7 @@ class NoteConverterClass {
                             // Update conduit's state with the new default notebook.
                             await NotebookConverter_1.NotebookConverter.convertFromService(trc, params, conduit_core_1.PERSONAL_USER_CONTEXT, nextDefaultNotebook);
                             // Retry the request with the correct default notebook.
-                            return SimplyImmutable.replaceImmutable(change, changeUpdatePath, Converters_1.convertGuidFromService(nextDefaultNotebook.guid, en_data_model_1.CoreEntityTypes.Notebook));
+                            return SimplyImmutable.replaceImmutable(change, changeUpdatePath, Converters_1.convertGuidFromService(nextDefaultNotebook.guid, en_core_entity_types_1.CoreEntityTypes.Notebook));
                         }
                         // Retry the request, this time with the default notebook.
                         return SimplyImmutable.replaceImmutable(change, changeUpdatePath, defaultNotebook.dstID);
@@ -1019,7 +1059,7 @@ class NoteConverterClass {
     }
     async applyEdgeChangesToService(trc, params, syncContext, nodeID, changes) {
         var _a;
-        const noteRef = { id: nodeID, type: en_data_model_1.CoreEntityTypes.Note };
+        const noteRef = { id: nodeID, type: en_core_entity_types_1.CoreEntityTypes.Note };
         const curNote = await params.graphTransaction.getNode(trc, null, noteRef);
         if (!curNote) {
             throw new conduit_utils_1.NotFoundError(noteRef.id, `Missing note ${noteRef.id} from local graph storage`);
@@ -1028,10 +1068,10 @@ class NoteConverterClass {
         const tagsChanges = changes['outputs:tags'];
         if (tagsChanges) {
             // Thrift requires all tags, not deltas
-            serviceData.tagGuids = Object.values(curNote.outputs.tags || {}).map(edge => Converters_1.convertGuidToService(edge.dstID, en_data_model_1.CoreEntityTypes.Tag));
+            serviceData.tagGuids = Object.values(curNote.outputs.tags || {}).map(edge => Converters_1.convertGuidToService(edge.dstID, en_core_entity_types_1.CoreEntityTypes.Tag));
             for (const tagID of tagsChanges.deletes) {
                 if (tagID) {
-                    const removedTagGuid = Converters_1.convertGuidToService(tagID, en_data_model_1.CoreEntityTypes.Tag);
+                    const removedTagGuid = Converters_1.convertGuidToService(tagID, en_core_entity_types_1.CoreEntityTypes.Tag);
                     serviceData.tagGuids = serviceData.tagGuids.filter(guid => guid !== removedTagGuid);
                 }
                 else {
@@ -1040,8 +1080,8 @@ class NoteConverterClass {
             }
             for (const edge of tagsChanges.creates) {
                 const { id, type } = conduit_storage_1.getEdgeConnection(edge, nodeID);
-                if (type === en_data_model_1.CoreEntityTypes.Tag) {
-                    serviceData.tagGuids.push(Converters_1.convertGuidToService(id, en_data_model_1.CoreEntityTypes.Tag));
+                if (type === en_core_entity_types_1.CoreEntityTypes.Tag) {
+                    serviceData.tagGuids.push(Converters_1.convertGuidToService(id, en_core_entity_types_1.CoreEntityTypes.Tag));
                 }
             }
         }
@@ -1052,14 +1092,14 @@ class NoteConverterClass {
             }
             for (const edge of parentChanges.creates) {
                 const { id, type } = conduit_storage_1.getEdgeConnection(edge, nodeID);
-                if (type === en_data_model_1.CoreEntityTypes.Notebook) {
-                    serviceData.notebookGuid = Converters_1.convertGuidToService(id, en_data_model_1.CoreEntityTypes.Notebook);
+                if (type === en_core_entity_types_1.CoreEntityTypes.Notebook) {
+                    serviceData.notebookGuid = Converters_1.convertGuidToService(id, en_core_entity_types_1.CoreEntityTypes.Notebook);
                 }
-                else if (type === en_data_model_1.CoreEntityTypes.Workspace) {
+                else if (type === en_core_entity_types_1.CoreEntityTypes.Workspace) {
                     // lookup backing notebook for workspace
                     const nbId = await params.graphTransaction.getSyncState(trc, null, ['workspaces', 'wsToBackingNb', id]);
                     if (nbId) {
-                        serviceData.notebookGuid = Converters_1.convertGuidToService(nbId, en_data_model_1.CoreEntityTypes.Notebook);
+                        serviceData.notebookGuid = Converters_1.convertGuidToService(nbId, en_core_entity_types_1.CoreEntityTypes.Notebook);
                     }
                     else {
                         throw new conduit_utils_1.NotFoundError(id, 'workspace to backing nb mapping not found');
@@ -1075,30 +1115,30 @@ class NoteConverterClass {
                 serviceData.attributes.conflictSourceNoteGuid = undefined;
             }
         }
-        await updateNote(trc, params, curNote, serviceData, null);
+        await updateNote(trc, params, curNote, serviceData, null, undefined);
         return true;
     }
 }
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Note)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Note)
 ], NoteConverterClass.prototype, "convertFromService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Note)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Note)
 ], NoteConverterClass.prototype, "customToService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Note)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Note)
 ], NoteConverterClass.prototype, "createOnService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Note)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Note)
 ], NoteConverterClass.prototype, "deleteFromService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Note)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Note)
 ], NoteConverterClass.prototype, "updateToService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Note)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Note)
 ], NoteConverterClass.prototype, "handleErrorToService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Note)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Note)
 ], NoteConverterClass.prototype, "applyEdgeChangesToService", null);
 exports.NoteConverter = new NoteConverterClass();
 //# sourceMappingURL=NoteConverter.js.map

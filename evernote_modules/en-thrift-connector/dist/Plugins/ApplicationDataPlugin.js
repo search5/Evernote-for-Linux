@@ -25,7 +25,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getApplicationDataPlugin = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Auth = __importStar(require("../Auth"));
 const Converters_1 = require("../Converters/Converters");
 async function resolveAuthTokenFromNodeID(id, type, context) {
@@ -44,53 +44,24 @@ async function resolveAuthTokenFromNodeID(id, type, context) {
     const noteAuthToken = metadata.authToken;
     return noteAuthToken || '';
 }
-function getApplicationDataPlugin(thriftComm) {
+function getApplicationDataPlugin() {
     async function noteApplicationDataEntryResolver(_, args, context) {
         conduit_core_1.validateDB(context);
-        const authToken = await resolveAuthTokenFromNodeID(args.id, en_data_model_1.CoreEntityTypes.Note, context);
+        const authToken = await resolveAuthTokenFromNodeID(args.id, en_core_entity_types_1.CoreEntityTypes.Note, context);
         const authData = Auth.decodeAuthData(authToken);
-        const notestore = thriftComm.getNoteStore(authData.urls.noteStoreUrl);
-        const guid = Converters_1.convertGuidToService(args.id, en_data_model_1.CoreEntityTypes.Note);
+        const notestore = context.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
+        const guid = Converters_1.convertGuidToService(args.id, en_core_entity_types_1.CoreEntityTypes.Note);
         const value = await notestore.getNoteApplicationDataEntry(context.trc, authData.token, guid, args.key);
         return { value };
     }
     async function attachmentApplicationDataEntryResolver(_, args, context) {
         conduit_core_1.validateDB(context);
-        const authToken = await resolveAuthTokenFromNodeID(args.id, en_data_model_1.CoreEntityTypes.Attachment, context);
+        const authToken = await resolveAuthTokenFromNodeID(args.id, en_core_entity_types_1.CoreEntityTypes.Attachment, context);
         const authData = Auth.decodeAuthData(authToken);
-        const notestore = thriftComm.getNoteStore(authData.urls.noteStoreUrl);
-        const guid = Converters_1.convertGuidToService(args.id, en_data_model_1.CoreEntityTypes.Attachment);
+        const notestore = context.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
+        const guid = Converters_1.convertGuidToService(args.id, en_core_entity_types_1.CoreEntityTypes.Attachment);
         const value = await notestore.getResourceApplicationDataEntry(context.trc, authData.token, guid, args.key);
         return { value };
-    }
-    async function setNoteApplicationDataEntryResolver(_, args, context) {
-        conduit_core_1.validateDB(context);
-        const authToken = await resolveAuthTokenFromNodeID(args.id, en_data_model_1.CoreEntityTypes.Note, context);
-        const authData = Auth.decodeAuthData(authToken);
-        const notestore = thriftComm.getNoteStore(authData.urls.noteStoreUrl);
-        const guid = Converters_1.convertGuidToService(args.id, en_data_model_1.CoreEntityTypes.Note);
-        if (args.value !== null) {
-            await notestore.setNoteApplicationDataEntry(context.trc, authData.token, guid, args.key, args.value);
-        }
-        else {
-            await notestore.unsetNoteApplicationDataEntry(context.trc, authData.token, guid, args.key);
-        }
-        return { success: true };
-    }
-    async function setAttachmentApplicationDataEntryResolver(_, args, context) {
-        conduit_core_1.validateDB(context);
-        const authToken = await resolveAuthTokenFromNodeID(args.id, en_data_model_1.CoreEntityTypes.Attachment, context);
-        const authData = Auth.decodeAuthData(authToken);
-        const notestore = thriftComm.getNoteStore(authData.urls.noteStoreUrl);
-        const guid = Converters_1.convertGuidToService(args.id, en_data_model_1.CoreEntityTypes.Attachment);
-        if (args.value !== null) {
-            await notestore.setResourceApplicationDataEntry(context.trc, authData.token, guid, args.key, args.value);
-        }
-        else {
-            await notestore.unsetResourceApplicationDataEntry(context.trc, authData.token, guid, args.key);
-        }
-        // TODO update applicationDataKeys in the appropriate node to reflect the mutation
-        return { success: true };
     }
     return {
         name: 'applicationdata',
@@ -110,26 +81,6 @@ function getApplicationDataPlugin(thriftComm) {
                 }),
                 type: conduit_core_1.schemaToGraphQLType({ value: 'string?' }, 'attachmentGetApplicationDataEntryResult', false),
                 resolve: attachmentApplicationDataEntryResolver,
-            },
-        }),
-        defineMutators: () => ({
-            noteSetApplicationDataEntry: {
-                args: conduit_core_1.schemaToGraphQLArgs({
-                    id: 'ID',
-                    key: 'string',
-                    value: 'string?',
-                }),
-                type: conduit_core_1.GenericMutationResult,
-                resolve: setNoteApplicationDataEntryResolver,
-            },
-            attachmentSetApplicationDataEntry: {
-                args: conduit_core_1.schemaToGraphQLArgs({
-                    id: 'ID',
-                    key: 'string',
-                    value: 'string?',
-                }),
-                type: conduit_core_1.GenericMutationResult,
-                resolve: setAttachmentApplicationDataEntryResolver,
             },
         }),
     };

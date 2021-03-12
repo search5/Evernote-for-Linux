@@ -4,7 +4,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildOpsPlanForUnpinNotes = exports.buildOpsPlanForUnpinNote = exports.buildOpsPlanForNotebookDelete = exports.buildOpsPlanForNoteDelete = void 0;
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const BoardConstants_1 = require("./BoardConstants");
 const BoardFeatureSchemaManager_1 = require("./Schema/BoardFeatureSchemaManager");
 async function buildOpsPlanForNoteDelete(trc, ctx, nodeRef) {
@@ -77,7 +77,7 @@ async function buildOpsPlanForUnpinNotes(trc, ctx, notes, noteToExclude) {
      */
     const deterministicIdParts = BoardFeatureSchemaManager_1.BoardFeatureSchemaManager.formDeterministicBoardIdParts(BoardConstants_1.BoardType.Home, 0, BoardConstants_1.WidgetType.Pinned, 0);
     const [, pinnedNoteId] = await ctx.generateDeterministicID(trc, ctx.userID, BoardConstants_1.BoardEntityTypes.Widget, BoardConstants_1.BoardDeterministicIdGenerator, deterministicIdParts);
-    const potentialEdgesToDelete = await ctx.traverseGraph(trc, { id: pinnedNoteId, type: BoardConstants_1.BoardEntityTypes.Widget }, [{ edge: ['outputs', 'contentProvider'], type: en_data_model_1.CoreEntityTypes.Note }]);
+    const potentialEdgesToDelete = await ctx.traverseGraph(trc, { id: pinnedNoteId, type: BoardConstants_1.BoardEntityTypes.Widget }, [{ edge: ['outputs', 'contentProvider'], type: en_core_entity_types_1.CoreEntityTypes.Note }]);
     if (potentialEdgesToDelete.length > 0) {
         const notesSet = new Set(notes);
         const edgesToDelete = potentialEdgesToDelete.filter(e => e.edge && notesSet.has(e.edge.dstID) && e.edge.dstID !== noteToExclude)

@@ -30,19 +30,15 @@ function getTaskUserSettingsIdByUserId(userID) {
     });
 }
 exports.getTaskUserSettingsIdByUserId = getTaskUserSettingsIdByUserId;
-async function getTasksExportData(context, noteRef) {
+async function getTasksExportData(context, note) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j;
     conduit_core_1.validateDB(context);
-    const note = await context.db.getNode(context, noteRef);
-    if (!note) {
-        throw new conduit_utils_1.NotFoundError(noteRef.id, 'Note not found');
-    }
     const tasks = [];
     let taskGroupNoteLevelIDs = [];
     const noteContentInfoID = NoteContentInfo_1.getNoteContentInfoIDByNoteID(note.id);
     const info = await context.db.getNode(context, { id: noteContentInfoID, type: TaskConstants_1.TaskEntityTypes.NoteContentInfo });
     if (info) {
-        taskGroupNoteLevelIDs = info.NodeFields.taskGroups || [];
+        taskGroupNoteLevelIDs = info.NodeFields.taskGroupNoteLevelIDs || [];
         const taskIDs = Object.values(note.outputs.tasks).map(edge => edge.dstID);
         const taskNodes = await context.db.batchGetNodes(context, TaskConstants_1.TaskEntityTypes.Task, taskIDs);
         for (const task of taskNodes) {

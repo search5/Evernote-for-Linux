@@ -24,7 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.syncSharedNote = exports.isValidSharedNoteMembershipProvider = exports.createSharedNoteSyncContextMetadata = exports.fetchNote = exports.deleteSharedNoteContext = exports.sharedNoteSyncContext = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Auth = __importStar(require("../Auth"));
 const Converters_1 = require("../Converters/Converters");
 const ChunkConversion_1 = require("./ChunkConversion");
@@ -109,8 +109,8 @@ async function syncSharedNote(trc, params, noteStoreUrl, sharedNoteGuid, sharedO
             updateCount,
             notes: [note],
         }, updateCount);
-        const noteID = Converters_1.convertGuidFromService(sharedNoteGuid, en_data_model_1.CoreEntityTypes.Note);
-        await SyncHelpers_1.updateSyncContextPrivilege(trc, params, { id: noteID, type: en_data_model_1.CoreEntityTypes.Note }, isValidSharedNoteMembershipProvider(noteID));
+        const noteID = Converters_1.convertGuidFromService(sharedNoteGuid, en_core_entity_types_1.CoreEntityTypes.Note);
+        await SyncHelpers_1.updateSyncContextPrivilege(trc, params, { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note }, isValidSharedNoteMembershipProvider(noteID));
     }
 }
 exports.syncSharedNote = syncSharedNote;

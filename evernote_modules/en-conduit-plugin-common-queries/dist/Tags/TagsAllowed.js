@@ -12,7 +12,7 @@ exports.tagsAllowedPlugin = void 0;
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 const conduit_core_1 = require("conduit-core");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const graphql_1 = require("graphql");
 function buildArgs() {
     const fieldsType = conduit_core_1.schemaToGraphQLType(['refsCount', 'label', '?'], 'TagsAllowedField');
@@ -43,12 +43,12 @@ function buildArgs() {
 }
 async function filterAlreadyOwnedTags(root, tags) {
     const ownedTags = [];
-    if (root.type === en_data_model_1.CoreEntityTypes.Note) {
+    if (root.type === en_core_entity_types_1.CoreEntityTypes.Note) {
         for (const edge in root.outputs.tags) {
             ownedTags.push(root.outputs.tags[edge].dstID);
         }
     }
-    else if (root.type === en_data_model_1.CoreEntityTypes.Tag) {
+    else if (root.type === en_core_entity_types_1.CoreEntityTypes.Tag) {
         for (const edge in root.outputs.children) {
             ownedTags.push(root.outputs.children[edge].dstID);
         }
@@ -64,14 +64,14 @@ async function tagsAllowedResolver(parent, args, context, info) {
         throw new Error(`Missing relative's id`);
     }
     conduit_core_1.validateDB(context);
-    let relative = await context.db.getNode(context, { type: en_data_model_1.CoreEntityTypes.Note, id: args.id });
+    let relative = await context.db.getNode(context, { type: en_core_entity_types_1.CoreEntityTypes.Note, id: args.id });
     if (!relative) {
-        relative = await context.db.getNode(context, { type: en_data_model_1.CoreEntityTypes.Tag, id: args.id });
+        relative = await context.db.getNode(context, { type: en_core_entity_types_1.CoreEntityTypes.Tag, id: args.id });
     }
     if (!relative) {
         throw new Error(`Could not find note or tag with id: ${args.id}`);
     }
-    const { indexedFilters, indexedSorts, unIndexedSorts, indexUsed, } = conduit_core_1.getListResolverParams(en_data_model_1.CoreEntityTypes.Tag, args, context, info, (paths) => paths.concat([['syncContext']]));
+    const { indexedFilters, indexedSorts, unIndexedSorts, indexUsed, } = conduit_core_1.getListResolverParams(en_core_entity_types_1.CoreEntityTypes.Tag, args, context, info, (paths) => paths.concat([['syncContext']]));
     let isFirstPass = true;
     const results = [];
     for (const syncContext of relative.syncContexts) {
@@ -81,8 +81,8 @@ async function tagsAllowedResolver(parent, args, context, info) {
                 string: syncContext,
             },
         };
-        const tree = await context.db.readonlyIndexingTreeForTypeAndIndex(context.trc, en_data_model_1.CoreEntityTypes.Tag, indexUsed);
-        const iterator = await context.indexer.getIterator(context.trc, context.watcher, tree, en_data_model_1.CoreEntityTypes.Tag, indexUsed, [syncContextFilter].concat(indexedFilters), indexedSorts, false, undefined);
+        const tree = await context.db.readonlyIndexingTreeForTypeAndIndex(context.trc, en_core_entity_types_1.CoreEntityTypes.Tag, indexUsed);
+        const iterator = await context.indexer.getIterator(context.trc, context.watcher, tree, en_core_entity_types_1.CoreEntityTypes.Tag, indexUsed, [syncContextFilter].concat(indexedFilters), indexedSorts, false, undefined);
         if (!iterator) {
             throw new Error('Unable to create iterator for query');
         }
@@ -103,14 +103,14 @@ async function tagsAllowedResolver(parent, args, context, info) {
         }
         isFirstPass = false;
     }
-    const fieldStripper = context.indexer.indexedValuesFromKeyFactory(en_data_model_1.CoreEntityTypes.Tag, indexUsed, true);
+    const fieldStripper = context.indexer.indexedValuesFromKeyFactory(en_core_entity_types_1.CoreEntityTypes.Tag, indexUsed, true);
     const list = await filterAlreadyOwnedTags(relative, results.map(e => {
-        return Object.assign({ type: en_data_model_1.CoreEntityTypes.Tag }, fieldStripper(e));
+        return Object.assign({ type: en_core_entity_types_1.CoreEntityTypes.Tag }, fieldStripper(e));
     }));
-    const congruencyCheck = conduit_core_1.indexedSortsCongruencyCheck(en_data_model_1.CoreEntityTypes.Tag, indexedSorts, indexedFilters, context.indexer, indexUsed.index);
+    const congruencyCheck = conduit_core_1.indexedSortsCongruencyCheck(en_core_entity_types_1.CoreEntityTypes.Tag, indexedSorts, indexedFilters, context.indexer, indexUsed.index);
     if (unIndexedSorts.length || !congruencyCheck) {
         // We're sorting by label first but the index is ['syncContext','refsCount','label'] so re-sort
-        context.indexer.sort(en_data_model_1.CoreEntityTypes.Tag, list, args.sorts);
+        context.indexer.sort(en_core_entity_types_1.CoreEntityTypes.Tag, list, args.sorts);
     }
     return {
         count: list.length,

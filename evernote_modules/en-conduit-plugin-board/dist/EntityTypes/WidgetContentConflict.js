@@ -5,14 +5,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.widgetContentConflictIndexConfig = exports.widgetContentConflictTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const BoardConstants_1 = require("../BoardConstants");
 exports.widgetContentConflictTypeDef = {
     name: BoardConstants_1.BoardEntityTypes.WidgetContentConflict,
     nsyncFeatureGroup: 'Home',
     syncSource: conduit_storage_1.SyncSource.NSYNC,
     schema: {
-        content: en_data_model_1.BlobV2SchemaWithContent,
+        content: en_core_entity_types_1.BlobV2SchemaWithContent,
         created: 'timestamp',
         updated: 'timestamp',
     },

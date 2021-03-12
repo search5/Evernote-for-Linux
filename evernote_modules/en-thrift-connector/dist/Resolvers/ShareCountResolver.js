@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ShareCountResolver = void 0;
 const conduit_core_1 = require("conduit-core");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 // fetch and dedupe shareCountProfiles(profiles pointing to all memberships recipient and owner edges)
 // of node and it's ancestors if present.
 async function getProfileIDs(context, node) {
@@ -13,8 +13,8 @@ async function getProfileIDs(context, node) {
         return [];
     }
     const profiles = new Set(Object.keys(node.NodeFields.internal_shareCountProfiles));
-    const permissionsContext = new en_data_model_1.GraphQLPermissionContext(context);
-    const ancestors = await en_data_model_1.getAncestors(permissionsContext, node);
+    const permissionsContext = new en_core_entity_types_1.GraphQLPermissionContext(context);
+    const ancestors = await en_core_entity_types_1.getAncestors(permissionsContext, node);
     for (const ancestor of ancestors) {
         for (const profileID of Object.keys(ancestor.NodeFields.internal_shareCountProfiles)) {
             profiles.add(profileID);
@@ -29,7 +29,7 @@ function ShareCountResolver() {
         const node = await context.db.getNode(context, nodeRef);
         if (node) {
             const profileIDs = await getProfileIDs(context, node);
-            const profiles = await context.db.batchGetNodes(context, en_data_model_1.CoreEntityTypes.Profile, profileIDs);
+            const profiles = await context.db.batchGetNodes(context, en_core_entity_types_1.CoreEntityTypes.Profile, profileIDs);
             for (const i in profiles) {
                 const profile = profiles[i];
                 if (profile) {
@@ -47,19 +47,19 @@ function ShareCountResolver() {
         'Note.shareCount': {
             type: conduit_core_1.schemaToGraphQLType('number'),
             resolve: async (nodeRef, _, context) => {
-                return getShareCount(context, { type: en_data_model_1.CoreEntityTypes.Note, id: nodeRef.id });
+                return getShareCount(context, { type: en_core_entity_types_1.CoreEntityTypes.Note, id: nodeRef.id });
             },
         },
         'Notebook.shareCount': {
             type: conduit_core_1.schemaToGraphQLType('number'),
             resolve: async (nodeRef, _, context) => {
-                return getShareCount(context, { type: en_data_model_1.CoreEntityTypes.Notebook, id: nodeRef.id });
+                return getShareCount(context, { type: en_core_entity_types_1.CoreEntityTypes.Notebook, id: nodeRef.id });
             },
         },
         'Workspace.shareCount': {
             type: conduit_core_1.schemaToGraphQLType('number'),
             resolve: async (nodeRef, _, context) => {
-                return getShareCount(context, { type: en_data_model_1.CoreEntityTypes.Workspace, id: nodeRef.id });
+                return getShareCount(context, { type: en_core_entity_types_1.CoreEntityTypes.Workspace, id: nodeRef.id });
             },
         },
     };

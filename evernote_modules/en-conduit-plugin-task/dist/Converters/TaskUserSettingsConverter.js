@@ -5,10 +5,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getTaskUserSettingsNodeAndEdges = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const en_nsync_connector_1 = require("en-nsync-connector");
 const TaskConstants_1 = require("../TaskConstants");
 const getTaskUserSettingsNodeAndEdges = async (trc, instance, context) => {
+    var _a;
     const nodesToUpsert = [];
     const edgesToCreate = [];
     const edgesToDelete = [];
@@ -16,16 +17,12 @@ const getTaskUserSettingsNodeAndEdges = async (trc, instance, context) => {
     if (!initial) {
         return null;
     }
-    let defaultRemindersOffsets = [];
-    if (instance.defaultRemindersOffsets) {
-        defaultRemindersOffsets = instance.defaultRemindersOffsets.map(offset => en_nsync_connector_1.convertLong(offset));
-    }
     const taskUserSettings = Object.assign(Object.assign({}, initial), { type: TaskConstants_1.TaskEntityTypes.TaskUserSettings, NodeFields: {
-            created: en_nsync_connector_1.convertLong(instance.created || 0),
-            updated: en_nsync_connector_1.convertLong(instance.updated || 0),
+            created: instance.created,
+            updated: instance.updated,
             defaultReminder: instance.defaultReminder || false,
-            defaultRemindersOffsets,
-            pinDefaultTaskNote: instance.pinDefaultTaskNote || true,
+            defaultRemindersOffsets: (_a = instance.defaultRemindersOffsets) !== null && _a !== void 0 ? _a : [],
+            pinDefaultTaskNote: Boolean(instance.pinDefaultTaskNote),
         }, inputs: {}, outputs: {
             defaultTaskNote: {},
         } });
@@ -36,13 +33,13 @@ const getTaskUserSettingsNodeAndEdges = async (trc, instance, context) => {
     if (existingDefaultTaskNoteID !== instance.defaultTaskNoteID) {
         if (existingDefaultTaskNoteID) {
             edgesToDelete.push({
-                dstType: en_data_model_1.CoreEntityTypes.Note, dstID: existingDefaultTaskNoteID, dstPort: 'taskUserSettingsForDefaultNote',
+                dstType: en_core_entity_types_1.CoreEntityTypes.Note, dstID: existingDefaultTaskNoteID, dstPort: 'taskUserSettingsForDefaultNote',
                 srcType: TaskConstants_1.TaskEntityTypes.TaskUserSettings, srcID: taskUserSettings.id, srcPort: 'defaultTaskNote',
             });
         }
         if (instance.defaultTaskNoteID) {
             edgesToCreate.push({
-                dstType: en_data_model_1.CoreEntityTypes.Note,
+                dstType: en_core_entity_types_1.CoreEntityTypes.Note,
                 dstID: instance.defaultTaskNoteID,
                 dstPort: 'taskUserSettingsForDefaultNote',
                 srcType: TaskConstants_1.TaskEntityTypes.TaskUserSettings, srcID: taskUserSettings.id, srcPort: 'defaultTaskNote',

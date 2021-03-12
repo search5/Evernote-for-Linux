@@ -9,14 +9,14 @@ const en_thrift_connector_1 = require("en-thrift-connector");
 const graphql_1 = require("graphql");
 const CommEngineSchemaTypes_1 = require("./CommEngineSchemaTypes");
 const EnThriftCommEngine_1 = require("./EnThriftCommEngine");
-function getENCommEnginePlugin(thriftComm) {
+function getENCommEnginePlugin() {
     async function commEngineResolver(parent, args, context) {
         if (!args || args === {}) {
             throw new Error('Missing args for commEngineResolver');
         }
         const authorizedToken = await conduit_core_1.retrieveAuthorizedToken(context);
         const authData = en_thrift_connector_1.decodeAuthData(authorizedToken);
-        const results = await EnThriftCommEngine_1.syncMessages(context.trc, thriftComm, authData, args);
+        const results = await EnThriftCommEngine_1.syncMessages(context.trc, context.thriftComm, authData, args);
         // Message content is deprecated, remove on next breaking change
         if (results && results.messages) {
             results.messages = results.messages.map(m => (Object.assign(Object.assign({}, m), { messageContent: m.content })));

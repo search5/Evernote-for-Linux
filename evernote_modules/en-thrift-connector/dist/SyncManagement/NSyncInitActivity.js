@@ -54,6 +54,9 @@ class NSyncInitActivity extends SyncActivity_1.SyncActivity {
             getNode: async (newTrc, ref) => {
                 return await this.context.syncEngine.graphStorage.getNode(newTrc, null, ref, false);
             },
+            getEdge: async (newTrc, ref) => {
+                return await this.context.syncEngine.graphStorage.getEdge(newTrc, null, ref);
+            },
             getSyncState: (newTrc, watcher, path) => {
                 return this.context.syncEngine.graphStorage.getSyncState(newTrc, watcher, path);
             },
@@ -70,7 +73,7 @@ class NSyncInitActivity extends SyncActivity_1.SyncActivity {
         };
         const napAuthInfo = Auth.hasNapAuthInfo(auth) ? auth.napAuthInfo : null;
         if (this.di.initSyncEventManager) {
-            this.context.syncEventManager = await this.di.initSyncEventManager(trc, auth.urlHost, auth.token, (napAuthInfo === null || napAuthInfo === void 0 ? void 0 : napAuthInfo.jwt) || '', (napAuthInfo === null || napAuthInfo === void 0 ? void 0 : napAuthInfo.clientID) || '', storage, async (newTrc, disable) => {
+            this.context.syncEventManager = await this.di.initSyncEventManager(trc, auth.urlHost, auth.token, (napAuthInfo === null || napAuthInfo === void 0 ? void 0 : napAuthInfo.jwt) || '', (napAuthInfo === null || napAuthInfo === void 0 ? void 0 : napAuthInfo.clientID) || '', storage, this.context.usedPrebuilt, async (newTrc, disable) => {
                 await this.context.syncManager.toggleNSync(newTrc, disable);
             });
             await this.context.syncEngine.transactEphemeral(trc, 'InitNSyncDisabled', async (tx) => {

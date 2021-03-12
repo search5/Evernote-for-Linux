@@ -1,0 +1,26 @@
+{
+  "name": "en-node-gyp-build",
+  "version": "1.0.0",
+  "description": "Build tool and bindings loader for node-gyp that supports prebuilds.  Added multiple path support for dev and webpack.",
+  "main": "index.js",
+  "devDependencies": {
+    "array-shuffle": "^1.0.1",
+    "standard": "^14.0.0",
+    "tape": "^5.0.0"
+  },
+  "bin": {
+    "node-gyp-build": "./bin.js",
+    "node-gyp-build-optional": "./optional.js",
+    "node-gyp-build-test": "./build-test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://source.build.etonreve.com/projects/NP/repos/en-node-gyp-build"
+  },
+  "author": "Mathias Buus (@mafintosh)",
+  "license": "MIT",
+  "homepage": "https://source.build.etonreve.com/projects/NP/repos/en-node-gyp-build",
+  "publishConfig": {
+    "registry": "http://localhost:4873"
+  }
+}

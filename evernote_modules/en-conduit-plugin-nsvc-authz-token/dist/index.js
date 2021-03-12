@@ -10,7 +10,7 @@ const EnAuthzTokenService_1 = require("./EnAuthzTokenService");
 const EnTokenThrift_1 = require("./EnTokenThrift");
 const TokenStorage_1 = require("./TokenStorage");
 const tokenCache = new TokenStorage_1.TokenStorage();
-function getENNsvcAuthzToken(thriftComm) {
+function getENNsvcAuthzToken() {
     /**
      * Get token from Thrift API or from Storage if token is not expired
      *
@@ -50,7 +50,7 @@ function getENNsvcAuthzToken(thriftComm) {
         const tokenStorageKey = `${userId}:${tokenType}`;
         results = tokenStorage.load(tokenStorageKey);
         if (!tokenStorage.valid(results)) {
-            results = await EnTokenThrift_1.getToken(context.trc, thriftComm, authorizedToken, tokenType);
+            results = await EnTokenThrift_1.getToken(context.trc, context.thriftComm, authorizedToken, tokenType);
             tokenStorage.save(results, tokenStorageKey);
         }
         return results;

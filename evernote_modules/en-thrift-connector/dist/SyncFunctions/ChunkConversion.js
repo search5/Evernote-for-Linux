@@ -5,7 +5,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.convertMessageSyncChunk = exports.convertSyncChunk = exports.processSyncUpdates = exports.fetchAndCacheSnippets = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Converters_1 = require("../Converters/Converters");
 const LinkedNotebookHelpers_1 = require("../Converters/LinkedNotebookHelpers");
 const MessageAttachmentConverter_1 = require("../Converters/MessageAttachmentConverter");
@@ -18,7 +19,6 @@ const ShortcutConverter_1 = require("../Converters/ShortcutConverter");
 const TagConverter_1 = require("../Converters/TagConverter");
 const ThreadConverter_1 = require("../Converters/ThreadConverter");
 const WorkspaceConverter_1 = require("../Converters/WorkspaceConverter");
-const ThriftTypes_1 = require("../ThriftTypes");
 const LinkedNotebookSync_1 = require("./LinkedNotebookSync");
 const SyncHelpers_1 = require("./SyncHelpers");
 const MAX_SNIPPET_LENGTH = 160;
@@ -37,7 +37,7 @@ async function fetchAndCacheSnippets(trc, thriftComm, auth, guids, transact, set
     }
     const snippetsOut = {};
     const noteStore = thriftComm.getNoteStore(auth.urls.noteStoreUrl);
-    const guidChunks = conduit_utils_1.chunkArray(guids.sort(), ThriftTypes_1.EDAM_SNIPPETS_NOTES_MAX);
+    const guidChunks = conduit_utils_1.chunkArray(guids.sort(), en_conduit_sync_types_1.EDAM_SNIPPETS_NOTES_MAX);
     let count = 0;
     for (const chunk of guidChunks) {
         const snippets = await noteStore.getNoteSnippetsV2(trc, auth.token, chunk, MAX_SNIPPET_LENGTH) || {};
@@ -47,7 +47,7 @@ async function fetchAndCacheSnippets(trc, thriftComm, auth, guids, transact, set
                     conduit_utils_1.logger.warn('Service did not return a snippet for note', guid);
                 }
                 const snippet = snippets[guid] || ''; // the service will omit any guid that the user doesn't have access to
-                const nodeRef = { id: Converters_1.convertGuidFromService(guid, en_data_model_1.CoreEntityTypes.Note), type: en_data_model_1.CoreEntityTypes.Note };
+                const nodeRef = { id: Converters_1.convertGuidFromService(guid, en_core_entity_types_1.CoreEntityTypes.Note), type: en_core_entity_types_1.CoreEntityTypes.Note };
                 await conduit_utils_1.withError(tx.setNodeCachedField(trc, nodeRef, 'snippet', snippet, {}));
                 if (snippetsOut) {
                     snippetsOut[guid] = snippet;
@@ -218,11 +218,11 @@ async function convertMessageSyncChunk(trc, params, chunk, syncTime) {
         for (const update of idsUpdates) {
             await MessageAttachmentConverter_1.addNewIdentity(trc, converterParams, params.syncContext, update);
         }
-        for (const update of threadUpdates) {
-            await ThreadConverter_1.ThreadConverter.convertFromService(trc, converterParams, params.syncContext, update);
-        }
         for (const update of messageUpdates) {
             await MessageConverter_1.MessageConverter.convertFromService(trc, converterParams, params.syncContext, update);
+        }
+        for (const update of threadUpdates) {
+            await ThreadConverter_1.ThreadConverter.convertFromService(trc, converterParams, params.syncContext, update);
         }
         await ThreadConverter_1.ThreadConverter.updateMessageMaxForThreads(trc, converterParams, params.syncContext, messageUpdates);
         for (const update of shareUpdates) {

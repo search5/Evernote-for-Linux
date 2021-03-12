@@ -14,7 +14,7 @@ class ConduitHttpRequestor extends en_node_appauth_js_1.Requestor {
         this.httpTransport = httpTransport;
     }
     async xhr(settings) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d, _e;
         if (!settings.url) {
             throw new en_node_appauth_js_1.AppAuthError('A URL must be provided.');
         }
@@ -61,7 +61,8 @@ class ConduitHttpRequestor extends en_node_appauth_js_1.Requestor {
             return conduit_utils_1.safeParse(resp.result);
         }
         else {
-            throw new en_node_appauth_js_1.AppAuthError(resp.status.toString(), resp.statusText);
+            const errResp = (_d = conduit_utils_1.safeParse(resp.result)) !== null && _d !== void 0 ? _d : {};
+            throw new en_node_appauth_js_1.AppAuthError(resp.status.toString(), (_e = errResp.error) !== null && _e !== void 0 ? _e : resp.statusText);
         }
     }
 }

@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Searcher = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const en_search_engine_shared_1 = require("en-search-engine-shared");
 const en_thrift_connector_1 = require("en-thrift-connector");
 const SearchExUtil_1 = require("../SearchExUtil");
@@ -18,6 +18,8 @@ const SearchUtils_1 = require("./SearchUtils");
  */
 class Searcher {
     constructor(searchEngine) {
+        this.quickSwitcherTypes = [SearchSchemaTypes_1.SearchExResultType.TAG, SearchSchemaTypes_1.SearchExResultType.NOTE,
+            SearchSchemaTypes_1.SearchExResultType.NOTEBOOK, SearchSchemaTypes_1.SearchExResultType.STACK, SearchSchemaTypes_1.SearchExResultType.WORKSPACE];
         this.searchEngine = searchEngine;
     }
     /**
@@ -39,7 +41,7 @@ class Searcher {
         const results = [];
         for (const guid of guids) {
             results.push({
-                noteID: en_thrift_connector_1.convertGuidFromService(guid, en_data_model_1.CoreEntityTypes.Note),
+                noteID: en_thrift_connector_1.convertGuidFromService(guid, en_core_entity_types_1.CoreEntityTypes.Note),
                 containerID: null,
                 score: 0,
                 label: null,
@@ -132,16 +134,38 @@ class Searcher {
         result.results.push(resGroup);
         return result;
     }
+    isQuickSwitcherRequest(args) {
+        if (!args.param || !args.param.resultSpec) {
+            return false;
+        }
+        const totalRequestedTypes = args.param.resultSpec.length;
+        if (totalRequestedTypes !== this.quickSwitcherTypes.length) {
+            return false;
+        }
+        for (const quickSwitcherType of this.quickSwitcherTypes) {
+            const resSpec = SearchExUtil_1.findResultSpec(args, quickSwitcherType);
+            if (resSpec === null || this.isSearchRequest(resSpec)) {
+                return false;
+            }
+        }
+        return true;
+    }
     async suggest(args, authData) {
         const searchExRet = SearchExUtil_1.emptySearchExResult();
         const searchStr = SearchExUtil_1.getSearchString(args);
+        let engineResults = new Array();
+        if (this.isQuickSwitcherRequest(args)) {
+            engineResults = await this.searchEngine.suggest(searchStr, en_search_engine_shared_1.ENDocumentType.NOTE, en_search_engine_shared_1.ENSuggestOptimization.NONE);
+        }
+        else {
+            engineResults = await this.searchEngine.suggest(searchStr, en_search_engine_shared_1.ENDocumentType.NOTE);
+        }
         // TODO: resotre this when full sync for large buiness acoounts is enabled
         // in case of empty request in business account we should limit note scope for suggest
         // if (searchStr.length === 0 && authData.vaultAuth) {
         //   const clientUserId: string = authData.userID.toString();
         //   searchStr = 'any: creatorId:' + clientUserId + ' lastEditorId:' + clientUserId;
         // }
-        const engineResults = await this.searchEngine.suggest(searchStr, en_search_engine_shared_1.ENDocumentType.NOTE);
         if (engineResults) {
             for (const engineSuggestion of engineResults) {
                 if (!engineSuggestion.guid) {

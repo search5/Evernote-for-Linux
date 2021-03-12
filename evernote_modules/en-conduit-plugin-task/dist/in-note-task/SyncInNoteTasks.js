@@ -13,7 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.syncInNoteTasks = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const NoteContentInfo_1 = require("../Mutators/Helpers/NoteContentInfo");
 const TaskConstants_1 = require("../TaskConstants");
 const ApplyComparisonChanges_1 = require("./ApplyComparisonChanges");
@@ -27,18 +27,18 @@ async function syncInNoteTasks(args, context) {
     const sourceOfChange = (_a = args.sourceOfChange) !== null && _a !== void 0 ? _a : '';
     validateNoteLevelIDUniqueness(args);
     conduit_core_1.validateDB(context);
-    const note = await context.db.getNode(context, { id: args.noteID, type: en_data_model_1.CoreEntityTypes.Note });
+    const note = await context.db.getNode(context, { id: args.noteID, type: en_core_entity_types_1.CoreEntityTypes.Note });
     if (!note) {
         throw new conduit_utils_1.NotFoundError(args.noteID, 'The parent note does not exists');
     }
-    await compareAndUpdateTaskGroups(args, context, note);
     const inputTasks = getTasksFromInput(args.taskGroupList);
     const inputLoadedTasks = getTasksFromInput(args.loadedTaskGroupList);
-    const graphDbTasks = await context.db.batchGetNodes(context, TaskConstants_1.TaskEntityTypes.Task, await getChildrenIDs(context, en_data_model_1.CoreEntityTypes.Note, note.id));
+    const graphDbTasks = await context.db.batchGetNodes(context, TaskConstants_1.TaskEntityTypes.Task, await getChildrenIDs(context, en_core_entity_types_1.CoreEntityTypes.Note, note.id));
     const taskComparisonResult = Comparison_1.compareList(inputLoadedTasks, inputTasks, note, graphDbTasks);
     await ApplyComparisonChanges_1.applyTaskComparisonChanges(context, taskComparisonResult, sourceOfChange);
     const reminderComparisonResult = await getChildrenChanges(context, taskComparisonResult, TaskConstants_1.TaskEntityTypes.Reminder, TaskConstants_1.TaskEntityTypes.Task);
     await ApplyComparisonChanges_1.applyReminderComparisonChanges(context, reminderComparisonResult, sourceOfChange);
+    await compareAndUpdateTaskGroups(args, context, note);
     return {
         success: true,
     };
@@ -54,7 +54,7 @@ async function getChildrenIDs(context, nodeType, nodeID) {
     let childPropertyName;
     let childType;
     switch (nodeType) {
-        case en_data_model_1.CoreEntityTypes.Note:
+        case en_core_entity_types_1.CoreEntityTypes.Note:
             childPropertyName = 'tasks';
             childType = TaskConstants_1.TaskEntityTypes.Task;
             break;
@@ -155,11 +155,11 @@ async function compareAndUpdateTaskGroups(args, context, note) {
     }
     const existingNoteContentInfo = await context.db.getNode(context, { type: TaskConstants_1.TaskEntityTypes.NoteContentInfo, id: NoteContentInfo_1.getNoteContentInfoIDByNoteID(args.noteID) });
     if (existingNoteContentInfo) {
-        if (arraysEqual(existingNoteContentInfo.NodeFields.taskGroups, taskGroupNoteLevelIDs)) {
+        if (arraysEqual(existingNoteContentInfo.NodeFields.taskGroupNoteLevelIDs, taskGroupNoteLevelIDs)) {
             return;
         }
-        if (existingNoteContentInfo.NodeFields.taskGroups) {
-            const notLoaded = existingNoteContentInfo.NodeFields.taskGroups.filter(tg => !loadedTaskGroupNoteLevelIDs.includes(tg));
+        if (existingNoteContentInfo.NodeFields.taskGroupNoteLevelIDs) {
+            const notLoaded = existingNoteContentInfo.NodeFields.taskGroupNoteLevelIDs.filter(tg => !loadedTaskGroupNoteLevelIDs.includes(tg));
             const notLoadedNotInNewInput = notLoaded.filter(tg => !taskGroupNoteLevelIDs.includes(tg));
             taskGroupNoteLevelIDs.push(...notLoadedNotInNewInput);
         }

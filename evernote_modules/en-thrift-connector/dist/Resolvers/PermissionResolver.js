@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PermissionResolver = void 0;
 const conduit_core_1 = require("conduit-core");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const NoteCommandPolicyGraphQLType = conduit_core_1.schemaToGraphQLType({
     canDuplicate: 'boolean',
     canEditContent: 'boolean',
@@ -43,22 +43,22 @@ function PermissionResolver() {
         'Note.CommandPolicy': {
             type: NoteCommandPolicyGraphQLType,
             resolve: async (n, _, context) => {
-                const permissionContext = new en_data_model_1.GraphQLPermissionContext(context);
-                return await en_data_model_1.commandPolicyOfNote(n.id, permissionContext);
+                const permissionContext = new en_core_entity_types_1.GraphQLPermissionContext(context);
+                return await en_core_entity_types_1.commandPolicyOfNote(n.id, permissionContext);
             },
         },
         'Notebook.CommandPolicy': {
             type: FolderCommandPolicyGraphQLType,
             resolve: async (nb, _, context) => {
-                const permissionContext = new en_data_model_1.GraphQLPermissionContext(context);
-                return await en_data_model_1.commandPolicyOfNotebook(nb.id, permissionContext);
+                const permissionContext = new en_core_entity_types_1.GraphQLPermissionContext(context);
+                return await en_core_entity_types_1.commandPolicyOfNotebook(nb.id, permissionContext);
             },
         },
         'Workspace.CommandPolicy': {
             type: FolderCommandPolicyGraphQLType,
             resolve: async (sp, _, context) => {
-                const permissionContext = new en_data_model_1.GraphQLPermissionContext(context);
-                return await en_data_model_1.commandPolicyOfSpace(sp.id, permissionContext);
+                const permissionContext = new en_core_entity_types_1.GraphQLPermissionContext(context);
+                return await en_core_entity_types_1.commandPolicyOfSpace(sp.id, permissionContext);
             },
         },
     };

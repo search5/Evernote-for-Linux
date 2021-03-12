@@ -25,11 +25,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.interruptible = exports.updateSyncType = exports.updateSyncProgressType = exports.clearSyncProgress = exports.updateSyncRate = exports.checkIfSyncAvailable = exports.getLocalSyncState = exports.hasRemoteValueChanged = exports.getConverterParamsFromSyncParams = exports.updateSyncContextPrivilegeImpl = exports.updateSyncContextPrivilege = exports.getInitialSnippetsToFetch = exports.updateInitialSnippetsToFetch = exports.MAX_INITIAL_SNIPPETS_TO_FETCH = exports.EmptySyncStateWithTurbo = exports.EmptySyncState = exports.TURBO_SYNC_DEFAULTS = exports.SYNC_TYPE_SYNC_STATE_PATH = exports.NOTES_SYNC_STATE_PATH = exports.POLL_JITTER = exports.RETRY_TIMEOUT = exports.MIN_POLL_INTERVAL = exports.DEFAULT_POLL_INTERVAL = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const Helpers_1 = require("../Converters/Helpers");
 const SyncActivity_1 = require("../SyncManagement/SyncActivity");
-const ThriftTypes_1 = require("../ThriftTypes");
 exports.DEFAULT_POLL_INTERVAL = 30000;
 exports.MIN_POLL_INTERVAL = 5000;
 exports.RETRY_TIMEOUT = 10000;
@@ -45,7 +45,7 @@ exports.EmptySyncState = SimplyImmutable.deepFreeze({
     syncInterval: exports.DEFAULT_POLL_INTERVAL,
 });
 exports.EmptySyncStateWithTurbo = SimplyImmutable.deepFreeze(Object.assign(Object.assign({}, exports.EmptySyncState), { turboSyncNoteIdleUpdateBuffer: exports.TURBO_SYNC_DEFAULTS.NOTE_IDLE_BUFFER, turboSyncNoteEditUpdateBuffer: exports.TURBO_SYNC_DEFAULTS.NOTE_EDIT_BUFFER }));
-exports.MAX_INITIAL_SNIPPETS_TO_FETCH = 2 * ThriftTypes_1.EDAM_SNIPPETS_NOTES_MAX;
+exports.MAX_INITIAL_SNIPPETS_TO_FETCH = 2 * en_conduit_sync_types_1.EDAM_SNIPPETS_NOTES_MAX;
 function getSnippetsFetchSyncStatePath(syncContext) {
     return [syncContext, 'snippetsFetch'];
 }
@@ -77,8 +77,8 @@ exports.getInitialSnippetsToFetch = getInitialSnippetsToFetch;
 async function updateSyncContextPrivilege(trc, params, nodeRef, isValidMembership) {
     const graphStorage = params.syncEngine.graphStorage;
     const membershipProvider = async () => {
-        const ownMemberships = await graphStorage.queryGraph(trc, null, en_data_model_1.CoreEntityTypes.Membership, 'MembershipsForMeInParent', { parent: nodeRef });
-        return await graphStorage.batchGetNodes(trc, null, en_data_model_1.CoreEntityTypes.Membership, ownMemberships.map(idx => idx.id)) || [];
+        const ownMemberships = await graphStorage.queryGraph(trc, null, en_core_entity_types_1.CoreEntityTypes.Membership, 'MembershipsForMeInParent', { parent: nodeRef });
+        return await graphStorage.batchGetNodes(trc, null, en_core_entity_types_1.CoreEntityTypes.Membership, ownMemberships.map(idx => idx.id)) || [];
     };
     const transactionProvider = async (debugName, func) => {
         await params.syncEngine.transact(trc, debugName, func);
@@ -88,14 +88,14 @@ async function updateSyncContextPrivilege(trc, params, nodeRef, isValidMembershi
 exports.updateSyncContextPrivilege = updateSyncContextPrivilege;
 async function updateSyncContextPrivilegeImpl(trc, nodeRef, syncContext, membershipsProvider, transactionProvider, isValidMembership) {
     const memberships = await membershipsProvider();
-    let privilege = en_data_model_1.MembershipPrivilege.READ;
+    let privilege = en_core_entity_types_1.MembershipPrivilege.READ;
     for (const membership of memberships) {
         if (!membership) {
             continue;
         }
         if (isValidMembership(membership)) {
-            privilege = en_data_model_1.highestPrivilege(privilege, membership.NodeFields.privilege);
-            if (privilege === en_data_model_1.MembershipPrivilege.MANAGE) {
+            privilege = en_core_entity_types_1.highestPrivilege(privilege, membership.NodeFields.privilege);
+            if (privilege === en_core_entity_types_1.MembershipPrivilege.MANAGE) {
                 break;
             }
         }

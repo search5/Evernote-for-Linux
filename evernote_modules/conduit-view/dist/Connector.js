@@ -165,9 +165,9 @@ async function uploadFile(params) {
     return await exports.connector.uploadFile(params);
 }
 exports.uploadFile = uploadFile;
-const FlushMutations = Query_1.gql `
-  mutation {
-    ForceDownsync(wait: true, flushMutations: true) {
+const FlushAttachmentMutations = Query_1.gql `
+  mutation ForceUpsync {
+    ForceUpsync {
       success
     }
   }
@@ -185,7 +185,7 @@ query ($attachmentID: String!) {
 `;
 async function waitForAttachmentUpload(attachmentID) {
     return ViewTracing_1.traceUserEvent('waitForAttachmentUpload', { attachmentID }, async () => {
-        await Query_1.execute(FlushMutations);
+        await Query_1.execute(FlushAttachmentMutations);
         const res = await Query_1.execute(GetAttachmentInfo, { attachmentID });
         return {
             width: res.width,

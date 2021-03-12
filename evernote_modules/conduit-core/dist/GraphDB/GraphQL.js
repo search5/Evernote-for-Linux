@@ -65,7 +65,8 @@ function argsToConfig(argsIn) {
         return args;
     }, {});
 }
-function applyCustomResolvers(autoResolverData, customQueries) {
+function applyCustomResolvers(trc, type, autoResolverData, customQueries) {
+    conduit_utils_1.traceEventStart(trc, `applyCustomResolvers:${type}`);
     const root = {};
     for (const custom of customQueries) {
         for (const key in custom) {
@@ -92,38 +93,45 @@ function applyCustomResolvers(autoResolverData, customQueries) {
     for (const key of rootKeys) {
         out[key] = Object.assign(Object.assign({}, root[key]), { args: argsToConfig(root[key].args) });
     }
+    conduit_utils_1.traceEventEnd(trc, `applyCustomResolvers:${type}`);
     return out;
 }
 class GraphQLResolver {
-    constructor(di) {
+    constructor(trc, di) {
         this.di = di;
         this.autoResolverData = new ResolverHelpers_1.AutoResolverData();
         this.cachePrefix = Date.now();
         this.gCachedQueries = {};
         this.queryCacheMax = 0;
+        conduit_utils_1.traceEventStart(trc, 'GraphQLResolver');
+        conduit_utils_1.traceEventStart(trc, 'BuildMutatorsAndQueries');
         const schemaDef = {
             query: new graphql_1.GraphQLObjectType({
                 name: 'RootQueryType',
-                fields: applyCustomResolvers(this.autoResolverData, [
-                    AutoResolvers_1.buildAutoResolvers(this.autoResolverData, di.nodeTypes(), di.indexer(), di.dataResolvers()),
+                fields: applyCustomResolvers(trc, 'Queries', this.autoResolverData, [
+                    AutoResolvers_1.buildAutoResolvers(trc, this.autoResolverData, di.nodeTypes(), di.indexer(), di.dataResolvers()),
                     CustomResolvers_1.buildCustomResolvers(),
-                    pluginManager_1.getPluginResolvers(di.plugins, di, 'Queries'),
+                    pluginManager_1.getPluginResolvers(trc, di.plugins, di, 'Queries'),
                 ]),
             }),
             mutation: new graphql_1.GraphQLObjectType({
                 name: 'RootMutationType',
-                fields: applyCustomResolvers(this.autoResolverData, [
-                    AutoMutations_1.buildAutoMutators(di.mutatorDefinitions()),
+                fields: applyCustomResolvers(trc, 'Mutators', this.autoResolverData, [
+                    AutoMutations_1.buildAutoMutators(trc, di.mutatorDefinitions()),
                     ErrorMutations_1.getErrorMutators(),
                     GraphMutations_1.getGraphMutators(),
                     LocalSettingsMutations_1.getLocalSettingsMutators(),
                     MultiUserMutations_1.getMultiUserMutators(),
                     TelemetryMutations_1.getTelemetryMutators(),
-                    pluginManager_1.getPluginResolvers(di.plugins, di, 'Mutators'),
+                    pluginManager_1.getPluginResolvers(trc, di.plugins, di, 'Mutators'),
                 ]),
             }),
         };
+        conduit_utils_1.traceEventEnd(trc, 'BuildMutatorsAndQueries');
+        conduit_utils_1.traceEventStart(trc, 'BuildGraphQLSchema');
         this.rootSchema = new graphql_1.GraphQLSchema(schemaDef);
+        conduit_utils_1.traceEventEnd(trc, 'BuildGraphQLSchema');
+        conduit_utils_1.traceEventEnd(trc, 'GraphQLResolver');
     }
     getSchema() {
         return this.rootSchema;

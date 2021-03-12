@@ -3,15 +3,20 @@
  * Copyright 2018 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.invalidateAuthToken = exports.refreshJWTFromMonolith = exports.hasNapAuthInfo = exports.hasNAPData = exports.registerSession = exports.refreshAuthToken = exports.needMonolithTokenRefresh = exports.getOAuthCredential = exports.setOAuthCredential = exports.getScopedGoogleOAuthCredential = exports.fixupAuth = exports.revalidateSyncContextAuth = exports.getUser = exports.authenticateToSharedNotebook = exports.authenticateToNote = exports.acquireSessionToken = exports.revokeNAPToken = exports.revokeSDMSSession = exports.logoutThrift = exports.userSignupandLogin = exports.loginWithServiceToken = exports.loginWithAuthInQueue = exports.loginWithExistingAuth = exports.loginWithTwoFactor = exports.loginWithNAP = exports.login = exports.getLoginInfo = exports.getAuthFromSyncContext = exports.fixupAuthServiceUrls = exports.toServiceToken = exports.decodeAuthData = exports.NullAuthData = exports.encodeAuthData = exports.RevalidateShareError = exports.RefreshUserTokenError = exports.TokenRefreshSource = exports.NAP_MIGRATION_STATE_ENUM = exports.SERVICE_PROVIDER_STRING_TO_ENUM = exports.SERVICE_PROVIDER_OPTIONAL_ENUM = exports.SERVICE_PROVIDER_ENUM = exports.NapMigrationStateType = exports.BusinessUserType = exports.LoginStatus = void 0;
+exports.invalidateAuthToken = exports.refreshJWTFromMonolith = exports.registerSession = exports.refreshAuthToken = exports.needMonolithTokenRefresh = exports.getOAuthCredential = exports.setOAuthCredential = exports.getScopedGoogleOAuthCredential = exports.fixupAuth = exports.revalidateSyncContextAuth = exports.getUser = exports.authenticateToSharedNotebook = exports.authenticateToNote = exports.acquireSessionToken = exports.revokeNAPToken = exports.revokeSDMSSession = exports.logoutThrift = exports.userSignupandLogin = exports.loginWithServiceToken = exports.loginWithAuthInQueue = exports.loginWithExistingAuth = exports.loginWithTwoFactor = exports.loginWithNAP = exports.login = exports.getLoginInfo = exports.getAuthFromSyncContext = exports.toServiceToken = exports.RevalidateShareError = exports.RefreshUserTokenError = exports.TokenRefreshSource = exports.NAP_MIGRATION_STATE_ENUM = exports.SERVICE_PROVIDER_STRING_TO_ENUM = exports.SERVICE_PROVIDER_OPTIONAL_ENUM = exports.SERVICE_PROVIDER_ENUM = exports.NapMigrationStateType = exports.BusinessUserType = exports.LoginStatus = exports.hasNAPData = exports.hasNapAuthInfo = exports.encodeAuthData = exports.decodeAuthData = exports.AuthServiceLevel = void 0;
+const conduit_auth_shared_1 = require("conduit-auth-shared");
 const conduit_core_1 = require("conduit-core");
 const conduit_nap_1 = require("conduit-nap");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
-const en_data_model_1 = require("en-data-model");
-const js_base64_1 = require("js-base64");
-const simply_immutable_1 = require("simply-immutable");
-const ThriftTypes_1 = require("./ThriftTypes");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
+var conduit_auth_shared_2 = require("conduit-auth-shared");
+Object.defineProperty(exports, "AuthServiceLevel", { enumerable: true, get: function () { return conduit_auth_shared_2.AuthServiceLevel; } });
+Object.defineProperty(exports, "decodeAuthData", { enumerable: true, get: function () { return conduit_auth_shared_2.decodeAuthData; } });
+Object.defineProperty(exports, "encodeAuthData", { enumerable: true, get: function () { return conduit_auth_shared_2.encodeAuthData; } });
+Object.defineProperty(exports, "hasNapAuthInfo", { enumerable: true, get: function () { return conduit_auth_shared_2.hasNapAuthInfo; } });
+Object.defineProperty(exports, "hasNAPData", { enumerable: true, get: function () { return conduit_auth_shared_2.hasNAPData; } });
 const logger = conduit_utils_1.createLogger('conduit:Auth');
 // For debugging token expiration
 const FORCE_BIZ_EXPIRE_AFTER = 0;
@@ -47,8 +52,8 @@ var NapMigrationStateType;
 exports.SERVICE_PROVIDER_ENUM = ['GOOGLE', 'FACEBOOK'];
 exports.SERVICE_PROVIDER_OPTIONAL_ENUM = [...exports.SERVICE_PROVIDER_ENUM, '?'];
 exports.SERVICE_PROVIDER_STRING_TO_ENUM = {
-    GOOGLE: ThriftTypes_1.TServiceProvider.GOOGLE,
-    FACEBOOK: ThriftTypes_1.TServiceProvider.FACEBOOK,
+    GOOGLE: en_conduit_sync_types_1.TServiceProvider.GOOGLE,
+    FACEBOOK: en_conduit_sync_types_1.TServiceProvider.FACEBOOK,
 };
 exports.NAP_MIGRATION_STATE_ENUM = [
     'UNKNOWN',
@@ -60,19 +65,19 @@ exports.NAP_MIGRATION_STATE_ENUM = [
     'NOT_FOUND',
 ];
 const THRIFT_LOGIN_STATUS_CONVERTER = {
-    [ThriftTypes_1.TLoginStatus.UNKNOWN]: LoginStatus.UNKNOWN,
-    [ThriftTypes_1.TLoginStatus.INVALID_FORMAT]: LoginStatus.INVALID_FORMAT,
-    [ThriftTypes_1.TLoginStatus.NOT_FOUND]: LoginStatus.NOT_FOUND,
-    [ThriftTypes_1.TLoginStatus.INVITE_PENDING]: LoginStatus.INVITE_PENDING,
-    [ThriftTypes_1.TLoginStatus.PASSWORD_RESET]: LoginStatus.PASSWORD_RESET,
-    [ThriftTypes_1.TLoginStatus.PASSWORD]: LoginStatus.PASSWORD,
-    [ThriftTypes_1.TLoginStatus.SSO]: LoginStatus.SSO,
+    [en_conduit_sync_types_1.TLoginStatus.UNKNOWN]: LoginStatus.UNKNOWN,
+    [en_conduit_sync_types_1.TLoginStatus.INVALID_FORMAT]: LoginStatus.INVALID_FORMAT,
+    [en_conduit_sync_types_1.TLoginStatus.NOT_FOUND]: LoginStatus.NOT_FOUND,
+    [en_conduit_sync_types_1.TLoginStatus.INVITE_PENDING]: LoginStatus.INVITE_PENDING,
+    [en_conduit_sync_types_1.TLoginStatus.PASSWORD_RESET]: LoginStatus.PASSWORD_RESET,
+    [en_conduit_sync_types_1.TLoginStatus.PASSWORD]: LoginStatus.PASSWORD,
+    [en_conduit_sync_types_1.TLoginStatus.SSO]: LoginStatus.SSO,
 };
 const THRIFT_BUSINESS_USER_TYPE_CONVERTER = {
-    [ThriftTypes_1.TBusinessUserType.UNKNOWN]: BusinessUserType.UNKNOWN,
-    [ThriftTypes_1.TBusinessUserType.PERSONAL_ONLY]: BusinessUserType.PERSONAL_ONLY,
-    [ThriftTypes_1.TBusinessUserType.LEGACY]: BusinessUserType.LEGACY,
-    [ThriftTypes_1.TBusinessUserType.BUSINESS_ONLY]: BusinessUserType.BUSINESS_ONLY,
+    [en_conduit_sync_types_1.TBusinessUserType.UNKNOWN]: BusinessUserType.UNKNOWN,
+    [en_conduit_sync_types_1.TBusinessUserType.PERSONAL_ONLY]: BusinessUserType.PERSONAL_ONLY,
+    [en_conduit_sync_types_1.TBusinessUserType.LEGACY]: BusinessUserType.LEGACY,
+    [en_conduit_sync_types_1.TBusinessUserType.BUSINESS_ONLY]: BusinessUserType.BUSINESS_ONLY,
 };
 var TokenRefreshSource;
 (function (TokenRefreshSource) {
@@ -95,143 +100,21 @@ class RevalidateShareError extends Error {
     }
 }
 exports.RevalidateShareError = RevalidateShareError;
-const expectedEncodedUrls = {
-    ns: '${p}${h}/${u}${s}/notestore',
-    wp: '${p}${h}/${u}${s}/',
-    us: '${p}${h}/${u}${s}/edam/user',
-    uu: '${p}${h}/${u}${s}/utility',
-    ms: '${p}${h}/${u}${s}/messagestore',
-    uws: '${p}ws.${h}/${u}${s}/id',
-    ce: '${p}${h}/${u}${s}/communicationengine',
-    wdb: '${p}dashboard.svc.${h}/v1/main.html#?v=dashboard',
-    wd: '${p}dashboard.svc.${h}/v1/main.html#?v=space-directory',
-};
-const expectedEncodedAuth = Object.assign({ b: null, s: true }, expectedEncodedUrls);
-function encodeUrl(url, host, shard, isSecure, shortName, userSlot, protocol = 'http') {
-    if (url === undefined || url === null) {
-        return expectedEncodedUrls[shortName];
-    }
-    const fullProto = `${protocol}${isSecure ? 's' : ''}://`;
-    const slotPrefix = (userSlot === null) ? '' : `u/${userSlot}/`;
-    url = url.replace(fullProto, '${p}');
-    url = url.replace(host, '${h}');
-    if (slotPrefix !== '') {
-        const newUrl = url.replace(slotPrefix, '${u}');
-        // sometimes user store gives us back urls without userSlot even though we need them
-        // handle that case
-        if (newUrl === url) {
-            url = newUrl.replace(`shard/${shard}`, '${u}${s}');
-        }
-        else {
-            url = newUrl.replace(`shard/${shard}`, '${s}');
-        }
-    }
-    else {
-        url = url.replace(`shard/${shard}`, '${u}${s}');
-    }
-    return url;
-}
-function encodeAuthData(auth) {
-    const isSecure = auth.thriftHost.startsWith('https://');
-    const host = auth.thriftHost.slice(isSecure ? 8 : 7);
-    const encodedNAPAuthData = hasNapAuthInfo(auth) ? {
-        j: auth.napAuthInfo.jwt,
-        nrt: auth.napAuthInfo.refreshToken,
-        nau: auth.napAuthInfo.authUrl,
-        nci: auth.napAuthInfo.clientID,
-        nru: auth.napAuthInfo.redirectUri,
-    } : {};
-    const obj = Object.assign({ t: auth.token, u: auth.userID, usl: auth.userSlot, b: auth.businessID, sl: auth.serviceLevel, sh: auth.shard, h: host, uh: auth.urlHost === auth.thriftHost ? undefined : auth.urlHost, s: isSecure, ns: encodeUrl(auth.urls.noteStoreUrl, host, auth.shard, isSecure, 'ns', auth.userSlot), wp: encodeUrl(auth.urls.webApiUrlPrefix, host, auth.shard, isSecure, 'wp', auth.userSlot), us: encodeUrl(auth.urls.userStoreUrl, host, auth.shard, isSecure, 'us', auth.userSlot), uu: encodeUrl(auth.urls.utilityUrl, host, auth.shard, isSecure, 'uu', auth.userSlot), ms: encodeUrl(auth.urls.messageStoreUrl, host, auth.shard, isSecure, 'ms', auth.userSlot), uws: encodeUrl(auth.urls.userWebSocketUrl, host, auth.shard, isSecure, 'uws', auth.userSlot, 'ws'), ce: encodeUrl(auth.urls.communicationEngineUrl, host, auth.shard, isSecure, 'ce', auth.userSlot), wdb: encodeUrl(auth.urls.workspaceDashboardUrl, host, auth.shard, isSecure, 'wdb', auth.userSlot), wd: encodeUrl(auth.urls.workspaceDirectoryUrl, host, auth.shard, isSecure, 'wd', auth.userSlot), vu: auth.vaultAuth ? encodeAuthData(auth.vaultAuth) : undefined }, encodedNAPAuthData);
-    for (const k in expectedEncodedAuth) {
-        const key = k;
-        if (obj[key] === expectedEncodedAuth[key]) {
-            delete obj[key];
-        }
-    }
-    return js_base64_1.Base64.encode(JSON.stringify(obj));
-}
-exports.encodeAuthData = encodeAuthData;
-function decodeUrl(str, host, shard, isSecure, userSlot, protocol = 'http') {
-    const fullProto = `${protocol}${isSecure ? 's' : ''}://`;
-    const slotPrefix = userSlot === null ? '' : `u/${userSlot}/`;
-    str = str.replace('${p}', fullProto);
-    str = str.replace('${h}', host);
-    str = str.replace('${s}', `shard/${shard}`);
-    str = str.replace('${u}', slotPrefix);
-    return str;
-}
-exports.NullAuthData = simply_immutable_1.deepFreeze({
-    token: '',
-    userID: conduit_utils_1.NullUserID,
-    businessID: null,
-    userSlot: null,
-    serviceLevel: ThriftTypes_1.TServiceLevel.BASIC,
-    thriftHost: 'NullThriftHost',
-    urlHost: 'NullUrlHost',
-    shard: 'sNull',
-    urls: {
-        noteStoreUrl: 'NullNoteStore',
-        webApiUrlPrefix: 'NullApiUrl',
-        userStoreUrl: 'NullStore',
-        utilityUrl: 'NullUtility',
-        messageStoreUrl: 'NullMessageStore',
-        userWebSocketUrl: 'NullUserWebSocket',
-        communicationEngineUrl: 'NullCommunicationEngine',
-        workspaceDashboardUrl: 'NullWorkspaceDashboard',
-        workspaceDirectoryUrl: 'NullWorkspaceDirectory',
-    },
-});
-function decodeAuthData(authString) {
-    var _a;
-    if (authString === null) {
-        return exports.NullAuthData;
-    }
-    try {
-        const obj = Object.assign({}, expectedEncodedAuth, JSON.parse(js_base64_1.Base64.decode(authString)));
-        const userSlot = obj.usl === undefined ? null : obj.usl;
-        const thriftHost = decodeUrl('${p}${h}', obj.h, obj.sh, obj.s, userSlot);
-        const auth = {
-            token: obj.t,
-            userID: obj.u,
-            businessID: obj.b,
-            userSlot,
-            serviceLevel: obj.sl,
-            thriftHost,
-            urlHost: (_a = obj.uh) !== null && _a !== void 0 ? _a : thriftHost,
-            shard: obj.sh,
-            urls: {
-                noteStoreUrl: decodeUrl(obj.ns, obj.h, obj.sh, obj.s, userSlot),
-                webApiUrlPrefix: decodeUrl(obj.wp, obj.h, obj.sh, obj.s, userSlot),
-                userStoreUrl: decodeUrl(obj.us, obj.h, obj.sh, obj.s, userSlot),
-                utilityUrl: decodeUrl(obj.uu, obj.h, obj.sh, obj.s, userSlot),
-                messageStoreUrl: decodeUrl(obj.ms, obj.h, obj.sh, obj.s, userSlot),
-                userWebSocketUrl: decodeUrl(obj.uws, obj.h, obj.sh, obj.s, userSlot, 'ws'),
-                communicationEngineUrl: decodeUrl(obj.ce, obj.h, obj.sh, obj.s, userSlot),
-                workspaceDashboardUrl: decodeUrl(obj.wdb, obj.h, obj.sh, obj.s, userSlot),
-                workspaceDirectoryUrl: decodeUrl(obj.wd, obj.h, obj.sh, obj.s, userSlot),
-            },
-        };
-        if (obj.vu) {
-            auth.vaultAuth = decodeAuthData(obj.vu);
-        }
-        const napAuthInfo = obj.j ? {
-            jwt: obj.j,
-            authUrl: obj.nau,
-            clientID: obj.nci,
-            refreshToken: obj.nrt,
-            redirectUri: obj.nru,
-        } : undefined;
-        if (!napAuthInfo) {
-            return auth;
-        }
-        const personalAuthData = Object.assign(Object.assign({}, auth), { napAuthInfo });
-        return personalAuthData;
-    }
-    catch (e) {
-        throw new Error('Invalid auth token');
+function thriftServiceLevelToAuthServiceLevel(tLevel) {
+    switch (tLevel) {
+        case en_conduit_sync_types_1.TServiceLevel.BASIC:
+            return conduit_auth_shared_1.AuthServiceLevel.BASIC;
+        case en_conduit_sync_types_1.TServiceLevel.PLUS:
+            return conduit_auth_shared_1.AuthServiceLevel.PLUS;
+        case en_conduit_sync_types_1.TServiceLevel.PREMIUM:
+            return conduit_auth_shared_1.AuthServiceLevel.PREMIUM;
+        case en_conduit_sync_types_1.TServiceLevel.BUSINESS:
+            return conduit_auth_shared_1.AuthServiceLevel.BUSINESS;
+        default:
+            conduit_utils_1.absurd(tLevel, 'Unknown TServiceLevel');
+            return conduit_auth_shared_1.AuthServiceLevel.UNKNOWN;
     }
 }
-exports.decodeAuthData = decodeAuthData;
 function toServiceToken(authenticationToken, args) {
     // strip out our internal tracking marker before sending auth token to the service
     const conduitAuthMarkerIdx = authenticationToken.indexOf(CONDUIT_TOKEN_MARKER);
@@ -261,26 +144,6 @@ function forceExpire(token, forceExpireAfter) {
     }
     return `${token}${CONDUIT_EXPIRE_MARKER}${Date.now() + forceExpireAfter}`;
 }
-// Fixes up urls returned from the service. If Conduit is accessing an internal endpoint (in thriftHost) the service
-// still returns the external urls so they need to be converted to internal urls here.
-function fixupAuthServiceUrls(urls, thriftHost, urlHost) {
-    if (thriftHost === urlHost) {
-        return urls;
-    }
-    const res = {};
-    for (const k in urls) {
-        const key = k;
-        const url = urls[key];
-        if (url && url.startsWith(urlHost)) {
-            res[key] = thriftHost + url.slice(urlHost.length);
-        }
-        else {
-            res[key] = url;
-        }
-    }
-    return res;
-}
-exports.fixupAuthServiceUrls = fixupAuthServiceUrls;
 async function getAuthFromSyncContext(trc, graphStorage, syncContext) {
     const metadata = await graphStorage.getSyncContextMetadata(trc, null, syncContext);
     if (!metadata) {
@@ -289,7 +152,7 @@ async function getAuthFromSyncContext(trc, graphStorage, syncContext) {
     if (!metadata.authToken) {
         throw new Error(`no auth for syncContext "${syncContext}"`);
     }
-    return decodeAuthData(metadata.authToken);
+    return conduit_auth_shared_1.decodeAuthData(metadata.authToken);
 }
 exports.getAuthFromSyncContext = getAuthFromSyncContext;
 function authDataFromNoteAuthResult(res, userID, serviceLevel, thriftHost, urlHost, noteStoreUrl, shardId, userSlot) {
@@ -304,7 +167,7 @@ function authDataFromNoteAuthResult(res, userID, serviceLevel, thriftHost, urlHo
         urlHost,
         serviceLevel,
         shard: shardId,
-        urls: fixupAuthServiceUrls({
+        urls: conduit_auth_shared_1.fixupAuthServiceUrls({
             noteStoreUrl,
         }, thriftHost, urlHost),
         userSlot,
@@ -359,9 +222,9 @@ async function authDataFromAuthResult(trc, res, thriftHost, urlHost, userSlot, u
             businessID: user.businessUserInfo && user.businessUserInfo.businessId || null,
             thriftHost,
             urlHost,
-            serviceLevel: user.serviceLevel ? user.serviceLevel : 0,
+            serviceLevel: user.serviceLevel ? thriftServiceLevelToAuthServiceLevel(user.serviceLevel) : 0,
             shard: user.shardId,
-            urls: fixupAuthServiceUrls(res.urls, thriftHost, urlHost),
+            urls: conduit_auth_shared_1.fixupAuthServiceUrls(res.urls, thriftHost, urlHost),
             userSlot,
         },
         state: conduit_view_types_1.AuthState.Authorized,
@@ -375,7 +238,7 @@ async function authDataFromAuthResult(trc, res, thriftHost, urlHost, userSlot, u
     }
     // check for biz info and service level so legacy business users get blocked
     if (userStore && user.businessUserInfo) {
-        if (user.serviceLevel === ThriftTypes_1.TServiceLevel.BUSINESS) {
+        if (user.serviceLevel === en_conduit_sync_types_1.TServiceLevel.BUSINESS) {
             const vaultRes = await conduit_utils_1.withError(authenticateToBusiness(trc, res.authenticationToken, thriftHost, urlHost, null, userStore));
             if (vaultRes.err instanceof conduit_utils_1.AuthError) {
                 switch (vaultRes.err.errorCode) {
@@ -474,9 +337,9 @@ async function handleAuthResult(trc, authResult, thriftHost, urlHost, userSlot, 
     }
     const auth = await authDataFromAuthResult(trc, authResult.data, thriftHost, urlHost, userSlot, userStore, { jwt: '' }, allowFacadeAsPersonal);
     // Auth flow does not return JWT yet, but we need it to talk to certain services.
-    const jwtRes = await conduit_utils_1.withError(refreshJWTFromMonolith(trc, decodeAuthData(encodeAuthData(auth.data)), thriftComm));
+    const jwtRes = await conduit_utils_1.withError(refreshJWTFromMonolith(trc, conduit_auth_shared_1.decodeAuthData(conduit_auth_shared_1.encodeAuthData(auth.data)), thriftComm));
     return {
-        token: (_b = (_a = jwtRes.data) === null || _a === void 0 ? void 0 : _a.token) !== null && _b !== void 0 ? _b : encodeAuthData(auth.data),
+        token: (_b = (_a = jwtRes.data) === null || _a === void 0 ? void 0 : _a.token) !== null && _b !== void 0 ? _b : conduit_auth_shared_1.encodeAuthData(auth.data),
         state: (_d = (_c = jwtRes.data) === null || _c === void 0 ? void 0 : _c.state) !== null && _d !== void 0 ? _d : auth.state,
         secondFactorDeliveryHint: auth.secondFactorDeliveryHint,
         usernameOrEmail: null,
@@ -487,12 +350,12 @@ async function handleAuthResult(trc, authResult, thriftHost, urlHost, userSlot, 
 }
 function convertNapMigrationState(migrationState) {
     switch (migrationState) {
-        case ThriftTypes_1.TNapMigrationState.LEGACY: return NapMigrationStateType.LEGACY;
-        case ThriftTypes_1.TNapMigrationState.MIGRATED: return NapMigrationStateType.MIGRATED;
-        case ThriftTypes_1.TNapMigrationState.MIGRATED_NAP_ONLY: return NapMigrationStateType.MIGRATED_NAP_ONLY;
-        case ThriftTypes_1.TNapMigrationState.MIGRATE_ON_LOGIN: return NapMigrationStateType.MIGRATE_ON_LOGIN;
-        case ThriftTypes_1.TNapMigrationState.MIGRATION_FAILED: return NapMigrationStateType.MIGRATION_FAILED;
-        case ThriftTypes_1.TNapMigrationState.UNKNOWN:
+        case en_conduit_sync_types_1.TNapMigrationState.LEGACY: return NapMigrationStateType.LEGACY;
+        case en_conduit_sync_types_1.TNapMigrationState.MIGRATED: return NapMigrationStateType.MIGRATED;
+        case en_conduit_sync_types_1.TNapMigrationState.MIGRATED_NAP_ONLY: return NapMigrationStateType.MIGRATED_NAP_ONLY;
+        case en_conduit_sync_types_1.TNapMigrationState.MIGRATE_ON_LOGIN: return NapMigrationStateType.MIGRATE_ON_LOGIN;
+        case en_conduit_sync_types_1.TNapMigrationState.MIGRATION_FAILED: return NapMigrationStateType.MIGRATION_FAILED;
+        case en_conduit_sync_types_1.TNapMigrationState.UNKNOWN:
         default: return NapMigrationStateType.UNKNOWN;
     }
 }
@@ -509,7 +372,7 @@ async function getLoginInfo(trc, thriftComm, thriftHost, urlHost, clientName, us
     // assuming only google as service provider for now
     const req = usernameOrEmail
         ? { usernameOrEmail }
-        : { openIdCredential: { tokenPayload: tokenPayload, serviceProvider: ThriftTypes_1.TServiceProvider.GOOGLE } };
+        : { openIdCredential: { tokenPayload: tokenPayload, serviceProvider: en_conduit_sync_types_1.TServiceProvider.GOOGLE } };
     const res = await userStore.getLoginInfo(trc, req);
     const pendingInvites = [];
     if (res.pendingInvites && res.pendingInvites.length) {
@@ -531,7 +394,7 @@ async function getLoginInfo(trc, thriftComm, thriftHost, urlHost, clientName, us
 exports.getLoginInfo = getLoginInfo;
 async function login(trc, thriftComm, thriftHost, urlHost, credentials, allowFacadeAsPersonal) {
     const userStore = thriftComm.getUserStore(`${thriftHost}/edam/user`);
-    const thriftParams = new ThriftTypes_1.TAuthenticationParameters(Object.assign(Object.assign({}, credentials), { supportsBusinessOnlyAccounts: true, supportsTwoFactor: true }));
+    const thriftParams = new en_conduit_sync_types_1.TAuthenticationParameters(Object.assign(Object.assign({}, credentials), { supportsBusinessOnlyAccounts: true, supportsTwoFactor: true }));
     const authResult = await conduit_utils_1.withError(userStore.authenticateLongSessionV2(trc, thriftParams));
     return await handleAuthResult(trc, authResult, thriftHost, urlHost, null, userStore, allowFacadeAsPersonal, thriftComm);
 }
@@ -560,7 +423,7 @@ async function loginWithNAPInternal(trc, thriftComm, { serviceHost: defaultHost,
     const utilityStore = thriftComm.getUtilityStore(auth.data.urls.utilityUrl);
     await registerSession(trc, utilityStore, monolithToken, napClientId, refreshToken, credentials);
     return {
-        token: encodeAuthData(auth.data),
+        token: conduit_auth_shared_1.encodeAuthData(auth.data),
         state: auth.state,
         secondFactorDeliveryHint: auth.secondFactorDeliveryHint,
         usernameOrEmail: null,
@@ -617,7 +480,7 @@ exports.loginWithTwoFactor = loginWithTwoFactor;
 async function loginWithExistingAuth(trc, thriftComm, thriftHost, urlHost, existingAuth, userSlot) {
     if (existingAuth.token && (existingAuth.state === conduit_view_types_1.AuthState.Authorized || existingAuth.state === conduit_view_types_1.AuthState.ClientNotSupported)) {
         // validate existing auth
-        const existingAuthData = decodeAuthData(existingAuth.token);
+        const existingAuthData = conduit_auth_shared_1.decodeAuthData(existingAuth.token);
         const userStore = thriftComm.getUserStore(`${existingAuthData.thriftHost}/edam/user`);
         const currentUser = await conduit_utils_1.withError(userStore.getUser(trc, existingAuthData.token));
         if (currentUser.err instanceof conduit_utils_1.AuthError) {
@@ -675,7 +538,7 @@ async function loginWithAuthInQueue(trc, thriftComm, existingAuth) {
         throw Error('No existing token');
     }
     // validate existing auth
-    const existingAuthData = decodeAuthData(existingAuth.token);
+    const existingAuthData = conduit_auth_shared_1.decodeAuthData(existingAuth.token);
     const userStore = thriftComm.getUserStore(`${existingAuthData.thriftHost}/edam/user`);
     const currentUser = await conduit_utils_1.withError(userStore.getUser(trc, existingAuthData.token));
     if (currentUser.err instanceof conduit_utils_1.AuthError) {
@@ -704,14 +567,14 @@ async function loginWithAuthInQueue(trc, thriftComm, existingAuth) {
     const authResult = {
         authenticationToken: existingAuthData.token,
         user: currentUser.data,
-        urls: fixupAuthServiceUrls(await userStore.getUserUrls(trc, existingAuthData.token), existingAuthData.thriftHost, existingAuthData.urlHost),
+        urls: conduit_auth_shared_1.fixupAuthServiceUrls(await userStore.getUserUrls(trc, existingAuthData.token), existingAuthData.thriftHost, existingAuthData.urlHost),
     };
     const auth = await authDataFromAuthResult(trc, authResult, existingAuthData.thriftHost, existingAuthData.urlHost, null, userStore, { jwt: '' }, false);
     const authState = existingAuth.state === conduit_view_types_1.AuthState.ClientNotSupported || existingAuth.state === conduit_view_types_1.AuthState.Authorized ?
         conduit_view_types_1.AuthState.Authorized :
         conduit_view_types_1.AuthState.UserChanged;
     return {
-        token: encodeAuthData(auth.data),
+        token: conduit_auth_shared_1.encodeAuthData(auth.data),
         state: authState,
         secondFactorDeliveryHint: auth.secondFactorDeliveryHint,
         usernameOrEmail: null,
@@ -737,9 +600,9 @@ async function loginWithServiceToken(trc, thriftComm, thriftHost, urlHost, servi
     };
     const auth = await authDataFromAuthResult(trc, authResult, thriftHost, urlHost, userSlot, userStore, { jwt: '' }, allowFacadeAsPersonal);
     // Auth flow does not return JWT yet, but we need it to talk to certain services.
-    const jwtRes = await conduit_utils_1.withError(refreshJWTFromMonolith(trc, decodeAuthData(encodeAuthData(auth.data)), thriftComm));
+    const jwtRes = await conduit_utils_1.withError(refreshJWTFromMonolith(trc, conduit_auth_shared_1.decodeAuthData(conduit_auth_shared_1.encodeAuthData(auth.data)), thriftComm));
     return {
-        token: (_b = (_a = jwtRes.data) === null || _a === void 0 ? void 0 : _a.token) !== null && _b !== void 0 ? _b : encodeAuthData(auth.data),
+        token: (_b = (_a = jwtRes.data) === null || _a === void 0 ? void 0 : _a.token) !== null && _b !== void 0 ? _b : conduit_auth_shared_1.encodeAuthData(auth.data),
         state: (_d = (_c = jwtRes.data) === null || _c === void 0 ? void 0 : _c.state) !== null && _d !== void 0 ? _d : auth.state,
         secondFactorDeliveryHint: auth.secondFactorDeliveryHint,
         usernameOrEmail: null,
@@ -820,7 +683,7 @@ async function newUserSignup(trc, httpTransport, thriftHost, urlHost, credential
         query = {
             code: credentials.referrerCode,
             openIdPayload: credentials.openIdCredential.tokenPayload,
-            openIdServiceProvider: credentials.openIdCredential.serviceProvider === ThriftTypes_1.TServiceProvider.FACEBOOK ? 'FACEBOOK' : 'GOOGLE',
+            openIdServiceProvider: credentials.openIdCredential.serviceProvider === en_conduit_sync_types_1.TServiceProvider.FACEBOOK ? 'FACEBOOK' : 'GOOGLE',
             openidRegister: 'true',
             terms: 'true',
         };
@@ -853,7 +716,7 @@ async function userSignupandLogin(trc, thriftComm, httpTransport, thriftHost, ur
 }
 exports.userSignupandLogin = userSignupandLogin;
 async function logoutThrift(trc, thriftComm, authString) {
-    const auth = decodeAuthData(authString);
+    const auth = conduit_auth_shared_1.decodeAuthData(authString);
     if (!auth.token) {
         return;
     }
@@ -862,7 +725,7 @@ async function logoutThrift(trc, thriftComm, authString) {
 }
 exports.logoutThrift = logoutThrift;
 async function revokeSDMSSession(trc, thriftComm, authData, clientCredentials) {
-    if (!hasNAPData(authData)) {
+    if (!conduit_auth_shared_1.hasNAPData(authData)) {
         logger.info('No NAP info found. Cannot revoke the session');
         return;
     }
@@ -870,7 +733,7 @@ async function revokeSDMSSession(trc, thriftComm, authData, clientCredentials) {
     let retryNum = 3;
     while (retryNum > 0) {
         try {
-            await utilityStore.revokeSession(trc, new ThriftTypes_1.TRevokeSessionRequest({
+            await utilityStore.revokeSession(trc, new en_conduit_sync_types_1.TRevokeSessionRequest({
                 authenticationToken: authData.token,
                 clientId: authData.napAuthInfo.clientID,
                 consumerKey: clientCredentials.consumerKey,
@@ -911,7 +774,7 @@ async function logoutNap(trc, authData, httpClient) {
         logger.warn('No Http Client');
         return defaultResult;
     }
-    if (!hasNAPData(authData)) {
+    if (!conduit_auth_shared_1.hasNAPData(authData)) {
         logger.info('No NAP info');
         return defaultResult;
     }
@@ -922,7 +785,7 @@ async function acquireSessionToken(trc, thriftComm, existingAuth) {
     if (!existingAuth.token) {
         throw new Error('Unable to request session token when not logged in');
     }
-    const auth = decodeAuthData(existingAuth.token);
+    const auth = conduit_auth_shared_1.decodeAuthData(existingAuth.token);
     if (!auth.token) {
         throw new Error('Unable to request session token when not logged in');
     }
@@ -962,7 +825,7 @@ async function authenticateToNote(trc, thriftComm, userAuth, noteGuid, noteStore
     const authData = authDataFromNoteAuthResult(noteAuth, userAuth.userID, userAuth.serviceLevel, userAuth.thriftHost, userAuth.urlHost, noteStoreUrl, shardId, userAuth.userSlot);
     return {
         guid: noteGuid,
-        authStr: encodeAuthData(authData.data),
+        authStr: conduit_auth_shared_1.encodeAuthData(authData.data),
     };
 }
 exports.authenticateToNote = authenticateToNote;
@@ -998,7 +861,7 @@ async function authenticateToSharedNotebook(trc, thriftComm, userAuth, notebookG
     if (authData.state !== conduit_view_types_1.AuthState.Authorized) {
         return null;
     }
-    return Object.assign(Object.assign({}, sharedNotebookRes.data), { username: notebookAuth.user ? notebookAuth.user.username : sharedNotebookRes.data.username, authStr: encodeAuthData(authData.data) });
+    return Object.assign(Object.assign({}, sharedNotebookRes.data), { username: notebookAuth.user ? notebookAuth.user.username : sharedNotebookRes.data.username, authStr: conduit_auth_shared_1.encodeAuthData(authData.data) });
 }
 exports.authenticateToSharedNotebook = authenticateToSharedNotebook;
 async function getUser(trc, thriftComm, auth) {
@@ -1038,13 +901,13 @@ async function revalidateSyncContextAuth(trc, thriftComm, syncContext, metadata,
         }
         return new conduit_utils_1.ServiceError('WRONG_AUTH', tokenType);
     }
-    const oldAuthData = decodeAuthData(metadata.authToken);
+    const oldAuthData = conduit_auth_shared_1.decodeAuthData(metadata.authToken);
     if (metadata.isUser) {
         // call getUser and see if the auth token is actually invalid
         const userRes = await conduit_utils_1.withError(getUser(trc, thriftComm, oldAuthData));
         if (userRes.err instanceof conduit_utils_1.AuthError) {
             // monolith token issued from NAP could be expired
-            if (hasNAPData(oldAuthData)) {
+            if (conduit_auth_shared_1.hasNAPData(oldAuthData)) {
                 throw new RefreshUserTokenError(TokenRefreshSource.NAP);
             }
             const userID = oldAuthData.userID;
@@ -1055,7 +918,7 @@ async function revalidateSyncContextAuth(trc, thriftComm, syncContext, metadata,
                 state: authErrorCodeToState(userRes.err.errorCode),
             };
         }
-        if (userRes.data && !hasNAPData(oldAuthData) && origErr.errorCode === conduit_utils_1.AuthErrorCode.JWT_AUTH_EXPIRED) {
+        if (userRes.data && !conduit_auth_shared_1.hasNAPData(oldAuthData) && origErr.errorCode === conduit_utils_1.AuthErrorCode.JWT_AUTH_EXPIRED) {
             // when using monolith auth, jwt will be used for authentication to API GW.
             // getUser will succeed in these cases but jwt might have expired.
             throw new RefreshUserTokenError(TokenRefreshSource.Monolith);
@@ -1068,7 +931,7 @@ async function revalidateSyncContextAuth(trc, thriftComm, syncContext, metadata,
         // no matching syncContext found; return null to indicate that the original AuthError is still correct
         return null;
     }
-    const userAuthData = decodeAuthData(userMetadata.authToken);
+    const userAuthData = conduit_auth_shared_1.decodeAuthData(userMetadata.authToken);
     if (metadata.isVaultUser) {
         // call getUser and see if the auth token is actually invalid
         const userRes = await conduit_utils_1.withError(getUser(trc, thriftComm, oldAuthData));
@@ -1099,7 +962,7 @@ async function revalidateSyncContextAuth(trc, thriftComm, syncContext, metadata,
         return {
             userID,
             state: conduit_view_types_1.AuthState.Authorized,
-            token: encodeAuthData(userAuthData),
+            token: conduit_auth_shared_1.encodeAuthData(userAuthData),
         };
     }
     if (metadata.sharedNotebookGlobalID) {
@@ -1112,11 +975,11 @@ async function revalidateSyncContextAuth(trc, thriftComm, syncContext, metadata,
         }
         if (isRevokedShareForNoteOrNotebook(sharedNotebookRes.err)) {
             // revoked after being shared, throw error up to ThriftSync for handling
-            throw new RevalidateShareError(en_data_model_1.CoreEntityTypes.Notebook, metadata.sharedNotebookGlobalID);
+            throw new RevalidateShareError(en_core_entity_types_1.CoreEntityTypes.Notebook, metadata.sharedNotebookGlobalID);
         }
         if (sharedNotebookRes.err instanceof conduit_utils_1.AuthError && sharedNotebookRes.err.errorCode === conduit_utils_1.AuthErrorCode.AUTH_EXPIRED) {
             // need to reauthenticate
-            throw new RevalidateShareError(en_data_model_1.CoreEntityTypes.Notebook, metadata.sharedNotebookGlobalID);
+            throw new RevalidateShareError(en_core_entity_types_1.CoreEntityTypes.Notebook, metadata.sharedNotebookGlobalID);
         }
         // some other error happened
         throw sharedNotebookRes.err;
@@ -1129,11 +992,11 @@ async function revalidateSyncContextAuth(trc, thriftComm, syncContext, metadata,
             throw asServiceError('SharedNoteAuthToken');
         }
         if (isRevokedShareForNoteOrNotebook(sharedNoteRes.err)) {
-            throw new RevalidateShareError(en_data_model_1.CoreEntityTypes.Note, metadata.sharedNoteID);
+            throw new RevalidateShareError(en_core_entity_types_1.CoreEntityTypes.Note, metadata.sharedNoteID);
         }
         if (sharedNoteRes.err instanceof conduit_utils_1.AuthError && sharedNoteRes.err.errorCode === conduit_utils_1.AuthErrorCode.AUTH_EXPIRED) {
             // need to reauthenticate
-            throw new RevalidateShareError(en_data_model_1.CoreEntityTypes.Note, metadata.sharedNoteID);
+            throw new RevalidateShareError(en_core_entity_types_1.CoreEntityTypes.Note, metadata.sharedNoteID);
         }
         // some other error happened
         throw sharedNoteRes.err;
@@ -1145,7 +1008,7 @@ async function fixupAuth(trc, thriftComm, tokenAndState) {
     if (!tokenAndState.token || (tokenAndState.state !== conduit_view_types_1.AuthState.Authorized && tokenAndState.state !== conduit_view_types_1.AuthState.ClientNotSupported)) {
         return null;
     }
-    const auth = decodeAuthData(tokenAndState.token);
+    const auth = conduit_auth_shared_1.decodeAuthData(tokenAndState.token);
     // fixup missing businessID
     const missingBusiness = auth.vaultAuth && !auth.businessID;
     const unsupportedClient = tokenAndState.state === conduit_view_types_1.AuthState.ClientNotSupported;
@@ -1168,7 +1031,7 @@ async function fixupAuth(trc, thriftComm, tokenAndState) {
         }
         return {
             userID: tokenAndState.userID,
-            token: encodeAuthData(auth),
+            token: conduit_auth_shared_1.encodeAuthData(auth),
             state: tokenAndState.state === conduit_view_types_1.AuthState.ClientNotSupported ? conduit_view_types_1.AuthState.Authorized : tokenAndState.state,
         };
     }
@@ -1176,7 +1039,7 @@ async function fixupAuth(trc, thriftComm, tokenAndState) {
 }
 exports.fixupAuth = fixupAuth;
 async function getScopedGoogleOAuthCredential(trc, thriftComm, authenticationToken, googleOAuthScope) {
-    const userToken = decodeAuthData(authenticationToken);
+    const userToken = conduit_auth_shared_1.decodeAuthData(authenticationToken);
     const utilityStore = thriftComm.getUtilityStore(userToken.urls.utilityUrl);
     const oAuthRes = await conduit_utils_1.withError(utilityStore.getScopedGoogleOAuthCredential(trc, userToken.token, userToken.token, googleOAuthScope));
     if (oAuthRes.err) {
@@ -1186,7 +1049,7 @@ async function getScopedGoogleOAuthCredential(trc, thriftComm, authenticationTok
 }
 exports.getScopedGoogleOAuthCredential = getScopedGoogleOAuthCredential;
 async function setOAuthCredential(trc, thriftComm, authenticationToken, newOAuthCredential) {
-    const userToken = decodeAuthData(authenticationToken);
+    const userToken = conduit_auth_shared_1.decodeAuthData(authenticationToken);
     const utilityStore = thriftComm.getUtilityStore(userToken.urls.utilityUrl);
     const oAuthResult = await conduit_utils_1.withError(utilityStore.setOAuthCredential(trc, userToken.token, newOAuthCredential));
     if (oAuthResult.err) {
@@ -1196,7 +1059,7 @@ async function setOAuthCredential(trc, thriftComm, authenticationToken, newOAuth
 }
 exports.setOAuthCredential = setOAuthCredential;
 async function getOAuthCredential(trc, thriftComm, authenticationToken, serviceId) {
-    const userToken = decodeAuthData(authenticationToken);
+    const userToken = conduit_auth_shared_1.decodeAuthData(authenticationToken);
     const utilityStore = thriftComm.getUtilityStore(userToken.urls.utilityUrl);
     return utilityStore.getOAuthCredential(trc, userToken.token, serviceId);
 }
@@ -1216,9 +1079,12 @@ function needMonolithTokenRefresh(token) {
 }
 exports.needMonolithTokenRefresh = needMonolithTokenRefresh;
 async function refreshAuthToken(trc, oldAuthData, httpTransport) {
+    const napMetric = { category: 'account', action: 'logout' };
     const userID = oldAuthData.userID;
-    if (!hasNAPData(oldAuthData)) {
+    if (!conduit_auth_shared_1.hasNAPData(oldAuthData)) {
         // Conduit can refresh tokens from NAP only
+        logger.info('refreshAuthToken (NAP): token expired. No NAP', userID);
+        conduit_utils_1.recordEvent(Object.assign(Object.assign({}, napMetric), { label: 'expired' }));
         return { userID, token: null, state: conduit_view_types_1.AuthState.Expired };
     }
     const tokenRequest = new conduit_nap_1.TokenRequest({
@@ -1237,10 +1103,12 @@ async function refreshAuthToken(trc, oldAuthData, httpTransport) {
         const tokenRequestResult = await conduit_utils_1.traceEventEndWhenSettled(trc, 'performAuthTokenRequest', tokenRequestHandler.performTokenRequest(configuration, tokenRequest));
         const serviceToken = conduit_nap_1.extractMonolithToken(tokenRequestResult.accessToken);
         if (!tokenRequestResult.refreshToken || !serviceToken) {
+            conduit_utils_1.recordEvent(Object.assign(Object.assign({}, napMetric), { label: 'revoked' }));
             throw new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.SESSION_REVOKED, oldAuthData.token);
         }
         const newAuthData = Object.assign(Object.assign({}, oldAuthData), { napAuthInfo: Object.assign(Object.assign({}, oldAuthData.napAuthInfo), { jwt: tokenRequestResult.accessToken, refreshToken: tokenRequestResult.refreshToken }), token: serviceToken });
-        return { userID, token: encodeAuthData(newAuthData), state: conduit_view_types_1.AuthState.Authorized };
+        logger.info('refreshAuthToken (NAP)', userID);
+        return { userID, token: conduit_auth_shared_1.encodeAuthData(newAuthData), state: conduit_view_types_1.AuthState.Authorized };
     }
     catch (err) {
         // response 400 with message 'invalid_client', 400 with 'invalid_grant' or 401 if client is unauthenticated
@@ -1249,7 +1117,9 @@ async function refreshAuthToken(trc, oldAuthData, httpTransport) {
         // Same for Calling fetchNAPConfiguration. This could have 401 and in this case we have to make user login again because client id is changed
         // https://gluu.org/docs/gluu-server/api-guide/openid-connect-api/#error-response
         if (err instanceof conduit_nap_1.AppAuthError && (err.extras === 'invalid_client' || err.extras === 'invalid_grant' || err.message === '401')) {
-            return { userID, token: encodeAuthData(oldAuthData), state: conduit_view_types_1.AuthState.Expired };
+            logger.info('refreshAuthToken (NAP): token expired', userID, err.extras || err.message);
+            conduit_utils_1.recordEvent(Object.assign(Object.assign({}, napMetric), { label: 'expired' }));
+            return { userID, token: conduit_auth_shared_1.encodeAuthData(oldAuthData), state: conduit_view_types_1.AuthState.Expired };
         }
         if (err instanceof conduit_utils_1.AuthError) {
             throw err;
@@ -1259,7 +1129,7 @@ async function refreshAuthToken(trc, oldAuthData, httpTransport) {
 }
 exports.refreshAuthToken = refreshAuthToken;
 async function registerSession(trc, utility, monolithToken, clientId, refreshToken, clientCredentials) {
-    const registerDeviceSessionRequest = new ThriftTypes_1.TRegisterDeviceSessionRequest({
+    const registerDeviceSessionRequest = new en_conduit_sync_types_1.TRegisterDeviceSessionRequest({
         authenticationToken: monolithToken,
         deviceDescription: clientCredentials.deviceDescription,
         deviceIdentifier: clientCredentials.deviceIdentifier,
@@ -1272,7 +1142,7 @@ async function registerSession(trc, utility, monolithToken, clientId, refreshTok
     }
     catch (error) {
         // SDMS is disabled. Logging.
-        if (error instanceof conduit_utils_1.ServiceError && error.errorCode === ThriftTypes_1.EDAMErrorCode.UNSUPPORTED_OPERATION) {
+        if (error instanceof conduit_utils_1.ServiceError && error.errorCode === en_conduit_sync_types_1.EDAMErrorCode.UNSUPPORTED_OPERATION) {
             logger.debug('Encountered an error during session registration process.');
         }
         else {
@@ -1281,22 +1151,9 @@ async function registerSession(trc, utility, monolithToken, clientId, refreshTok
     }
 }
 exports.registerSession = registerSession;
-function hasNAPData(authData) {
-    return hasNapAuthInfo(authData) &&
-        Boolean(authData.napAuthInfo &&
-            authData.napAuthInfo.authUrl &&
-            authData.napAuthInfo.clientID &&
-            authData.napAuthInfo.redirectUri &&
-            authData.napAuthInfo.refreshToken);
-}
-exports.hasNAPData = hasNAPData;
-function hasNapAuthInfo(authData) {
-    return authData.hasOwnProperty('napAuthInfo');
-}
-exports.hasNapAuthInfo = hasNapAuthInfo;
 async function refreshJWTFromMonolith(trc, authData, thriftComm) {
     const userStore = thriftComm.getUserStore(authData.urls.userStoreUrl);
-    const jwtRequest = new ThriftTypes_1.TGetNAPAccessJWTRequest({ includeBusinessFields: Boolean(authData.vaultAuth) });
+    const jwtRequest = new en_conduit_sync_types_1.TGetNAPAccessJWTRequest({ includeBusinessFields: Boolean(authData.vaultAuth) });
     const res = await conduit_utils_1.withError(userStore.getNAPAccessJWT(trc, authData.token, jwtRequest));
     if (res.err) {
         if (res.err instanceof conduit_utils_1.AuthError) {
@@ -1314,15 +1171,15 @@ async function refreshJWTFromMonolith(trc, authData, thriftComm) {
         } });
     return {
         state: conduit_view_types_1.AuthState.Authorized,
-        token: encodeAuthData(newAuthData),
+        token: conduit_auth_shared_1.encodeAuthData(newAuthData),
         userID: authData.userID,
     };
 }
 exports.refreshJWTFromMonolith = refreshJWTFromMonolith;
 async function invalidateAuthToken(trc, token, thriftComm, httpClient, clientCredentials) {
     let napAddress;
-    const authData = decodeAuthData(token);
-    if (hasNAPData(authData)) {
+    const authData = conduit_auth_shared_1.decodeAuthData(token);
+    if (conduit_auth_shared_1.hasNAPData(authData)) {
         if (clientCredentials) {
             await conduit_utils_1.logAndDiscardError(revokeSDMSSession(trc, thriftComm, authData, clientCredentials), 'Failed revoking the session, but continuing anyway');
         }

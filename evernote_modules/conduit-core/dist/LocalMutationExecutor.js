@@ -18,7 +18,7 @@ class LocalGraphInterface {
             if (plan.lateOps) {
                 await this.runExecutionPlanInternal(trc, mutation, plan.lateOps);
             }
-            return;
+            return null;
         };
         this.runRemoteCommand = null;
         this.traverseGraph = async (trc, nodeRef, traverse) => {
@@ -79,9 +79,13 @@ class LocalGraphInterface {
         };
         await db.updateNode(trc, syncContext, nodeRef, nodeUpdate);
         // assumes all blob content is cached...
-        await this.updateNodeCachedFields(trc, db, nodeRef, {
+        const cacheUpdate = {
             [`${blobName}.content`]: blob.content,
-        });
+        };
+        if (blob.editSequenceNumber !== undefined) {
+            cacheUpdate[`${blobName}.editSequenceNumber`] = blob.editSequenceNumber;
+        }
+        await this.updateNodeCachedFields(trc, db, nodeRef, cacheUpdate);
     }
     async runCommand(command, args) {
         // no-op for local mutation executor
@@ -106,8 +110,8 @@ class LocalGraphInterface {
                     }
                     case 'Node:UPDATE': {
                         const syncContext = await this.getNodeBestSyncContext(trc, db, change.nodeRef);
-                        await db.updateNode(trc, syncContext, change.nodeRef, change.node, timestamp);
-                        if (change.node.CacheFields) {
+                        const updatedNode = await db.updateNode(trc, syncContext, change.nodeRef, change.node, timestamp);
+                        if (updatedNode && change.node.CacheFields) {
                             await this.updateNodeCachedFields(trc, db, change.nodeRef, change.node.CacheFields);
                         }
                         break;
@@ -146,9 +150,6 @@ class LocalGraphInterface {
                         break;
                     }
                     case 'Custom': {
-                        // If we have a custom command run, then we will have to wait for
-                        // the mutation tracker timestamp to clear the optimistic
-                        mutation.clearedWithMutationTracker = true;
                         break;
                     }
                     default:

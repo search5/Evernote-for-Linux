@@ -8,7 +8,7 @@ const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
 const en_conduit_plugin_task_1 = require("en-conduit-plugin-task");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const trc = conduit_utils_1.createTraceContext('SearchStorageChangeReceiver');
 /**
  * Receives database events and adds them to the SearchProcessor main processing queue.
@@ -28,7 +28,7 @@ class SearchStorageChangeReceiver {
             // there's no need to process attachment delete events since the corresponding note change event
             // should be triggered
             const nodeType = this.nodeTables.get(tableName);
-            if (nodeType === en_data_model_1.CoreEntityTypes.Attachment && event.type === conduit_storage_1.StorageChangeType.Delete) {
+            if (nodeType === en_core_entity_types_1.CoreEntityTypes.Attachment && event.type === conduit_storage_1.StorageChangeType.Delete) {
                 return false;
             }
             // Task creation / update events are required in order
@@ -45,7 +45,7 @@ class SearchStorageChangeReceiver {
     }
     isAttachmentEvent(event) {
         const tableName = event.path[conduit_storage_1.StorageChangePath.TableName];
-        if (tableName && tableName === conduit_storage_1.tableForNodeType(en_data_model_1.CoreEntityTypes.Attachment) && this.supportedStorageChangeTypes.has(event.type)) {
+        if (tableName && tableName === conduit_storage_1.tableForNodeType(en_core_entity_types_1.CoreEntityTypes.Attachment) && this.supportedStorageChangeTypes.has(event.type)) {
             return true;
         }
         return false;
@@ -67,10 +67,10 @@ class SearchStorageChangeReceiver {
         const storageChangeValueEvent = event;
         const attachmentNode = storageChangeValueEvent.value;
         const edge = conduit_utils_1.firstStashEntry(attachmentNode.inputs.parent);
-        if ((edge === null || edge === void 0 ? void 0 : edge.srcType) === en_data_model_1.CoreEntityTypes.Note) {
+        if ((edge === null || edge === void 0 ? void 0 : edge.srcType) === en_core_entity_types_1.CoreEntityTypes.Note) {
             const noteID = edge.srcID;
             conduit_utils_1.logger.trace(`SearchStorageChangeReceiver: transformed attachment: ${attachmentNode.id} event to note event: ${noteID}`);
-            return { nodeRef: { id: noteID, type: en_data_model_1.CoreEntityTypes.Note }, localTimestamp: Date.now(), eventType: conduit_storage_1.StorageChangeType.Replace };
+            return { nodeRef: { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note }, localTimestamp: Date.now(), eventType: conduit_storage_1.StorageChangeType.Replace };
         }
         return null;
     }
@@ -78,10 +78,10 @@ class SearchStorageChangeReceiver {
         const storageChangeValueEvent = event;
         const taskNode = storageChangeValueEvent.value;
         const edge = conduit_utils_1.firstStashEntry(taskNode.inputs.parent);
-        if ((edge === null || edge === void 0 ? void 0 : edge.srcType) === en_data_model_1.CoreEntityTypes.Note) {
+        if ((edge === null || edge === void 0 ? void 0 : edge.srcType) === en_core_entity_types_1.CoreEntityTypes.Note) {
             const noteID = edge.srcID;
             conduit_utils_1.logger.trace(`SearchStorageChangeReceiver: transformed task: ${taskNode.id} event to note event: ${noteID}`);
-            return { nodeRef: { id: noteID, type: en_data_model_1.CoreEntityTypes.Note }, localTimestamp: Date.now(), eventType: conduit_storage_1.StorageChangeType.Replace };
+            return { nodeRef: { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note }, localTimestamp: Date.now(), eventType: conduit_storage_1.StorageChangeType.Replace };
         }
         return null;
     }

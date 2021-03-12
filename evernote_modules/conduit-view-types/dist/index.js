@@ -13,15 +13,20 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.drillDownIntoResponse = exports.SyncProgressType = exports.AdaptiveDownsyncType = exports.DownsyncMode = exports.OfflineContentStrategy = exports.AuthState = exports.LocalSettingsValueType = exports.LocalSettingsType = exports.isLocalUpload = exports.isExternalUpload = exports.ConduitEvent = void 0;
+exports.drillDownIntoResponse = exports.SyncProgressType = exports.AdaptiveDownsyncType = exports.DownsyncMode = exports.OfflineContentStrategy = exports.AuthState = exports.LocalSettingsValueType = exports.LocalSettingsType = exports.isLocalUpload = exports.isExternalUpload = exports.ConduitEvent = exports.FEATURE_VERSION = exports.CONDUIT_VERSION = void 0;
+var ConduitVersion_1 = require("./ConduitVersion");
+Object.defineProperty(exports, "CONDUIT_VERSION", { enumerable: true, get: function () { return ConduitVersion_1.CONDUIT_VERSION; } });
 __exportStar(require("./FeatureFlags"), exports);
 __exportStar(require("./HttpTransport"), exports);
+__exportStar(require("./Paging"), exports);
+// this doesn't really belong here, as it is really Thrift-specific, but we need in places where we don't have the Thrift library imported
+exports.FEATURE_VERSION = '4';
 var ConduitEvent;
 (function (ConduitEvent) {
     ConduitEvent["START_SYNCING_WITH_AUTH"] = "StartSyncingWithAuth";
     ConduitEvent["BOOTSTRAP_SYNC_FINISHED"] = "BootstrapSyncFinished";
     ConduitEvent["FATAL_ERROR"] = "FatalError";
-    ConduitEvent["LOCAL_INDEX_UPDATED"] = "LocalIndexUpdated";
+    ConduitEvent["SEARCH_INDEX_UPDATED"] = "SearchIndexUpdated";
     ConduitEvent["NOTIFICATION_ACTION"] = "NotificationAction";
     ConduitEvent["FIRE_NOTIFICATION"] = "FireNotification";
 })(ConduitEvent = exports.ConduitEvent || (exports.ConduitEvent = {}));

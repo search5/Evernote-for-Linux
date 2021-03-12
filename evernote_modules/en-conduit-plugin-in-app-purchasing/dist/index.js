@@ -39,7 +39,7 @@ const clientPlatform = new graphql_1.GraphQLNonNull(new graphql_1.GraphQLEnumTyp
         MAC: { value: 'mac' },
     },
 }));
-function getENInAppPurchasingPlugin(thriftComm, httpClient) {
+function getENInAppPurchasingPlugin(httpClient) {
     async function productDataResolver(parent, args, context) {
         var _a;
         if (!(args && args.clientPlatform)) {
@@ -59,7 +59,7 @@ function getENInAppPurchasingPlugin(thriftComm, httpClient) {
     }
     async function subscriptionInfoResolver(parent, args, context) {
         const authData = en_thrift_connector_1.decodeAuthData(await conduit_core_1.retrieveAuthorizedToken(context));
-        const userStore = thriftComm.getUserStore(authData.urls.userStoreUrl);
+        const userStore = context.thriftComm.getUserStore(authData.urls.userStoreUrl);
         return conduit_utils_1.safeStringify(await userStore.getSubscriptionInfo(context.trc, authData.token));
     }
     async function androidPrePurchaseResolver(parent, args, context) {

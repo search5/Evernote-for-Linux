@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.boardIndexConfig = exports.boardTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const BoardConstants_1 = require("../BoardConstants");
 const DesktopFormFactor = {
     layout: BoardConstants_1.desktopLayouts,
@@ -19,10 +19,10 @@ exports.boardTypeDef = {
     nsyncFeatureGroup: 'Home',
     schema: {
         boardType: BoardConstants_1.boardTypes,
-        headerBG: en_data_model_1.BlobV2Schema,
+        headerBG: en_core_entity_types_1.BlobV2Schema,
         headerBGMime: 'string?',
         headerBGFileName: 'string?',
-        headerBGPreviousUpload: en_data_model_1.BlobV2Schema,
+        headerBGPreviousUpload: en_core_entity_types_1.BlobV2Schema,
         headerBGPreviousUploadMime: 'string?',
         headerBGPreviousUploadFileName: 'string?',
         desktop: DesktopFormFactor,

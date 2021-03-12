@@ -38,7 +38,7 @@ const gLoadingResult = {
 };
 function useSubscription(...args) {
     const ownerName = ViewTracing_1.getHookOwnerUnstable();
-    const [wrappedQuery, newVars, priority, newNoQuery] = args;
+    const [wrappedQuery, newVars, priority, newNoQuery, shouldUseLayoutEffect] = args;
     const noQuery = Boolean(newNoQuery);
     // unwrap ConduitQuery so we can reference compare the memoized result of graphql-tag
     const query = wrappedQuery instanceof Query_1.ConduitQuery ? wrappedQuery.query : wrappedQuery;
@@ -69,7 +69,7 @@ function useSubscription(...args) {
         // when overrideIsStale is set we need isStale to be set, if not in the loading state
         resultRef.current = simply_immutable_1.updateImmutable(resultRef.current, ['isStale'], true);
     }
-    react_1.useEffect(() => {
+    function runQuery() {
         if (noQuery) {
             return () => undefined;
         }
@@ -98,7 +98,17 @@ function useSubscription(...args) {
         return () => {
             WatcherManager.releaseWatcher(watcher, onUpdate);
         };
-    }, [query, vars, noQuery]);
+    }
+    if (shouldUseLayoutEffect) {
+        react_1.useLayoutEffect(() => {
+            return runQuery();
+        }, [query, vars, noQuery]);
+    }
+    else {
+        react_1.useEffect(() => {
+            return runQuery();
+        }, [query, vars, noQuery]);
+    }
     return resultRef.current;
 }
 exports.useSubscription = useSubscription;

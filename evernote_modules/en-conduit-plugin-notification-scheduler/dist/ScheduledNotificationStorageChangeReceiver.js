@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ScheduledNotificationStorageChangeReceiver = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
-const en_conduit_plugin_task_1 = require("en-conduit-plugin-task");
+const en_conduit_plugin_scheduled_notification_shared_1 = require("en-conduit-plugin-scheduled-notification-shared");
 const gTrcPool = new conduit_utils_1.AsyncTracePool('ScheduledNotificationStorageChangeReceiver');
 /**
  * Receives StorageChangeEvents emitted by the graphDB, and calls the appropriate operations
@@ -17,7 +17,7 @@ class ScheduledNotificationStorageChangeReceiver {
         this.notificationManager = notificationManager;
         this.graphDB = graphDB;
         const watchedEventTypes = [conduit_storage_1.StorageChangeType.Create, conduit_storage_1.StorageChangeType.Replace, conduit_storage_1.StorageChangeType.Delete];
-        this.eventFilter = new conduit_storage_1.StorageChangeEventFilter(watchedEventTypes, [en_conduit_plugin_task_1.TaskEntityTypes.ScheduledNotification]);
+        this.eventFilter = new conduit_storage_1.StorageChangeEventFilter(watchedEventTypes, [en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.ScheduledNotification]);
     }
     /**
      * Processes the storage change events for the purposes of scheduling, updating, and
@@ -47,7 +47,7 @@ class ScheduledNotificationStorageChangeReceiver {
     }
     async storageEventTriggeredForEntity(id) {
         await gTrcPool.runTraced(null, async (trc) => {
-            const sn = await this.graphDB.getNodeWithoutGraphQLContext(trc, { type: en_conduit_plugin_task_1.TaskEntityTypes.ScheduledNotification, id });
+            const sn = await this.graphDB.getNodeWithoutGraphQLContext(trc, { type: en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.ScheduledNotification, id });
             if (!sn) {
                 // SN not found - treat as deleted
                 await this.notificationManager.deleteNotification(trc, id);

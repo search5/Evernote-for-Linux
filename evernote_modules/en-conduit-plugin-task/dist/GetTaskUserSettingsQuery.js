@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getTaskUserSettings = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const TaskConstants_1 = require("./TaskConstants");
 const TaskUtils_1 = require("./TaskUtils");
 const Utilities_1 = require("./Utilities");
@@ -21,7 +21,7 @@ async function getTaskUserSettings(parent, args, context) {
     const defaultTaskNoteEdge = conduit_utils_1.firstStashEntry(existingTaskUserSettings.outputs.defaultTaskNote);
     let noteLabel = null;
     if (defaultTaskNoteEdge && defaultTaskNoteEdge.dstID) {
-        const note = await context.db.getNode(context, { id: defaultTaskNoteEdge.dstID, type: en_data_model_1.CoreEntityTypes.Note });
+        const note = await context.db.getNode(context, { id: defaultTaskNoteEdge.dstID, type: en_core_entity_types_1.CoreEntityTypes.Note });
         if (note) {
             noteLabel = note.label;
         }

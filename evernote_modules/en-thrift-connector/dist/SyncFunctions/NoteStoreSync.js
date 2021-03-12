@@ -25,12 +25,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getTotalNotesInAccount = exports.syncNoteCount = exports.syncAllNotesMetadata = exports.syncCurrentNoteSnippets = exports.syncBootstrap = exports.syncNotesReverse = exports.syncBackgroundNotes = exports.currentBackgroundNoteSyncProgress = exports.checkNotesSyncAvailable = exports.syncCatchup = exports.syncForward = exports.NotesSyncProgressType = exports.EmptyNoteStoreSyncState = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const AccountLimitsConverter_1 = require("../Converters/AccountLimitsConverter");
 const Converters_1 = require("../Converters/Converters");
 const ProfileConverter_1 = require("../Converters/ProfileConverter");
-const ThriftTypes_1 = require("../ThriftTypes");
 const ChunkConversion_1 = require("./ChunkConversion");
 const SyncHelpers_1 = require("./SyncHelpers");
 let gBootstrapTags = conduit_utils_1.registerDebugSetting('BootstrapTags', true, v => gBootstrapTags = Boolean(v));
@@ -140,7 +140,7 @@ async function getAndUpdateBusinessUsers(trc, params, businessUsersUpdateCount) 
         return;
     }
     const userStore = params.syncEngine.thriftComm.getUserStore(params.auth.urls.userStoreUrl);
-    const businessUserFilter = { statuses: [ThriftTypes_1.TBusinessUserStatus.ACTIVE, ThriftTypes_1.TBusinessUserStatus.DEACTIVATED] };
+    const businessUserFilter = { statuses: [en_conduit_sync_types_1.TBusinessUserStatus.ACTIVE, en_conduit_sync_types_1.TBusinessUserStatus.DEACTIVATED] };
     const currentUsers = await SyncHelpers_1.interruptible(params, userStore.listBusinessUsers(trc, params.auth.token, businessUserFilter));
     const businessProfiles = currentUsers.map(user => ProfileConverter_1.profileFromUserProfile(user, true));
     await params.syncEngine.transact(trc, 'updateBusinessUsers', async (graphTransaction) => {
@@ -156,7 +156,7 @@ async function updateShowChoiceScreen(trc, params, showChoiceScreen) {
         return;
     }
     await params.syncEngine.transact(trc, 'showChoiceScreen', async (graphTransaction) => {
-        const userRef = { id: conduit_core_1.PERSONAL_USER_ID, type: en_data_model_1.CoreEntityTypes.User };
+        const userRef = { id: conduit_core_1.PERSONAL_USER_ID, type: en_core_entity_types_1.CoreEntityTypes.User };
         // source of truth in our DB is in SyncState, but cache it on the user so it gets exposed out to clients
         await graphTransaction.updateSyncState(trc, syncStatePath, { showChoiceScreen });
         await graphTransaction.setNodeCachedField(trc, userRef, 'showChoiceScreen', showChoiceScreen, {});
@@ -238,10 +238,10 @@ async function syncForwardInternal(trc, params, filter, isCatchup) {
         params.setProgress && await params.setProgress(trc, lastUpdateCount / updateCount);
     }
     const wsRefs = catchUpWorkspaces.map(guid => {
-        return { id: Converters_1.convertGuidFromService(guid, en_data_model_1.CoreEntityTypes.Workspace), type: en_data_model_1.CoreEntityTypes.Workspace };
+        return { id: Converters_1.convertGuidFromService(guid, en_core_entity_types_1.CoreEntityTypes.Workspace), type: en_core_entity_types_1.CoreEntityTypes.Workspace };
     });
     const nbRefs = catchUpNotebooks.map(guid => {
-        return { id: Converters_1.convertGuidFromService(guid, en_data_model_1.CoreEntityTypes.Notebook), type: en_data_model_1.CoreEntityTypes.Notebook };
+        return { id: Converters_1.convertGuidFromService(guid, en_core_entity_types_1.CoreEntityTypes.Notebook), type: en_core_entity_types_1.CoreEntityTypes.Notebook };
     });
     return wsRefs.concat(nbRefs);
 }
@@ -270,10 +270,10 @@ async function syncCatchup(trc, params, catchupRefs) {
     const nbGuids = [];
     for (const ref of catchupRefs) {
         const guid = Converters_1.convertGuidToService(ref.id, ref.type);
-        if (ref.type === en_data_model_1.CoreEntityTypes.Workspace) {
+        if (ref.type === en_core_entity_types_1.CoreEntityTypes.Workspace) {
             wsGuids.push(guid);
         }
-        else if (ref.type === en_data_model_1.CoreEntityTypes.Notebook) {
+        else if (ref.type === en_core_entity_types_1.CoreEntityTypes.Notebook) {
             nbGuids.push(guid);
         }
     }
@@ -430,7 +430,7 @@ async function syncAllNotesMetadata(trc, params, inTrash) {
     const utilityStore = params.thriftComm.getUtilityStore(params.auth.urls.utilityUrl);
     const authToken = params.auth.token;
     const filter = {
-        order: ThriftTypes_1.TNoteSortOrder.CREATED,
+        order: en_conduit_sync_types_1.TNoteSortOrder.CREATED,
         inactive: inTrash,
     };
     const resultSpec = {

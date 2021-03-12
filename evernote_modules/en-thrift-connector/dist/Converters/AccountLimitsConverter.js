@@ -24,8 +24,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateNodeTypeCount = exports.updateAccountLimitsNode = exports.initAccountLimitsNode = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const SimplyImmutable = __importStar(require("simply-immutable"));
+const Helpers_1 = require("../Helpers");
 const EMPTY_RESOURCE_COUNTS = SimplyImmutable.deepFreeze({
     userNoteCount: 0,
     userNotebookCount: 0,
@@ -62,7 +63,7 @@ const TYPE_TO_COUNT_MAP = {
     Workspace: 'userWorkspaceCount',
 };
 async function initAccountLimitsNode(trc, params, syncContext, auth, limits) {
-    const current = await params.graphTransaction.getNode(trc, null, { id: en_data_model_1.ACCOUNT_LIMITS_ID, type: en_data_model_1.CoreEntityTypes.AccountLimits });
+    const current = await params.graphTransaction.getNode(trc, null, { id: en_core_entity_types_1.ACCOUNT_LIMITS_ID, type: en_core_entity_types_1.CoreEntityTypes.AccountLimits });
     let allowance = -1;
     try {
         const utilityStore = params.thriftComm.getUtilityStore(auth.urls.utilityUrl);
@@ -79,11 +80,11 @@ async function initAccountLimitsNode(trc, params, syncContext, auth, limits) {
         Limits: Object.assign({}, (limits || (current ? current.NodeFields.Limits : DEFAULT_ACCOUNT_LIMITS))),
         Counts: Object.assign({}, (current ? current.NodeFields.Counts : EMPTY_RESOURCE_COUNTS)),
     });
-    await params.graphTransaction.setNodeCachedField(trc, { id: en_data_model_1.ACCOUNT_LIMITS_ID, type: en_data_model_1.CoreEntityTypes.AccountLimits }, 'noteAndNotebookSharesAllowance', allowance, {});
+    await params.graphTransaction.setNodeCachedField(trc, { id: en_core_entity_types_1.ACCOUNT_LIMITS_ID, type: en_core_entity_types_1.CoreEntityTypes.AccountLimits }, 'noteAndNotebookSharesAllowance', allowance, {});
 }
 exports.initAccountLimitsNode = initAccountLimitsNode;
 async function updateAccountLimitsNode(trc, params, syncContext, updatedCounts) {
-    const current = await params.graphTransaction.getNode(trc, null, en_data_model_1.ACCOUNT_LIMITS_REF);
+    const current = await params.graphTransaction.getNode(trc, null, en_core_entity_types_1.ACCOUNT_LIMITS_REF);
     await convertAccountLimitsFromService(trc, params, syncContext, {
         Limits: Object.assign({}, (current ? current.NodeFields.Limits : DEFAULT_ACCOUNT_LIMITS)),
         Counts: Object.assign(Object.assign({}, (current ? current.NodeFields.Counts : EMPTY_RESOURCE_COUNTS)), updatedCounts),
@@ -95,14 +96,14 @@ async function updateNodeTypeCount(trc, graphTransaction, syncContext, type, del
     if (!countField) {
         return;
     }
-    const current = await graphTransaction.getNode(trc, null, en_data_model_1.ACCOUNT_LIMITS_REF);
+    const current = await graphTransaction.getNode(trc, null, en_core_entity_types_1.ACCOUNT_LIMITS_REF);
     if (!current) {
         return;
     }
     if (!current.syncContexts.includes(syncContext)) {
-        if (!customCountName && type === en_data_model_1.CoreEntityTypes.Notebook && syncContext.match(en_data_model_1.LINKED_CONTEXT_REGEX)) {
+        if (!customCountName && type === en_core_entity_types_1.CoreEntityTypes.Notebook && syncContext.match(Helpers_1.LINKED_CONTEXT_REGEX)) {
             const accountLimitsContext = current.syncContexts[0]; // I can't think of a case where the AccountLimits node would have two syncContexts
-            await graphTransaction.updateNode(trc, accountLimitsContext, en_data_model_1.ACCOUNT_LIMITS_REF, {
+            await graphTransaction.updateNode(trc, accountLimitsContext, en_core_entity_types_1.ACCOUNT_LIMITS_REF, {
                 NodeFields: {
                     Counts: {
                         userLinkedNotebookCount: (current ? current.NodeFields.Counts.userLinkedNotebookCount : 0) + delta,
@@ -112,7 +113,7 @@ async function updateNodeTypeCount(trc, graphTransaction, syncContext, type, del
         }
         return;
     }
-    await graphTransaction.updateNode(trc, syncContext, en_data_model_1.ACCOUNT_LIMITS_REF, {
+    await graphTransaction.updateNode(trc, syncContext, en_core_entity_types_1.ACCOUNT_LIMITS_REF, {
         NodeFields: {
             Counts: {
                 [countField]: (current ? current.NodeFields.Counts[countField] : 0) + delta,
@@ -125,8 +126,8 @@ async function convertAccountLimitsFromService(trc, params, syncContext, service
     const limits = serviceData.Limits;
     const counts = serviceData.Counts;
     const accountLimits = {
-        id: en_data_model_1.ACCOUNT_LIMITS_ID,
-        type: en_data_model_1.CoreEntityTypes.AccountLimits,
+        id: en_core_entity_types_1.ACCOUNT_LIMITS_ID,
+        type: en_core_entity_types_1.CoreEntityTypes.AccountLimits,
         version: 0,
         syncContexts: [],
         localChangeTimestamp: 0,

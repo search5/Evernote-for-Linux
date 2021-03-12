@@ -31,11 +31,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.WorkspaceConverter = exports.cachePinnedContentsDataFromThrift = exports.convertPinnedContentFromService = exports.removeBackingNotebookNode = exports.updateWorkspaceUiPreferencesToService = exports.workspaceFromService = exports.PINNED_CONTENTS_FIELD_NAME = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const Auth = __importStar(require("../Auth"));
 const WorkspaceUIPreferencesResolver_1 = require("../Resolvers/WorkspaceUIPreferencesResolver");
-const ThriftTypes_1 = require("../ThriftTypes");
 const Converters_1 = require("./Converters");
 const Helpers_1 = require("./Helpers");
 const MembershipConverter_1 = require("./MembershipConverter");
@@ -45,48 +45,48 @@ const WS_PREF_REFETCH_INTERVAL = 5 * 60 * 1000;
 exports.PINNED_CONTENTS_FIELD_NAME = 'pinnedContents';
 function toWorkspaceType(t) {
     switch (t) {
-        case ThriftTypes_1.TWorkspaceType.INVITE_ONLY:
-            return en_data_model_1.WorkspaceType.INVITE_ONLY;
-        case ThriftTypes_1.TWorkspaceType.DISCOVERABLE:
-            return en_data_model_1.WorkspaceType.DISCOVERABLE;
-        case ThriftTypes_1.TWorkspaceType.OPEN:
-            return en_data_model_1.WorkspaceType.OPEN;
+        case en_conduit_sync_types_1.TWorkspaceType.INVITE_ONLY:
+            return en_core_entity_types_1.WorkspaceType.INVITE_ONLY;
+        case en_conduit_sync_types_1.TWorkspaceType.DISCOVERABLE:
+            return en_core_entity_types_1.WorkspaceType.DISCOVERABLE;
+        case en_conduit_sync_types_1.TWorkspaceType.OPEN:
+            return en_core_entity_types_1.WorkspaceType.OPEN;
         default:
             throw conduit_utils_1.absurd(t, 'Unknown service workspace type');
     }
 }
 function toServiceWorkspaceType(t) {
     switch (t) {
-        case en_data_model_1.WorkspaceType.INVITE_ONLY:
-            return ThriftTypes_1.TWorkspaceType.INVITE_ONLY;
-        case en_data_model_1.WorkspaceType.DISCOVERABLE:
-            return ThriftTypes_1.TWorkspaceType.DISCOVERABLE;
-        case en_data_model_1.WorkspaceType.OPEN:
-            return ThriftTypes_1.TWorkspaceType.OPEN;
+        case en_core_entity_types_1.WorkspaceType.INVITE_ONLY:
+            return en_conduit_sync_types_1.TWorkspaceType.INVITE_ONLY;
+        case en_core_entity_types_1.WorkspaceType.DISCOVERABLE:
+            return en_conduit_sync_types_1.TWorkspaceType.DISCOVERABLE;
+        case en_core_entity_types_1.WorkspaceType.OPEN:
+            return en_conduit_sync_types_1.TWorkspaceType.OPEN;
         default:
             throw conduit_utils_1.absurd(t, 'Unknown internal workspace type');
     }
 }
 function toMembershipPrivilege(t) {
     switch (t) {
-        case ThriftTypes_1.TWorkspacePrivilegeLevel.READ:
-            return en_data_model_1.MembershipPrivilege.READ;
-        case ThriftTypes_1.TWorkspacePrivilegeLevel.EDIT:
-            return en_data_model_1.MembershipPrivilege.EDIT;
-        case ThriftTypes_1.TWorkspacePrivilegeLevel.EDIT_AND_MANAGE:
-            return en_data_model_1.MembershipPrivilege.MANAGE;
+        case en_conduit_sync_types_1.TWorkspacePrivilegeLevel.READ:
+            return en_core_entity_types_1.MembershipPrivilege.READ;
+        case en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT:
+            return en_core_entity_types_1.MembershipPrivilege.EDIT;
+        case en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT_AND_MANAGE:
+            return en_core_entity_types_1.MembershipPrivilege.MANAGE;
         default:
             return null;
     }
 }
 function toServicePrivilegeLevel(t) {
     switch (t) {
-        case en_data_model_1.MembershipPrivilege.READ:
-            return ThriftTypes_1.TWorkspacePrivilegeLevel.READ;
-        case en_data_model_1.MembershipPrivilege.EDIT:
-            return ThriftTypes_1.TWorkspacePrivilegeLevel.EDIT;
-        case en_data_model_1.MembershipPrivilege.MANAGE:
-            return ThriftTypes_1.TWorkspacePrivilegeLevel.EDIT_AND_MANAGE;
+        case en_core_entity_types_1.MembershipPrivilege.READ:
+            return en_conduit_sync_types_1.TWorkspacePrivilegeLevel.READ;
+        case en_core_entity_types_1.MembershipPrivilege.EDIT:
+            return en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT;
+        case en_core_entity_types_1.MembershipPrivilege.MANAGE:
+            return en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT_AND_MANAGE;
         default:
             return null;
     }
@@ -94,25 +94,25 @@ function toServicePrivilegeLevel(t) {
 function getAccessStatus(isMember, accessInfo, wsType) {
     var _a;
     if (isMember) {
-        return en_data_model_1.WorkspaceAccessStatusEnum.MEMBER;
+        return en_core_entity_types_1.WorkspaceAccessStatusEnum.MEMBER;
     }
-    if (wsType === en_data_model_1.WorkspaceType.OPEN) {
-        return en_data_model_1.WorkspaceAccessStatusEnum.OPEN;
+    if (wsType === en_core_entity_types_1.WorkspaceType.OPEN) {
+        return en_core_entity_types_1.WorkspaceAccessStatusEnum.OPEN;
     }
     const accessRequestedTime = (_a = accessInfo === null || accessInfo === void 0 ? void 0 : accessInfo.accessRequestedTimestamp) !== null && _a !== void 0 ? _a : null;
     if (accessRequestedTime) {
-        return en_data_model_1.WorkspaceAccessStatusEnum.PENDING;
+        return en_core_entity_types_1.WorkspaceAccessStatusEnum.PENDING;
     }
-    return en_data_model_1.WorkspaceAccessStatusEnum.DISCOVERABLE;
+    return en_core_entity_types_1.WorkspaceAccessStatusEnum.DISCOVERABLE;
 }
 function workspaceFromService(serviceData) {
     var _a, _b, _c, _d, _e, _f;
     const workspace = serviceData.workspace;
-    const wsType = toWorkspaceType(workspace.workspaceType || ThriftTypes_1.TWorkspaceType.INVITE_ONLY);
+    const wsType = toWorkspaceType(workspace.workspaceType || en_conduit_sync_types_1.TWorkspaceType.INVITE_ONLY);
     const accessStatus = getAccessStatus((_a = serviceData.member) !== null && _a !== void 0 ? _a : null, (_b = serviceData.accessInfo) !== null && _b !== void 0 ? _b : null, wsType);
     const workspaceOut = {
-        id: Converters_1.convertGuidFromService(workspace.guid, en_data_model_1.CoreEntityTypes.Workspace),
-        type: en_data_model_1.CoreEntityTypes.Workspace,
+        id: Converters_1.convertGuidFromService(workspace.guid, en_core_entity_types_1.CoreEntityTypes.Workspace),
+        type: en_core_entity_types_1.CoreEntityTypes.Workspace,
         version: workspace.updateSequenceNum || 0,
         syncContexts: [],
         localChangeTimestamp: 0,
@@ -151,29 +151,29 @@ async function workspaceUpdateSyncState(trc, params, workspaceID, backingNbID) {
 // map object for notebookColor and noteDisplayOrder
 async function curateWorkspacePreferencesMap(trc, params, wsNode, backingNbId, field, mutatedValue) {
     const wsId = wsNode.id;
-    const wsRef = { id: wsId, type: en_data_model_1.CoreEntityTypes.Workspace };
+    const wsRef = { id: wsId, type: en_core_entity_types_1.CoreEntityTypes.Workspace };
     const res = {};
     const nbEdges = wsNode.outputs.children;
     for (const nb of Object.keys(wsNode.outputs.children)) {
         const nbId = nbEdges[nb].dstID;
         if (nbId === mutatedValue.id) {
-            res[Converters_1.convertGuidToService(nbId, en_data_model_1.CoreEntityTypes.Notebook)] = mutatedValue.val;
+            res[Converters_1.convertGuidToService(nbId, en_core_entity_types_1.CoreEntityTypes.Notebook)] = mutatedValue.val;
             continue;
         }
-        const cacheVal = await params.graphTransaction.getNodeCachedField(trc, null, { id: nbId, type: en_data_model_1.CoreEntityTypes.Notebook }, field);
+        const cacheVal = await params.graphTransaction.getNodeCachedField(trc, null, { id: nbId, type: en_core_entity_types_1.CoreEntityTypes.Notebook }, field);
         if (cacheVal) {
-            res[Converters_1.convertGuidToService(nbId, en_data_model_1.CoreEntityTypes.Notebook)] = cacheVal.values[field];
+            res[Converters_1.convertGuidToService(nbId, en_core_entity_types_1.CoreEntityTypes.Notebook)] = cacheVal.values[field];
         }
     }
     if (field === 'noteDisplayOrder') {
         if (mutatedValue.id === wsId) {
-            res[Converters_1.convertGuidToService(backingNbId, en_data_model_1.CoreEntityTypes.Notebook)] = mutatedValue.val;
+            res[Converters_1.convertGuidToService(backingNbId, en_core_entity_types_1.CoreEntityTypes.Notebook)] = mutatedValue.val;
         }
         else {
             // fetch cached value of noteOrder for ws
             const cacheVal = await params.graphTransaction.getNodeCachedField(trc, null, wsRef, field);
             if (cacheVal) {
-                res[Converters_1.convertGuidToService(backingNbId, en_data_model_1.CoreEntityTypes.Notebook)] = cacheVal.values[field];
+                res[Converters_1.convertGuidToService(backingNbId, en_core_entity_types_1.CoreEntityTypes.Notebook)] = cacheVal.values[field];
             }
         }
     }
@@ -183,8 +183,8 @@ async function updateWorkspaceUiPreferencesToService(trc, params, syncContext, n
     if (!fields) {
         return;
     }
-    const wsGuid = Converters_1.convertGuidToService(wsId, en_data_model_1.CoreEntityTypes.Workspace);
-    const wsRef = { id: wsId, type: en_data_model_1.CoreEntityTypes.Workspace };
+    const wsGuid = Converters_1.convertGuidToService(wsId, en_core_entity_types_1.CoreEntityTypes.Workspace);
+    const wsRef = { id: wsId, type: en_core_entity_types_1.CoreEntityTypes.Workspace };
     const wsToBackingNb = await params.graphTransaction.getSyncState(trc, null, ['workspaces', 'wsToBackingNb']);
     if (!wsToBackingNb) {
         throw new conduit_utils_1.NotFoundError(wsId, 'Workspace to backing nb mapping not found in sync state');
@@ -204,14 +204,14 @@ async function updateWorkspaceUiPreferencesToService(trc, params, syncContext, n
     }
     const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
     if (fields.layoutStyle) {
-        await noteStore.setWorkspaceUserInterfaceLayoutStyle(trc, auth.token, wsGuid, fields.layoutStyle === en_data_model_1.WorkspaceLayoutStyle.BOARD ? 1 : 0);
+        await noteStore.setWorkspaceUserInterfaceLayoutStyle(trc, auth.token, wsGuid, fields.layoutStyle === en_core_entity_types_1.WorkspaceLayoutStyle.BOARD ? 1 : 0);
         await params.graphTransaction.setNodeCachedField(trc, wsRef, 'layoutStyle', fields.layoutStyle, {});
     }
-    const isBoardView = fields.layoutStyle === en_data_model_1.WorkspaceLayoutStyle.BOARD || (wsNode.CacheFields && wsNode.CacheFields.layoutStyle === en_data_model_1.WorkspaceLayoutStyle.BOARD);
+    const isBoardView = fields.layoutStyle === en_core_entity_types_1.WorkspaceLayoutStyle.BOARD || (wsNode.CacheFields && wsNode.CacheFields.layoutStyle === en_core_entity_types_1.WorkspaceLayoutStyle.BOARD);
     if (isBoardView) {
         if (fields.notebookDisplayOrder) {
             const nbOrder = fields.notebookDisplayOrder.map(id => {
-                return Converters_1.convertGuidToService(id === wsId ? backingNbId : id, en_data_model_1.CoreEntityTypes.Notebook);
+                return Converters_1.convertGuidToService(id === wsId ? backingNbId : id, en_core_entity_types_1.CoreEntityTypes.Notebook);
             });
             await noteStore.setNotebookUserInterfaceDisplayOrder(trc, auth.token, wsGuid, nbOrder);
             await params.graphTransaction.setNodeCachedField(trc, wsRef, 'notebookDisplayOrder', fields.notebookDisplayOrder, {});
@@ -219,15 +219,15 @@ async function updateWorkspaceUiPreferencesToService(trc, params, syncContext, n
         if (fields.noteDisplayOrder) {
             const noteOrder = await curateWorkspacePreferencesMap(trc, params, wsNode, backingNbId, 'noteDisplayOrder', {
                 id: nbId ? nbId : wsId,
-                val: fields.noteDisplayOrder.map(id => Converters_1.convertGuidToService(id, en_data_model_1.CoreEntityTypes.Note)),
+                val: fields.noteDisplayOrder.map(id => Converters_1.convertGuidToService(id, en_core_entity_types_1.CoreEntityTypes.Note)),
             });
             await noteStore.setNoteUserInterfaceDisplayOrder(trc, auth.token, wsGuid, noteOrder);
-            await params.graphTransaction.setNodeCachedField(trc, nbId ? { id: nbId, type: en_data_model_1.CoreEntityTypes.Notebook } : wsRef, 'noteDisplayOrder', fields.noteDisplayOrder, {});
+            await params.graphTransaction.setNodeCachedField(trc, nbId ? { id: nbId, type: en_core_entity_types_1.CoreEntityTypes.Notebook } : wsRef, 'noteDisplayOrder', fields.noteDisplayOrder, {});
         }
         if (fields.displayColor && nbId) {
             const displayColorMap = await curateWorkspacePreferencesMap(trc, params, wsNode, backingNbId, 'displayColor', { id: nbId, val: fields.displayColor });
             await noteStore.setNotebookUserInterfaceColors(trc, auth.token, wsGuid, displayColorMap);
-            await params.graphTransaction.setNodeCachedField(trc, { id: nbId, type: en_data_model_1.CoreEntityTypes.Notebook }, 'displayColor', fields.displayColor, {});
+            await params.graphTransaction.setNodeCachedField(trc, { id: nbId, type: en_core_entity_types_1.CoreEntityTypes.Notebook }, 'displayColor', fields.displayColor, {});
         }
     }
     else {
@@ -240,7 +240,7 @@ exports.updateWorkspaceUiPreferencesToService = updateWorkspaceUiPreferencesToSe
 async function removeBackingNotebookNode(trc, params, syncContext, nbID, wsID) {
     const edgesToAdd = [];
     const edgesToRemove = [];
-    const backingNotebookNode = await params.graphTransaction.getNode(trc, null, { id: nbID, type: en_data_model_1.CoreEntityTypes.Notebook }, true);
+    const backingNotebookNode = await params.graphTransaction.getNode(trc, null, { id: nbID, type: en_core_entity_types_1.CoreEntityTypes.Notebook }, true);
     if (backingNotebookNode) {
         // During inital downsync a backing notebook node might be created if we don't already have
         // workspace to backing nb mappings. Backing nb node might be a dummy node if notes are synced before nb.
@@ -260,7 +260,7 @@ async function removeBackingNotebookNode(trc, params, syncContext, nbID, wsID) {
                 });
                 edgesToRemove.push({
                     srcID: nbID,
-                    srcType: en_data_model_1.CoreEntityTypes.Notebook,
+                    srcType: en_core_entity_types_1.CoreEntityTypes.Notebook,
                     srcPort: port,
                     dstID: edge.dstID,
                     dstType: edge.dstType,
@@ -287,7 +287,7 @@ async function removeBackingNotebookNode(trc, params, syncContext, nbID, wsID) {
             dstPort: 'parent',
         });
         await params.graphTransaction.replaceEdges(trc, edgesToRemove, edgesToAdd);
-        await params.graphTransaction.deleteNode(trc, syncContext, { id: nbID, type: en_data_model_1.CoreEntityTypes.Notebook }, true);
+        await params.graphTransaction.deleteNode(trc, syncContext, { id: nbID, type: en_core_entity_types_1.CoreEntityTypes.Notebook }, true);
     }
 }
 exports.removeBackingNotebookNode = removeBackingNotebookNode;
@@ -309,12 +309,12 @@ function checkPinnedContentsField(maybeSupport) {
 }
 function convertPinnedContentTypeFromService(fromService) {
     switch (fromService) {
-        case ThriftTypes_1.TPinnedEntityType.NOTE:
-            return en_data_model_1.PinnedContentTypeEnum.NOTE;
-        case ThriftTypes_1.TPinnedEntityType.NOTEBOOK:
-            return en_data_model_1.PinnedContentTypeEnum.NOTEBOOK;
-        case ThriftTypes_1.TPinnedEntityType.EXTERNAL:
-            return en_data_model_1.PinnedContentTypeEnum.EXTERNAL;
+        case en_conduit_sync_types_1.TPinnedEntityType.NOTE:
+            return en_core_entity_types_1.PinnedContentTypeEnum.NOTE;
+        case en_conduit_sync_types_1.TPinnedEntityType.NOTEBOOK:
+            return en_core_entity_types_1.PinnedContentTypeEnum.NOTEBOOK;
+        case en_conduit_sync_types_1.TPinnedEntityType.EXTERNAL:
+            return en_core_entity_types_1.PinnedContentTypeEnum.EXTERNAL;
         default:
             conduit_utils_1.logger.warn(`PinnedEntityType from server ${fromService} does not match any PinnedEntityType in data model.`);
             return null;
@@ -322,12 +322,12 @@ function convertPinnedContentTypeFromService(fromService) {
 }
 function convertPinnedContentTypeToService(toService) {
     switch (toService) {
-        case en_data_model_1.PinnedContentTypeEnum.NOTE:
-            return ThriftTypes_1.TPinnedEntityType.NOTE;
-        case en_data_model_1.PinnedContentTypeEnum.NOTEBOOK:
-            return ThriftTypes_1.TPinnedEntityType.NOTEBOOK;
-        case en_data_model_1.PinnedContentTypeEnum.EXTERNAL:
-            return ThriftTypes_1.TPinnedEntityType.EXTERNAL;
+        case en_core_entity_types_1.PinnedContentTypeEnum.NOTE:
+            return en_conduit_sync_types_1.TPinnedEntityType.NOTE;
+        case en_core_entity_types_1.PinnedContentTypeEnum.NOTEBOOK:
+            return en_conduit_sync_types_1.TPinnedEntityType.NOTEBOOK;
+        case en_core_entity_types_1.PinnedContentTypeEnum.EXTERNAL:
+            return en_conduit_sync_types_1.TPinnedEntityType.EXTERNAL;
         default:
             conduit_utils_1.logger.warn(`PinnedEntityType from server ${toService} does not match any PinnedEntityType in data model.`);
             return null;
@@ -352,11 +352,11 @@ function convertPinnedContentFromService(fromService) {
     if (entityType === null) {
         return null;
     }
-    else if (entityType === en_data_model_1.PinnedContentTypeEnum.NOTE) {
-        contentNodeID = Converters_1.convertGuidFromService(fromService.entityGuid, en_data_model_1.CoreEntityTypes.Note); // Typecasting because entityGuid comes as string from Thrift call
+    else if (entityType === en_core_entity_types_1.PinnedContentTypeEnum.NOTE) {
+        contentNodeID = Converters_1.convertGuidFromService(fromService.entityGuid, en_core_entity_types_1.CoreEntityTypes.Note); // Typecasting because entityGuid comes as string from Thrift call
     }
-    else if (entityType === en_data_model_1.PinnedContentTypeEnum.NOTEBOOK) {
-        contentNodeID = Converters_1.convertGuidFromService(fromService.entityGuid, en_data_model_1.CoreEntityTypes.Notebook); // Typecasting because entityGuid comes as string from Thrift call
+    else if (entityType === en_core_entity_types_1.PinnedContentTypeEnum.NOTEBOOK) {
+        contentNodeID = Converters_1.convertGuidFromService(fromService.entityGuid, en_core_entity_types_1.CoreEntityTypes.Notebook); // Typecasting because entityGuid comes as string from Thrift call
     }
     else {
         conduit_utils_1.logger.debug(`Cannot convert guid from service for type ${entityType}`);
@@ -366,7 +366,7 @@ function convertPinnedContentFromService(fromService) {
         pinID: fromService.guid,
         uri: (_b = fromService.entityUri) !== null && _b !== void 0 ? _b : null,
         label: (_c = fromService.entityTitle) !== null && _c !== void 0 ? _c : null,
-        entity: entityType === en_data_model_1.PinnedContentTypeEnum.EXTERNAL ? null : {
+        entity: entityType === en_core_entity_types_1.PinnedContentTypeEnum.EXTERNAL ? null : {
             type: entityType,
             id: contentNodeID,
         },
@@ -379,7 +379,7 @@ function convertPinnedContentFromService(fromService) {
 exports.convertPinnedContentFromService = convertPinnedContentFromService;
 async function cachePinnedContentsDataFromThrift(trc, workspace, metadata, graphTransaction, thriftFetchFunction) {
     const auth = Auth.decodeAuthData(metadata.authToken);
-    const pinnedContentsFromServer = await thriftFetchFunction(auth.token, Converters_1.convertGuidToService(workspace.id, en_data_model_1.CoreEntityTypes.Workspace));
+    const pinnedContentsFromServer = await thriftFetchFunction(auth.token, Converters_1.convertGuidToService(workspace.id, en_core_entity_types_1.CoreEntityTypes.Workspace));
     const pinnedContents = [];
     for (const pContent of pinnedContentsFromServer) {
         const convertResult = convertPinnedContentFromService(pContent);
@@ -392,7 +392,7 @@ async function cachePinnedContentsDataFromThrift(trc, workspace, metadata, graph
 }
 exports.cachePinnedContentsDataFromThrift = cachePinnedContentsDataFromThrift;
 async function mapContentIDAndTypeToContentUpdate(trc, thriftGraphTransaction, workspaceGuid, nodeIDs, contentype) {
-    if (contentype !== en_data_model_1.PinnedContentTypeEnum.NOTE && contentype !== en_data_model_1.PinnedContentTypeEnum.NOTEBOOK) {
+    if (contentype !== en_core_entity_types_1.PinnedContentTypeEnum.NOTE && contentype !== en_core_entity_types_1.PinnedContentTypeEnum.NOTEBOOK) {
         throw Error(`Pinned Content entity type ${contentype} is not supported`);
     }
     const res = [];
@@ -409,7 +409,7 @@ async function mapContentIDAndTypeToContentUpdate(trc, thriftGraphTransaction, w
             res.push({
                 entityGuid: Converters_1.convertGuidToService(nodeID, contentype),
                 entityType,
-                workspaceGuid: Converters_1.convertGuidToService(workspaceGuid, en_data_model_1.CoreEntityTypes.Workspace),
+                workspaceGuid: Converters_1.convertGuidToService(workspaceGuid, en_core_entity_types_1.CoreEntityTypes.Workspace),
             });
         }
     }
@@ -417,7 +417,7 @@ async function mapContentIDAndTypeToContentUpdate(trc, thriftGraphTransaction, w
 }
 class WorkspaceConverterClass {
     constructor() {
-        this.nodeType = en_data_model_1.CoreEntityTypes.Workspace;
+        this.nodeType = en_core_entity_types_1.CoreEntityTypes.Workspace;
     }
     convertGuidFromService(guid) {
         return guid;
@@ -427,7 +427,7 @@ class WorkspaceConverterClass {
     }
     async convertFromService(trc, params, syncContext, workspaceResponse) {
         const workspaceOut = workspaceFromService(workspaceResponse);
-        const currentWorkspace = await params.graphTransaction.getNode(trc, null, { type: en_data_model_1.CoreEntityTypes.Workspace, id: workspaceOut.id });
+        const currentWorkspace = await params.graphTransaction.getNode(trc, null, { type: en_core_entity_types_1.CoreEntityTypes.Workspace, id: workspaceOut.id });
         if (workspaceResponse.memberships) {
             const currentIDs = [];
             for (const membership of workspaceResponse.memberships) {
@@ -438,7 +438,7 @@ class WorkspaceConverterClass {
             if (currentWorkspace) {
                 for (const m in currentWorkspace.outputs.memberships) {
                     const membershipNodeID = currentWorkspace.outputs.memberships[m].dstID;
-                    const membershipID = Converters_1.convertGuidToService(membershipNodeID, en_data_model_1.CoreEntityTypes.Membership);
+                    const membershipID = Converters_1.convertGuidToService(membershipNodeID, en_core_entity_types_1.CoreEntityTypes.Membership);
                     if (currentIDs.indexOf(membershipID) === -1) {
                         await MembershipConverter_1.deleteMembershipHelper(trc, params, syncContext, membershipNodeID);
                     }
@@ -446,15 +446,15 @@ class WorkspaceConverterClass {
             }
         }
         if (workspaceResponse.workspace && workspaceResponse.workspace.backingNotebookGuid) {
-            const id = Converters_1.convertGuidFromService(workspaceResponse.workspace.backingNotebookGuid, en_data_model_1.CoreEntityTypes.Notebook);
+            const id = Converters_1.convertGuidFromService(workspaceResponse.workspace.backingNotebookGuid, en_core_entity_types_1.CoreEntityTypes.Notebook);
             await removeBackingNotebookNode(trc, params, syncContext, id, workspaceOut.id);
             // update sync state mappings between ws guid and backing nb guid
             await workspaceUpdateSyncState(trc, params, workspaceOut.id, id);
         }
         if (workspaceResponse.workspace && workspaceResponse.workspace.contactId) {
             conduit_storage_1.addOutputEdgeToNode(workspaceOut, 'manager', {
-                id: Converters_1.convertGuidFromService(workspaceResponse.workspace.contactId, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User),
-                type: en_data_model_1.CoreEntityTypes.Profile,
+                id: Converters_1.convertGuidFromService(workspaceResponse.workspace.contactId, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User),
+                type: en_core_entity_types_1.CoreEntityTypes.Profile,
                 port: null,
             });
         }
@@ -474,8 +474,8 @@ class WorkspaceConverterClass {
         const workspaceResponse = await noteStore.createWorkspace(trc, auth.token, serviceData, { includeMemberships: true });
         if (workspaceResponse.workspace) {
             // create ws to backing nb mappings
-            const workspaceId = Converters_1.convertGuidFromService(workspaceResponse.workspace.guid, en_data_model_1.CoreEntityTypes.Workspace);
-            const backingNbId = Converters_1.convertGuidFromService(workspaceResponse.workspace.backingNotebookGuid, en_data_model_1.CoreEntityTypes.Notebook);
+            const workspaceId = Converters_1.convertGuidFromService(workspaceResponse.workspace.guid, en_core_entity_types_1.CoreEntityTypes.Workspace);
+            const backingNbId = Converters_1.convertGuidFromService(workspaceResponse.workspace.backingNotebookGuid, en_core_entity_types_1.CoreEntityTypes.Notebook);
             await workspaceUpdateSyncState(trc, params, workspaceId, backingNbId);
             await this.convertFromService(trc, params, syncContext, workspaceResponse);
         }
@@ -502,14 +502,14 @@ class WorkspaceConverterClass {
                     // TODO handle email invites? Is that allowed for workspaces?
                     profileIDs.push(emailAndID.profileID);
                 }
-                const privilege = inviteArgs.privilege === undefined ? ThriftTypes_1.TWorkspacePrivilegeLevel.READ : MembershipConverter_1.membershipPrivilegeToWorkspacePrivilege(inviteArgs.privilege);
+                const privilege = inviteArgs.privilege === undefined ? en_conduit_sync_types_1.TWorkspacePrivilegeLevel.READ : MembershipConverter_1.membershipPrivilegeToWorkspacePrivilege(inviteArgs.privilege);
                 const inviteRequest = {
-                    workspaceGuid: Converters_1.convertGuidToService(inviteArgs.workspace, en_data_model_1.CoreEntityTypes.Workspace),
+                    workspaceGuid: Converters_1.convertGuidToService(inviteArgs.workspace, en_core_entity_types_1.CoreEntityTypes.Workspace),
                     invitationsToCreateOrUpdate: profileIDs.map(profileID => {
                         return {
                             contact: {
-                                id: Converters_1.convertGuidToService(profileID, en_data_model_1.CoreEntityTypes.Profile),
-                                type: ThriftTypes_1.TContactType.EVERNOTE,
+                                id: Converters_1.convertGuidToService(profileID, en_core_entity_types_1.CoreEntityTypes.Profile),
+                                type: en_conduit_sync_types_1.TContactType.EVERNOTE,
                             },
                             privilege,
                         };
@@ -525,7 +525,7 @@ class WorkspaceConverterClass {
             }
             case 'WorkspaceChangePinnedContentPosition': {
                 const args = commandRun.params;
-                const workspaceNode = await params.graphTransaction.getNode(trc, null, { id: args.workspace, type: en_data_model_1.CoreEntityTypes.Workspace });
+                const workspaceNode = await params.graphTransaction.getNode(trc, null, { id: args.workspace, type: en_core_entity_types_1.CoreEntityTypes.Workspace });
                 if (!workspaceNode) {
                     throw new conduit_utils_1.NotFoundError(args.workspace, `Cannot find workspace id ${args.workspace}`);
                 }
@@ -587,7 +587,7 @@ class WorkspaceConverterClass {
                     conduit_utils_1.logger.debug('No node ids are passed.');
                     return null;
                 }
-                const workspaceNode = await params.graphTransaction.getNode(trc, null, { id: args.workspace, type: en_data_model_1.CoreEntityTypes.Workspace });
+                const workspaceNode = await params.graphTransaction.getNode(trc, null, { id: args.workspace, type: en_core_entity_types_1.CoreEntityTypes.Workspace });
                 if (!workspaceNode) {
                     throw new conduit_utils_1.NotFoundError(args.workspace, `Cannot find workspace id ${args.workspace}`);
                 }
@@ -595,10 +595,10 @@ class WorkspaceConverterClass {
                 if (!syncContextMetadata) {
                     throw new conduit_utils_1.NotFoundError(syncContext, 'Missing syncContextMetadata for syncContext');
                 }
-                const noteToAdd = await mapContentIDAndTypeToContentUpdate(trc, params.graphTransaction, args.workspace, (_a = args.noteIDsToAdd) !== null && _a !== void 0 ? _a : [], en_data_model_1.PinnedContentTypeEnum.NOTE);
-                const noteToRemove = await mapContentIDAndTypeToContentUpdate(trc, params.graphTransaction, args.workspace, (_b = args.noteIDsToRemove) !== null && _b !== void 0 ? _b : [], en_data_model_1.PinnedContentTypeEnum.NOTE);
-                const nbToAdd = await mapContentIDAndTypeToContentUpdate(trc, params.graphTransaction, args.workspace, (_c = args.nbIDsToAdd) !== null && _c !== void 0 ? _c : [], en_data_model_1.PinnedContentTypeEnum.NOTEBOOK);
-                const nbToRemove = await mapContentIDAndTypeToContentUpdate(trc, params.graphTransaction, args.workspace, (_d = args.nbIDsToRemove) !== null && _d !== void 0 ? _d : [], en_data_model_1.PinnedContentTypeEnum.NOTEBOOK);
+                const noteToAdd = await mapContentIDAndTypeToContentUpdate(trc, params.graphTransaction, args.workspace, (_a = args.noteIDsToAdd) !== null && _a !== void 0 ? _a : [], en_core_entity_types_1.PinnedContentTypeEnum.NOTE);
+                const noteToRemove = await mapContentIDAndTypeToContentUpdate(trc, params.graphTransaction, args.workspace, (_b = args.noteIDsToRemove) !== null && _b !== void 0 ? _b : [], en_core_entity_types_1.PinnedContentTypeEnum.NOTE);
+                const nbToAdd = await mapContentIDAndTypeToContentUpdate(trc, params.graphTransaction, args.workspace, (_c = args.nbIDsToAdd) !== null && _c !== void 0 ? _c : [], en_core_entity_types_1.PinnedContentTypeEnum.NOTEBOOK);
+                const nbToRemove = await mapContentIDAndTypeToContentUpdate(trc, params.graphTransaction, args.workspace, (_d = args.nbIDsToRemove) !== null && _d !== void 0 ? _d : [], en_core_entity_types_1.PinnedContentTypeEnum.NOTEBOOK);
                 const utilityStore = params.thriftComm.getUtilityStore(auth.urls.utilityUrl);
                 await cachePinnedContentsDataFromThrift(trc, workspaceNode, syncContextMetadata, params.graphTransaction, async (authToken, workspaceID) => {
                     return await utilityStore.updateContentOfPinnedWidget(trc, authToken, workspaceID, [...noteToAdd, ...nbToAdd], [...noteToRemove, ...nbToRemove]);
@@ -624,7 +624,7 @@ class WorkspaceConverterClass {
         const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
         const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
         const serviceData = {
-            guid: Converters_1.convertGuidToService(wsID, en_data_model_1.CoreEntityTypes.Workspace),
+            guid: Converters_1.convertGuidToService(wsID, en_core_entity_types_1.CoreEntityTypes.Workspace),
         };
         const spaceFields = diff.NodeFields;
         if (diff.hasOwnProperty('label')) {
@@ -641,7 +641,7 @@ class WorkspaceConverterClass {
         }
         if (spaceFields && spaceFields.viewed === true) {
             // NOTE: there is no API for setting `viewed` back to false
-            const workspace = await params.graphTransaction.getNode(trc, null, { id: wsID, type: en_data_model_1.CoreEntityTypes.Workspace });
+            const workspace = await params.graphTransaction.getNode(trc, null, { id: wsID, type: en_core_entity_types_1.CoreEntityTypes.Workspace });
             if (workspace && !workspace.NodeFields.viewed) {
                 const utilityStore = params.thriftComm.getUtilityStore(auth.urls.utilityUrl);
                 await utilityStore.sendWorkspaceViewedEvent(trc, auth.token, serviceData.guid);
@@ -661,22 +661,22 @@ class WorkspaceConverterClass {
     }
 }
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Workspace)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Workspace)
 ], WorkspaceConverterClass.prototype, "convertFromService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Workspace)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Workspace)
 ], WorkspaceConverterClass.prototype, "createOnService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Workspace)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Workspace)
 ], WorkspaceConverterClass.prototype, "customToService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Workspace)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Workspace)
 ], WorkspaceConverterClass.prototype, "deleteFromService", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Workspace)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Workspace)
 ], WorkspaceConverterClass.prototype, "onDelete", null);
 __decorate([
-    conduit_utils_1.traceAsync(en_data_model_1.CoreEntityTypes.Workspace)
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Workspace)
 ], WorkspaceConverterClass.prototype, "updateToService", null);
 exports.WorkspaceConverter = new WorkspaceConverterClass();
 //# sourceMappingURL=WorkspaceConverter.js.map

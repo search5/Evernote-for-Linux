@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getNoteLockPlugin = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const en_thrift_connector_1 = require("en-thrift-connector");
 const NotelockArgument = conduit_core_1.schemaToGraphQLArgs({ noteID: 'ID' });
 /*
@@ -30,8 +30,8 @@ function toNotelockResolver(f) {
         }
         conduit_core_1.validateDB(context);
         await conduit_core_1.retrieveAuthorizedToken(context);
-        const serviceNoteGuid = en_thrift_connector_1.convertGuidToService(args.noteID, en_data_model_1.CoreEntityTypes.Note);
-        const { node, syncContext } = await context.db.getNodeWithContext(context, { id: args.noteID, type: en_data_model_1.CoreEntityTypes.Note });
+        const serviceNoteGuid = en_thrift_connector_1.convertGuidToService(args.noteID, en_core_entity_types_1.CoreEntityTypes.Note);
+        const { node, syncContext } = await context.db.getNodeWithContext(context, { id: args.noteID, type: en_core_entity_types_1.CoreEntityTypes.Note });
         if (!node) {
             throw new conduit_utils_1.NotFoundError(args.noteID, 'Note not found');
         }
@@ -64,20 +64,20 @@ async function toNotelock(lock, syncContext, context, noteGuid, offlineContentSt
             }
         });
     }
-    const note = await context.db.getNode(context, { type: en_data_model_1.CoreEntityTypes.Note, id: en_thrift_connector_1.convertGuidFromService(noteGuid, en_data_model_1.CoreEntityTypes.Note) });
+    const note = await context.db.getNode(context, { type: en_core_entity_types_1.CoreEntityTypes.Note, id: en_thrift_connector_1.convertGuidFromService(noteGuid, en_core_entity_types_1.CoreEntityTypes.Note) });
     return {
         isNoteStale: (note === null || note === void 0 ? void 0 : note.version) !== lock.noteUpdateSequenceNumber,
-        lockHolderId: lock.lockHolderUserId ? en_thrift_connector_1.convertGuidFromService(lock.lockHolderUserId, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User) : null,
+        lockHolderId: lock.lockHolderUserId ? en_thrift_connector_1.convertGuidFromService(lock.lockHolderUserId, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User) : null,
         lockRenewBy: lock.lockRenewBy || null,
-        viewerIds: (lock.viewingUserIds || []).map(id => en_thrift_connector_1.convertGuidFromService(id, en_data_model_1.CoreEntityTypes.Profile, en_data_model_1.PROFILE_SOURCE.User)),
+        viewerIds: (lock.viewingUserIds || []).map(id => en_thrift_connector_1.convertGuidFromService(id, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User)),
         viewIdleExpiration: lock.viewIdleExpiration || null,
         currentTime: lock.currentTime || null,
     };
 }
-function getNoteLockPlugin(thriftComm, offlineContentStrategy) {
+function getNoteLockPlugin() {
     const notelockAcquireResolver = toNotelockResolver(async (authData, noteGuid, syncContext, context) => {
         // TODO need to check canEditContent permission on the note before passing this through to the service
-        const noteStore = thriftComm.getNoteStore(authData.urls.noteStoreUrl);
+        const noteStore = context.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
         const lockStatusRes = await conduit_utils_1.withError(noteStore.acquireNoteLock(context.trc, authData.token, noteGuid));
         if (lockStatusRes.err) {
             if (lockStatusRes.err instanceof conduit_utils_1.AuthError && lockStatusRes.err.errorCode === conduit_utils_1.AuthErrorCode.PERMISSION_DENIED && lockStatusRes.err.parameter === 'lock') {
@@ -85,18 +85,18 @@ function getNoteLockPlugin(thriftComm, offlineContentStrategy) {
             }
             throw lockStatusRes.err;
         }
-        return toNotelock(lockStatusRes.data, syncContext, context, noteGuid, offlineContentStrategy);
+        return toNotelock(lockStatusRes.data, syncContext, context, noteGuid, context.offlineContentStrategy);
     });
     const notelockReleaseResolver = toNotelockResolver(async (authData, noteGuid, syncContext, context) => {
         if (context.db) {
             await conduit_utils_1.withError(context.db.flushRemoteMutations());
         }
-        const noteStore = thriftComm.getNoteStore(authData.urls.noteStoreUrl);
-        return toNotelock(await noteStore.releaseNoteLock(context.trc, authData.token, noteGuid), syncContext, context, noteGuid, offlineContentStrategy);
+        const noteStore = context.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
+        return toNotelock(await noteStore.releaseNoteLock(context.trc, authData.token, noteGuid), syncContext, context, noteGuid, context.offlineContentStrategy);
     });
     const notelockStatusResolver = toNotelockResolver(async (authData, noteGuid, syncContext, context) => {
-        const noteStore = thriftComm.getNoteStore(authData.urls.noteStoreUrl);
-        return toNotelock(await noteStore.getNoteLockStatus(context.trc, authData.token, noteGuid), syncContext, context, noteGuid, offlineContentStrategy);
+        const noteStore = context.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
+        return toNotelock(await noteStore.getNoteLockStatus(context.trc, authData.token, noteGuid), syncContext, context, noteGuid, context.offlineContentStrategy);
     });
     return {
         mutators: {

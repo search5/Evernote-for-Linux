@@ -1,0 +1,34 @@
+{
+  "name": "en-native-reg",
+  "description": "Native in-process low-level windows registry access.  Added multiple search paths for webpack.",
+  "version": "1.0.1",
+  "repository": "ssh://git@source.build.etonreve.com:7999/np/en-native-reg.git",
+  "license": "MIT",
+  "os": [
+    "win32"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "gypfile": false,
+  "files": [
+    "lib",
+    "src",
+    "prebuilds",
+    "binding.gyp",
+    "*.cc",
+    "test.js"
+  ],
+  "dependencies": {
+    "en-node-gyp-build": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^10.11.0",
+    "node-addon-api": "^2.0.0",
+    "prebuildify": "^3.0.4",
+    "rimraf": "^3.0.0",
+    "typescript": "~3.7.3"
+  },
+  "publishConfig": {
+    "registry": "http://localhost:4873"
+  }
+}

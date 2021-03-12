@@ -80,39 +80,60 @@ class SearchEngineContext {
         std::unique_ptr<lucene::analysis::PerFieldAnalyzerWrapper> analyzer_;
         std::unique_ptr<lucene::store::RAMDirectory> storage_;
     private:
+        // id
         const unsigned int kMaxIDSize;
         const std::string kIDField;
         const std::wstring kIDFieldWide;
+        // notebook
         const std::wstring kNotebookField;
         const std::wstring kNotebookTextField;
+        const std::wstring kNotebookTextAltField;
         const std::wstring kNotebookGuidField;
+        // stack
         const std::wstring kStack;
+        const std::wstring kStackText;
+        const std::wstring kStackTextAlt;
+        // tag
         const std::wstring kTagField;
         const std::wstring kTagTextField;
+        const std::wstring kTagTextAltField;
         const std::wstring kTagGuidField;
+        // space
         const std::wstring kSpaceField;
         const std::wstring kSpaceTextField;
+        const std::wstring kSpaceTextAltField;
         const std::wstring kSpaceGuidField;
+        // resource
         const std::wstring kResourceMime;
         const std::wstring kResourceFileName;
+        // 
         const std::wstring kCreated;
         const std::wstring kUpdated;
+        // title
         const std::wstring KTitle;
+        const std::wstring KTitleAlt;
         const std::wstring KTitleRaw;
+        //
         const std::wstring kSubjectDate;
+        // author
         const std::wstring kAuthor;
         const std::wstring kAuthorText;
+        const std::wstring kAuthorTextAlt;
+        // 
         const std::wstring kCreatorId;
         const std::wstring kLastEditorId;
+        // attributes
         const std::wstring kSource;
         const std::wstring kSourceApplication;
         const std::wstring kSourceURL;
         const std::wstring kContentClass;
         const std::wstring kPlaceName;
         const std::wstring kApplicationData;
+        // reminder
         const std::wstring kReminderOrder;
         const std::wstring kReminderTime;
         const std::wstring kReminderDoneTime;
+        // 
         const std::wstring kContains;
 
         const std::wstring kExists;

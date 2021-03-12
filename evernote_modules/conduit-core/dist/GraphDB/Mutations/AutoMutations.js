@@ -1,8 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildAutoMutators = void 0;
+/*!
+ * Copyright 2019 Evernote Corporation. All rights reserved.
+ */
+const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
+const graphql_1 = require("graphql");
 const DataSchemaGQL_1 = require("../../Types/DataSchemaGQL");
+const GraphMutationTypes_1 = require("../../Types/GraphMutationTypes");
+const AutoResolvers_1 = require("../Resolvers/AutoResolvers");
 const ResolverHelpers_1 = require("../Resolvers/ResolverHelpers");
 function buildArgs(mutatorName, def) {
     const out = {};
@@ -38,19 +45,38 @@ function runForMutation(name) {
             throw new Error('Not logged in');
         }
         const mutation = await context.db.runMutator(context.trc, name, args);
-        return { success: true, result: mutation.result };
+        return Object.assign(Object.assign({ result: null }, mutation.results), { success: true });
     };
+}
+function buildMutatorResultType(autoResolverData, name, schema) {
+    const fields = {};
+    for (const key in schema) {
+        AutoResolvers_1.schemaFieldToGraphQL(autoResolverData, fields, key, schema[key], '', undefined);
+    }
+    fields.success = { type: DataSchemaGQL_1.schemaToGraphQLType('boolean') };
+    return new graphql_1.GraphQLObjectType({
+        name: conduit_utils_1.toPascalCase([name, 'MutatorRes']),
+        fields,
+    });
 }
 function buildMutator(name, def) {
-    const args = buildArgs(name, def);
-    return {
-        type: ResolverHelpers_1.GenericMutationResultWithData,
-        resolve: runForMutation(name),
-        args,
-        deprecationReason: def.deprecationReason,
+    return (autoResolverData) => {
+        // default is to use the legacy mutation result schema, for backwards compatibility
+        let type = ResolverHelpers_1.GenericMutationResultWithData;
+        if (def.resultTypes && def.resultTypes !== GraphMutationTypes_1.GenericMutatorResultsSchema) {
+            // override with custom result types schema
+            type = buildMutatorResultType(autoResolverData, name, def.resultTypes);
+        }
+        return {
+            type,
+            resolve: runForMutation(name),
+            args: buildArgs(name, def),
+            deprecationReason: def.deprecationReason,
+        };
     };
 }
-function buildAutoMutators(mutatorDefs) {
+function buildAutoMutators(trc, mutatorDefs) {
+    conduit_utils_1.traceEventStart(trc, 'buildAutoMutators');
     const out = {};
     for (const mutation in mutatorDefs) {
         const def = mutatorDefs[mutation];
@@ -60,6 +86,7 @@ function buildAutoMutators(mutatorDefs) {
         const mutationName = def.clientAlias || mutation;
         out[mutationName] = buildMutator(mutation, def);
     }
+    conduit_utils_1.traceEventEnd(trc, 'buildAutoMutators');
     return out;
 }
 exports.buildAutoMutators = buildAutoMutators;

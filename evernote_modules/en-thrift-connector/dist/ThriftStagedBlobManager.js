@@ -6,14 +6,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ThriftStagedBlobManager = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Auth_1 = require("./Auth");
 const Converters_1 = require("./Converters/Converters");
 const Helpers_1 = require("./Converters/Helpers");
 const NoteConverter_1 = require("./Converters/NoteConverter");
 const ResourceConverter_1 = require("./Converters/ResourceConverter");
 const ThriftRpc_1 = require("./ThriftRpc");
-const ThriftTypes_1 = require("./ThriftTypes");
 const BLOB_STAGE_TIMEOUT = 10 * conduit_utils_1.MILLIS_IN_ONE_MINUTE;
 const StagedBlobTable = 'StagedBlobs';
 function validateStagedBlob(blob) {
@@ -52,10 +52,10 @@ class ThriftStagedBlobManager {
     async checkForExistingAttachment(trc, graphDB, note, hash, size) {
         const attachmentRefs = [];
         for (const edge of Object.values(note.outputs.attachments)) {
-            attachmentRefs.push({ id: edge.dstID, type: en_data_model_1.CoreEntityTypes.Attachment });
+            attachmentRefs.push({ id: edge.dstID, type: en_core_entity_types_1.CoreEntityTypes.Attachment });
         }
         for (const edge of Object.values(note.outputs.inactiveAttachments)) {
-            attachmentRefs.push({ id: edge.dstID, type: en_data_model_1.CoreEntityTypes.Attachment });
+            attachmentRefs.push({ id: edge.dstID, type: en_core_entity_types_1.CoreEntityTypes.Attachment });
         }
         const attachments = await conduit_utils_1.allSettled(attachmentRefs.map(ref => graphDB.getNodeWithoutGraphQLContext(trc, ref)));
         for (const attachment of attachments) {
@@ -134,7 +134,7 @@ class ThriftStagedBlobManager {
         if (!noteMetadata) {
             throw new conduit_utils_1.NotFoundError(syncContext, 'Missing syncContext metadata for note');
         }
-        const remoteUrl = ResourceConverter_1.generateResourceUrl(noteMetadata, 'res', Converters_1.convertGuidToService(params.attachmentID, en_data_model_1.CoreEntityTypes.Attachment));
+        const remoteUrl = ResourceConverter_1.generateResourceUrl(noteMetadata, 'res', Converters_1.convertGuidToService(params.attachmentID, en_core_entity_types_1.CoreEntityTypes.Attachment));
         const resourceRef = {
             parentID: params.noteID,
             hash: params.hash,
@@ -264,12 +264,12 @@ class ThriftStagedBlobManager {
             }
             throw new conduit_utils_1.RetryError('Attachment data is not staged yet', 500);
         }
-        const attachmentRef = { id: attachmentID, type: en_data_model_1.CoreEntityTypes.Attachment };
-        const noteGuid = Converters_1.convertGuidToService(resourceRef.parentID, en_data_model_1.CoreEntityTypes.Note);
+        const attachmentRef = { id: attachmentID, type: en_core_entity_types_1.CoreEntityTypes.Attachment };
+        const noteGuid = Converters_1.convertGuidToService(resourceRef.parentID, en_core_entity_types_1.CoreEntityTypes.Note);
         // Get the file contents
         let body = this.stagedData[stagedBlobID];
         if (blob.source) {
-            if (blob.source.sourceRef.type !== en_data_model_1.CoreEntityTypes.Attachment) {
+            if (blob.source.sourceRef.type !== en_core_entity_types_1.CoreEntityTypes.Attachment) {
                 throw new conduit_utils_1.InternalError(`Unsupported file source type for copy: ${blob.source.sourceRef.type}`);
             }
             const sourceGuid = Converters_1.convertGuidToService(blob.source.sourceRef.id, blob.source.sourceRef.type);
@@ -295,7 +295,7 @@ class ThriftStagedBlobManager {
                 await this.graphStorage.transact(trc, 'deleteFailedAttachment', async (graphTransaction) => {
                     await graphTransaction.removeEdges(trc, [{
                             dstID: attachmentID,
-                            dstType: en_data_model_1.CoreEntityTypes.Attachment,
+                            dstType: en_core_entity_types_1.CoreEntityTypes.Attachment,
                             dstPort: 'parent',
                         }]);
                     await graphTransaction.deleteNode(trc, syncContext, attachmentRef);
@@ -346,7 +346,7 @@ class ThriftStagedBlobManager {
                 seed: serviceGuidSeed,
             });
         }
-        const resAttachmentID = res.guid && Converters_1.convertGuidFromService(res.guid, en_data_model_1.CoreEntityTypes.Attachment);
+        const resAttachmentID = res.guid && Converters_1.convertGuidFromService(res.guid, en_core_entity_types_1.CoreEntityTypes.Attachment);
         if (resAttachmentID !== attachmentID) {
             conduit_utils_1.logger.warn('Added an attachment that already exists on the service', { noteID: resourceRef.parentID, attachmentID, resAttachmentID });
             if (resAttachmentID) {
@@ -355,10 +355,10 @@ class ThriftStagedBlobManager {
         }
         let isMarkedForOffline = false;
         const noteStore = this.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
-        const noteSpec = new ThriftTypes_1.TNoteResultSpec();
+        const noteSpec = new en_conduit_sync_types_1.TNoteResultSpec();
         const noteServiceData = await noteStore.getNoteWithResultSpec(trc, auth.token, noteGuid, noteSpec);
         await this.graphStorage.transact(trc, 'uploadStagedBlob', async (graphTransaction) => {
-            var _a;
+            var _a, _b, _c, _d;
             // convert resource from service
             const personalMetadata = await graphTransaction.getSyncContextMetadata(trc, null, conduit_core_1.PERSONAL_USER_CONTEXT);
             const personalUserId = personalMetadata ? personalMetadata.userID : conduit_utils_1.NullUserID;
@@ -372,15 +372,27 @@ class ThriftStagedBlobManager {
                 localSettings: this.localSettings,
                 offlineContentStrategy: this.offlineContentStrategy,
             });
-            await ResourceConverter_1.ResourceConverter.convertFromService(trc, converterParams, syncContext, res);
+            // The result of Utility.addResource does not include attributes.applicationData
+            const resourceData = Object.assign(Object.assign({}, res), { attributes: res.attributes ? Object.assign({}, res.attributes) : {} });
+            if (fullMap) {
+                resourceData.attributes.applicationData = {
+                    keysOnly: [
+                        // use keys of fullMap as a fallback
+                        ...((_c = (_b = (_a = res.attributes) === null || _a === void 0 ? void 0 : _a.applicationData) === null || _b === void 0 ? void 0 : _b.keysOnly) !== null && _c !== void 0 ? _c : Object.keys(fullMap)),
+                    ],
+                };
+            }
+            // Conduit has to call ResourceConverter.convertFromService first
+            // because noteServiceData does not have `resources` field(null) yet when any resource is attached first time.
+            await ResourceConverter_1.ResourceConverter.convertFromService(trc, converterParams, syncContext, resourceData);
             await NoteConverter_1.NoteConverter.convertFromService(trc, converterParams, syncContext, noteServiceData, { skipShares: true });
             if (this.resourceManager) {
-                const noteRef = { id: resourceRef.parentID, type: en_data_model_1.CoreEntityTypes.Note };
+                const noteRef = { id: resourceRef.parentID, type: en_core_entity_types_1.CoreEntityTypes.Note };
                 const notebooks = await graphTransaction.traverseGraph(trc, null, noteRef, [{
                         edge: ['inputs', 'parent'],
-                        type: en_data_model_1.CoreEntityTypes.Notebook,
+                        type: en_core_entity_types_1.CoreEntityTypes.Notebook,
                     }]);
-                const notebookID = (_a = notebooks[0]) === null || _a === void 0 ? void 0 : _a.id;
+                const notebookID = (_d = notebooks[0]) === null || _d === void 0 ? void 0 : _d.id;
                 isMarkedForOffline = Boolean(converterParams.nbsMarkedOffline && notebookID && (notebookID in converterParams.nbsMarkedOffline));
             }
         });

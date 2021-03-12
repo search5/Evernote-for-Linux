@@ -7,7 +7,7 @@ exports.WorkspaceUIPreferencesResolver = exports.asyncFetchandCacheWsPreferences
 const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const Auth_1 = require("../Auth");
 const Converters_1 = require("../Converters/Converters");
 const gBatchFetchTrc = conduit_utils_1.createTraceContext('WorkspaceUIFetch');
@@ -23,12 +23,12 @@ exports.getWsPreferencesLastFetch = getWsPreferencesLastFetch;
 function mergeNotebookPreferences(nbColor, noteOrder) {
     const res = {};
     for (const key in nbColor) {
-        const nbId = Converters_1.convertGuidFromService(key, en_data_model_1.CoreEntityTypes.Notebook);
+        const nbId = Converters_1.convertGuidFromService(key, en_core_entity_types_1.CoreEntityTypes.Notebook);
         res[nbId] = { color: nbColor[nbId] };
     }
     for (const key in noteOrder) {
-        const nbId = Converters_1.convertGuidFromService(key, en_data_model_1.CoreEntityTypes.Notebook);
-        const val = { noteOrder: noteOrder[key].map(guid => Converters_1.convertGuidFromService(guid, en_data_model_1.CoreEntityTypes.Note)) };
+        const nbId = Converters_1.convertGuidFromService(key, en_core_entity_types_1.CoreEntityTypes.Notebook);
+        const val = { noteOrder: noteOrder[key].map(guid => Converters_1.convertGuidFromService(guid, en_core_entity_types_1.CoreEntityTypes.Note)) };
         res[nbId] = res[nbId] ? Object.assign(Object.assign({}, res[nbId]), val) : val;
     }
     return res;
@@ -46,7 +46,7 @@ async function cacheNotebookPreferences(trc, graphTransaction, nbPreferences, ba
             }
             continue;
         }
-        const nbRef = { id: nbId, type: en_data_model_1.CoreEntityTypes.Notebook };
+        const nbRef = { id: nbId, type: en_core_entity_types_1.CoreEntityTypes.Notebook };
         const nbNode = await graphTransaction.getNode(trc, null, nbRef);
         if (!nbNode) {
             throw new conduit_utils_1.NotFoundError(nbId, 'notebook not found in graph');
@@ -75,17 +75,17 @@ async function asyncFetchandCacheWsPreferences(trc, db, activeTransaction, thrif
     const auth = Auth_1.decodeAuthData(metadata.authToken);
     const noteStore = thriftComm.getNoteStore(auth.urls.noteStoreUrl);
     const resp = await noteStore.getWorkspaceUserInterfaceProperties(trc, auth.token, {
-        workspaceGuid: Converters_1.convertGuidToService(wsNode.id, en_data_model_1.CoreEntityTypes.Workspace),
+        workspaceGuid: Converters_1.convertGuidToService(wsNode.id, en_core_entity_types_1.CoreEntityTypes.Workspace),
         updateVersion: 0,
     });
     const nbPrefs = mergeNotebookPreferences(resp.notebookColor || {}, resp.noteDisplayOrder || {});
     await conduit_core_1.runInTransaction(trc, db, 'cacheWorkspacePreferences', activeTransaction, async (tx) => {
-        const layoutStyle = resp.layoutStyle === 1 ? en_data_model_1.WorkspaceLayoutStyle.BOARD : en_data_model_1.WorkspaceLayoutStyle.LIST;
+        const layoutStyle = resp.layoutStyle === 1 ? en_core_entity_types_1.WorkspaceLayoutStyle.BOARD : en_core_entity_types_1.WorkspaceLayoutStyle.LIST;
         const { noteOrderMap } = await cacheNotebookPreferences(trc, tx, nbPrefs, backingNbToWs);
-        const wsRef = { id: wsNode.id, type: en_data_model_1.CoreEntityTypes.Workspace };
+        const wsRef = { id: wsNode.id, type: en_core_entity_types_1.CoreEntityTypes.Workspace };
         const notebookDisplayOrder = resp.notebookDisplayOrder ? resp.notebookDisplayOrder.map(guid => {
             // nb display order contains guid of ws backing nb. Converting that to ws ID when returning to clients.
-            const nbGuid = Converters_1.convertGuidFromService(guid, en_data_model_1.CoreEntityTypes.Notebook);
+            const nbGuid = Converters_1.convertGuidFromService(guid, en_core_entity_types_1.CoreEntityTypes.Notebook);
             return backingNbToWs[nbGuid] ? backingNbToWs[nbGuid] : nbGuid;
         }) : [];
         await tx.setNodeCachedField(trc, wsRef, 'layoutStyle', layoutStyle, {});
@@ -94,7 +94,7 @@ async function asyncFetchandCacheWsPreferences(trc, db, activeTransaction, thrif
     });
 }
 exports.asyncFetchandCacheWsPreferences = asyncFetchandCacheWsPreferences;
-function WorkspaceUIPreferencesResolver(thriftComm) {
+function WorkspaceUIPreferencesResolver() {
     async function resolveWorkspacePreferences(context, nodeID, nodeType, field) {
         conduit_core_1.validateDB(context);
         const nodeRef = { id: nodeID, type: nodeType };
@@ -106,14 +106,14 @@ function WorkspaceUIPreferencesResolver(thriftComm) {
         context.watcher && context.watcher.triggerAfterTime(WS_PREFERENCES_FETCH_INTERVAL);
         const { node, syncContext } = nodeInContext;
         let wsNode;
-        if (nodeType === en_data_model_1.CoreEntityTypes.Notebook) {
+        if (nodeType === en_core_entity_types_1.CoreEntityTypes.Notebook) {
             const parentEdge = conduit_utils_1.firstStashEntry(node.inputs.parent);
             if (!parentEdge) {
                 logger.debug(`Workspace edge not found for notebook ${node.id}`);
                 return null;
             }
             const wsID = conduit_storage_1.getEdgeConnection(parentEdge, node.id).id;
-            wsNode = await context.db.getSyncedNode(context.trc, context.watcher, { id: wsID, type: en_data_model_1.CoreEntityTypes.Workspace });
+            wsNode = await context.db.getSyncedNode(context.trc, context.watcher, { id: wsID, type: en_core_entity_types_1.CoreEntityTypes.Workspace });
             if (!wsNode) {
                 logger.warn(`Workspace node not found for notebook ${node.id}`);
                 return null;
@@ -134,7 +134,7 @@ function WorkspaceUIPreferencesResolver(thriftComm) {
             else if (!cacheResp || !wsPrefFetch[wsNode.id] ||
                 (wsPrefFetch[wsNode.id] && wsPrefFetch[wsNode.id].lastFetch + WS_PREFERENCES_FETCH_INTERVAL < Date.now())) {
                 // entry not found in cache or fetch interval elapsed from last fetch. Wait for another fetch.
-                const fetchPromise = asyncFetchandCacheWsPreferences(gBatchFetchTrc, context.db, null, thriftComm, wsNode, syncContext);
+                const fetchPromise = asyncFetchandCacheWsPreferences(gBatchFetchTrc, context.db, null, context.thriftComm, wsNode, syncContext);
                 wsPrefFetch[wsNode.id] = {
                     fetchPromise,
                     inProgress: true,
@@ -168,39 +168,39 @@ function WorkspaceUIPreferencesResolver(thriftComm) {
             };
         }
         if (field === 'layoutStyle' && !cacheResp) {
-            return en_data_model_1.WorkspaceLayoutStyle.LIST;
+            return en_core_entity_types_1.WorkspaceLayoutStyle.LIST;
         }
         return cacheResp;
     }
     return {
         'Workspace.layoutStyle': {
-            type: conduit_core_1.schemaToGraphQLType([...en_data_model_1.WorkspaceLayoutStyleSchema, '?'], 'layoutStyle'),
+            type: conduit_core_1.schemaToGraphQLType([...en_core_entity_types_1.WorkspaceLayoutStyleSchema, '?'], 'layoutStyle'),
             resolve: async (nodeRef, _, context) => {
-                return resolveWorkspacePreferences(context, nodeRef.id, en_data_model_1.CoreEntityTypes.Workspace, 'layoutStyle');
+                return resolveWorkspacePreferences(context, nodeRef.id, en_core_entity_types_1.CoreEntityTypes.Workspace, 'layoutStyle');
             },
         },
         'Workspace.notebookDisplayOrder': {
             type: conduit_core_1.schemaToGraphQLType('ID[]?'),
             resolve: async (nodeRef, _, context) => {
-                return resolveWorkspacePreferences(context, nodeRef.id, en_data_model_1.CoreEntityTypes.Workspace, 'notebookDisplayOrder');
+                return resolveWorkspacePreferences(context, nodeRef.id, en_core_entity_types_1.CoreEntityTypes.Workspace, 'notebookDisplayOrder');
             },
         },
         'Workspace.noteDisplayOrder': {
             type: conduit_core_1.schemaToGraphQLType('ID[]?'),
             resolve: async (nodeRef, _, context) => {
-                return resolveWorkspacePreferences(context, nodeRef.id, en_data_model_1.CoreEntityTypes.Workspace, 'noteDisplayOrder');
+                return resolveWorkspacePreferences(context, nodeRef.id, en_core_entity_types_1.CoreEntityTypes.Workspace, 'noteDisplayOrder');
             },
         },
         'Notebook.displayColor': {
             type: conduit_core_1.schemaToGraphQLType('int?'),
             resolve: async (nodeRef, _, context) => {
-                return resolveWorkspacePreferences(context, nodeRef.id, en_data_model_1.CoreEntityTypes.Notebook, 'displayColor');
+                return resolveWorkspacePreferences(context, nodeRef.id, en_core_entity_types_1.CoreEntityTypes.Notebook, 'displayColor');
             },
         },
         'Notebook.noteDisplayOrder': {
             type: conduit_core_1.schemaToGraphQLType('ID[]?'),
             resolve: async (nodeRef, _, context) => {
-                return resolveWorkspacePreferences(context, nodeRef.id, en_data_model_1.CoreEntityTypes.Notebook, 'noteDisplayOrder');
+                return resolveWorkspacePreferences(context, nodeRef.id, en_core_entity_types_1.CoreEntityTypes.Notebook, 'noteDisplayOrder');
             },
         },
     };

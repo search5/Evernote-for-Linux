@@ -4,12 +4,12 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.QuasarConnectorAndExecutor = exports.RETRY_STATUS_CODES = void 0;
+const conduit_auth_shared_1 = require("conduit-auth-shared");
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const Auth_1 = require("./Auth");
-const QuasarMinusAuthHandler_1 = require("./QuasarMinusAuthHandler");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const en_nsync_connector_1 = require("en-nsync-connector");
 const QuasarMutationBatchBroker_1 = require("./QuasarMutationBatchBroker");
-const Types_1 = require("./Types");
 const MUTATION_BATCH_SIZE = 1;
 const SHAPE_BLOCKED_CODE = '429';
 const SHAPE_HEADER_NAME = 'X-EN-SHAPE';
@@ -28,18 +28,19 @@ class QuasarConnectorAndExecutor extends conduit_core_1.RemoteMutationExecutor {
         this.nSyncEventManager = nSyncEventManager;
         this.commandServiceVersion = 'v1';
         this.fileServiceVersion = 'v1';
+        this.queryServiceVersion = 'v1';
         this.logger = conduit_utils_1.createLogger('conduit:CommandServiceConnector');
         this.backoffManager = new conduit_utils_1.ExponentialBackoffManager(60000);
         this.dispatchCustomCommand = async (trc, auth, mutation, commandName, params) => {
-            var _a, _b, _c;
+            var _a, _b;
             if (!this.isAvailable()) {
-                return;
+                return null;
             }
             const singleMutation = {
                 id: mutation.mutationID,
                 name: commandName,
                 params,
-                guids: Types_1.convertMutationGuids(mutation.guids),
+                guids: en_conduit_sync_types_1.convertMutationGuids(mutation.guids),
                 timestamp: mutation.timestamp,
                 isRetry: mutation.isRetry,
             };
@@ -47,7 +48,7 @@ class QuasarConnectorAndExecutor extends conduit_core_1.RemoteMutationExecutor {
                 id: conduit_utils_1.uuid(),
                 mutations: [singleMutation],
                 timestamp: Date.now(),
-                clientID: Auth_1.hasNapAuthInfo(auth) && auth.napAuthInfo.clientID || 'null',
+                clientID: conduit_auth_shared_1.hasNapAuthInfo(auth) && auth.napAuthInfo.clientID || 'null',
             };
             this.logger.debug('Executing custom command', {
                 name: singleMutation.name,
@@ -60,7 +61,7 @@ class QuasarConnectorAndExecutor extends conduit_core_1.RemoteMutationExecutor {
             else if (((_a = response.mutationResponseBatch) === null || _a === void 0 ? void 0 : _a.mutations[0].wasSuccessful) === false) {
                 throw ((_b = response.mutationResponseBatch) === null || _b === void 0 ? void 0 : _b.mutations[0].data.error) || new Error('Unknown error running custom mutation');
             }
-            return (_c = response.mutationResponseBatch) === null || _c === void 0 ? void 0 : _c.timestamp;
+            return await en_nsync_connector_1.serviceResultsToMutationDeps(trc, this.di, this.nSyncEventManager.getStorage(), response.mutationResponseBatch.mutations[0].data.result);
         };
         this.fetchFileFromService = async (trc, auth, url) => {
             throw new Error('unable to fetch');
@@ -75,30 +76,81 @@ class QuasarConnectorAndExecutor extends conduit_core_1.RemoteMutationExecutor {
             const host = await this.hostResolver.getServiceHost(trc, auth.urlHost, 'File');
             const ownerParam = owner && auth.userID !== owner ? `o=${owner}` : '';
             const fullPath = `${host}/${this.fileServiceVersion}/create/${entityType}/${entityID}/${fileSeed}${ownerParam}`;
+            if (!conduit_auth_shared_1.authHasJWT(auth)) {
+                throw new conduit_utils_1.GWAuthError();
+            }
             const params = {
                 method: 'PUT',
                 url: fullPath,
-                headers: Object.assign(Object.assign({ 'Content-Type': typeof data === 'string' ? 'text/plain' : 'application/octet-stream', 'Digest': `md5=${conduit_utils_1.md5Base64(data)}` }, QuasarMinusAuthHandler_1.QuasarMinusAuthHandler.getAuthHeaders(auth)), this.di.customHeaders),
+                headers: Object.assign(Object.assign({ 'Content-Type': typeof data === 'string' ? 'text/plain' : 'application/octet-stream', 'Digest': `md5=${conduit_utils_1.md5Base64(data)}` }, conduit_auth_shared_1.authHeadersFromAuthData(auth, false)), this.di.customHeaders),
                 body: typeof data === 'string' ? data : data.buffer,
             };
             const response = await this.di.getHttpTransport().request(trc, params);
             return this.handleResponse(response);
         };
-        this.makeBatchRequest = async (trc, auth, request) => {
+        this.makeQueryRequestFromGraphQL = async (request, context) => {
+            conduit_core_1.validateDB(context, 'missing db');
+            const metadata = await context.db.getSyncContextMetadata(context, conduit_core_1.PERSONAL_USER_CONTEXT);
+            const authData = conduit_auth_shared_1.decodeAuthData((metadata === null || metadata === void 0 ? void 0 : metadata.authToken) || null);
+            return this.makeQueryRequest(context.trc, authData, request);
+        };
+        this.makeQueryRequest = async (trc, auth, request) => {
             if (!this.di.getHttpTransport) {
                 return { error: new conduit_utils_1.InternalError('no HTTPTransport client present in CommandService') };
             }
-            request.timestamp = Date.now();
-            const host = await this.hostResolver.getServiceHost(trc, auth.urlHost, 'Command');
-            request.timestamp = Date.now();
+            const host = await this.hostResolver.getServiceHost(trc, auth.urlHost, 'Query');
             if (!host || host.length === 0) {
                 return { error: new conduit_utils_1.InternalError(`no QuasarMinusHost available for ${auth.urlHost}`) };
             }
             try {
+                if (!conduit_auth_shared_1.authHasJWT(auth)) {
+                    throw new conduit_utils_1.GWAuthError();
+                }
+                const params = {
+                    method: 'POST',
+                    url: `${host}/${this.queryServiceVersion}/graphql`,
+                    headers: Object.assign(Object.assign({ ['content-type']: 'application/json' }, conduit_auth_shared_1.authHeadersFromAuthData(auth, false)), this.di.customHeaders),
+                    body: conduit_utils_1.safeStringify({
+                        operationName: null,
+                        query: request.query,
+                        variables: request.args || {},
+                    }),
+                };
+                const response = await this.di.getHttpTransport().request(trc, params);
+                const resultOrError = this.handleResponse(response);
+                if (resultOrError.result) {
+                    try {
+                        return { result: JSON.parse(resultOrError.result) };
+                    }
+                    catch (e) {
+                        return { error: e };
+                    }
+                }
+                else {
+                    return { error: resultOrError.error };
+                }
+            }
+            catch (error) {
+                return { error };
+            }
+        };
+        this.makeBatchRequest = async (trc, auth, request) => {
+            if (!this.di.getHttpTransport) {
+                return { error: new conduit_utils_1.InternalError('no HTTPTransport client present in CommandService') };
+            }
+            const host = await this.hostResolver.getServiceHost(trc, auth.urlHost, 'Command');
+            if (!host || host.length === 0) {
+                return { error: new conduit_utils_1.InternalError(`no QuasarMinusHost available for ${auth.urlHost}`) };
+            }
+            try {
+                request.timestamp = Date.now();
+                if (!conduit_auth_shared_1.authHasJWT(auth)) {
+                    throw new conduit_utils_1.GWAuthError();
+                }
                 const params = {
                     method: 'POST',
                     url: `${host}/${this.commandServiceVersion}/batch`,
-                    headers: Object.assign(Object.assign({ 'Content-Type': 'application/json' }, QuasarMinusAuthHandler_1.QuasarMinusAuthHandler.getAuthHeaders(auth)), this.di.customHeaders),
+                    headers: Object.assign(Object.assign({ 'Content-Type': 'application/json' }, conduit_auth_shared_1.authHeadersFromAuthData(auth, false)), this.di.customHeaders),
                     body: conduit_utils_1.safeStringify(request),
                 };
                 const response = await this.di.getHttpTransport().request(trc, params);
@@ -129,9 +181,10 @@ class QuasarConnectorAndExecutor extends conduit_core_1.RemoteMutationExecutor {
         }
         return true;
     }
-    async runMutations(trc, authData, userID, vaultUserID, mutations, opts) {
-        const auth = Auth_1.decodeAuthData(authData);
-        const mutationBatchBroker = new QuasarMutationBatchBroker_1.MutationBatchBroker(mutations, MUTATION_BATCH_SIZE, Auth_1.hasNapAuthInfo(auth) && auth.napAuthInfo.clientID || '', opts);
+    async runMutations(trc, authData, userID, vaultUserID, mutations, opts, ret) {
+        const auth = conduit_auth_shared_1.decodeAuthData(authData);
+        const mutationBatchBroker = new QuasarMutationBatchBroker_1.MutationBatchBroker(this.di, this.nSyncEventManager.getStorage(), mutations, MUTATION_BATCH_SIZE, conduit_auth_shared_1.hasNapAuthInfo(auth) && auth.napAuthInfo.clientID || '', opts, ret);
+        let latestUpsync = 0;
         while (mutationBatchBroker.hasNextBatch()) {
             if (opts.stopConsumer) {
                 this.logger.info('Stopping Quasar runMutations execution as stopConsumer is true');
@@ -143,6 +196,7 @@ class QuasarConnectorAndExecutor extends conduit_core_1.RemoteMutationExecutor {
                 name: mutation.name,
                 params: Object.keys(mutation.params),
             })));
+            const batchStartTime = Date.now();
             const { mutationResponseBatch, error } = await this.makeBatchRequest(trc, auth, mutationRequestBatch);
             if (error) {
                 let errorFromHandle = null;
@@ -164,9 +218,10 @@ class QuasarConnectorAndExecutor extends conduit_core_1.RemoteMutationExecutor {
             if (!mutationResponseBatch) {
                 throw new conduit_utils_1.InternalError('No error and empty response body from command service. This should not happen');
             }
-            mutationBatchBroker.processMutationResponseBatchErrors(mutationResponseBatch);
+            await mutationBatchBroker.processMutationResponseBatchErrors(trc, mutationResponseBatch, batchStartTime);
+            latestUpsync = Date.now();
         }
-        return mutationBatchBroker.getErrorsAndTimestampsKeyedByMutationID();
+        return latestUpsync;
     }
     handleResponse(response) {
         if (response.status === 200 || response.status === 201) {
@@ -198,10 +253,10 @@ class QuasarConnectorAndExecutor extends conduit_core_1.RemoteMutationExecutor {
         if (!auth.token) {
             throw new conduit_utils_1.InternalError('Monolith Token not found in decoded token');
         }
-        if (!Auth_1.hasNapAuthInfo(auth) || !auth.napAuthInfo.jwt) {
+        if (!conduit_auth_shared_1.hasNapAuthInfo(auth) || !auth.napAuthInfo.jwt) {
             this.logger.warn('JWT Token not found in decoded token. The request will fail if going through the API Gateway');
         }
-        if (!Auth_1.hasNapAuthInfo(auth) || !auth.napAuthInfo.clientID) {
+        if (!conduit_auth_shared_1.hasNapAuthInfo(auth) || !auth.napAuthInfo.clientID) {
             this.logger.warn('ClientID not found in decoded token. This may cause bugs in mutation round trips');
         }
     }

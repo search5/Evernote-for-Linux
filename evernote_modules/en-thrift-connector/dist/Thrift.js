@@ -208,6 +208,9 @@ class AsyncNoteStore {
         this.listPublishedBusinessNotebooks = (trc, authenticationToken) => {
             return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'listPublishedBusinessNotebooks', this.noteStore, this.noteStore.listPublishedBusinessNotebooks, authenticationToken);
         };
+        this.unpublishNotebook = (trc, authenticationToken, notebookGuid, convertGroupSharesToIndividual) => {
+            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'unpublishNotebook', this.noteStore, this.noteStore.unpublishNotebook, authenticationToken, notebookGuid, convertGroupSharesToIndividual);
+        };
         this.updateLinkedNotebook = (trc, authenticationToken, notebook) => {
             return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'updateLinkedNotebook', this.noteStore, this.noteStore.updateLinkedNotebook, authenticationToken, notebook);
         };

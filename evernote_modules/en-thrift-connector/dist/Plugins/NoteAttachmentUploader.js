@@ -6,10 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.NoteAttachmentUploader = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 class NoteAttachmentUploader {
     async stageFileUpload(trc, stagedBlobManager, params, userID, syncContext, hash, size, takeFileOwnership) {
-        const stagedBlobID = await stagedBlobManager.allocStagedBlobID(trc, en_data_model_1.CoreEntityTypes.Attachment);
+        const stagedBlobID = await stagedBlobManager.allocStagedBlobID(trc, en_core_entity_types_1.CoreEntityTypes.Attachment);
         const attachmentGenID = [
             ...conduit_core_1.GuidGenerator.generateID(userID, 'Resource'),
             userID.toString(),
@@ -38,7 +38,7 @@ class NoteAttachmentUploader {
         };
     }
     async doFileUpload(trc, graphDB, stagedBlobManager, params, hash, size) {
-        const note = await graphDB.getNodeWithoutGraphQLContext(trc, { id: params.parentID, type: en_data_model_1.CoreEntityTypes.Note });
+        const note = await graphDB.getNodeWithoutGraphQLContext(trc, { id: params.parentID, type: en_core_entity_types_1.CoreEntityTypes.Note });
         if (!note) {
             throw new conduit_utils_1.NotFoundError(params.parentID, 'Note not found');
         }
@@ -68,8 +68,9 @@ class NoteAttachmentUploader {
             attachmentGenID,
             sourceUrl: params.url,
         });
-        if (res.result !== attachmentID) {
-            throw new conduit_utils_1.InternalError(`Attachment ID from attachmentCreateInternal does not match the ID passed in (res: ${res.result}, gen: ${attachmentID})`);
+        const resAttachmentID = res.results.result;
+        if (resAttachmentID !== attachmentID) {
+            throw new conduit_utils_1.InternalError(`Attachment ID from attachmentCreateInternal does not match the ID passed in (res: ${resAttachmentID}, gen: ${attachmentID})`);
         }
         return {
             uploadedNodeID: attachmentID,

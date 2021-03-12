@@ -8,7 +8,7 @@ const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_plugin_task_1 = require("en-conduit-plugin-task");
-const en_data_model_1 = require("en-data-model");
+const en_core_entity_types_1 = require("en-core-entity-types");
 /**
  * First stage of the search ETL pipeline. Extracts required information from the external storage (GraphDB).
  */
@@ -24,21 +24,21 @@ class SearchExtractor {
         let stackName;
         const edge = conduit_utils_1.firstStashEntry(noteNode.inputs.parent);
         if (edge) {
-            if (edge.srcType === en_data_model_1.CoreEntityTypes.Notebook) {
-                const notebookNodeRef = { id: edge.srcID, type: en_data_model_1.CoreEntityTypes.Notebook };
+            if (edge.srcType === en_core_entity_types_1.CoreEntityTypes.Notebook) {
+                const notebookNodeRef = { id: edge.srcID, type: en_core_entity_types_1.CoreEntityTypes.Notebook };
                 notebook = (await this.graphDB.getNodeWithoutGraphQLContext(trc, notebookNodeRef));
                 // extact stack
                 const stackEdge = conduit_utils_1.firstStashEntry(notebook === null || notebook === void 0 ? void 0 : notebook.inputs.stack);
-                if (stackEdge && stackEdge.srcType === en_data_model_1.CoreEntityTypes.Stack) {
-                    const stackNodeRef = { id: stackEdge.srcID, type: en_data_model_1.CoreEntityTypes.Stack };
+                if (stackEdge && stackEdge.srcType === en_core_entity_types_1.CoreEntityTypes.Stack) {
+                    const stackNodeRef = { id: stackEdge.srcID, type: en_core_entity_types_1.CoreEntityTypes.Stack };
                     const stack = (await this.graphDB.getNodeWithoutGraphQLContext(trc, stackNodeRef));
                     if (stack) {
                         stackName = stack.label;
                     }
                 }
             }
-            if (edge.srcType === en_data_model_1.CoreEntityTypes.Workspace) {
-                const workspaceNodeRef = { id: edge.srcID, type: en_data_model_1.CoreEntityTypes.Workspace };
+            if (edge.srcType === en_core_entity_types_1.CoreEntityTypes.Workspace) {
+                const workspaceNodeRef = { id: edge.srcID, type: en_core_entity_types_1.CoreEntityTypes.Workspace };
                 workspace = (await this.graphDB.getNodeWithoutGraphQLContext(trc, workspaceNodeRef));
             }
         }
@@ -48,7 +48,7 @@ class SearchExtractor {
         const tags = new Array();
         for (const tag in noteNode.outputs.tags) {
             const tagEdge = noteNode.outputs.tags[tag];
-            const tagNodeRef = { id: tagEdge.dstID, type: en_data_model_1.CoreEntityTypes.Tag };
+            const tagNodeRef = { id: tagEdge.dstID, type: en_core_entity_types_1.CoreEntityTypes.Tag };
             const tagNode = (await this.graphDB.getNodeWithoutGraphQLContext(trc, tagNodeRef));
             tags.push(tagNode);
         }
@@ -63,7 +63,7 @@ class SearchExtractor {
         return data;
     }
     async extractAttachment(trc, attachmentID) {
-        const attachmentNodeRef = { id: attachmentID, type: en_data_model_1.CoreEntityTypes.Attachment };
+        const attachmentNodeRef = { id: attachmentID, type: en_core_entity_types_1.CoreEntityTypes.Attachment };
         const attachmentNode = await this.graphDB.getNodeWithoutGraphQLContext(trc, attachmentNodeRef);
         if (!attachmentNode) {
             return undefined;
@@ -190,7 +190,7 @@ class SearchExtractor {
      * If it's not set, returns null. This method is required to perform login/logout processing.
      */
     async extractUserId(trc) {
-        const userNode = await this.graphDB.getNodeWithoutGraphQLContext(trc, { id: conduit_core_1.PERSONAL_USER_ID, type: en_data_model_1.CoreEntityTypes.User });
+        const userNode = await this.graphDB.getNodeWithoutGraphQLContext(trc, { id: conduit_core_1.PERSONAL_USER_ID, type: en_core_entity_types_1.CoreEntityTypes.User });
         if (userNode) {
             return userNode.NodeFields.internal_userID;
         }
@@ -215,7 +215,7 @@ class SearchExtractor {
                     results.push(event);
                     break;
                 default:
-                    const result = event.nodeRef.type === en_data_model_1.CoreEntityTypes.Note ? await this.extractNote(trc, event) : await this.extractMessage(trc, event);
+                    const result = event.nodeRef.type === en_core_entity_types_1.CoreEntityTypes.Note ? await this.extractNote(trc, event) : await this.extractMessage(trc, event);
                     if (result) {
                         results.push(result);
                     }
