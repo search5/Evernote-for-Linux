@@ -30,7 +30,7 @@ function registerRenameNoteContentInfoTaskGroups() {
         await params.syncEngine.transact(trc, 'SchemaMigration: NCI-rename-taskgroup-1.29', async (tx) => {
             const oldNodes = await tx.getGraphNodesByType(trc, null, 'NoteContentInfo');
             for (let node of oldNodes) {
-                if (!node.syncContexts.length) {
+                if (!node.syncContexts.length || node.NodeFields.hasOwnProperty('taskGroupNoteLevelIDs')) {
                     continue;
                 }
                 node = SimplyImmutable.updateImmutable(node, ['NodeFields', 'taskGroupNoteLevelIDs'], node.NodeFields.taskGroups);

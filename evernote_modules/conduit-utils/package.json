@@ -1,6 +1,6 @@
 {
   "name": "conduit-utils",
-  "version": "1.30.2",
+  "version": "1.31.4",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },

@@ -20,10 +20,12 @@ async function getTaskUserSettings(parent, args, context) {
     }
     const defaultTaskNoteEdge = conduit_utils_1.firstStashEntry(existingTaskUserSettings.outputs.defaultTaskNote);
     let noteLabel = null;
+    let isDefaultTaskNoteInTrash = null;
     if (defaultTaskNoteEdge && defaultTaskNoteEdge.dstID) {
         const note = await context.db.getNode(context, { id: defaultTaskNoteEdge.dstID, type: en_core_entity_types_1.CoreEntityTypes.Note });
         if (note) {
             noteLabel = note.label;
+            isDefaultTaskNoteInTrash = Boolean(note.NodeFields.deleted);
         }
     }
     return {
@@ -31,6 +33,7 @@ async function getTaskUserSettings(parent, args, context) {
         type: existingTaskUserSettings.type,
         defaultTaskNoteId: defaultTaskNoteEdge ? defaultTaskNoteEdge.dstID : null,
         defaultTaskNoteLabel: noteLabel,
+        isDefaultTaskNoteInTrash,
         defaultReminder: existingTaskUserSettings.NodeFields.defaultReminder || false,
         defaultRemindersOffsets: existingTaskUserSettings.NodeFields.defaultRemindersOffsets,
         pinDefaultTaskNote: existingTaskUserSettings.NodeFields.pinDefaultTaskNote || false,

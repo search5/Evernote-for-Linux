@@ -23,6 +23,17 @@ const NotelockSchema = {
 };
 const Notelock = conduit_core_1.schemaToGraphQLType(NotelockSchema, 'Notelock', false);
 const NullableNotelock = conduit_core_1.schemaToGraphQLType(NotelockSchema, 'NotelockOrNull', true);
+async function checkNoteUpsyncStatus(context, noteID) {
+    conduit_core_1.validateDB(context);
+    await conduit_utils_1.withError(context.db.flushRemoteMutations());
+    const noteNode = await context.db.getNode(context, { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note });
+    if (conduit_utils_1.isNullish(noteNode)) {
+        throw new conduit_utils_1.NotFoundError(noteID);
+    }
+    if (noteNode.version === 0) {
+        throw new conduit_utils_1.RetryError('Note is not upsynced yet', 5000 /* random number */);
+    }
+}
 function toNotelockResolver(f) {
     return async (parent, args, context) => {
         if (!args || !args.noteID) {
@@ -76,6 +87,7 @@ async function toNotelock(lock, syncContext, context, noteGuid, offlineContentSt
 }
 function getNoteLockPlugin() {
     const notelockAcquireResolver = toNotelockResolver(async (authData, noteGuid, syncContext, context) => {
+        await checkNoteUpsyncStatus(context, en_thrift_connector_1.convertGuidFromService(noteGuid, en_core_entity_types_1.CoreEntityTypes.Note));
         // TODO need to check canEditContent permission on the note before passing this through to the service
         const noteStore = context.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
         const lockStatusRes = await conduit_utils_1.withError(noteStore.acquireNoteLock(context.trc, authData.token, noteGuid));
@@ -95,6 +107,7 @@ function getNoteLockPlugin() {
         return toNotelock(await noteStore.releaseNoteLock(context.trc, authData.token, noteGuid), syncContext, context, noteGuid, context.offlineContentStrategy);
     });
     const notelockStatusResolver = toNotelockResolver(async (authData, noteGuid, syncContext, context) => {
+        await checkNoteUpsyncStatus(context, en_thrift_connector_1.convertGuidFromService(noteGuid, en_core_entity_types_1.CoreEntityTypes.Note));
         const noteStore = context.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
         return toNotelock(await noteStore.getNoteLockStatus(context.trc, authData.token, noteGuid), syncContext, context, noteGuid, context.offlineContentStrategy);
     });

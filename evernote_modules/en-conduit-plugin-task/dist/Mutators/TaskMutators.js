@@ -212,6 +212,7 @@ exports.taskUpdate = {
             return reminder.id;
         });
         const reminders = await ctx.fetchEntities(trc, TaskConstants_1.TaskEntityTypes.Reminder, reminderIds);
+        const deletedReminders = {};
         let ops = [];
         // update reminders date on dueDate change
         if (!!params.dueDate) {
@@ -236,13 +237,6 @@ exports.taskUpdate = {
                     node: ctx.assignFields(TaskConstants_1.TaskEntityTypes.Reminder, reminderFields),
                 };
             });
-            if (params.status) {
-                // TODO ^^ this is not great.
-                // We should have a single method that can deal with reminder updates given the structure of the mutation
-                // Or fix the rules so that we can implement this as a rule (currently impossible)
-                const reminderStatus = params.status === TaskConstants_1.TaskStatus.completed ? TaskConstants_1.ReminderStatus.muted : TaskConstants_1.ReminderStatus.active;
-                await ReminderStatusContainmentRules_1.updateReminderStatus(ctx, trc, taskRef.id, ops, reminderStatus, reminders);
-            }
             // delete relative reminders on deleting dueDate
         }
         else if (params.dueDate === null) {
@@ -254,15 +248,16 @@ exports.taskUpdate = {
                 return reminder.NodeFields.reminderDateUIOption === TaskConstants_1.ReminderDateUIOption.relative_to_due;
             })
                 .map(reminder => {
+                deletedReminders[reminder.id] = true;
                 return {
                     changeType: 'Node:DELETE',
                     nodeRef: { id: reminder.id, type: TaskConstants_1.TaskEntityTypes.Reminder },
                 };
             });
         }
-        else if (params.status) {
+        if (params.status) {
             const reminderStatus = params.status === TaskConstants_1.TaskStatus.completed ? TaskConstants_1.ReminderStatus.muted : TaskConstants_1.ReminderStatus.active;
-            await ReminderStatusContainmentRules_1.updateReminderStatus(ctx, trc, taskRef.id, ops, reminderStatus, reminders);
+            await ReminderStatusContainmentRules_1.updateReminderStatus(ctx, trc, taskRef.id, ops, reminderStatus, reminders.filter(r => r && !deletedReminders[r.id]));
         }
         // let's remove the associations
         ops.forEach(op => {

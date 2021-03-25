@@ -667,13 +667,6 @@ class NotebookConverterClass {
                 if (shortcut) {
                     await ShortcutConverter_1.updateShortcutsToService(trc, params, [], [shortcutID]);
                 }
-                if (metadata && metadata.sharedNotebookGlobalID) {
-                    const syncStatePath = ['sharing', 'sharedNotebooks', metadata.sharedNotebookGlobalID];
-                    await params.graphTransaction.deleteSyncState(trc, syncStatePath);
-                }
-                // now we can wipe sync context once new recepient is set
-                await params.graphTransaction.deleteSyncContext(trc, syncContext);
-                await params.graphTransaction.deleteSyncState(trc, [syncContext]);
                 return null;
             }
             case 'NotebookAcceptShare': {

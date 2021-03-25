@@ -128,6 +128,16 @@ class ThriftGraphInterface {
             }
             return syncContextMetadata.userID;
         };
+        const localOnlyNodeTypes = [];
+        if (this.di.getNodeTypeDefs) {
+            const defs = this.di.getNodeTypeDefs();
+            for (const type in defs) {
+                if (defs[type].syncSource === conduit_storage_1.SyncSource.LOCAL) {
+                    localOnlyNodeTypes.push(defs[type].name);
+                }
+            }
+        }
+        Converters_1.initNodeConverters(localOnlyNodeTypes);
     }
     async updateBlobToGraph(trc, mutatorParams, nodeRef, syncContext, blobName, blob) {
         const nodeUpdate = {

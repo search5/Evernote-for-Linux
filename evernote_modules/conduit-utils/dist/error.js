@@ -44,6 +44,13 @@ class AuthError extends Error {
         this.errorCode = errorCode;
         this.tokenHash = hashTokenForAuthError(authenticationToken);
         this.parameter = parameter;
+        this.authRevalidated = false;
+    }
+    getAuthRevalidated() {
+        return this.authRevalidated;
+    }
+    setAuthRevalidated() {
+        this.authRevalidated = true;
     }
 }
 exports.AuthError = AuthError;

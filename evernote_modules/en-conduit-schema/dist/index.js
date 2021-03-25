@@ -928,6 +928,7 @@ var ScheduledNotificationFilterField;
 var ScheduledNotificationScheduledNotificationType;
 (function (ScheduledNotificationScheduledNotificationType) {
     ScheduledNotificationScheduledNotificationType["TaskReminder"] = "TaskReminder";
+    ScheduledNotificationScheduledNotificationType["Calendar"] = "Calendar";
 })(ScheduledNotificationScheduledNotificationType = exports.ScheduledNotificationScheduledNotificationType || (exports.ScheduledNotificationScheduledNotificationType = {}));
 var ScheduledNotificationSortField;
 (function (ScheduledNotificationSortField) {

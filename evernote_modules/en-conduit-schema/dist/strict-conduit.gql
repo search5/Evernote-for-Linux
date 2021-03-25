@@ -373,6 +373,7 @@ enum BoardBootstrapPlatform {
 type BoardBootstrapResult {
   success: Boolean!
   result: String!
+  board: Board!
 }
 
 enum BoardCreateHome_platform {
@@ -553,6 +554,12 @@ type BusinessCardInfo {
 
   """Business card the rest of urls."""
   otherUrls: [String]
+}
+
+type BusinessNotebook {
+  notebookDescription: String!
+  privilege: Float!
+  recommended: Boolean!
 }
 
 type CalendarAccount {
@@ -864,6 +871,7 @@ type GetTaskUserSettingsResult {
   type: String!
   defaultTaskNoteId: String
   defaultTaskNoteLabel: String
+  isDefaultTaskNoteInTrash: Boolean
   defaultReminder: Boolean
   defaultRemindersOffsets: [Float!]
   pinDefaultTaskNote: Boolean
@@ -2761,6 +2769,7 @@ type PublishedNotebookList {
   membersCount: Float!
   ownerID: String
   notesCount: Float!
+  businessNotebook: BusinessNotebook
 }
 
 enum PublishedNotebooksFilterField {
@@ -3356,6 +3365,7 @@ type ScheduledNotificationListResults {
 
 enum ScheduledNotificationScheduledNotificationType {
   TaskReminder
+  Calendar
 }
 
 input ScheduledNotificationSort {

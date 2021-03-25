@@ -85,6 +85,7 @@ async function fetchPublishedNotebooks(thriftComm, context) {
             notesCount: results[1][nb.guid || ''] || 0,
             accessStatus: access,
             ownerID,
+            businessNotebook: nb.businessNotebook,
         };
     })) : undefined;
     return publishedNBs || [];
@@ -201,6 +202,15 @@ function getPublishedNotebookPlugin() {
                         membersCount: { type: conduit_core_1.schemaToGraphQLType('number') },
                         ownerID: { type: conduit_core_1.schemaToGraphQLType('ID?') },
                         notesCount: { type: conduit_core_1.schemaToGraphQLType('number') },
+                        businessNotebook: { type: new graphql_1.GraphQLObjectType({
+                                name: 'BusinessNotebook',
+                                fields: {
+                                    notebookDescription: { type: conduit_core_1.schemaToGraphQLType('string') },
+                                    privilege: { type: conduit_core_1.schemaToGraphQLType('number') },
+                                    recommended: { type: conduit_core_1.schemaToGraphQLType('boolean') },
+                                }
+                            }),
+                        },
                     },
                 })),
                 args: buildArgs(),

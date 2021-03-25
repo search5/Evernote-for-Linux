@@ -272,9 +272,18 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
             delete this.activeAuthRevalidations[err.tokenHash];
         }
     }
+    setAuthErrorRevalidated(err) {
+        if (err instanceof conduit_utils_1.AuthError) {
+            err.setAuthRevalidated();
+        }
+    }
     async handleAuthErrorImpl(trc, err, tx) {
         if (!this.isInitialized) {
             return new conduit_utils_1.RetryError('Unable to handle auth error without a graph db', 500);
+        }
+        if (err.getAuthRevalidated()) {
+            conduit_utils_1.logger.info('Auth already revalidated for err ', err);
+            return err;
         }
         if (err.errorCode === conduit_utils_1.AuthErrorCode.CLIENT_NOT_SUPPORTED) {
             const tokenAndState = await this.getAuthTokenAndState(trc, null);
@@ -284,6 +293,7 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
                     conduit_utils_1.logger.error('setAuthTokenAndState failed', innerErr);
                 });
             }
+            this.setAuthErrorRevalidated(err);
             return err;
         }
         if (err.errorCode === conduit_utils_1.AuthErrorCode.SESSION_REVOKED) {
@@ -291,6 +301,7 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
             this.setAuthTokenAndState(trc, { userID: this.userID, token: null, state: conduit_view_types_1.AuthState.SessionRevoked }).catch(innerErr => {
                 conduit_utils_1.logger.error('setAuthTokenAndState failed', innerErr);
             });
+            this.setAuthErrorRevalidated(err);
             return err;
         }
         if (!Boolean(this.authBackoff[err.tokenHash])) {
@@ -301,12 +312,21 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
         if (delay > 0) {
             return new conduit_utils_1.RetryError('Slowing down auth request', delay);
         }
-        const { err: authErr, data } = await conduit_utils_1.withError(this.syncEngine.revalidateAuth(trc, err, tx));
-        // original AuthError converted to a different error; combine the stacks
-        if (authErr) {
-            authErr.stack = (authErr.stack || '') + (err.stack || '');
-            backoffManager.bumpDelayTime(); // Initial downsync retries token refresh even if there is another error than AuthError.
-            return authErr;
+        const { err: newErr, data } = await conduit_utils_1.withError(this.syncEngine.revalidateAuth(trc, err, tx));
+        this.setAuthErrorRevalidated(err);
+        if (newErr) {
+            if (newErr instanceof conduit_utils_1.RetryError && newErr.reason === conduit_utils_1.RetryErrorReason.AUTH_UPDATED) {
+                // Token refresh is finished successfully. Remove backoff manager for the current token
+                backoffManager.resetDelay();
+                delete this.authBackoff[err.tokenHash];
+            }
+            else {
+                // original AuthError converted to a different error; combine the stacks
+                newErr.stack = (newErr.stack || '') + (err.stack || '');
+                backoffManager.bumpDelayTime(); // Initial downsync retries token refresh even if there is another error than AuthError.
+                this.setAuthErrorRevalidated(newErr);
+            }
+            return newErr;
         }
         // null indicates that the original AuthError is still correct
         if (!data) {

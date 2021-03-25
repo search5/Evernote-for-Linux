@@ -75,7 +75,7 @@ class ThriftRemoteMutationExecutor extends conduit_core_1.RemoteMutationExecutor
                 };
                 if (res.err instanceof conduit_utils_1.RetryError) {
                     abortForRetry = true;
-                    logger.debug('Got retryable error on mutation', { name: mutation.name });
+                    logger.debug('Got retryable error on mutation', { name: mutation.name, err: res.err });
                 }
                 else {
                     logger.error('Error response for mutation', { name: mutation.name, err: res.err });

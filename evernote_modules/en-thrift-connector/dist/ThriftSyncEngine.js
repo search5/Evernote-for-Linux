@@ -248,7 +248,7 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
         return initUserSyncContext(trc, graphTransaction, syncContext, auth);
     }
     async updateUser(trc, graphTransaction, user, isVaultUser, auth) {
-        var _a;
+        var _a, _b, _c;
         const syncContext = await this.initUserSyncContext(trc, graphTransaction, isVaultUser ? conduit_core_1.VAULT_USER_CONTEXT : conduit_core_1.PERSONAL_USER_CONTEXT, auth);
         const params = await Helpers_1.makeConverterParams({
             trc,
@@ -275,6 +275,7 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
             const resolvedLocale = enLocale ? enLocaleMap[enLocale] || enLocale : enLocale;
             this.locale = resolvedLocale || await this.di.getSystemLocale();
             const oldLocale = await graphTransaction.getStoredLocale(trc, null);
+            (_c = (_b = this.di).didSetLocale) === null || _c === void 0 ? void 0 : _c.call(_b, trc, this.locale);
             if ((!oldLocale && this.locale) || (this.locale && oldLocale !== this.locale)) {
                 // Going through the sync manager so that the loading screen appears
                 await this.syncManager.addReindexingActivity(trc, graphTransaction);

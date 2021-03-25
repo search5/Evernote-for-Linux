@@ -16,6 +16,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.NOTIFICATION_DEFAULT_TITLE = void 0;
 __exportStar(require("./EntityTypes/ScheduledNotification"), exports);
 __exportStar(require("./ScheduledNotificationConstants"), exports);
-__exportStar(require("./ScheduledNotificationConstants"), exports);
 exports.NOTIFICATION_DEFAULT_TITLE = 'Evernote';
 //# sourceMappingURL=index.js.map

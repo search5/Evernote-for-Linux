@@ -6,18 +6,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getSnNodeAndEdges = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_plugin_scheduled_notification_shared_1 = require("en-conduit-plugin-scheduled-notification-shared");
-/**
- * Only Scheduled Notification types listed here that are
- * coming from NSync will get converted to Conduit Scheduled Notification.
- */
-const ScheduledNotificationTypes = {
-    Calendar: 'Calendar',
-};
 const ScheduledNotificationSources = {
-    // This will change to Calendar Entity Types, when implemented
-    [ScheduledNotificationTypes.Calendar]: {
+    // This might change when Tasks is sync with Nsync
+    // Adding it as a placeholder for TS validation
+    [en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.Task]: {
         schedulingType: 'Reminder',
         dataSourceType: 'Task',
+    },
+    [en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.Calendar]: {
+        schedulingType: undefined,
+        dataSourceType: undefined,
     },
 };
 async function getSnNodeAndEdges(trc, instance, context) {
@@ -27,21 +25,21 @@ async function getSnNodeAndEdges(trc, instance, context) {
         nodes: { nodesToDelete: [], nodesToUpsert },
         edges: { edgesToDelete: [], edgesToCreate },
     };
+    // Validate sources types
+    const SNSources = ScheduledNotificationSources[instance.scheduledNotificationType];
     // Make sure Conduit ignores un-supported types, for backwards compatibility
-    if (!ScheduledNotificationTypes[instance.scheduledNotificationType]) {
+    if (!en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes[instance.scheduledNotificationType]) {
         conduit_utils_1.logger.error(`Unsupported scheduledNotificationType type ${instance.scheduledNotificationType}`);
         return nodesAndEdges;
     }
     // Validate Instance
-    if (!instance.dataSourceId ||
-        !instance.dataSourceType ||
-        !instance.schedulingId ||
-        !instance.schedulingType) {
+    if ((SNSources.dataSourceType && (!instance.dataSourceId ||
+        !instance.dataSourceType)) ||
+        (SNSources.schedulingType && (!instance.schedulingId ||
+            !instance.schedulingType))) {
         conduit_utils_1.logger.error(`DataSource and Scheduling entities required for ${instance.scheduledNotificationType}`);
         return nodesAndEdges;
     }
-    // Validate sources types
-    const SNSources = ScheduledNotificationSources[instance.scheduledNotificationType];
     if (SNSources.dataSourceType !== instance.dataSourceType ||
         SNSources.schedulingType !== instance.schedulingType) {
         conduit_utils_1.logger.error(`DataSource ${instance.dataSourceType} and Scheduling ${instance.schedulingType} types do not match for ${instance.scheduledNotificationType}`);
@@ -53,6 +51,7 @@ async function getSnNodeAndEdges(trc, instance, context) {
     const instanceRefId = instance.ref.id;
     const dataSourceId = instance.dataSourceId;
     const schedulingId = instance.schedulingId;
+    const payload = instance.payload;
     const sn = {
         id: instanceRefId,
         type: en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.ScheduledNotification,
@@ -63,8 +62,9 @@ async function getSnNodeAndEdges(trc, instance, context) {
         NodeFields: {
             scheduledNotificationType,
             mute: instance.mute,
-            created: Number((instance.created || Date.now())),
-            updated: Number((instance.updated || Date.now())),
+            created: instance.created,
+            updated: instance.updated,
+            data: payload,
         },
         owner: ownerId,
         inputs: {
@@ -75,14 +75,18 @@ async function getSnNodeAndEdges(trc, instance, context) {
         },
     };
     nodesToUpsert.push(sn);
-    edgesToCreate.push({
-        srcID: schedulingId, srcType: SNSources.schedulingType, srcPort: 'scheduledNotification',
-        dstID: instanceRefId, dstType: en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.ScheduledNotification, dstPort: 'scheduling',
-    });
-    edgesToCreate.push({
-        srcID: instanceRefId, srcType: en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.ScheduledNotification, srcPort: 'dataSource',
-        dstID: dataSourceId, dstType: SNSources.dataSourceType, dstPort: null,
-    });
+    if (SNSources.schedulingType) {
+        edgesToCreate.push({
+            srcID: schedulingId, srcType: SNSources.schedulingType, srcPort: 'scheduledNotification',
+            dstID: instanceRefId, dstType: en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.ScheduledNotification, dstPort: 'scheduling',
+        });
+    }
+    if (SNSources.dataSourceType) {
+        edgesToCreate.push({
+            srcID: instanceRefId, srcType: en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.ScheduledNotification, srcPort: 'dataSource',
+            dstID: dataSourceId, dstType: SNSources.dataSourceType, dstPort: null,
+        });
+    }
     return nodesAndEdges;
 }
 exports.getSnNodeAndEdges = getSnNodeAndEdges;

@@ -85,6 +85,7 @@ function getENTaskPlugin() {
                         type: 'string',
                         defaultTaskNoteId: 'ID?',
                         defaultTaskNoteLabel: 'string?',
+                        isDefaultTaskNoteInTrash: 'boolean?',
                         defaultReminder: 'boolean?',
                         defaultRemindersOffsets: 'number[]?',
                         pinDefaultTaskNote: 'boolean?',

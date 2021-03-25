@@ -918,10 +918,16 @@ async function revalidateSyncContextAuth(trc, thriftComm, syncContext, metadata,
                 state: authErrorCodeToState(userRes.err.errorCode),
             };
         }
-        if (userRes.data && !conduit_auth_shared_1.hasNAPData(oldAuthData) && origErr.errorCode === conduit_utils_1.AuthErrorCode.JWT_AUTH_EXPIRED) {
-            // when using monolith auth, jwt will be used for authentication to API GW.
-            // getUser will succeed in these cases but jwt might have expired.
-            throw new RefreshUserTokenError(TokenRefreshSource.Monolith);
+        if (userRes.data) {
+            if (!conduit_auth_shared_1.hasNAPData(oldAuthData) && origErr.errorCode === conduit_utils_1.AuthErrorCode.JWT_AUTH_EXPIRED) {
+                // when using monolith auth, jwt will be used for authentication to API GW.
+                // getUser will succeed in these cases but jwt might have expired.
+                throw new RefreshUserTokenError(TokenRefreshSource.Monolith);
+            }
+            else {
+                // still valid, throw ServiceError
+                throw asServiceError('UserAuthToken');
+            }
         }
         // some other error happened
         throw userRes.err;

@@ -254,7 +254,7 @@ class SyncManager {
         }
         const syncPaused = await this.activityContext.syncEngine.getEphemeralFlag(trc, 'SyncManager', 'syncPaused');
         logger.debug('Triggering immediate sync activity ', activity.params.activityType);
-        await this.addActivity(trc, activity);
+        activity = await this.addActivity(trc, activity);
         if (syncPaused) {
             await this.resumeSyncing(trc);
         }
@@ -476,7 +476,7 @@ class SyncManager {
             if (existingActivity.isRunning()) {
                 if (conduit_utils_1.isEqual(existingActivity.dehydrate(), activity.dehydrate())) {
                     logger.info(`addActivity: Similar activity ${conduit_utils_1.safeStringify(existingActivity.dehydrate())} is already running. Ignoring new activity.`);
-                    return;
+                    return existingActivity;
                 }
                 logger.info(`addActivity: ${activityType} already running. Cancelling existing activity to replace with new one.`);
                 // need to cancel otherwise runActivity will replace with old activity if we abort.
@@ -492,6 +492,7 @@ class SyncManager {
             // persist pending activities
             await this.replaceActivityQueueSyncState(trc, tx);
         }, graphTransaction);
+        return activity;
     }
     async replaceActivity(trc, oldActivity, newActivity, graphTransaction) {
         logger.debug('replaceActivity', newActivity.params.activityType);
@@ -507,6 +508,7 @@ class SyncManager {
             // persist pending activities
             await this.replaceActivityQueueSyncState(trc, tx);
         }, graphTransaction, MUTEX_TIMEOUT);
+        return newActivity;
     }
     async removeActivity(trc, activity) {
         await this.activityContext.syncEngine.transact(trc, 'removeActivity', async (tx) => {

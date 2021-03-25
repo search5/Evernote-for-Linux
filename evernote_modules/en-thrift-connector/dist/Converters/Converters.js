@@ -3,10 +3,11 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.convertGuidToService = exports.convertGuidFromService = exports.getNodeConverter = exports.testResetConverters = exports.testOverrideConverters = void 0;
+exports.convertGuidToService = exports.convertGuidFromService = exports.getNodeConverter = exports.initNodeConverters = exports.testOverrideConverters = void 0;
 const en_core_entity_types_1 = require("en-core-entity-types");
 const BetaFeatureConverter_1 = require("./BetaFeatureConverter");
 const InvitationConverter_1 = require("./InvitationConverter");
+const LocalEntityConverter_1 = require("./LocalEntityConverter");
 const MembershipConverter_1 = require("./MembershipConverter");
 const MessageConverter_1 = require("./MessageConverter");
 const NotebookConverter_1 = require("./NotebookConverter");
@@ -23,35 +24,41 @@ const UserConverter_1 = require("./UserConverter");
 const WorkspaceConverter_1 = require("./WorkspaceConverter");
 let gNodeConverters;
 function testOverrideConverters(nodeConverters) {
+    const oldConverters = gNodeConverters;
     gNodeConverters = nodeConverters;
+    return () => {
+        gNodeConverters = oldConverters;
+    };
 }
 exports.testOverrideConverters = testOverrideConverters;
-function testResetConverters() {
-    gNodeConverters = undefined;
+function initNodeConverters(localEntities) {
+    gNodeConverters = {
+        Attachment: ResourceConverter_1.ResourceConverter,
+        BetaFeature: BetaFeatureConverter_1.BetaFeatureConverter,
+        Invitation: InvitationConverter_1.InvitationConverter,
+        Membership: MembershipConverter_1.MembershipConverter,
+        Message: MessageConverter_1.MessageConverter,
+        Note: NoteConverter_1.NoteConverter,
+        Notebook: NotebookConverter_1.NotebookConverter,
+        Profile: ProfileConverter_1.ProfileConverter,
+        Promotion: PromotionConverter_1.PromotionConverter,
+        SavedSearch: SavedSearchConverter_1.SavedSearchConverter,
+        Shortcut: ShortcutConverter_1.ShortcutConverter,
+        Stack: StackConverter_1.StackConverter,
+        Tag: TagConverter_1.TagConverter,
+        Thread: ThreadConverter_1.ThreadConverter,
+        Workspace: WorkspaceConverter_1.WorkspaceConverter,
+        User: UserConverter_1.UserConverter,
+    };
+    localEntities === null || localEntities === void 0 ? void 0 : localEntities.forEach(type => {
+        gNodeConverters[type] = new LocalEntityConverter_1.LocalEntitiyConverterClass(type);
+    });
 }
-exports.testResetConverters = testResetConverters;
+exports.initNodeConverters = initNodeConverters;
 function getNodeConverter(nodeType) {
     var _a;
     if (!gNodeConverters) {
-        // lazy init to protect against circular dependencies
-        gNodeConverters = {
-            Attachment: ResourceConverter_1.ResourceConverter,
-            BetaFeature: BetaFeatureConverter_1.BetaFeatureConverter,
-            Invitation: InvitationConverter_1.InvitationConverter,
-            Membership: MembershipConverter_1.MembershipConverter,
-            Message: MessageConverter_1.MessageConverter,
-            Note: NoteConverter_1.NoteConverter,
-            Notebook: NotebookConverter_1.NotebookConverter,
-            Profile: ProfileConverter_1.ProfileConverter,
-            Promotion: PromotionConverter_1.PromotionConverter,
-            SavedSearch: SavedSearchConverter_1.SavedSearchConverter,
-            Shortcut: ShortcutConverter_1.ShortcutConverter,
-            Stack: StackConverter_1.StackConverter,
-            Tag: TagConverter_1.TagConverter,
-            Thread: ThreadConverter_1.ThreadConverter,
-            Workspace: WorkspaceConverter_1.WorkspaceConverter,
-            User: UserConverter_1.UserConverter,
-        };
+        initNodeConverters();
     }
     return (_a = gNodeConverters[nodeType]) !== null && _a !== void 0 ? _a : null;
 }

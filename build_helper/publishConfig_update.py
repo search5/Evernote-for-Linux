@@ -11,7 +11,7 @@ def main(registry):
     # Node Modules Selection
     evernote_module_prefix = "../evernote_modules"
     npm_packages = glob.glob(f"{evernote_module_prefix}/*", recursive=False)
-    #npm_packages.append(f"{evernote_module_prefix}/en-graph-types/node_modules/en-data-model")
+    npm_packages.append(f"{evernote_module_prefix}/en-graph-types/node_modules/en-data-model")
     #print(npm_packages)
 
     for idx, item in enumerate(npm_packages):

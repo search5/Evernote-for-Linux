@@ -1,6 +1,6 @@
 {
   "name": "en-thrift-connector",
-  "version": "1.30.2",
+  "version": "1.31.4",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -16,21 +16,21 @@
     "@types/sinon": "^7.0.11",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
-    "conduit-storage": "1.30.2",
+    "conduit-storage": "1.31.4",
     "sinon": "^7.3.2",
     "sinon-chai": "^3.3.0",
     "ts-sinon": "^1.0.21"
   },
   "dependencies": {
-    "conduit-auth-shared": "1.30.2",
-    "conduit-core": "1.30.2",
-    "conduit-nap": "1.30.2",
-    "conduit-utils": "1.30.2",
-    "conduit-view-types": "1.30.2",
-    "en-conduit-sync-types": "1.30.2",
-    "en-core-entity-types": "1.30.2",
+    "conduit-auth-shared": "1.31.4",
+    "conduit-core": "1.31.4",
+    "conduit-nap": "1.31.4",
+    "conduit-utils": "1.31.4",
+    "conduit-view-types": "1.31.4",
+    "en-conduit-sync-types": "1.31.4",
+    "en-core-entity-types": "1.31.4",
     "en-graph-types": "1.2.2",
-    "en-nsync-connector": "1.30.2",
+    "en-nsync-connector": "1.31.4",
     "en-thrift-internal": "2.7.10",
     "eventsource": "^1.0.7",
     "evernote-thrift": "1.4.3",

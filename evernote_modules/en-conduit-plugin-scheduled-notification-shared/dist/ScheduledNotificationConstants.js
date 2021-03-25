@@ -7,6 +7,7 @@ exports.ScheduledNotificationEntityTypes = exports.ScheduledNotificationType = v
 var ScheduledNotificationType;
 (function (ScheduledNotificationType) {
     ScheduledNotificationType["TaskReminder"] = "TaskReminder";
+    ScheduledNotificationType["Calendar"] = "Calendar";
 })(ScheduledNotificationType = exports.ScheduledNotificationType || (exports.ScheduledNotificationType = {}));
 exports.ScheduledNotificationEntityTypes = {
     ScheduledNotification: 'ScheduledNotification',
@@ -14,5 +15,6 @@ exports.ScheduledNotificationEntityTypes = {
     Reminder: 'Reminder',
     Task: 'Task',
     TaskUserSettings: 'TaskUserSettings',
+    Calendar: 'Calendar',
 };
 //# sourceMappingURL=ScheduledNotificationConstants.js.map
