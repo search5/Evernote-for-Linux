@@ -1,6 +1,6 @@
 {
   "name": "en-conduit-plugin-features-rollout",
-  "version": "1.31.4",
+  "version": "1.32.4",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -16,9 +16,9 @@
     "chai-as-promised": "^7.1.1"
   },
   "dependencies": {
-    "conduit-core": "1.31.4",
-    "conduit-utils": "1.31.4",
-    "conduit-view-types": "1.31.4"
+    "conduit-core": "1.32.4",
+    "conduit-utils": "1.32.4",
+    "conduit-view-types": "1.32.4"
   },
   "peerDependencies": {
     "graphql": "^14.0.2"

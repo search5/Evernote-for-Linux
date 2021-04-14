@@ -26,6 +26,8 @@ function membershipPrivilegeToShareRelationship(privilege) {
             return en_conduit_sync_types_1.TShareRelationshipPrivilegeLevel.MODIFY_NOTEBOOK_PLUS_ACTIVITY;
         case en_core_entity_types_1.MembershipPrivilege.MANAGE:
             return en_conduit_sync_types_1.TShareRelationshipPrivilegeLevel.FULL_ACCESS;
+        case en_core_entity_types_1.MembershipPrivilege.COMPLETE:
+            throw new Error(`invalid privilege ${privilege}`);
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
     }
@@ -38,6 +40,8 @@ function membershipPrivilegeToSharedNotebookPrivilege(privilege) {
             return en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.MODIFY_NOTEBOOK_PLUS_ACTIVITY;
         case en_core_entity_types_1.MembershipPrivilege.MANAGE:
             return en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.FULL_ACCESS;
+        case en_core_entity_types_1.MembershipPrivilege.COMPLETE:
+            throw new Error(`invalid privilege ${privilege}`);
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
     }
@@ -66,6 +70,8 @@ function membershipPrivilegeToWorkspacePrivilege(privilege) {
             return en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT;
         case en_core_entity_types_1.MembershipPrivilege.MANAGE:
             return en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT_AND_MANAGE;
+        case en_core_entity_types_1.MembershipPrivilege.COMPLETE:
+            throw new Error(`invalid privilege ${privilege}`);
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
     }
@@ -91,6 +97,8 @@ function membershipPrivilegeToSharedNotePrivilegeLevel(privilege) {
             return en_conduit_sync_types_1.TSharedNotePrivilegeLevel.MODIFY_NOTE;
         case en_core_entity_types_1.MembershipPrivilege.MANAGE:
             return en_conduit_sync_types_1.TSharedNotePrivilegeLevel.FULL_ACCESS;
+        case en_core_entity_types_1.MembershipPrivilege.COMPLETE:
+            throw new Error(`invalid privilege ${privilege}`);
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
     }

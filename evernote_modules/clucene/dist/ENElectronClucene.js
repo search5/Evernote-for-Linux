@@ -413,6 +413,7 @@ class CLuceneWrapper {
         if (!CLuceneWrapper.isValid()) {
             throw new Error('CLucene: unsupported on this platform');
         }
+        // console.log('search query: ', queryWithParams);
         const { error, result } = this.cl.search('', JSON.stringify(queryWithParams));
         if (error) {
             this.logger.error(en_search_engine_shared_1.formatSearchEngineException('CLuceneWrapper', 'search', error));
@@ -434,18 +435,18 @@ class CLuceneWrapper {
             });
         });
     }
-    suggest(queryWithParams, suggestType) {
+    suggest(queryWithParams, searchTokens, suggestType) {
         if (!CLuceneWrapper.isValid()) {
             throw new Error('CLucene: unsupported on this platform');
         }
-        // console.log('suggest query: ', query);
+        // console.log('suggest query: ', queryWithParams);
         queryWithParams.stored_fields = ['nbGuid', 'notebook', 'spaceGuid', 'space', 'tagGuid', 'tag', 'creatorId', 'author', 'title', 'stack'];
         const { error, result } = this.cl.search('', JSON.stringify(queryWithParams));
         if (error) {
             this.logger.error(en_search_engine_shared_1.formatSearchEngineException('CLuceneWrapper', 'suggest', error));
             return [];
         }
-        return en_search_engine_shared_1.ENCLuceneHelper.createSuggestResults(JSON.parse(result), queryWithParams.queryString, suggestType);
+        return en_search_engine_shared_1.ENCLuceneHelper.createSuggestResults(JSON.parse(result), searchTokens, suggestType);
     }
 }
 exports.CLuceneWrapper = CLuceneWrapper;

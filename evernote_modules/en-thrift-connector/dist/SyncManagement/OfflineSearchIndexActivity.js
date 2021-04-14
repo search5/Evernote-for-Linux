@@ -3,10 +3,9 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OfflineSearchIndexActivity = void 0;
+exports.offlineSearchIndexActivityHydrator = exports.OfflineSearchIndexActivity = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const SyncActivity_1 = require("./SyncActivity");
-const SyncActivityHydration_1 = require("./SyncActivityHydration");
 /**
  * Periodically runs offline search indexation.
  *
@@ -57,7 +56,8 @@ class OfflineSearchIndexActivity extends SyncActivity_1.SyncActivity {
     }
 }
 exports.OfflineSearchIndexActivity = OfflineSearchIndexActivity;
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.OfflineSearchIndexActivity, (di, context, p, timeout) => {
+function offlineSearchIndexActivityHydrator(di, context, p, timeout) {
     return new OfflineSearchIndexActivity(di, context, p.subpriority, timeout);
-});
+}
+exports.offlineSearchIndexActivityHydrator = offlineSearchIndexActivityHydrator;
 //# sourceMappingURL=OfflineSearchIndexActivity.js.map

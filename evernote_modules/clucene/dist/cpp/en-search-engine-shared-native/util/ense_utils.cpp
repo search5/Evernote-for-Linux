@@ -1,4 +1,7 @@
 #include <string.h>
+#include <cmath>
+
+#include <unordered_set>
 
 #include "ense_utils.h"
 #include "enml_parser.h"
@@ -358,6 +361,35 @@ std::pair<std::string, std::string> enml_to_plain_text(const std::string& enml)
       plain_text.clear();
   }
   return std::make_pair(error, plain_text);
+}
+
+std::wstring join_strings(const std::vector<std::wstring>& input, const std::wstring& delimeter)
+{
+  std::wstring result;
+
+  if (input.empty()) {
+    return result;
+  }
+
+  for (const auto& element : input) {
+    result += element + delimeter;
+  }
+
+  if (!delimeter.empty()) {
+    result.erase(result.size() - delimeter.size(), delimeter.size());
+  }
+
+  return result;
+}
+
+float sigmoid(float input)
+{
+  return 1.0 / (1.0 + std::exp(-input));
+}
+
+float sigmoid_inverse(float sigmoid_input)
+{
+  return std::log(sigmoid_input / (1.0 - sigmoid_input));
 }
 
 

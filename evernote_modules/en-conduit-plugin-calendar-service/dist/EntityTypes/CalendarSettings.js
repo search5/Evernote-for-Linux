@@ -17,9 +17,9 @@ var NotificationOptions;
     NotificationOptions["AT_START"] = "AT_START";
     NotificationOptions["AT_END"] = "AT_END";
     NotificationOptions["FIVE_AFTER"] = "FIVE_AFTER";
+    NotificationOptions["OFF"] = "OFF";
 })(NotificationOptions = exports.NotificationOptions || (exports.NotificationOptions = {}));
-exports.NotificationOptionsSchema = [NotificationOptions.THIRTY_BEFORE, NotificationOptions.TEN_BEFORE,
-    NotificationOptions.FIVE_BEFORE, NotificationOptions.AT_START, NotificationOptions.AT_END, NotificationOptions.FIVE_AFTER];
+exports.NotificationOptionsSchema = Object.values(NotificationOptions);
 const ActionReminders = {
     /** Minutes before the event that the user wants to receive a notification for an event without a linked note */
     createNoteMinutes: exports.NotificationOptionsSchema,

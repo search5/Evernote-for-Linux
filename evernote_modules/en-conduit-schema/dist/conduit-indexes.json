@@ -900,6 +900,56 @@
           }
         ]
       },
+      "4505bfca118d3847e4441c09c895c15b": {
+        "index": [
+          {
+            "field": "workspace",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "EntityRef?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "ignoreForFiltering": true,
+            "field": "inBusinessAccount",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
       "4c3c36d3f89aec50e078ecb962cc0bc8": {
         "index": [
           {
@@ -1059,6 +1109,56 @@
           {
             "field": "inTrash",
             "value": true
+          }
+        ]
+      },
+      "8d508cce0bde24a820596f61cb85a28c": {
+        "index": [
+          {
+            "field": "workspace",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "EntityRef?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "ignoreForFiltering": true,
+            "field": "inBusinessAccount",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
           }
         ]
       },
@@ -2115,6 +2215,56 @@
           }
         ]
       },
+      "e2141798fc391bd79ad15e60656b3dda": {
+        "index": [
+          {
+            "field": "workspace",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "EntityRef?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "ignoreForFiltering": true,
+            "field": "inBusinessAccount",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
       "ed9032bd1611417da075e5b00caf3ba4": {
         "index": [
           {
@@ -2366,6 +2516,35 @@
           }
         ],
         "indexCondition": []
+      },
+      "8d4240028077b724bb58169136463f17": {
+        "index": [
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "childrenCount",
+            "order": "ASC",
+            "type": "int"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "hasStack",
+            "value": false
+          },
+          {
+            "field": "parent",
+            "value": null
+          }
+        ]
       },
       "b99b4be9980093ee5762034b0721dd88": {
         "index": [
@@ -3061,6 +3240,26 @@
   },
   "Task": {
     "indexes": {
+      "ae47c2637cb99bb25244150d33de6c84": {
+        "index": [
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "sortWeight",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      },
       "c3a987094a1b62e7f5efe2927688de56": {
         "index": [
           {

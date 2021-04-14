@@ -3,8 +3,9 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userTypeDef = exports.UserReminderEmailConfig = exports.PremiumOrderStatus = exports.PremiumOrderStatusSchema = exports.BusinessUserRole = exports.BusinesUserRoleSchema = exports.ServiceLevel = exports.ServiceLevelSchema = exports.PrivilegeLevel = exports.PrivilegeLevelSchema = void 0;
+exports.userTypeDef = exports.UserReminderEmailConfig = exports.PremiumOrderStatus = exports.PremiumOrderStatusSchema = exports.BusinessUserRole = exports.BusinesUserRoleSchema = exports.ServiceLevelV2Schema = exports.ServiceLevelV2 = exports.ServiceLevel = exports.ServiceLevelSchema = exports.PrivilegeLevel = exports.PrivilegeLevelSchema = void 0;
 const conduit_storage_1 = require("conduit-storage");
+const en_data_model_1 = require("en-data-model");
 const EntityConstants_1 = require("../EntityConstants");
 exports.PrivilegeLevelSchema = ['NORMAL', 'PREMIUM', 'VIP', 'MANAGER', 'SUPPORT', 'ADMIN'];
 var PrivilegeLevel;
@@ -24,6 +25,9 @@ var ServiceLevel;
     ServiceLevel["PREMIUM"] = "PREMIUM";
     ServiceLevel["BUSINESS"] = "BUSINESS";
 })(ServiceLevel = exports.ServiceLevel || (exports.ServiceLevel = {}));
+var en_data_model_2 = require("en-data-model");
+Object.defineProperty(exports, "ServiceLevelV2", { enumerable: true, get: function () { return en_data_model_2.ServiceLevelV2; } });
+exports.ServiceLevelV2Schema = Object.values(en_data_model_1.ServiceLevelV2);
 exports.BusinesUserRoleSchema = ['ADMIN', 'NORMAL'];
 var BusinessUserRole;
 (function (BusinessUserRole) {
@@ -57,6 +61,7 @@ exports.userTypeDef = {
         timezone: 'string?',
         privilege: exports.PrivilegeLevelSchema,
         serviceLevel: exports.ServiceLevelSchema,
+        serviceLevelV2: exports.ServiceLevelV2Schema,
         created: 'timestamp',
         updated: 'timestamp',
         deleted: 'timestamp?',

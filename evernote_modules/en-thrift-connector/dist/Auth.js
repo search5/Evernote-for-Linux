@@ -100,6 +100,7 @@ class RevalidateShareError extends Error {
     }
 }
 exports.RevalidateShareError = RevalidateShareError;
+// TODO: remove all this in followup PR very shortly (03/18/2021)
 function thriftServiceLevelToAuthServiceLevel(tLevel) {
     switch (tLevel) {
         case en_conduit_sync_types_1.TServiceLevel.BASIC:
@@ -111,8 +112,7 @@ function thriftServiceLevelToAuthServiceLevel(tLevel) {
         case en_conduit_sync_types_1.TServiceLevel.BUSINESS:
             return conduit_auth_shared_1.AuthServiceLevel.BUSINESS;
         default:
-            conduit_utils_1.absurd(tLevel, 'Unknown TServiceLevel');
-            return conduit_auth_shared_1.AuthServiceLevel.UNKNOWN;
+            throw new Error('Using possible serviceLevelV2 value');
     }
 }
 function toServiceToken(authenticationToken, args) {
@@ -896,6 +896,7 @@ function authErrorCodeToState(errorCode) {
 async function revalidateSyncContextAuth(trc, thriftComm, syncContext, metadata, allMetadata, origErr) {
     logger.info('revalidateSyncContextAuth', syncContext);
     function asServiceError(tokenType) {
+        logger.info('revalidateSyncContextAuth: Auth still valid ', tokenType);
         if (origErr.errorCode === conduit_utils_1.AuthErrorCode.PERMISSION_DENIED) {
             return new conduit_utils_1.ServiceError('PERMISSION_DENIED', origErr.parameter || '', origErr.message);
         }
@@ -963,6 +964,7 @@ async function revalidateSyncContextAuth(trc, thriftComm, syncContext, metadata,
             throw vaultRes.err;
         }
         userAuthData.vaultAuth = vaultRes.data.data;
+        logger.info('revalidateSyncContextAuth: refreshed business auth token');
         // encode new auth data and return it
         // no need to update syncContext metadata, that will happen on next sync
         return {
@@ -1109,6 +1111,7 @@ async function refreshAuthToken(trc, oldAuthData, httpTransport) {
         const tokenRequestResult = await conduit_utils_1.traceEventEndWhenSettled(trc, 'performAuthTokenRequest', tokenRequestHandler.performTokenRequest(configuration, tokenRequest));
         const serviceToken = conduit_nap_1.extractMonolithToken(tokenRequestResult.accessToken);
         if (!tokenRequestResult.refreshToken || !serviceToken) {
+            logger.info('refreshAuthToken (NAP): token revoked', userID);
             conduit_utils_1.recordEvent(Object.assign(Object.assign({}, napMetric), { label: 'revoked' }));
             throw new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.SESSION_REVOKED, oldAuthData.token);
         }
@@ -1172,6 +1175,7 @@ async function refreshJWTFromMonolith(trc, authData, thriftComm) {
         logger.error('Error occured while refreshing token', res.err);
         throw res.err;
     }
+    logger.info('refreshJWTFromMonolith: refreshed jwt token from monolith');
     const newAuthData = Object.assign(Object.assign({}, authData), { napAuthInfo: {
             jwt: res.data,
         } });

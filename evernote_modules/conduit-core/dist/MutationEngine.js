@@ -134,7 +134,7 @@ class MutationContext {
         const prev = this.guids[guidKey][index];
         const [seed, nodeID] = generateFunc(ownerID, serviceEntityType, prev, custom);
         const ret = [seed, nodeID, ownerID, stripOwner(owner)];
-        this.guids[guidKey].push(ret);
+        this.guids[guidKey][index] = ret;
         this.guidIndexes[guidKey]++;
         return SimplyImmutable.deepFreeze(ret);
     }

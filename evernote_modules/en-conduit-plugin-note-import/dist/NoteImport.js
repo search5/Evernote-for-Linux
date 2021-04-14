@@ -35,7 +35,7 @@ async function noteImportResolver(parent, args, context, info) {
             attachmentsByHash.add(hashAndSize.hash);
             // stage it for upload
             const data = await fileUploader.stageFileUpload(context.trc, stageParams, userID, syncContext, hashAndSize.hash, hashAndSize.size);
-            const attachmentData = Object.assign(Object.assign(Object.assign({}, attachment), hashAndSize), { attachmentGenID: data.nodeGenID, stagedBlobID: data.stagedBlobID, url: (_a = data.url) !== null && _a !== void 0 ? _a : undefined, sourceURL: attachment.sourceURL });
+            const attachmentData = Object.assign(Object.assign(Object.assign({}, attachment), hashAndSize), { filename: stageParams.filename || attachment.filename, attachmentGenID: data.nodeGenID, stagedBlobID: data.stagedBlobID, url: (_a = data.url) !== null && _a !== void 0 ? _a : undefined, sourceURL: attachment.sourceURL });
             attachmentDatas.push(attachmentData);
         }
         if (attachment.placeholderHash) {

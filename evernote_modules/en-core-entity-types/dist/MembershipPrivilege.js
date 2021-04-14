@@ -7,6 +7,7 @@ exports.highestPrivilege = exports.MembershipPrivilege = void 0;
 var MembershipPrivilege;
 (function (MembershipPrivilege) {
     MembershipPrivilege["READ"] = "READ";
+    MembershipPrivilege["COMPLETE"] = "COMPLETE";
     MembershipPrivilege["EDIT"] = "EDIT";
     MembershipPrivilege["MANAGE"] = "MANAGE";
 })(MembershipPrivilege = exports.MembershipPrivilege || (exports.MembershipPrivilege = {}));

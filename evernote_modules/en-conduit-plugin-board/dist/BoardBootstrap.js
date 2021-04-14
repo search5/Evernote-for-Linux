@@ -52,19 +52,12 @@ const createBoardBootstrapDefinition = (di) => {
             type: new graphql_1.GraphQLObjectType({
                 name: 'BoardBootstrapResult',
                 fields: () => {
-                    return {
-                        success: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLBoolean) },
-                        result: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-                        board: { type: new graphql_1.GraphQLNonNull(autoResolverData.NodeGraphQLTypes.Board), resolve: async (parent, args, context, info) => {
-                                if (!info || !info.fieldName) {
-                                    throw new Error('Invalid info block');
-                                }
-                                conduit_core_1.validateDB(context);
-                                const nodeRef = parent[info.fieldName];
-                                return await conduit_core_1.resolveNode(nodeRef, context, info);
-                            },
-                        },
+                    const resultMap = {
+                        success: { type: conduit_core_1.schemaToGraphQLType('boolean') },
+                        result: { type: conduit_core_1.schemaToGraphQLType('string') },
                     };
+                    conduit_core_1.schemaFieldToGraphQL(autoResolverData, resultMap, 'board', 'EntityRef', 'BoardBootstrapResult', [BoardConstants_1.BoardEntityTypes.Board], undefined);
+                    return resultMap;
                 },
             }),
             resolve: async function resolver(parent, args, context) {
@@ -105,7 +98,7 @@ const createBoardBootstrapDefinition = (di) => {
                     const serviceLevel = userNode.NodeFields.serviceLevel;
                     await context.db.runMutator(context.trc, 'boardCreateHome', { serviceLevel, features, featureVersions });
                 }
-                else if (features.length > 0) {
+                else {
                     let upgradeDetected = false;
                     for (let i = 0; i < features.length; i++) {
                         const feature = features[i];

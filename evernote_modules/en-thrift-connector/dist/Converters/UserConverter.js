@@ -3,12 +3,13 @@
  * Copyright 2018 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserConverter = exports.convertUserFromService = void 0;
+exports.UserConverter = exports.convertUserFromService = exports.toServiceLevelV2 = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
+const en_data_model_1 = require("en-data-model");
 const Converters_1 = require("./Converters");
 const Helpers_1 = require("./Helpers");
 const NotebookConverter_1 = require("./NotebookConverter");
@@ -31,7 +32,7 @@ function toPrivilegeLevel(t) {
             throw conduit_utils_1.absurd(t, 'Unknown service privilege level');
     }
 }
-function toServiceLevel(t) {
+function toServiceLevelV1(t) {
     switch (t) {
         case en_conduit_sync_types_1.TServiceLevel.BASIC:
             return en_core_entity_types_1.ServiceLevel.BASIC;
@@ -42,11 +43,18 @@ function toServiceLevel(t) {
         case en_conduit_sync_types_1.TServiceLevel.BUSINESS:
             return en_core_entity_types_1.ServiceLevel.BUSINESS;
         default:
-            throw conduit_utils_1.absurd(t, 'Unknown service service level');
+            throw new Error('Looking at possible v2 serviceLevel field');
     }
 }
+function toServiceLevelV2(t) {
+    // TODO: Change en-data-model to give a better type and get rid of this hackish cast
+    const supportedLevel = t;
+    const ret = en_data_model_1.getServiceLevelV2Summary(supportedLevel);
+    return ret.serviceLevel;
+}
+exports.toServiceLevelV2 = toServiceLevelV2;
 function toServiceLevelArray(t) {
-    return t.map(serviceLevel => toServiceLevel(serviceLevel));
+    return t.map(serviceLevel => toServiceLevelV1(serviceLevel));
 }
 function toPremiumServiceStatus(t) {
     switch (t) {
@@ -90,6 +98,9 @@ function convertReminderEmailConfig(reminderEmailConfig) {
 }
 async function convertUserFromService(trc, params, syncContext, user, isVaultUser) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41;
+    const serviceLevelV2Enum = user.serviceLevelV2;
+    const serviceLevelV1String = toServiceLevelV1(user.serviceLevel || en_conduit_sync_types_1.TServiceLevel.BASIC);
+    const serviceLevelV2String = toServiceLevelV2(serviceLevelV2Enum !== null && serviceLevelV2Enum !== void 0 ? serviceLevelV2Enum : serviceLevelV1String);
     const userOut = {
         id: isVaultUser ? conduit_core_1.VAULT_USER_ID : conduit_core_1.PERSONAL_USER_ID,
         type: en_core_entity_types_1.CoreEntityTypes.User,
@@ -105,7 +116,8 @@ async function convertUserFromService(trc, params, syncContext, user, isVaultUse
             name: user.name || null,
             timezone: user.timezone || null,
             privilege: toPrivilegeLevel(user.privilege || en_conduit_sync_types_1.TPrivilegeLevel.NORMAL),
-            serviceLevel: toServiceLevel(user.serviceLevel || en_conduit_sync_types_1.TServiceLevel.BASIC),
+            serviceLevel: serviceLevelV1String,
+            serviceLevelV2: serviceLevelV2String,
             created: user.created || 0,
             updated: user.updated || 0,
             deleted: user.deleted || null,

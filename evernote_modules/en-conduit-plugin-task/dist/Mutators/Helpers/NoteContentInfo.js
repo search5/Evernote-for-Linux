@@ -120,6 +120,9 @@ async function taskGroupUpsertPlanFor(trc, ctx, noteID, taskGroupNoteLevelID, so
 }
 exports.taskGroupUpsertPlanFor = taskGroupUpsertPlanFor;
 async function genTasksDataCreateOps(trc, ctx, tasksExportData, noteID, plan, copyOwnerRef) {
+    if (!tasksExportData.taskGroupNoteLevelIDs || !tasksExportData.taskGroupNoteLevelIDs.length) {
+        return;
+    }
     const groupParams = {
         noteID,
         taskGroupNoteLevelIDs: tasksExportData.taskGroupNoteLevelIDs,
@@ -131,6 +134,9 @@ async function genTasksDataCreateOps(trc, ctx, tasksExportData, noteID, plan, co
         commandName: 'taskGroupUpsertInNoteContentInfo',
         params: groupParams,
     });
+    if (!tasksExportData.tasks || !tasksExportData.tasks.length) {
+        return;
+    }
     const taskKeys = [];
     for (let i = 0; i < tasksExportData.tasks.length; i++) {
         const taskParams = tasksExportData.tasks[i];

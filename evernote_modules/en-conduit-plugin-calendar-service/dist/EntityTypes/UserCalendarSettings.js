@@ -3,15 +3,14 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.calendarSettingsTypeDef = void 0;
+exports.userCalendarSettingsTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const CalendarConstants_1 = require("../CalendarConstants");
-exports.calendarSettingsTypeDef = {
+exports.userCalendarSettingsTypeDef = {
     name: CalendarConstants_1.CalendarEntityTypes.UserCalendarSettings,
     syncSource: conduit_storage_1.SyncSource.LOCAL,
     fieldValidation: {},
     schema: {
-        id: 'string',
         isActive: 'boolean',
     },
     edges: {

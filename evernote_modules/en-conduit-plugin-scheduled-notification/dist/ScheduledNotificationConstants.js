@@ -6,5 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.NotificationActionNames = void 0;
 exports.NotificationActionNames = {
     NavigateToNote: 'NAVIGATE_TO_NOTE',
+    CalendarNavigateToNote: 'CALENDAR_NAVIGATE_TO_NOTE',
+    CalendarCreateNote: 'CALENDAR_CREATE_NOTE',
 };
 //# sourceMappingURL=ScheduledNotificationConstants.js.map

@@ -12,9 +12,7 @@ var ClientTypeEnum;
 })(ClientTypeEnum = exports.ClientTypeEnum || (exports.ClientTypeEnum = {}));
 exports.ClientTypeSchema = ['mobile', 'desktop'];
 function isFeatureRolloutData(obj) {
-    return obj.hasOwnProperty('host_name') &&
-        obj.hasOwnProperty('siwg_percentage') &&
-        obj.hasOwnProperty('siwa_enabled');
+    return obj.hasOwnProperty('host_name') && obj.hasOwnProperty('siwg_percentage') && obj.hasOwnProperty('siwa_enabled');
 }
 async function fetchRolloutData(trc, httpClient, clientType) {
     const address = `https://update.evernote.com/enclients/${clientType}/features_rollout.json`;

@@ -28,15 +28,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DefaultDeterministicIdGenerator = exports.validateEntity = exports.validateDataAgainstSchema = exports.ValidationError = exports.agentFromUserID = exports.NullUserID = exports.ClientNSyncTypes = void 0;
+exports.DefaultDeterministicIdGenerator = exports.validateEntity = exports.validateDataAgainstSchema = exports.ValidationError = exports.agentFromUserID = exports.NullUserID = exports.BoardSchema = exports.getServiceLevelV2Summary = exports.ServiceLevelV2Summaries = exports.ClientNSyncTypes = void 0;
+const ajv_1 = __importDefault(require("ajv"));
+const en_ts_utils_1 = require("en-ts-utils");
 const schema_embed_1 = require("./schema-embed");
 const ClientNSyncTypes = __importStar(require("./sync-types"));
 const ts_types_1 = require("./ts-types");
-const ajv_1 = __importDefault(require("ajv"));
-const en_ts_utils_1 = require("en-ts-utils");
 __exportStar(require("./schema-embed"), exports);
 __exportStar(require("./ts-types"), exports);
 exports.ClientNSyncTypes = __importStar(require("./sync-types"));
+var serviceLevelV2Schema_1 = require("./serviceLevelV2Schema");
+Object.defineProperty(exports, "ServiceLevelV2Summaries", { enumerable: true, get: function () { return serviceLevelV2Schema_1.ServiceLevelV2Summaries; } });
+Object.defineProperty(exports, "getServiceLevelV2Summary", { enumerable: true, get: function () { return serviceLevelV2Schema_1.getServiceLevelV2Summary; } });
+exports.BoardSchema = __importStar(require("./boardSchema"));
 const gValidator = new ajv_1.default({
     useDefaults: false,
     validateSchema: true,
@@ -117,6 +121,7 @@ exports.DefaultDeterministicIdGenerator = (() => {
     entityTypeMap.set(ts_types_1.EntityType.Widget, ClientNSyncTypes.EntityType.WIDGET);
     // entityTypeMap.set(EntityType.TaskGroup, 14);
     // entityTypeMap.set(EntityType.Task, 15);
+    entityTypeMap.set(ts_types_1.EntityType.WidgetContentConflict, ClientNSyncTypes.EntityType.WIDGET_CONTENT_CONFLICT);
     return new en_ts_utils_1.DeterministicIdGenerator(entityTypeMap);
 })();
 //# sourceMappingURL=index.js.map

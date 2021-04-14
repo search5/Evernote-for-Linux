@@ -2,7 +2,7 @@
   "name": "clucene",
   "description": "A CLucene native library for Node.js, for advanced information retrieval.",
   "main": "dist/index",
-  "version": "12.0.0",
+  "version": "14.0.0",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -11,6 +11,7 @@
   },
   "files": [
     "dist",
+    "binding.gyp",
     "build"
   ],
   "devDependencies": {
@@ -18,7 +19,8 @@
     "nan": "^2.14.0"
   },
   "dependencies": {
-    "en-search-engine-shared": "^12.0.0",
-    "node-addon-api": "*"
+    "en-search-engine-shared": "^14.0.0",
+    "node-addon-api": "*",
+    "node-gyp": "*"
   }
 }

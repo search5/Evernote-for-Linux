@@ -121,7 +121,7 @@ function getENSearchPlugin(provideSearchEngine, di) {
         }
     }
     const searchExTypes = new Set([SearchSchemaTypes_1.SearchExResultType.HISTORY, SearchSchemaTypes_1.SearchExResultType.TEXT, SearchSchemaTypes_1.SearchExResultType.NOTE, SearchSchemaTypes_1.SearchExResultType.NOTEBOOK,
-        SearchSchemaTypes_1.SearchExResultType.WORKSPACE, SearchSchemaTypes_1.SearchExResultType.TAG, SearchSchemaTypes_1.SearchExResultType.AUTHOR, SearchSchemaTypes_1.SearchExResultType.CONTAINS]);
+        SearchSchemaTypes_1.SearchExResultType.STACK, SearchSchemaTypes_1.SearchExResultType.WORKSPACE, SearchSchemaTypes_1.SearchExResultType.TAG, SearchSchemaTypes_1.SearchExResultType.AUTHOR, SearchSchemaTypes_1.SearchExResultType.CONTAINS]);
     // SearchEx in online mode. Offline engine calls are allowed too.
     // Some functions will throw exception if we are actaully offline.
     async function onlineModeSearchEx(args, context, authData) {

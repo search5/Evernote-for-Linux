@@ -3,12 +3,11 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ReindexActivity = void 0;
+exports.reindexActivityHydrator = exports.ReindexActivity = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
 const SyncHelpers_1 = require("../SyncFunctions/SyncHelpers");
 const SyncActivity_1 = require("./SyncActivity");
-const SyncActivityHydration_1 = require("./SyncActivityHydration");
 class ReindexActivity extends SyncActivity_1.SyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
         super(di, context, {
@@ -32,7 +31,8 @@ class ReindexActivity extends SyncActivity_1.SyncActivity {
     }
 }
 exports.ReindexActivity = ReindexActivity;
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.ReindexActivity, (di, context, p, timeout) => {
+function reindexActivityHydrator(di, context, p, timeout) {
     return new ReindexActivity(di, context, p.subpriority, timeout);
-});
+}
+exports.reindexActivityHydrator = reindexActivityHydrator;
 //# sourceMappingURL=ReindexActivity.js.map

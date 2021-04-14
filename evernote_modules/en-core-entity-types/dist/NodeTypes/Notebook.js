@@ -218,6 +218,18 @@ exports.notebookIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(expo
                 },
             },
         },
+        NotebooksWithoutStackAndParent: {
+            filter: [{
+                    field: 'hasStack',
+                    value: false,
+                }, {
+                    field: 'parent',
+                    value: null,
+                }],
+            sort: [{ field: 'label', order: 'ASC' }],
+            params: {},
+            includeFields: ['childrenCount'],
+        },
     },
 });
 function isNotebook(node) {

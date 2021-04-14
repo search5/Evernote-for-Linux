@@ -7,11 +7,11 @@ const ENSearchTypes_1 = require("./ENSearchTypes");
 class ENCLuceneHelper {
     static initializePrimaryToAltFields() {
         const result = new Map();
-        result.set(ENCLuceneHelper.notebookTextField, ENCLuceneHelper.notebookTextAltField);
-        result.set(ENCLuceneHelper.spaceTextField, ENCLuceneHelper.spaceTextAltField);
-        result.set(ENCLuceneHelper.stackText, ENCLuceneHelper.stackTextAlt);
-        result.set(ENCLuceneHelper.title, ENCLuceneHelper.titleAlt);
-        result.set(ENCLuceneHelper.authorText, ENCLuceneHelper.authorTextAlt);
+        result.set(ENCLuceneHelper.tagTextField, [{ name: ENCLuceneHelper.tagTextAltField, type: ENSearchTypes_1.ENSearchAlternativeFieldType.ALTERNATIVE }, { name: ENCLuceneHelper.tagTextSuffixField, type: ENSearchTypes_1.ENSearchAlternativeFieldType.SUFFIX }]);
+        result.set(ENCLuceneHelper.notebookTextField, [{ name: ENCLuceneHelper.notebookTextAltField, type: ENSearchTypes_1.ENSearchAlternativeFieldType.ALTERNATIVE }, { name: ENCLuceneHelper.notebookTextSuffixField, type: ENSearchTypes_1.ENSearchAlternativeFieldType.SUFFIX }]);
+        result.set(ENCLuceneHelper.spaceTextField, [{ name: ENCLuceneHelper.spaceTextAltField, type: ENSearchTypes_1.ENSearchAlternativeFieldType.ALTERNATIVE }, { name: ENCLuceneHelper.spaceTextSuffixField, type: ENSearchTypes_1.ENSearchAlternativeFieldType.SUFFIX }]);
+        result.set(ENCLuceneHelper.stackText, [{ name: ENCLuceneHelper.stackTextAlt, type: ENSearchTypes_1.ENSearchAlternativeFieldType.ALTERNATIVE }, { name: ENCLuceneHelper.stackTextSuffix, type: ENSearchTypes_1.ENSearchAlternativeFieldType.SUFFIX }]);
+        result.set(ENCLuceneHelper.title, [{ name: ENCLuceneHelper.titleAlt, type: ENSearchTypes_1.ENSearchAlternativeFieldType.ALTERNATIVE }, { name: ENCLuceneHelper.titleSuffix, type: ENSearchTypes_1.ENSearchAlternativeFieldType.SUFFIX }]);
         return result;
     }
     static truncateField(value, limit) {
@@ -30,6 +30,27 @@ class ENCLuceneHelper {
             luceneQuery += ` AND ${ENCLuceneHelper.activeField}:1`;
         }
         return luceneQuery;
+    }
+    static nGramTokenize(searchWord, nGramSize) {
+        const result = new Array();
+        if (searchWord.length === 0) {
+            return result;
+        }
+        if (searchWord.length < nGramSize) {
+            result.push(searchWord);
+            return result;
+        }
+        for (let i = 0; i < searchWord.length; ++i) {
+            let nGram = '';
+            if (i + nGramSize < searchWord.length) {
+                nGram = searchWord.substring(i, i + nGramSize);
+            }
+            else {
+                nGram = searchWord.substring(i);
+            }
+            result.push(nGram);
+        }
+        return result;
     }
     static emptySearchResultGroup() {
         return {
@@ -56,28 +77,14 @@ class ENCLuceneHelper {
         resultGroup.totalResultCount = searchResultGroup.totalResultCount;
         return resultGroup;
     }
-    static createSuggestResults(searchResultGroup, query, suggestType) {
+    static createSuggestResults(searchResultGroup, searchWords, suggestType) {
         const results = new Array();
         if (!this.validateJson(searchResultGroup)) {
             return results;
         }
         // will need to ckeck that each search word has it's own pair in entity name
-        let searchWords = new Array();
-        if (suggestType !== null) {
-            // extract search words from query
-            const filter = suggestType + ':';
-            let beg = 0;
-            while ((beg = query.indexOf(filter, beg)) >= 0) {
-                beg += filter.length;
-                const end = query.indexOf('*', beg);
-                if (end > 0) {
-                    searchWords.push(query.substr(beg, end - beg));
-                }
-            }
-            // sort search words by length, first will try to match longer words
-            searchWords.sort((a, b) => b.length - a.length);
-            // console.log('searchWords: ', searchWords);
-        }
+        // sort search words by length, first will try to match longer words
+        searchWords.sort((a, b) => b.length - a.length);
         for (const document of searchResultGroup.documents) {
             if ((suggestType === null || suggestType === 'notebookText') && document.hasOwnProperty('nbGuid') && document.hasOwnProperty('notebook')) {
                 const suggest = { type: ENSearchTypes_1.ENSuggestResultType.NOTEBOOK, guid: document.nbGuid, value: document.notebook, score: document.score };
@@ -184,7 +191,8 @@ class ENCLuceneHelper {
             for (const searchWord of searchWords) {
                 let matchIndex = -1;
                 for (let i = 0; i < tokens.length; ++i) {
-                    if (tokens[i].startsWith(searchWord)) {
+                    if (tokens[i].indexOf(searchWord) !== -1) {
+                        // if (tokens[i].startsWith(searchWord)) {
                         matchIndex = i;
                         break;
                     }
@@ -216,20 +224,24 @@ ENCLuceneHelper.activeField = 'active';
 ENCLuceneHelper.notebookField = 'notebook';
 ENCLuceneHelper.notebookTextField = 'notebookText';
 ENCLuceneHelper.notebookTextAltField = 'notebookTextAlt';
+ENCLuceneHelper.notebookTextSuffixField = 'notebookTextSuffix';
 ENCLuceneHelper.notebookGuidField = 'nbGuid';
 // stack
 ENCLuceneHelper.stack = 'stack';
 ENCLuceneHelper.stackText = 'stackText';
 ENCLuceneHelper.stackTextAlt = 'stackTextAlt';
+ENCLuceneHelper.stackTextSuffix = 'stackTextSuffix';
 // tag
 ENCLuceneHelper.tagField = 'tag';
 ENCLuceneHelper.tagTextField = 'tagText';
 ENCLuceneHelper.tagTextAltField = 'tagTextAlt';
+ENCLuceneHelper.tagTextSuffixField = 'tagTextSuffix';
 ENCLuceneHelper.tagGuidField = 'tagGuid';
 // space
 ENCLuceneHelper.spaceField = 'space';
 ENCLuceneHelper.spaceTextField = 'spaceText';
 ENCLuceneHelper.spaceTextAltField = 'spaceTextAlt';
+ENCLuceneHelper.spaceTextSuffixField = 'spaceTextSuffix';
 ENCLuceneHelper.spaceGuidField = 'spaceGuid';
 // resource
 ENCLuceneHelper.resourceMime = 'resourceMime';
@@ -239,12 +251,12 @@ ENCLuceneHelper.updated = 'updated';
 // note title
 ENCLuceneHelper.title = 'title';
 ENCLuceneHelper.titleAlt = 'titleAlt';
+ENCLuceneHelper.titleSuffix = 'titleSuffix';
 ENCLuceneHelper.titleRaw = 'titleRaw';
 ENCLuceneHelper.subjectDate = 'subjectDate';
 // author
 ENCLuceneHelper.author = 'author';
 ENCLuceneHelper.authorText = 'authorText';
-ENCLuceneHelper.authorTextAlt = 'authorTextAlt';
 ENCLuceneHelper.creatorId = 'creatorId';
 ENCLuceneHelper.lastEditorId = 'lastEditorId';
 ENCLuceneHelper.source = 'source';

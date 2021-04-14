@@ -118,7 +118,6 @@ class FakeBackend {
                 }
             }
         }
-        // flatten response to return a list of events
         return events.reduce((acc, val) => acc.concat(val), []);
     }
     /**
@@ -131,7 +130,8 @@ class FakeBackend {
     async getEvent(id, context) {
         // TODO: Use provider and user id to find the correct event. Wait for multiple accounts
         conduit_core_1.validateDB(context, 'Must be authenticated to retrieve Google Calendar File data.');
-        const [, , userCalendarExternalId, calendarEventExternalId] = id.split(';');
+        id = id.replace('_CalendarEvent', '');
+        const [userCalendarExternalId, calendarEventExternalId] = id.split(';');
         const accessToken = await this.getAccessToken(context);
         const calendarResponse = await this.googleServices.getCalendarById(accessToken, context, userCalendarExternalId);
         const calendar = this.transformUserCalendar(calendarResponse);
@@ -161,7 +161,7 @@ class FakeBackend {
     }
     transformCalendarEvent(externalEvent, calendarId, calendarColor) {
         return {
-            id: `GOOGLE;example@gmail.com;${calendarId};${externalEvent.id}`,
+            id: `${calendarId};${externalEvent.id}`,
             provider: CalendarServiceType_1.CalendarProvider.GOOGLE,
             calendarUserId: 'example@gmail.com',
             userCalendarExternalId: calendarId ? calendarId : 'primary',

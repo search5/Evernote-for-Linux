@@ -521,8 +521,15 @@ exports.noteIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
                     field: 'inBusinessAccount',
                     value: true,
                 }],
-            sort: [{ field: 'updated', order: 'DESC' }, { field: 'created', order: 'DESC' }, { field: 'label', order: 'ASC' }],
             params: {
+                orderBy: {
+                    defaultValue: 'updated',
+                    sort: {
+                        updated: [{ field: 'updated', order: 'DESC' }, { field: 'label', order: 'ASC' }, { field: 'created', order: 'DESC' }],
+                        label: [{ field: 'label', order: 'ASC' }, { field: 'updated', order: 'DESC' }, { field: 'created', order: 'DESC' }],
+                        created: [{ field: 'created', order: 'DESC' }, { field: 'label', order: 'ASC' }, { field: 'updated', order: 'DESC' }],
+                    },
+                },
                 workspace: {
                     match: { field: 'workspace' },
                 },

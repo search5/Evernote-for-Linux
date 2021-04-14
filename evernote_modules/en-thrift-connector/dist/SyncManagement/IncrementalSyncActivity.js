@@ -3,7 +3,7 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.IncrementalSyncActivity = exports.IncrementalSyncBaseActivity = void 0;
+exports.incrementalSyncActivityHydrator = exports.IncrementalSyncActivity = exports.IncrementalSyncBaseActivity = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
 const Auth_1 = require("../Auth");
@@ -15,7 +15,6 @@ const SharedNoteSync_1 = require("../SyncFunctions/SharedNoteSync");
 const SyncHelpers_1 = require("../SyncFunctions/SyncHelpers");
 const CatchupSyncActivity_1 = require("./CatchupSyncActivity");
 const SyncActivity_1 = require("./SyncActivity");
-const SyncActivityHydration_1 = require("./SyncActivityHydration");
 const CHUNK_TIMEBOX = 200;
 const MESSAGE_SUBBUCKET_SIZE = 0.2; // for incremenatal progress
 const NSYNC_SUBBUCKET_SIZE = 0.05; // for incremental progress
@@ -183,7 +182,8 @@ class IncrementalSyncActivity extends IncrementalSyncBaseActivity {
     }
 }
 exports.IncrementalSyncActivity = IncrementalSyncActivity;
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.IncrementalSyncActivity, (di, context, p, timeout) => {
+function incrementalSyncActivityHydrator(di, context, p, timeout) {
     return new IncrementalSyncActivity(di, context, p.options.priority, p.subpriority, timeout);
-});
+}
+exports.incrementalSyncActivityHydrator = incrementalSyncActivityHydrator;
 //# sourceMappingURL=IncrementalSyncActivity.js.map

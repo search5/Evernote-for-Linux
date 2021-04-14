@@ -6,25 +6,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.notificationManagerSNUtilityDI = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_plugin_scheduled_notification_shared_1 = require("en-conduit-plugin-scheduled-notification-shared");
-const notificationDataExtractor_1 = require("./notificationDataExtractor");
-const ScheduledNotificationUtils_1 = require("./ScheduledNotificationUtils");
+const Extractors_1 = require("./Extractors");
 function getNotificationIsMute(notification) {
     return notification.NodeFields.mute;
 }
 exports.notificationManagerSNUtilityDI = {
     getNotificationData: async (trc, graphDB, notificationEntity) => {
-        const refs = ScheduledNotificationUtils_1.getDependencyRefsForSN(notificationEntity);
-        if (!refs) {
-            conduit_utils_1.logger.warn(`Cannot get notification data for notification ID ${notificationEntity.id}. Graph edges for dependencies are missing. Aborting`);
+        if (!notificationEntity.NodeFields || !notificationEntity.NodeFields.scheduledNotificationType) {
+            conduit_utils_1.logger.warn(`Cannot get notification type for notification ID ${notificationEntity.id}. Aborting.`);
             return null;
         }
-        let dataSourceEntity = null;
-        const schedulingEntity = await graphDB.getNodeWithoutGraphQLContext(trc, refs.schedulingRef);
-        if (refs.schedulingRef.id !== refs.dataSourceRef.id) {
-            dataSourceEntity = await graphDB.getNodeWithoutGraphQLContext(trc, refs.dataSourceRef);
+        switch (notificationEntity.NodeFields.scheduledNotificationType) {
+            case en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationType.TaskReminder:
+                return Extractors_1.extractTaskReminder(trc, graphDB, notificationEntity);
+            case en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationType.Calendar:
+                return Extractors_1.extractCalendarNotification(notificationEntity);
+            default:
+                conduit_utils_1.logger.warn(`Unsupported notification type ${notificationEntity.NodeFields.scheduledNotificationType}. for notification ID ${notificationEntity.id}. Aborting`);
+                return null;
         }
-        const notificationData = notificationDataExtractor_1.notificationDataExtractor[notificationEntity.NodeFields.scheduledNotificationType].extract(notificationEntity.id, notificationEntity.NodeFields.updated, schedulingEntity, dataSourceEntity);
-        return notificationData;
     },
     getScheduledNotifications: async (trc, graphDB) => {
         const ret = {

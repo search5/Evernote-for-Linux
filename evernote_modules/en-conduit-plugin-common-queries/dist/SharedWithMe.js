@@ -29,6 +29,10 @@ function buildArgs() {
         },
     };
 }
+const allowedMemberships = {
+    [en_core_entity_types_1.CoreEntityTypes.Notebook]: true,
+    [en_core_entity_types_1.CoreEntityTypes.Note]: true,
+};
 async function resolveSharedWithMe(_, args, context, info) {
     const perfStart = Date.now();
     const memberships = [];
@@ -50,7 +54,7 @@ async function resolveSharedWithMe(_, args, context, info) {
             continue;
         }
         const parentRef = conduit_utils_1.firstStashEntry(node.inputs.parent);
-        if (!parentRef || parentRef.srcType === en_core_entity_types_1.CoreEntityTypes.Workspace) {
+        if (!parentRef || !allowedMemberships[parentRef.srcType]) {
             continue;
         }
         const recipient = conduit_utils_1.firstStashEntry(node.outputs.recipient);
@@ -78,12 +82,25 @@ async function resolveSharedWithMe(_, args, context, info) {
     // we check if there are pending invites for any of the notes of this notebook
     // and accept those invitations as well and vice versa when notes are accepted
     for (const node of invitationNodes) {
+        if (!node) {
+            continue;
+        }
         // If invitation type is NOTE, we check if SharedNote sync context exists for this note or not.
         // If SharedNote sync context exist, it means note invitation is accepted separately
         // If SharedNote sync context does not exist, it means note invitation is not yet accepted and hence should be displayed in result
-        if (!node || (acceptedSharedObjects.has(en_thrift_connector_1.convertGuidToService(node.id, en_core_entity_types_1.CoreEntityTypes.Invitation)) &&
-            (node.NodeFields.invitationType !== 'NOTE' || syncContexts.has('SharedNote:' + en_thrift_connector_1.convertGuidToService(node.id, en_core_entity_types_1.CoreEntityTypes.Invitation))))) {
+        const sharedEntityID = en_thrift_connector_1.convertGuidToService(node.id, en_core_entity_types_1.CoreEntityTypes.Invitation);
+        if (acceptedSharedObjects.has(sharedEntityID) &&
+            (node.NodeFields.invitationType !== 'NOTE' || syncContexts.has('SharedNote:' + sharedEntityID))) {
             continue;
+        }
+        if (node.NodeFields.invitationType === 'NOTE') {
+            // If both note and nb are shared, note membership also gets synced via linkedNotebook sync
+            // and if the note invitation is not accepted yet, we're displaying both membership and invitation.
+            // Need to filter out the membership in this case and also show note invitation so it can be accepted.
+            const membershipIndex = memberships.findIndex(m => m.id.includes(sharedEntityID));
+            if (membershipIndex >= 0) {
+                memberships.splice(membershipIndex, 1);
+            }
         }
         const ref = { id: node.id, type: node.type };
         invitations.push(ref);

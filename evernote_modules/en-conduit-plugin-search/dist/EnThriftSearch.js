@@ -338,7 +338,9 @@ async function onlineSearchEx(trc, thriftComm, authData, args, setSearchShareMet
             }
             const resultType = serverSuggestion.type;
             const suggestion = conduit_utils_1.safeParse(serverSuggestion.value);
-            suggestion.id = SearchExUtil_1.serviceGuidToObjectID(serverSuggestion.objectGuid, resultType);
+            suggestion.id = resultType === SearchSchemaTypes_1.SearchExResultType.STACK ? // stacks don't have real guids
+                SearchExUtil_1.serviceGuidToObjectID(serverSuggestion.displayValue, resultType) :
+                SearchExUtil_1.serviceGuidToObjectID(serverSuggestion.objectGuid, resultType);
             // Cache shared objects metadata to help demand fetch unsynced shared notes.
             if (resultType === SearchSchemaTypes_1.SearchExResultType.NOTE && suggestion.isShared) {
                 if (suggestion.label && suggestion.shardId && suggestion.containerId) {

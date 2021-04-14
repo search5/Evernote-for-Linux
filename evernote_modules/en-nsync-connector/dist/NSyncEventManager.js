@@ -282,7 +282,7 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             this.monolithToken = monolithToken;
             await this.clearBackoff(trc);
         }
-        if (!this.eventSrc) {
+        if (!this.eventSrc && this.isAvailable()) {
             await this.createSync(trc);
         }
     }
@@ -298,7 +298,7 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         if (this.nsyncRunning !== disabled) {
             return;
         }
-        this.nsyncRunning = !disabled;
+        this.nsyncRunning = !disabled && !this.isAvailable();
         if (this.nsyncRunning) {
             await this.createSync(trc);
         }
@@ -352,6 +352,10 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             return;
         }
         if (this.backoffSleep) {
+            return;
+        }
+        if (!this.isAvailable()) {
+            this.nsyncRunning = false;
             return;
         }
         const connInfo = await this.getConnectionInformation(trc);

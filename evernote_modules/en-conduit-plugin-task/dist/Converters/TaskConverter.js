@@ -41,9 +41,11 @@ const getTaskNodeAndEdges = async (trc, instance, context) => {
             memberships: {},
             shortcut: {},
             reminders: {},
+            assignee: {},
+            assignedBy: {},
         } });
     nodesToUpsert.push(task);
-    const { creator, lastEditor } = instance;
+    const { creator, lastEditor, assigneeIdentityID, assigneeUserID, assignedByUserID } = instance;
     if (creator) {
         const creatorProfileId = convertGuidFromService(creator, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
         edgesToCreate.push({
@@ -51,6 +53,20 @@ const getTaskNodeAndEdges = async (trc, instance, context) => {
             dstID: creatorProfileId,
             dstPort: null,
             srcType: task.type, srcID: task.id, srcPort: 'creator',
+        });
+    }
+    if (assignedByUserID) {
+        const assignedByProfileId = convertGuidFromService(assignedByUserID, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
+        edgesToCreate.push({
+            dstType: en_core_entity_types_1.CoreEntityTypes.Profile,
+            dstID: assignedByProfileId,
+            dstPort: null,
+            srcType: task.type, srcID: task.id, srcPort: 'assignedBy',
+        });
+    }
+    else {
+        edgesToDelete.push({
+            srcType: task.type, srcID: task.id, srcPort: 'assignedBy',
         });
     }
     if (lastEditor) {
@@ -82,6 +98,22 @@ const getTaskNodeAndEdges = async (trc, instance, context) => {
             dstType: TaskConstants_1.TaskEntityTypes.Task,
             dstID: task.id,
             dstPort: 'parent',
+        });
+    }
+    if (assigneeIdentityID || assigneeUserID) {
+        const assigneeID = assigneeIdentityID ?
+            convertGuidFromService(assigneeIdentityID, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.Identity) :
+            convertGuidFromService(assigneeUserID, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
+        edgesToCreate.push({
+            dstType: en_core_entity_types_1.CoreEntityTypes.Profile,
+            dstID: assigneeID,
+            dstPort: null,
+            srcType: task.type, srcID: task.id, srcPort: 'assignee',
+        });
+    }
+    else {
+        edgesToDelete.push({
+            srcType: task.type, srcID: task.id, srcPort: 'assignee',
         });
     }
     const taskNodesAndEdges = { nodes: { nodesToUpsert, nodesToDelete: [] }, edges: { edgesToDelete, edgesToCreate } };

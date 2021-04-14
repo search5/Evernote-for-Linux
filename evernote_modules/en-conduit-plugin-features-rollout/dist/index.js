@@ -8,13 +8,21 @@ const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const RolloutData_1 = require("./RolloutData");
 const SignInMethod_1 = require("./SignInMethod");
-const GetRolloutReleaseDataArgs = conduit_core_1.schemaToGraphQLArgs({ serviceHost: 'string', featureRolloutClientType: RolloutData_1.ClientTypeSchema });
+const GetRolloutReleaseDataArgs = conduit_core_1.schemaToGraphQLArgs({
+    serviceHost: 'string',
+    featureRolloutClientType: RolloutData_1.ClientTypeSchema,
+});
 const SignInMethodResultType = conduit_core_1.schemaToGraphQLType({
     siwg: SignInMethod_1.SignInMethodTypeSchema,
     siwa: SignInMethod_1.SignInMethodTypeSchema,
 }, 'FeatureRolloutDataResult', true);
+const IterableLogsSwitchResultType = conduit_core_1.schemaToGraphQLType({
+    iterableLogsEnabled: 'boolean',
+}, 'IterableLogsSwitchResult', false);
+const PollInterval = conduit_utils_1.MILLIS_IN_ONE_HOUR;
 function getFeatureRolloutPlugin(httpClient) {
-    async function getSignInMethodResolver(parent, args, context) {
+    const cachedRolloutData = { expiration: 0 };
+    async function getRolloutData(args, context) {
         if (!context) {
             throw new conduit_utils_1.InternalError('No Context');
         }
@@ -25,8 +33,37 @@ function getFeatureRolloutPlugin(httpClient) {
             throw new conduit_utils_1.MissingParameterError('Both serviceHost and clientType must be passed');
         }
         try {
-            const rolloutData = await RolloutData_1.fetchRolloutData(context.trc, httpClient, args.featureRolloutClientType);
-            const data = rolloutData.find(datum => datum.host_name === args.serviceHost);
+            return await RolloutData_1.fetchRolloutData(context.trc, httpClient, args.featureRolloutClientType);
+        }
+        catch (e) {
+            conduit_utils_1.logger.error('Failed to fetch gradual rollout information', e);
+            throw e;
+        }
+    }
+    async function getCachedRolloutData(args, context) {
+        const { expiration, data } = cachedRolloutData;
+        try {
+            if (!cachedRolloutData.pendingPromise && (!cachedRolloutData.data || expiration < Date.now())) {
+                cachedRolloutData.pendingPromise = getRolloutData(args, context);
+                cachedRolloutData.expiration = Date.now() + conduit_utils_1.MILLIS_IN_ONE_MINUTE * 30;
+            }
+            if (cachedRolloutData.pendingPromise) {
+                cachedRolloutData.data = await cachedRolloutData.pendingPromise;
+                cachedRolloutData.pendingPromise = undefined;
+            }
+        }
+        catch (e) {
+            cachedRolloutData.pendingPromise = undefined;
+            cachedRolloutData.data = data;
+        }
+        return cachedRolloutData.data ? cachedRolloutData.data.find(datum => datum.host_name === args.serviceHost) : null;
+    }
+    async function getSignInMethodResolver(parent, args, context) {
+        if (!context) {
+            throw new conduit_utils_1.InternalError('No Context');
+        }
+        try {
+            const data = await getCachedRolloutData(args, context);
             if (!data) {
                 return {
                     siwg: SignInMethod_1.SignInMethodEnum.Legacy,
@@ -40,8 +77,22 @@ function getFeatureRolloutPlugin(httpClient) {
             return result;
         }
         catch (e) {
-            conduit_utils_1.logger.error('Failed to fech gradual rollout information', e);
             return SignInMethod_1.getFallbackSignInMethodValue(context.trc, context.localSettings);
+        }
+    }
+    async function getIterableLogsSwitchResolver(parent, args, context) {
+        var _a;
+        try {
+            (_a = context === null || context === void 0 ? void 0 : context.watcher) === null || _a === void 0 ? void 0 : _a.triggerAfterTime(PollInterval);
+            const data = await getCachedRolloutData(args, context);
+            if (!data) {
+                return { iterableLogsEnabled: false };
+            }
+            const { iterable_logs_enabled = false } = data;
+            return { iterableLogsEnabled: iterable_logs_enabled };
+        }
+        catch (e) {
+            return { iterableLogsEnabled: false };
         }
     }
     return {
@@ -53,6 +104,12 @@ function getFeatureRolloutPlugin(httpClient) {
                     type: SignInMethodResultType,
                     resolve: getSignInMethodResolver,
                     description: 'Get Gradual Release Feature Flag',
+                },
+                IterableLogsSwitch: {
+                    args: GetRolloutReleaseDataArgs,
+                    type: IterableLogsSwitchResultType,
+                    resolve: getIterableLogsSwitchResolver,
+                    description: 'Get Flag to enable/disable Iterable Datadog Logs',
                 },
             };
             return queries;

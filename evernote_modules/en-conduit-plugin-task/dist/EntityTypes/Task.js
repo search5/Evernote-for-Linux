@@ -47,11 +47,27 @@ exports.taskTypeDef = {
             type: conduit_storage_1.EdgeType.LINK,
             to: en_core_entity_types_1.CoreEntityTypes.Profile,
         },
+        assignee: {
+            constraint: conduit_storage_1.EdgeConstraint.OPTIONAL,
+            type: conduit_storage_1.EdgeType.LINK,
+            to: en_core_entity_types_1.CoreEntityTypes.Profile,
+        },
+        assignedBy: {
+            constraint: conduit_storage_1.EdgeConstraint.OPTIONAL,
+            type: conduit_storage_1.EdgeType.LINK,
+            to: en_core_entity_types_1.CoreEntityTypes.Profile,
+        },
+        memberships: {
+            constraint: conduit_storage_1.EdgeConstraint.MANY,
+            type: conduit_storage_1.EdgeType.LINK,
+            to: en_core_entity_types_1.CoreEntityTypes.Membership,
+        },
     },
 };
 exports.taskIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.taskTypeDef, {
     indexResolvers: {
         parent: conduit_storage_1.getIndexByResolverForEdge(exports.taskTypeDef, ['edges', 'parent']),
+        assignee: conduit_storage_1.getIndexByResolverForEdge(exports.taskTypeDef, ['edges', 'assignee']),
         label: conduit_storage_1.getIndexByResolverForPrimitives(exports.taskTypeDef, ['label']),
         sortWeight: conduit_storage_1.getIndexByResolverForPrimitives(exports.taskTypeDef, ['NodeFields', 'sortWeight']),
         status: conduit_storage_1.getIndexByResolverForPrimitives(exports.taskTypeDef, ['NodeFields', 'status']),
@@ -89,6 +105,14 @@ exports.taskIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
                 },
             },
             includeFields: ['status', 'taskGroupNoteLevelID'],
+        },
+        TasksByAssignee: {
+            sort: [{ field: 'sortWeight', order: 'DESC' }],
+            params: {
+                assignee: {
+                    match: { field: 'assignee' },
+                },
+            },
         },
     },
 });

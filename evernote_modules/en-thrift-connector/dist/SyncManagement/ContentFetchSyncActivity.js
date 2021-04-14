@@ -22,7 +22,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ContentFetchSyncActivity = void 0;
+exports.contentFetchSyncActivityHydrator = exports.ContentFetchSyncActivity = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
@@ -34,7 +34,6 @@ const Converters_1 = require("../Converters/Converters");
 const NotebookConverter_1 = require("../Converters/NotebookConverter");
 const ResourceConverter_1 = require("../Converters/ResourceConverter");
 const SyncActivity_1 = require("./SyncActivity");
-const SyncActivityHydration_1 = require("./SyncActivityHydration");
 // Queue of resources currently being downloaded
 const resourcesQueue = [];
 function getEmptyResourceSlot(maxResources) {
@@ -368,7 +367,8 @@ class ContentFetchSyncActivity extends SyncActivity_1.SyncActivity {
     }
 }
 exports.ContentFetchSyncActivity = ContentFetchSyncActivity;
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.ContentFetchSyncActivity, (di, context, p, timeout) => {
+function contentFetchSyncActivityHydrator(di, context, p, timeout) {
     return new ContentFetchSyncActivity(di, context, p.options.immediateSyncArgs, p.subpriority, timeout);
-});
+}
+exports.contentFetchSyncActivityHydrator = contentFetchSyncActivityHydrator;
 //# sourceMappingURL=ContentFetchSyncActivity.js.map

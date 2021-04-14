@@ -304,8 +304,9 @@ class ThriftGraphInterface {
                     conduit_utils_1.logger.info(`Encountered auth error. Need to revalidate auth ${msg}`);
                     e = await this.di.handleAuthError(trc, e, mutatorParams.graphTransaction);
                     conduit_utils_1.logger.info(`handleAuthError ${e instanceof conduit_utils_1.RetryError ? 'refreshed auth. retrying mutation' : `auth still valid err ${e}`} ${msg}`);
-                    if (e instanceof conduit_utils_1.RetryError && e.reason === conduit_utils_1.RetryErrorReason.AUTH_UPDATED) {
-                        // auth updated. Should let the transaction go through for auth to be written to DB. So wrap error with ErrorWithCleanup.
+                    if ((e instanceof conduit_utils_1.RetryError && e.reason === conduit_utils_1.RetryErrorReason.AUTH_UPDATED) || e instanceof conduit_utils_1.NoAccessError) {
+                        // auth updated/access lost. Should let the transaction go through
+                        // for new auth to be written to DB/for shared entity cleanup to happen.
                         e = new ErrorWithCleanup(e);
                     }
                 }

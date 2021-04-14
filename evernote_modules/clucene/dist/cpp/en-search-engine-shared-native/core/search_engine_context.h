@@ -30,6 +30,8 @@ using namespace lucene::search;
 using namespace lucene::store;
 using namespace lucene::queryParser;
 
+const double kRelevanceFactor = -4.313191834428174e-8; // from elastic relevance function
+
 enum class SortType 
 {
     CREATED = 1,
@@ -44,6 +46,11 @@ struct SearchParams
     bool reverseOrder;
     int from;
     int size;
+};
+
+struct SInterimResults {
+    size_t index;
+    float score;
 };
 
 /*
@@ -88,20 +95,24 @@ class SearchEngineContext {
         const std::wstring kNotebookField;
         const std::wstring kNotebookTextField;
         const std::wstring kNotebookTextAltField;
+        const std::wstring kNotebookTextSuffixField;
         const std::wstring kNotebookGuidField;
         // stack
         const std::wstring kStack;
         const std::wstring kStackText;
         const std::wstring kStackTextAlt;
+        const std::wstring kStackTextSuffix;
         // tag
         const std::wstring kTagField;
         const std::wstring kTagTextField;
         const std::wstring kTagTextAltField;
+        const std::wstring kTagTextSuffixField;
         const std::wstring kTagGuidField;
         // space
         const std::wstring kSpaceField;
         const std::wstring kSpaceTextField;
         const std::wstring kSpaceTextAltField;
+        const std::wstring kSpaceTextSuffixField;
         const std::wstring kSpaceGuidField;
         // resource
         const std::wstring kResourceMime;
@@ -112,13 +123,13 @@ class SearchEngineContext {
         // title
         const std::wstring KTitle;
         const std::wstring KTitleAlt;
+        const std::wstring KTitleSuffix;
         const std::wstring KTitleRaw;
         //
         const std::wstring kSubjectDate;
         // author
         const std::wstring kAuthor;
         const std::wstring kAuthorText;
-        const std::wstring kAuthorTextAlt;
         // 
         const std::wstring kCreatorId;
         const std::wstring kLastEditorId;
@@ -139,6 +150,7 @@ class SearchEngineContext {
         const std::wstring kExists;
     };
 
+    std::string getFilterStringFromJson(const json &jQueryWithParams);
     std::string getQueryStringFromJson(const json &jQueryWithParams);
     SearchParams getSearchParamsFromJson(const json &jQueryWithParams);
     std::vector<std::string> getStoredFieldsFromJson(const json &jQueryWithParams);
@@ -147,5 +159,7 @@ class SearchEngineContext {
     std::vector<std::string> getArrayOfStringFromField(const Document &document, const TCHAR *fieldName);
 
     json get_empty_search_result_group();
+
+    double smarttiming2plain(long long updated);
 }
 #endif

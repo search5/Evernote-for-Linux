@@ -22,7 +22,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addInitialDownsyncActivities = exports.NSyncInitialDownsyncActivity = exports.NotesFetchActivity = exports.PromotionsSyncActivity = exports.MaestroSyncActivity = exports.BetaFeatureSyncActivity = exports.NotesCountFetchActivity = exports.FINAL_ACTIVITY_ORDER = exports.INITIAL_DOWNSYNC_CHUNK_TIMEBOX = void 0;
+exports.addInitialDownsyncActivities = exports.nsyncInitialDownsyncActivityHydrator = exports.NSyncInitialDownsyncActivity = exports.schemaMigrationCompleteActivityHydrator = exports.notesFetchActivityHydrator = exports.NotesFetchActivity = exports.noteMetadataFetchActivityHydrator = exports.trashedNoteMetadataFetchActivityHydrator = exports.snippetsFetchActivityHydrator = exports.messagesSyncActivityHydrator = exports.promotionsSyncActivityHydrator = exports.PromotionsSyncActivity = exports.maestroSyncActivityHydrator = exports.MaestroSyncActivity = exports.betaFeatureSyncActivityHydrator = exports.BetaFeatureSyncActivity = exports.vaultBootstrapActivityHydrator = exports.bootstrapActivityHydrator = exports.notesCountFetchActivityHydrator = exports.NotesCountFetchActivity = exports.userUpdateActivityHydrator = exports.fetchPrebuiltDatabaseActivityHydrator = exports.initialDownsyncCompleteActivityHydrator = exports.FINAL_ACTIVITY_ORDER = exports.INITIAL_DOWNSYNC_CHUNK_TIMEBOX = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
@@ -43,7 +43,6 @@ const IncrementalSyncActivity_1 = require("./IncrementalSyncActivity");
 const NSyncInitActivity_1 = require("./NSyncInitActivity");
 const SchemaMigrationActivity_1 = require("./SchemaMigrationActivity");
 const SyncActivity_1 = require("./SyncActivity");
-const SyncActivityHydration_1 = require("./SyncActivityHydration");
 exports.INITIAL_DOWNSYNC_CHUNK_TIMEBOX = 30000;
 var FINAL_ACTIVITY_ORDER;
 (function (FINAL_ACTIVITY_ORDER) {
@@ -74,9 +73,10 @@ class InitialDownsyncCompleteActivity extends SyncActivity_1.SyncActivity {
         this.di.emitEvent(conduit_view_types_1.ConduitEvent.BOOTSTRAP_SYNC_FINISHED);
     }
 }
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.InitialDownsyncCompleteActivity, (di, context, p) => {
+function initialDownsyncCompleteActivityHydrator(di, context, p) {
     return new InitialDownsyncCompleteActivity(di, context, p.subpriority);
-});
+}
+exports.initialDownsyncCompleteActivityHydrator = initialDownsyncCompleteActivityHydrator;
 /*********************************************************/
 class FetchPrebuiltDatabaseActivity extends SyncActivity_1.SyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
@@ -180,9 +180,10 @@ class FetchPrebuiltDatabaseActivity extends SyncActivity_1.SyncActivity {
         await this.setProgress(trc, 1);
     }
 }
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.FetchPrebuiltDatabaseActivity, (di, context, p, timeout) => {
+function fetchPrebuiltDatabaseActivityHydrator(di, context, p, timeout) {
     return new FetchPrebuiltDatabaseActivity(di, context, p.subpriority, timeout);
-});
+}
+exports.fetchPrebuiltDatabaseActivityHydrator = fetchPrebuiltDatabaseActivityHydrator;
 /*********************************************************/
 class UserUpdateActivity extends SyncActivity_1.SyncActivity {
     get progressBucketSize() { return 500; }
@@ -223,9 +224,10 @@ class UserUpdateActivity extends SyncActivity_1.SyncActivity {
         });
     }
 }
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.UserUpdateActivity, (di, context, p, timeout) => {
+function userUpdateActivityHydrator(di, context, p, timeout) {
     return new UserUpdateActivity(di, context, p.subpriority, timeout);
-});
+}
+exports.userUpdateActivityHydrator = userUpdateActivityHydrator;
 /*********************************************************/
 class NotesCountFetchActivity extends SyncActivity_1.SyncActivity {
     constructor(di, context, subpriority = 0) {
@@ -257,9 +259,10 @@ class NotesCountFetchActivity extends SyncActivity_1.SyncActivity {
     }
 }
 exports.NotesCountFetchActivity = NotesCountFetchActivity;
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.NotesCountFetchActivity, (di, context, p) => {
+function notesCountFetchActivityHydrator(di, context, p) {
     return new NotesCountFetchActivity(di, context, p.subpriority);
-});
+}
+exports.notesCountFetchActivityHydrator = notesCountFetchActivityHydrator;
 /*********************************************************/
 class BootstrapActivity extends SyncActivity_1.SyncActivity {
     get progressBucketSize() { return 10000; }
@@ -280,17 +283,19 @@ class BootstrapActivity extends SyncActivity_1.SyncActivity {
         await NoteStoreSync_1.syncBootstrap(trc, syncParams, this.options.shouldBootstrapNotes, [syncParams.syncContext, SyncHelpers_1.NOTES_SYNC_STATE_PATH]);
     }
 }
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.BootstrapActivity, (di, context, p, timeout) => {
+function bootstrapActivityHydrator(di, context, p, timeout) {
     return new BootstrapActivity(di, context, p.options.forVault, p.options.shouldBootstrapNotes, p.subpriority, timeout);
-});
+}
+exports.bootstrapActivityHydrator = bootstrapActivityHydrator;
 class VaultBootstrapActivity extends BootstrapActivity {
     constructor(di, context, shouldBootstrapNotes, subpriority = 0, timeout = 0) {
         super(di, context, true, shouldBootstrapNotes, subpriority, timeout);
     }
 }
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.VaultBootstrapActivity, (di, context, p, timeout) => {
+function vaultBootstrapActivityHydrator(di, context, p, timeout) {
     return new VaultBootstrapActivity(di, context, p.options.shouldBootstrapNotes, p.subpriority, timeout);
-});
+}
+exports.vaultBootstrapActivityHydrator = vaultBootstrapActivityHydrator;
 /*********************************************************/
 class BetaFeatureSyncActivity extends SyncActivity_1.SyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
@@ -313,9 +318,10 @@ class BetaFeatureSyncActivity extends SyncActivity_1.SyncActivity {
     }
 }
 exports.BetaFeatureSyncActivity = BetaFeatureSyncActivity;
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.BetaFeatureSyncActivity, (di, context, p, timeout) => {
+function betaFeatureSyncActivityHydrator(di, context, p, timeout) {
     return new BetaFeatureSyncActivity(di, context, p.subpriority, timeout);
-});
+}
+exports.betaFeatureSyncActivityHydrator = betaFeatureSyncActivityHydrator;
 /*********************************************************/
 class MaestroSyncActivity extends SyncActivity_1.SyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
@@ -342,9 +348,10 @@ class MaestroSyncActivity extends SyncActivity_1.SyncActivity {
     }
 }
 exports.MaestroSyncActivity = MaestroSyncActivity;
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.MaestroSyncActivity, (di, context, p, timeout) => {
+function maestroSyncActivityHydrator(di, context, p, timeout) {
     return new MaestroSyncActivity(di, context, p.subpriority, timeout);
-});
+}
+exports.maestroSyncActivityHydrator = maestroSyncActivityHydrator;
 /*********************************************************/
 class PromotionsSyncActivity extends SyncActivity_1.SyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
@@ -368,9 +375,10 @@ class PromotionsSyncActivity extends SyncActivity_1.SyncActivity {
     }
 }
 exports.PromotionsSyncActivity = PromotionsSyncActivity;
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.PromotionsSyncActivity, (di, context, p, timeout) => {
+function promotionsSyncActivityHydrator(di, context, p, timeout) {
     return new PromotionsSyncActivity(di, context, p.subpriority, timeout);
-});
+}
+exports.promotionsSyncActivityHydrator = promotionsSyncActivityHydrator;
 /*********************************************************/
 class MessagesSyncActivity extends SyncActivity_1.SyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
@@ -388,9 +396,10 @@ class MessagesSyncActivity extends SyncActivity_1.SyncActivity {
         await MessageSync_1.syncMessages(trc, syncParams);
     }
 }
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.MessagesSyncActivity, (di, context, p, timeout) => {
+function messagesSyncActivityHydrator(di, context, p, timeout) {
     return new MessagesSyncActivity(di, context, p.subpriority, timeout);
-});
+}
+exports.messagesSyncActivityHydrator = messagesSyncActivityHydrator;
 /*********************************************************/
 class SnippetsFetchActivity extends SyncActivity_1.SyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
@@ -414,9 +423,10 @@ class SnippetsFetchActivity extends SyncActivity_1.SyncActivity {
         }
     }
 }
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.SnippetsFetchActivity, (di, context, p, timeout) => {
+function snippetsFetchActivityHydrator(di, context, p, timeout) {
     return new SnippetsFetchActivity(di, context, p.subpriority, timeout);
-});
+}
+exports.snippetsFetchActivityHydrator = snippetsFetchActivityHydrator;
 /*********************************************************/
 class TrashedNoteMetadataFetchActivity extends SyncActivity_1.SyncActivity {
     constructor(di, context, forVault, subpriority = 0, timeout = 0) {
@@ -435,9 +445,10 @@ class TrashedNoteMetadataFetchActivity extends SyncActivity_1.SyncActivity {
         await NoteStoreSync_1.syncAllNotesMetadata(trc, syncParams, true);
     }
 }
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.TrashedNoteMetadataFetchActivity, (di, context, p, timeout) => {
+function trashedNoteMetadataFetchActivityHydrator(di, context, p, timeout) {
     return new TrashedNoteMetadataFetchActivity(di, context, p.options.forVault, p.subpriority, timeout);
-});
+}
+exports.trashedNoteMetadataFetchActivityHydrator = trashedNoteMetadataFetchActivityHydrator;
 /*********************************************************/
 class NoteMetadataFetchActivity extends SyncActivity_1.SyncActivity {
     get progressBucketSize() { return 10000; }
@@ -462,9 +473,10 @@ class NoteMetadataFetchActivity extends SyncActivity_1.SyncActivity {
         });
     }
 }
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.NoteMetadataFetchActivity, (di, context, p, timeout) => {
+function noteMetadataFetchActivityHydrator(di, context, p, timeout) {
     return new NoteMetadataFetchActivity(di, context, p.options.forVault, p.subpriority, timeout);
-});
+}
+exports.noteMetadataFetchActivityHydrator = noteMetadataFetchActivityHydrator;
 class NotesFetchActivity extends SyncActivity_1.SyncActivity {
     constructor(di, context, immediateSyncArgs, subpriority = 0, timeout = 0) {
         super(di, context, {
@@ -531,9 +543,10 @@ class NotesFetchActivity extends SyncActivity_1.SyncActivity {
     }
 }
 exports.NotesFetchActivity = NotesFetchActivity;
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.NotesFetchActivity, (di, context, p, timeout) => {
+function notesFetchActivityHydrator(di, context, p, timeout) {
     return new NotesFetchActivity(di, context, p.options.immediateSyncArgs, p.subpriority, timeout);
-});
+}
+exports.notesFetchActivityHydrator = notesFetchActivityHydrator;
 /*********************************************************/
 class SchemaMigrationCompleteActivity extends SyncActivity_1.SyncActivity {
     get progressBucketSize() { return 2500; }
@@ -564,9 +577,10 @@ class SchemaMigrationCompleteActivity extends SyncActivity_1.SyncActivity {
         });
     }
 }
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.SchemaMigrationCompleteActivity, (di, context, p) => {
+function schemaMigrationCompleteActivityHydrator(di, context, p) {
     return new SchemaMigrationCompleteActivity(di, context, p.subpriority);
-});
+}
+exports.schemaMigrationCompleteActivityHydrator = schemaMigrationCompleteActivityHydrator;
 /*********************************************************/
 class NSyncInitialDownsyncActivity extends SyncActivity_1.SyncActivity {
     get progressBucketSize() { return 500; }
@@ -615,9 +629,10 @@ class NSyncInitialDownsyncActivity extends SyncActivity_1.SyncActivity {
     }
 }
 exports.NSyncInitialDownsyncActivity = NSyncInitialDownsyncActivity;
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.NSyncInitialDownsyncActivity, (di, context, p, timeout) => {
+function nsyncInitialDownsyncActivityHydrator(di, context, p, timeout) {
     return new NSyncInitialDownsyncActivity(di, context, p.subpriority);
-});
+}
+exports.nsyncInitialDownsyncActivityHydrator = nsyncInitialDownsyncActivityHydrator;
 /*********************************************************/
 async function addInitialDownsyncActivities(trc, di, context, tx) {
     const auth = context.syncManager.getAuth();

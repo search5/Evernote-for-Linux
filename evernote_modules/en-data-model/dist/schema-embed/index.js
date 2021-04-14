@@ -5,6 +5,29 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SchemaArray = exports.SchemaMap = void 0;
 exports.SchemaMap = {
+    "AdjustedServiceLevelV2.schema.json": {
+        "$id": "AdjustedServiceLevelV2.schema.json",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "AdjustedServiceLevelV2",
+        "type": "number",
+        "enum": [
+            1,
+            16,
+            256,
+            4096,
+            65536,
+            1048576
+        ],
+        "tsEnumNames": [
+            "FREE",
+            "PLUS",
+            "PREMIUM",
+            "PERSONAL",
+            "PROFESSIONAL",
+            "TEAMS"
+        ],
+        "default": 0
+    },
     "AgentID.schema.json": {
         "$id": "AgentID.schema.json",
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -166,6 +189,40 @@ exports.SchemaMap = {
             "path": ""
         }
     },
+    "BoardDesktopLayout.schema.json": {
+        "$id": "BoardDesktopLayout.schema.json",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "BoardDesktopLayout",
+        "type": "string",
+        "enum": [
+            "ThreeColumnFlex"
+        ],
+        "tsEnumNames": [
+            "ThreeColumnFlex"
+        ],
+        "default": ""
+    },
+    "BoardFeature.schema.json": {
+        "$id": "BoardFeature.schema.json",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "BoardFeature",
+        "type": "string",
+        "enum": [
+            "calendar",
+            "core",
+            "extra",
+            "filteredNotes",
+            "tasks"
+        ],
+        "tsEnumNames": [
+            "Calendar",
+            "Core",
+            "Extra",
+            "FilteredNotes",
+            "Tasks"
+        ],
+        "default": ""
+    },
     "BoardMimeType.schema.json": {
         "$id": "BoardMimeType.schema.json",
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -183,6 +240,19 @@ exports.SchemaMap = {
         ],
         "default": ""
     },
+    "BoardMobileLayout.schema.json": {
+        "$id": "BoardMobileLayout.schema.json",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "BoardMobileLayout",
+        "type": "string",
+        "enum": [
+            "SingleColumnStack"
+        ],
+        "tsEnumNames": [
+            "SingleColumnStack"
+        ],
+        "default": ""
+    },
     "BoardType.schema.json": {
         "$id": "BoardType.schema.json",
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -195,6 +265,29 @@ exports.SchemaMap = {
             "Home"
         ],
         "default": ""
+    },
+    "ColorScheme.schema.json": {
+        "$id": "ColorScheme.schema.json",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "ColorScheme",
+        "properties": {
+            "light": {
+                "type": "string",
+                "default": ""
+            },
+            "dark": {
+                "type": "string",
+                "default": ""
+            }
+        },
+        "required": [
+            "light",
+            "dark"
+        ],
+        "default": {
+            "light": "",
+            "dark": ""
+        }
     },
     "ConditionalDirective.schema.json": {
         "$id": "ConditionalDirective.schema.json",
@@ -263,6 +356,36 @@ exports.SchemaMap = {
                 "$ref": "DeclarativeConditionalExpr.schema.json"
             }
         ]
+    },
+    "DeprecatedServiceLevel.schema.json": {
+        "$id": "DeprecatedServiceLevel.schema.json",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "DeprecatedServiceLevel",
+        "type": "string",
+        "enum": [
+            "BASIC",
+            "BUSINESS"
+        ],
+        "tsEnumNames": [
+            "BASIC",
+            "BUSINESS"
+        ],
+        "default": ""
+    },
+    "DeviceFormFactor.schema.json": {
+        "$id": "DeviceFormFactor.schema.json",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "DeviceFormFactor",
+        "type": "string",
+        "enum": [
+            "Desktop",
+            "Mobile"
+        ],
+        "tsEnumNames": [
+            "Desktop",
+            "Mobile"
+        ],
+        "default": ""
     },
     "DirectValueRef.schema.json": {
         "$id": "DirectValueRef.schema.json",
@@ -449,6 +572,75 @@ exports.SchemaMap = {
         ],
         "default": 0
     },
+    "MutableWidgetType.schema.json": {
+        "$id": "MutableWidgetType.schema.json",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "MutableWidgetType",
+        "type": "string",
+        "enum": [
+            "Pinned",
+            "ScratchPad",
+            "FilteredNotes"
+        ],
+        "tsEnumNames": [
+            "Pinned",
+            "ScratchPad",
+            "FilteredNotes"
+        ],
+        "default": ""
+    },
+    "ServiceLevelV2.schema.json": {
+        "$id": "ServiceLevelV2.schema.json",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "ServiceLevelV2",
+        "type": "string",
+        "enum": [
+            "FREE",
+            "PLUS",
+            "PREMIUM",
+            "PERSONAL",
+            "PROFESSIONAL",
+            "TEAMS"
+        ],
+        "tsEnumNames": [
+            "FREE",
+            "PLUS",
+            "PREMIUM",
+            "PERSONAL",
+            "PROFESSIONAL",
+            "TEAMS"
+        ],
+        "default": ""
+    },
+    "ServiceLevelV2Summary.schema.json": {
+        "$id": "ServiceLevelV2Summary.schema.json",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "ServiceLevelV2Summary",
+        "properties": {
+            "serviceLevel": {
+                "$ref": "ServiceLevelV2.schema.json",
+                "default": ""
+            },
+            "adjustedServiceLevel": {
+                "$ref": "AdjustedServiceLevelV2.schema.json",
+                "default": 0
+            },
+            "thriftServiceLevel": {
+                "$ref": "ThriftServiceLevelV2.schema.json",
+                "default": 0
+            }
+        },
+        "required": [
+            "serviceLevel",
+            "adjustedServiceLevel",
+            "thriftServiceLevel"
+        ],
+        "default": {
+            "serviceLevel": "",
+            "adjustedServiceLevel": 0,
+            "thriftServiceLevel": 0
+        }
+    },
     "ShortcutTargetRef.schema.json": {
         "$id": "ShortcutTargetRef.schema.json",
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -495,6 +687,29 @@ exports.SchemaMap = {
             "SavedSearch"
         ],
         "default": ""
+    },
+    "ThriftServiceLevelV2.schema.json": {
+        "$id": "ThriftServiceLevelV2.schema.json",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "ThriftServiceLevelV2",
+        "type": "number",
+        "enum": [
+            10,
+            2,
+            3,
+            20,
+            30,
+            40
+        ],
+        "tsEnumNames": [
+            "FREE",
+            "PLUS",
+            "PREMIUM",
+            "PERSONAL",
+            "PROFESSIONAL",
+            "TEAMS"
+        ],
+        "default": 0
     },
     "TraversalDir.schema.json": {
         "$id": "TraversalDir.schema.json",
@@ -594,7 +809,9 @@ exports.SchemaMap = {
             "Notebooks",
             "Clipped",
             "Calendar",
-            "Tasks"
+            "Tasks",
+            "FilteredNotes",
+            "Extra"
         ],
         "tsEnumNames": [
             "Tags",
@@ -606,7 +823,9 @@ exports.SchemaMap = {
             "Notebooks",
             "Clipped",
             "Calendar",
-            "Tasks"
+            "Tasks",
+            "FilteredNotes",
+            "Extra"
         ],
         "default": ""
     },
@@ -820,6 +1039,9 @@ exports.SchemaMap = {
                         "$ref": "BoardType.schema.json",
                         "default": ""
                     },
+                    "internalID": {
+                        "type": "number"
+                    },
                     "freeTrialExpiration": {
                         "$ref": "timestamp.schema.json"
                     },
@@ -855,10 +1077,7 @@ exports.SchemaMap = {
                         "type": "object",
                         "properties": {
                             "layout": {
-                                "type": "string",
-                                "enum": [
-                                    "SingleColumnStack"
-                                ],
+                                "$ref": "BoardMobileLayout.schema.json",
                                 "default": ""
                             }
                         },
@@ -873,10 +1092,7 @@ exports.SchemaMap = {
                         "type": "object",
                         "properties": {
                             "layout": {
-                                "type": "string",
-                                "enum": [
-                                    "ThreeColumnFlex"
-                                ],
+                                "$ref": "BoardDesktopLayout.schema.json",
                                 "default": ""
                             }
                         },
@@ -892,6 +1108,28 @@ exports.SchemaMap = {
                     },
                     "tasksVersion": {
                         "type": "integer"
+                    },
+                    "filteredNotesVersion": {
+                        "type": "integer"
+                    },
+                    "extraVersion": {
+                        "type": "integer"
+                    },
+                    "coreVersion": {
+                        "type": "integer"
+                    },
+                    "serviceLevel": {
+                        "anyOf": [
+                            {
+                                "$ref": "ServiceLevelV2.schema.json"
+                            },
+                            {
+                                "$ref": "DeprecatedServiceLevel.schema.json"
+                            }
+                        ]
+                    },
+                    "isCustomized": {
+                        "type": "boolean"
                     }
                 },
                 "required": [
@@ -1844,6 +2082,12 @@ exports.SchemaMap = {
                         "$ref": "WidgetType.schema.json",
                         "default": ""
                     },
+                    "mutableWidgetType": {
+                        "$ref": "MutableWidgetType.schema.json"
+                    },
+                    "internalID": {
+                        "type": "number"
+                    },
                     "selectedTab": {
                         "$ref": "WidgetSelectedTab.schema.json"
                     },
@@ -1903,6 +2147,9 @@ exports.SchemaMap = {
                             "path": "",
                             "content": ""
                         }
+                    },
+                    "backgroundColor": {
+                        "$ref": "ColorScheme.schema.json"
                     }
                 },
                 "required": [

@@ -3,7 +3,7 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkNoteEditPermissionByNoteId = exports.checkNoteEditPermissionByTask = exports.taskCreatePlan = void 0;
+exports.createMembership = exports.getParentNoteId = exports.checkNoteEditPermissionByNoteId = exports.checkNoteEditPermissionByTask = exports.taskCreatePlan = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const TaskConstants_1 = require("../../TaskConstants");
@@ -98,4 +98,43 @@ async function checkNoteEditPermissionByNoteId(trc, ctx, noteId) {
     }
 }
 exports.checkNoteEditPermissionByNoteId = checkNoteEditPermissionByNoteId;
+async function getParentNoteId(trc, ctx, taskID) {
+    const taskRef = { id: taskID, type: TaskConstants_1.TaskEntityTypes.Task };
+    const noteEdge = await ctx.traverseGraph(trc, taskRef, [{ edge: ['inputs', 'parent'], type: en_core_entity_types_1.CoreEntityTypes.Note }]);
+    if (!noteEdge || !noteEdge.length || !noteEdge[0].edge) {
+        throw new conduit_utils_1.NotFoundError('The task does not have parent Note');
+    }
+    return noteEdge[0].edge.srcID;
+}
+exports.getParentNoteId = getParentNoteId;
+async function createMembership(trc, ctx, plan, owner, srcRef, srcPort, recipientId, currentProfile) {
+    const membershipGenID = await ctx.generateID(trc, owner, en_core_entity_types_1.CoreEntityTypes.Membership);
+    const membershipID = membershipGenID[1];
+    const membership = ctx.createEntity({ id: membershipID, type: en_core_entity_types_1.CoreEntityTypes.Membership }, {
+        privilege: en_core_entity_types_1.MembershipPrivilege.COMPLETE,
+        recipientType: en_core_entity_types_1.MembershipRecipientType.USER,
+        recipientIsMe: currentProfile.id === recipientId,
+    });
+    plan.ops.push({
+        changeType: 'Node:CREATE',
+        node: membership,
+        id: membershipGenID,
+    }, {
+        changeType: 'Edge:MODIFY',
+        edgesToCreate: [{
+                srcID: srcRef.id, srcType: srcRef.type, srcPort,
+                dstID: membership.id, dstType: en_core_entity_types_1.CoreEntityTypes.Membership, dstPort: 'parent',
+            }, {
+                srcID: membership.id, srcType: en_core_entity_types_1.CoreEntityTypes.Membership, srcPort: 'recipient',
+                dstID: recipientId, dstType: en_core_entity_types_1.CoreEntityTypes.Profile, dstPort: null,
+            }, {
+                srcID: membership.id, srcType: en_core_entity_types_1.CoreEntityTypes.Membership, srcPort: 'sharer',
+                dstID: currentProfile.id, dstType: en_core_entity_types_1.CoreEntityTypes.Profile, dstPort: null,
+            }, {
+                srcID: membership.id, srcType: en_core_entity_types_1.CoreEntityTypes.Membership, srcPort: 'owner',
+                dstID: currentProfile.id, dstType: en_core_entity_types_1.CoreEntityTypes.Profile, dstPort: null,
+            }],
+    });
+}
+exports.createMembership = createMembership;
 //# sourceMappingURL=Task.js.map

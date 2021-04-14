@@ -297,7 +297,7 @@ function getNoteDataResolver(getSearchShareAcceptMetadata) {
                 await updateSharedSyncContextMetadataHelper(context, { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note }, noteShareData.syncContext, SharedNoteSync_1.isValidSharedNoteMembershipProvider(noteID));
             }
             if (nbShareData && nbShareData.sharedNbGlobalID) {
-                await updateSharedSyncContextMetadataHelper(context, { id: Converters_1.convertGuidFromService(shareMetadata.nbGuid, 'Notebook'), type: en_core_entity_types_1.CoreEntityTypes.Note }, nbShareData.syncContext, LinkedNotebookSync_1.isValidSharedNotebookMembershipProvider(nbShareData.sharedNbGlobalID));
+                await updateSharedSyncContextMetadataHelper(context, { id: Converters_1.convertGuidFromService(shareMetadata.nbGuid, en_core_entity_types_1.CoreEntityTypes.Notebook), type: en_core_entity_types_1.CoreEntityTypes.Notebook }, nbShareData.syncContext, LinkedNotebookSync_1.isValidSharedNotebookMembershipProvider(nbShareData.sharedNbGlobalID));
             }
         }
         return Boolean(serviceData === null || serviceData === void 0 ? void 0 : serviceData.note);

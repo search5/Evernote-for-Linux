@@ -327,15 +327,15 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
                 // SharedNotebook access is still valid, just needed to refresh the auth token
                 throw new conduit_utils_1.RetryError('reauthenticated to SharedNotebook', 0, conduit_utils_1.RetryErrorReason.AUTH_UPDATED);
             }
-            // lost access to SharedNotebook, return null to indicate that the original AuthError is still correct
-            return null;
+            // lost access to SharedNotebook
+            throw new conduit_utils_1.NoAccessError(res.err.shareGuid, 'lost access to shared notebook');
         }
         if (res.err instanceof Auth.RevalidateShareError && res.err.type === en_core_entity_types_1.CoreEntityTypes.Note) {
             if (await this.refreshSharedNoteAuth(trc, res.err.shareGuid, tx)) {
                 throw new conduit_utils_1.RetryError('reauthenticated to SharedNote', 0, conduit_utils_1.RetryErrorReason.AUTH_UPDATED);
             }
-            // lost access to note, return null to indicate that the original AuthError is still correct
-            return null;
+            // lost access to note
+            throw new conduit_utils_1.NoAccessError(res.err.shareGuid, 'lost access to shared note');
         }
         throw res.err;
     }
@@ -357,9 +357,11 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
                     notebookGuid: Converters_1.convertGuidFromService(sharedNotebook.notebookGuid, en_core_entity_types_1.CoreEntityTypes.Notebook),
                     authStr: sharedNotebook.authStr,
                 });
+                conduit_utils_1.logger.info('refreshSharedNotebookAuth: auth refreshed for notebook ', sharedNotebook.notebookGuid);
                 return true;
             }
             // notebook permissions revoked, cleanup share state and associated LinkedNotebooks
+            conduit_utils_1.logger.info('refreshSharedNotebookAuth: Lost access to shared notebook ', shareGuid);
             await graphTransaction.deleteSyncState(trc, syncStatePath);
             shareState.linkedNotebook.guid && await LinkedNotebookSync_1.deleteLinkedNotebookContext(trc, graphTransaction, shareState.linkedNotebook.guid);
             await graphTransaction.deleteNode(trc, conduit_core_1.PERSONAL_USER_CONTEXT, { id: Converters_1.convertGuidFromService(shareState.guid, en_core_entity_types_1.CoreEntityTypes.Invitation), type: en_core_entity_types_1.CoreEntityTypes.Invitation });
@@ -385,9 +387,11 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
                     shardID: shareState.shardId,
                     authStr: sharedNoteAuth.authStr,
                 });
+                conduit_utils_1.logger.info('refreshSharedNoteAuth: Auth refreshed for shared note ', noteGuid);
                 return true;
             }
             // permission revoked, cleanup share state
+            conduit_utils_1.logger.info('refreshSharedNoteAuth: Lost access to note ', noteGuid);
             await graphTransaction.deleteSyncState(trc, syncStatePath);
             await SharedNoteSync_1.deleteSharedNoteContext(trc, graphTransaction, noteGuid);
             return false;

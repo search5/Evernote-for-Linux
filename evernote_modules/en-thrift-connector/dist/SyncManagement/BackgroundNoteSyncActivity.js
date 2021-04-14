@@ -3,14 +3,13 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BackgroundNoteSyncActivity = void 0;
+exports.backgroundNoteSyncActivityHydrator = exports.BackgroundNoteSyncActivity = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
 const NoteStoreSync_1 = require("../SyncFunctions/NoteStoreSync");
 const SyncHelpers_1 = require("../SyncFunctions/SyncHelpers");
 const ContentFetchSyncActivity_1 = require("./ContentFetchSyncActivity");
 const SyncActivity_1 = require("./SyncActivity");
-const SyncActivityHydration_1 = require("./SyncActivityHydration");
 let gMaxTime = conduit_utils_1.registerDebugSetting('BackgroundNoteMaxTimePerPoll', 1000, v => gMaxTime = v);
 let gChunkTimebox = conduit_utils_1.registerDebugSetting('BackgroundNoteChunkTimebox', 400, v => gChunkTimebox = v);
 class BackgroundNoteSyncActivity extends SyncActivity_1.SyncActivity {
@@ -65,7 +64,8 @@ class BackgroundNoteSyncActivity extends SyncActivity_1.SyncActivity {
     }
 }
 exports.BackgroundNoteSyncActivity = BackgroundNoteSyncActivity;
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.BackgroundNoteSyncActivity, (di, context, p, timeout) => {
+function backgroundNoteSyncActivityHydrator(di, context, p, timeout) {
     return new BackgroundNoteSyncActivity(di, context, p.subpriority, timeout);
-});
+}
+exports.backgroundNoteSyncActivityHydrator = backgroundNoteSyncActivityHydrator;
 //# sourceMappingURL=BackgroundNoteSyncActivity.js.map

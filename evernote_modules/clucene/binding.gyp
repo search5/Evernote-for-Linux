@@ -30,6 +30,8 @@
                     "dist/cpp/en-search-engine-shared-native/core/search_document_context.cpp",
                     "dist/cpp/en-search-engine-shared-native/util/ense_utils.cpp",
                     "dist/cpp/en-search-engine-shared-native/util/ense_reco_resource_parser.cpp",
+                    "dist/cpp/en-search-engine-shared-native/util/ense_symb_type.cpp",
+                    "dist/cpp/en-search-engine-shared-native/util/ense_tokenization.cpp",
                     "dist/cpp/en-search-engine-shared-native/util/enml_parser.cpp",
                     "dist/cpp/en-search-engine-shared-native/util/tinyxml2.cpp",
                     "dist/cpp/lib/clucene/src/core/CLucene/StdHeader.cpp",
@@ -186,7 +188,7 @@
                     "dist/cpp/lib/clucene/src/ext/zlib/inflate.c",
                     "dist/cpp/lib/clucene/src/ext/zlib/inftrees.c",
                     "dist/cpp/lib/clucene/src/ext/zlib/trees.c",
-                    "dist/cpp/lib/clucene/src/ext/zlib/zutil.c",
+                    "dist/cpp/lib/clucene/src/ext/zlib/zutil.c"
                     "../node-gyp/src/win_delay_load_hook.cc"
         ],
         "link_settings": {

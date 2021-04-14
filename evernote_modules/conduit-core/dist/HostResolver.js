@@ -44,6 +44,9 @@ class HostResolver {
             conduit_utils_1.logger.warn('Invalid host info schema');
             return;
         }
+        if (newInfo.version <= this.cachedHostInfo.version) {
+            return;
+        }
         // For safety, we are going to keep all old fields that might be getting deleted. This is to
         // prevent any problems downloading the new host information causing us to be unable to upload
         for (const host in this.hostDefaults.hostInformation) {
@@ -58,28 +61,33 @@ class HostResolver {
     }
     async attemptToCacheHostInfo(trc) {
         if (this.inFlight) {
-            return await this.inFlight;
+            return this.inFlight;
         }
         if (!this.lastRetrieved && this.httpProvider && this.updateUrl) {
             this.inFlight = new Promise(async (resolve) => {
-                const result = await this.httpProvider().request(trc, {
-                    method: 'GET',
-                    url: this.updateUrl,
-                });
-                this.inFlight = null;
-                if (result.status === 200) {
-                    conduit_utils_1.logger.info('Found service hosts file');
-                    conduit_utils_1.logger.info(result.result || '');
-                    this.lastRetrieved = Date.now();
-                    const resultStruct = conduit_utils_1.safeParse(result.result);
-                    if (resultStruct.version > this.cachedHostInfo.version) {
+                try {
+                    const result = await this.httpProvider().request(trc, {
+                        method: 'GET',
+                        url: `${this.updateUrl}?cachebust=${Date.now()}`,
+                    });
+                    if (result.status === 200) {
+                        conduit_utils_1.logger.info('Found service hosts file');
+                        conduit_utils_1.logger.info(result.result || '');
+                        const resultStruct = JSON.parse(result.result || '');
                         await this.updateCachedHostInfo(trc, resultStruct);
+                        this.lastRetrieved = Date.now();
+                    }
+                    else {
+                        conduit_utils_1.logger.warn(`Unable to cache service hosts: ${result.status}: ${result.statusText}`);
                     }
                 }
-                else {
-                    conduit_utils_1.logger.warn(`Unable to cache service hosts: ${result.status}: ${result.statusText}`);
+                catch (e) {
+                    conduit_utils_1.logger.error('Unable to read host file', e);
                 }
-                resolve(result);
+                finally {
+                    this.inFlight = null;
+                    resolve();
+                }
             });
             await this.inFlight;
         }

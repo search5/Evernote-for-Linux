@@ -1,17 +1,20 @@
 #include <sstream>
 #include <algorithm>
+#include <chrono>
 
 #include "ense_utils.h"
 #include "ense_reco_resource_parser.h"
 #include "search_engine_context.h"
 
+#include "CLucene/search/QueryFilter.h"
+
 namespace en_search {
 
     SearchEngineContext::SearchEngineContext(): kMaxIDSize(220), kIDField("_id"), kIDFieldWide(L"_id"),
-    kNotebookField(L"notebook"), kNotebookTextField(L"notebookText"), kNotebookTextAltField(L"notebookTextAlt"), kNotebookGuidField(L"nbGuid"), kStack(L"stack"), kStackText(L"stackText"), kStackTextAlt(L"stackTextAlt"),
-    kTagField(L"tag"), kTagTextField(L"tagText"), kTagTextAltField(L"tagTextAlt"), kTagGuidField(L"tagGuid"), kSpaceField(L"space"), kSpaceTextField(L"spaceText"), kSpaceTextAltField(L"spaceTextAlt"),
+    kNotebookField(L"notebook"), kNotebookTextField(L"notebookText"), kNotebookTextAltField(L"notebookTextAlt"), kNotebookTextSuffixField(L"notebookTextSuffix"),kNotebookGuidField(L"nbGuid"), kStack(L"stack"), kStackText(L"stackText"), kStackTextAlt(L"stackTextAlt"), kStackTextSuffix(L"stackTextSuffix"),
+    kTagField(L"tag"), kTagTextField(L"tagText"), kTagTextAltField(L"tagTextAlt"), kTagTextSuffixField(L"tagTextSuffix"), kTagGuidField(L"tagGuid"), kSpaceField(L"space"), kSpaceTextField(L"spaceText"), kSpaceTextAltField(L"spaceTextAlt"), kSpaceTextSuffixField(L"spaceTextSuffix"),
     kSpaceGuidField(L"spaceGuid"), kResourceMime(L"resourceMime"), kResourceFileName(L"resourceFileName"), kCreated(L"created"),
-    kUpdated(L"updated"), KTitle(L"title"), KTitleAlt(L"titleAlt"), KTitleRaw(L"titleRaw"), kSubjectDate(L"subjectDate"), kAuthor(L"author"), kAuthorText(L"authorText"), kAuthorTextAlt(L"authorTextAlt"),
+    kUpdated(L"updated"), KTitle(L"title"), KTitleAlt(L"titleAlt"), KTitleSuffix(L"titleSuffix"), KTitleRaw(L"titleRaw"), kSubjectDate(L"subjectDate"), kAuthor(L"author"), kAuthorText(L"authorText"),
     kCreatorId(L"creatorId"), kLastEditorId(L"lastEditorId"), kSource(L"source"), kSourceApplication(L"sourceApplication"),
     kSourceURL(L"sourceURL"), kContentClass(L"contentClass"), kPlaceName(L"placeName"), kApplicationData(L"applicationData"),
     kReminderOrder(L"reminderOrder"), kReminderTime(L"reminderTime"), kReminderDoneTime(L"reminderDoneTime"), kContains(L"contains"),
@@ -129,18 +132,32 @@ namespace en_search {
 
             auto jQueryWithParams = json::parse(queryWithParams);
             
+            auto filterString = getFilterStringFromJson(jQueryWithParams);
+            // printf("filterString: %s\n", filterString.c_str());
+            auto filterStringUc = util::toWstring(filterString);
+            auto filterStringQuery = util::cst_del_unique_ptr<Query>(
+            QueryParser::parse(filterStringUc.c_str(), _T("_id"), analyzer_.get()), 
+                [](Query* query) {
+                    _CLLDELETE(query);
+                });
+            
+            auto filter = util::cst_del_unique_ptr<Filter>(_CLNEW QueryFilter(filterStringQuery.get()), [](Filter* filter) {
+                _CLDELETE(filter);
+            });
+
             auto queryString = getQueryStringFromJson(jQueryWithParams);
+            // printf("queryString: %s\n", queryString.c_str());
             auto queryStringUc = util::toWstring(queryString);
-            auto query = util::cst_del_unique_ptr<Query>(
+            auto queryStringQuery = util::cst_del_unique_ptr<Query>(
             QueryParser::parse(queryStringUc.c_str(), _T("_id"), analyzer_.get()), 
                 [](Query* query) {
                     _CLLDELETE(query);
                 });
 
+
             auto searchParams = getSearchParamsFromJson(jQueryWithParams);
             auto storedFields = getStoredFieldsFromJson(jQueryWithParams);
-            // printf("queryString: %s\n", queryString.c_str());
-
+            
             SortField* sortField = NULL;
             switch (searchParams.sortType) {
                 case SortType::CREATED:
@@ -164,23 +181,42 @@ namespace en_search {
 
             auto searcher = std::make_unique<IndexSearcher>(reader.get());
             auto hits = util::cst_del_unique_ptr<Hits>(
-                searcher->search(query.get(), sort.get()),
+                searcher->search(queryStringQuery.get(), filter.get(), sort.get()),
                 [](Hits* hits) {
                     _CLLDELETE(hits);
                 });
-                
+
             auto maxHitsCount = hits->length();
+            std::vector<SInterimResults> interimResults;
+            auto needRescoring = searchParams.sortType == SortType::RELEVANCE;
+            if (needRescoring) {
+                interimResults.resize(maxHitsCount);
+                for (size_t i = 0; i < maxHitsCount; ++i) {
+                    auto updatedStr = getStringFromField(hits->doc(i), L"updated");
+                    auto updated = std::stoll(updatedStr.c_str());
+                    interimResults[i].index = i;
+                    interimResults[i].score = hits->score(i) * smarttiming2plain(updated);
+                }
+
+                std::sort(interimResults.begin(), interimResults.end(), [](const SInterimResults &lhs, const SInterimResults &rhs) {
+                    return lhs.score > rhs.score;
+                });
+            }
+
             auto startIndex = std::min((size_t)std::max(searchParams.from, 0), maxHitsCount);
             maxHitsCount -= startIndex;
             auto maxResults = (searchParams.size >= 0 && (size_t)searchParams.size < maxHitsCount) ? (size_t)searchParams.size : maxHitsCount;
-
             for (auto i = startIndex; i < startIndex + maxResults; ++i) {
+                auto index = needRescoring ? interimResults[i].index : i;
+                auto interimScore = needRescoring ? interimResults[i].score : hits->score(i);
+                auto &hitDoc = hits->doc(index);
+
                 // ids/guids can only contain ascii symbols
-                auto wide_guid = std::wstring(hits->doc(i).get(_T("_id")));
+                auto wide_guid = std::wstring(hitDoc.get(_T("_id")));
                 std::string guid(wide_guid.begin(), wide_guid.end());
-                auto wide_type = std::wstring(hits->doc(i).get(_T("type")));
-                auto wide_version = std::wstring(hits->doc(i).get(_T("version")));
-                auto score = hits->score(i);
+                auto wide_type = std::wstring(hitDoc.get(_T("type")));
+                auto wide_version = std::wstring(hitDoc.get(_T("version")));
+                auto score = util::sigmoid(interimScore);
 
                 auto doc = json::object();
                 doc["guid"] = guid;
@@ -189,9 +225,9 @@ namespace en_search {
                 doc["score"] = score;
                 for (const auto &field: storedFields) {
                     if (field == "tag" || field == "tagGuid") {
-                        doc[field] = getArrayOfStringFromField(hits->doc(i), std::wstring(field.begin(), field.end()).c_str());
+                        doc[field] = getArrayOfStringFromField(hitDoc, std::wstring(field.begin(), field.end()).c_str());
                     } else {
-                        doc[field] = getStringFromField(hits->doc(i), std::wstring(field.begin(), field.end()).c_str());
+                        doc[field] = getStringFromField(hitDoc, std::wstring(field.begin(), field.end()).c_str());
                     }
                 }
                 searchResultGroup["documents"].emplace_back(doc);
@@ -365,32 +401,46 @@ namespace en_search {
         const TCHAR* EMPTY_STOP_WORDS[] = { NULL }; 
         
         analyzer_->addAnalyzer(kIDFieldWide.c_str(), new lucene::analysis::KeywordAnalyzer());
+        // notebook
         analyzer_->addAnalyzer(kNotebookField.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kNotebookTextField.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
         analyzer_->addAnalyzer(kNotebookTextAltField.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
+        analyzer_->addAnalyzer(kNotebookTextSuffixField.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kNotebookGuidField.c_str(), new lucene::analysis::KeywordAnalyzer());
+        // stack
         analyzer_->addAnalyzer(kStack.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kStackText.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
         analyzer_->addAnalyzer(kStackTextAlt.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
+        analyzer_->addAnalyzer(kStackTextSuffix.c_str(), new lucene::analysis::KeywordAnalyzer());
+        // tag
         analyzer_->addAnalyzer(kTagField.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kTagTextField.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
         analyzer_->addAnalyzer(kTagTextAltField.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
+        analyzer_->addAnalyzer(kTagTextSuffixField.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kTagGuidField.c_str(), new lucene::analysis::KeywordAnalyzer());
+        // space
         analyzer_->addAnalyzer(kSpaceField.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kSpaceTextField.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
         analyzer_->addAnalyzer(kSpaceTextAltField.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
+        analyzer_->addAnalyzer(kSpaceTextSuffixField.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kSpaceGuidField.c_str(), new lucene::analysis::KeywordAnalyzer());
+        // resource
         analyzer_->addAnalyzer(kResourceMime.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kResourceFileName.c_str(), new StandardAnalyzer());
+        // created / updated
         analyzer_->addAnalyzer(kCreated.c_str(), new StandardAnalyzer());
         analyzer_->addAnalyzer(kUpdated.c_str(), new StandardAnalyzer());
+        // title
         analyzer_->addAnalyzer(KTitle.c_str(), new StandardAnalyzer());
         analyzer_->addAnalyzer(KTitleAlt.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
+        analyzer_->addAnalyzer(KTitleSuffix.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(KTitleRaw.c_str(), new lucene::analysis::KeywordAnalyzer());
+        // subject date
         analyzer_->addAnalyzer(kSubjectDate.c_str(), new StandardAnalyzer());
+        // author
         analyzer_->addAnalyzer(kAuthor.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kAuthorText.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
-        analyzer_->addAnalyzer(kAuthorTextAlt.c_str(), new StandardAnalyzer(EMPTY_STOP_WORDS));
+        // other fields
         analyzer_->addAnalyzer(kCreatorId.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kLastEditorId.c_str(), new lucene::analysis::KeywordAnalyzer());
         analyzer_->addAnalyzer(kSource.c_str(), new lucene::analysis::KeywordAnalyzer());
@@ -409,9 +459,14 @@ namespace en_search {
         this->get_index_writer();
     }
 
+    std::string getFilterStringFromJson(const json &jQueryWithParams) {
+        return ((jQueryWithParams.contains("filterString") && jQueryWithParams["filterString"].is_string())) ? 
+            jQueryWithParams["filterString"].get<std::string>() : "*:*";
+    }
+
     std::string getQueryStringFromJson(const json &jQueryWithParams) {
         return ((jQueryWithParams.contains("queryString") && jQueryWithParams["queryString"].is_string())) ? 
-            jQueryWithParams["queryString"].get<std::string>() : "";
+            jQueryWithParams["queryString"].get<std::string>() : "*:*";
     }
 
     SearchParams getSearchParamsFromJson(const json &jQueryWithParams) {
@@ -470,5 +525,11 @@ namespace en_search {
                 { "documents", json::array() }
             };
         return searchResultGroup;
+    }
+
+    double smarttiming2plain(long long updated) {
+        auto currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        double tx = std::fabs(updated - currentTime) / 1000; 
+        return std::exp(tx * kRelevanceFactor);
     }
 }

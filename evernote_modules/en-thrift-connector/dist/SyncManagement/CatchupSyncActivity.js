@@ -3,10 +3,9 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CatchupSyncActivity = void 0;
+exports.catchupSyncActivityHydrator = exports.CatchupSyncActivity = void 0;
 const NoteStoreSync_1 = require("../SyncFunctions/NoteStoreSync");
 const SyncActivity_1 = require("./SyncActivity");
-const SyncActivityHydration_1 = require("./SyncActivityHydration");
 const CHUNK_TIMEBOX = 200;
 class CatchupSyncActivity extends SyncActivity_1.SyncActivity {
     constructor(di, context, isVault, catchupRefs, subBucketSize, offset, timeout = 0) {
@@ -33,9 +32,10 @@ class CatchupSyncActivity extends SyncActivity_1.SyncActivity {
     }
 }
 exports.CatchupSyncActivity = CatchupSyncActivity;
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.CatchupSyncActivity, (di, context, p, timeout) => {
+function catchupSyncActivityHydrator(di, context, p, timeout) {
     // Provide an empty array as catchupRefs to make the activity refresh target refs.
     // Hydration/Dehydration can be happened for CatchupSyncActivity when it throws an error during sync or aborted/canceled.
     return new CatchupSyncActivity(di, context, p.options.isVault, [], p.options.subBucketSize, p.options.offset, timeout);
-});
+}
+exports.catchupSyncActivityHydrator = catchupSyncActivityHydrator;
 //# sourceMappingURL=CatchupSyncActivity.js.map

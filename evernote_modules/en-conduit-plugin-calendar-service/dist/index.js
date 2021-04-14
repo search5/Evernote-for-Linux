@@ -6,8 +6,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getCalendarServicePlugin = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const graphql_1 = require("graphql");
+const CalendarConstants_1 = require("./CalendarConstants");
 const CalendarServiceType_1 = require("./CalendarServiceType");
+const CalendarAccount_1 = require("./EntityTypes/CalendarAccount");
+const CalendarEvent_1 = require("./EntityTypes/CalendarEvent");
+const CalendarEventLink_1 = require("./EntityTypes/CalendarEventLink");
 const CalendarSettings_1 = require("./EntityTypes/CalendarSettings");
+const UserCalendarSettings_1 = require("./EntityTypes/UserCalendarSettings");
+const CalendarEventLinkMutators_1 = require("./Mutators/CalendarEventLinkMutators");
 const FakeBackend_1 = require("./Services/FakeBackend");
 function getCalendarServicePlugin(httpClient) {
     let fakeBackend;
@@ -61,30 +67,54 @@ function getCalendarServicePlugin(httpClient) {
                     resolve: calendarAccountsResolver,
                     description: `List all calendar accounts with it's calendars`,
                 },
-                calendarAccount: {
+                calendarAccountById: {
                     args: CalendarServiceType_1.CalendarAccountSchemaArgs,
                     type: CalendarServiceType_1.CalendarAccountGQLType,
                     resolve: calendarAccountResolver,
-                    description: 'Get calendarAccounts by provider',
+                    description: 'Get calendarAccounts by id',
                 },
                 calendarEvents: {
                     args: CalendarServiceType_1.CalendarEventsSchemaArgs,
-                    type: new graphql_1.GraphQLList(CalendarServiceType_1.CalendarEventGQLType),
+                    type: CalendarServiceType_1.CalendarEventGQLType,
                     resolve: eventsResolver,
                     description: 'List all events from a specified time window',
                 },
                 calendarEventById: {
                     args: CalendarServiceType_1.CalendarEventByIdSchemaArgs,
-                    type: CalendarServiceType_1.CalendarEventGQLType,
+                    type: CalendarServiceType_1.CalendarEventByIdGQLType,
                     resolve: eventResolver,
                     description: 'Get an event by id',
                 },
             };
             return queries;
         },
+        entityTypes: () => {
+            const entityTypes = {
+                [CalendarConstants_1.CalendarEntityTypes.CalendarSettings]: {
+                    typeDef: CalendarSettings_1.calendarSettingsTypeDef,
+                },
+                [CalendarConstants_1.CalendarEntityTypes.CalendarEvent]: {
+                    typeDef: CalendarEvent_1.calendarEventTypeDef,
+                },
+                [CalendarConstants_1.CalendarEntityTypes.CalendarEventLink]: {
+                    typeDef: CalendarEventLink_1.calendarEventLinkTypeDef,
+                },
+                [CalendarConstants_1.CalendarEntityTypes.CalendarAccount]: {
+                    typeDef: CalendarAccount_1.calendarAccountTypeDef,
+                },
+                [CalendarConstants_1.CalendarEntityTypes.UserCalendarSettings]: {
+                    typeDef: UserCalendarSettings_1.userCalendarSettingsTypeDef,
+                },
+            };
+            return entityTypes;
+        },
         defineMutators: () => ({}),
-        entityTypes: () => ({}),
-        mutatorDefs: () => ({}),
+        mutatorDefs: () => {
+            return {
+                calendarEventLinkCreate: CalendarEventLinkMutators_1.calendarEventLinkCreate,
+                calendarEventLinkDelete: CalendarEventLinkMutators_1.calendarEventLinkDelete,
+            };
+        },
         mutationRules: () => ([]),
     };
 }

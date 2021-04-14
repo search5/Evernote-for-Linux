@@ -18,4 +18,10 @@ namespace util {
     std::string format_exception(const std::string& method, const std::string& exception_type, const std::string& reason);
     std::string hex_decode(const std::string& hex_buffer);
     std::pair<std::string, std::string> enml_to_plain_text(const std::string& enml);
+
+    std::wstring join_strings(const std::vector<std::wstring>& input, const std::wstring& delimeter);
+
+    float sigmoid(float input);
+    float sigmoid_inverse(float sigmoid_input);
+
 }

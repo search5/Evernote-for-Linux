@@ -3,12 +3,11 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AccountSessionSyncActivity = void 0;
+exports.accountSessionActivityHydrator = exports.AccountSessionSyncActivity = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const Auth_1 = require("../Auth");
 const SyncActivity_1 = require("./SyncActivity");
-const SyncActivityHydration_1 = require("./SyncActivityHydration");
 const ACCOUNT_SESSION_SYNC_ACTIVITY_INTERVAL = conduit_utils_1.MILLIS_IN_ONE_MINUTE;
 class AccountSessionSyncActivity extends SyncActivity_1.SyncActivity {
     constructor(di, context, subpriority = 0) {
@@ -55,7 +54,8 @@ class AccountSessionSyncActivity extends SyncActivity_1.SyncActivity {
     }
 }
 exports.AccountSessionSyncActivity = AccountSessionSyncActivity;
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.AccountSessionSyncActivity, (di, context, p) => {
+function accountSessionActivityHydrator(di, context, p) {
     return new AccountSessionSyncActivity(di, context, p.subpriority);
-});
+}
+exports.accountSessionActivityHydrator = accountSessionActivityHydrator;
 //# sourceMappingURL=AccountSessionSyncActivity.js.map

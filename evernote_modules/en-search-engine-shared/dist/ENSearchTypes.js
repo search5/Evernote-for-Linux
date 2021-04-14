@@ -26,9 +26,15 @@ var ENSortType;
     ENSortType[ENSortType["RELEVANCE"] = 3] = "RELEVANCE";
     ENSortType[ENSortType["TITLE"] = 5] = "TITLE";
 })(ENSortType = exports.ENSortType || (exports.ENSortType = {}));
+exports.EMPTY_QUERY = '*:*';
 var ENSuggestOptimization;
 (function (ENSuggestOptimization) {
     ENSuggestOptimization[ENSuggestOptimization["NONE"] = 0] = "NONE";
     ENSuggestOptimization[ENSuggestOptimization["O3"] = 1] = "O3";
 })(ENSuggestOptimization = exports.ENSuggestOptimization || (exports.ENSuggestOptimization = {}));
+var ENSearchAlternativeFieldType;
+(function (ENSearchAlternativeFieldType) {
+    ENSearchAlternativeFieldType[ENSearchAlternativeFieldType["ALTERNATIVE"] = 0] = "ALTERNATIVE";
+    ENSearchAlternativeFieldType[ENSearchAlternativeFieldType["SUFFIX"] = 1] = "SUFFIX";
+})(ENSearchAlternativeFieldType = exports.ENSearchAlternativeFieldType || (exports.ENSearchAlternativeFieldType = {}));
 //# sourceMappingURL=ENSearchTypes.js.map

@@ -1,6 +1,6 @@
 {
   "name": "en-conduit-sync-types",
-  "version": "1.31.4",
+  "version": "1.32.4",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -10,14 +10,14 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-auth-shared": "1.31.4",
-    "conduit-core": "1.31.4",
-    "conduit-storage": "1.31.4",
-    "conduit-utils": "1.31.4",
-    "conduit-view-types": "1.31.4",
-    "en-core-entity-types": "1.31.4",
-    "en-data-model": "^2.7.4",
+    "conduit-auth-shared": "1.32.4",
+    "conduit-core": "1.32.4",
+    "conduit-storage": "1.32.4",
+    "conduit-utils": "1.32.4",
+    "conduit-view-types": "1.32.4",
+    "en-core-entity-types": "1.32.4",
+    "en-data-model": "^2.7.11",
     "en-graph-types": "1.2.2",
-    "en-thrift-internal": "2.7.10"
+    "en-thrift-internal": "2.7.14"
   }
 }

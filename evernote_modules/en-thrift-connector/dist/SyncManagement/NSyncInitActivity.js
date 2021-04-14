@@ -22,10 +22,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NSyncInitActivity = void 0;
+exports.nsyncInitActivityHydrator = exports.NSyncInitActivity = void 0;
 const Auth = __importStar(require("../Auth"));
 const SyncActivity_1 = require("./SyncActivity");
-const SyncActivityHydration_1 = require("./SyncActivityHydration");
 class NSyncInitActivity extends SyncActivity_1.SyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
         super(di, context, {
@@ -86,7 +85,8 @@ class NSyncInitActivity extends SyncActivity_1.SyncActivity {
     }
 }
 exports.NSyncInitActivity = NSyncInitActivity;
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.NSyncInitActivity, (di, context, p, timeout) => {
+function nsyncInitActivityHydrator(di, context, p, timeout) {
     return new NSyncInitActivity(di, context, p.subpriority, timeout);
-});
+}
+exports.nsyncInitActivityHydrator = nsyncInitActivityHydrator;
 //# sourceMappingURL=NSyncInitActivity.js.map

@@ -69,7 +69,7 @@ async function stageAttachmentUploadsForNote(context, sourceAuth, sourceNote, so
         };
         const data = await fileUploader.stageFileUpload(context.trc, stageParams, userID, destSyncContext, sourceAttachment.NodeFields.data.hash, sourceAttachment.NodeFields.data.size);
         const attachmentData = {
-            filename: sourceAttachment.NodeFields.filename,
+            filename: stageParams.filename || sourceAttachment.NodeFields.filename,
             mime: sourceAttachment.NodeFields.mime,
             hash: sourceAttachment.NodeFields.data.hash,
             size: sourceAttachment.NodeFields.data.size,

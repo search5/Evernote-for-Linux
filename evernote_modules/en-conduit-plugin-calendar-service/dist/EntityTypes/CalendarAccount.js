@@ -11,7 +11,6 @@ exports.calendarAccountTypeDef = {
     syncSource: conduit_storage_1.SyncSource.LOCAL,
     fieldValidation: {},
     schema: {
-        id: 'string',
         isConnected: 'boolean',
     },
     edges: {},

@@ -3,13 +3,12 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SchemaMigrationActivity = void 0;
+exports.schemaMigrationActivityHydrator = exports.SchemaMigrationActivity = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
 const Migrations_1 = require("../SyncFunctions/Migrations");
 const SyncHelpers_1 = require("../SyncFunctions/SyncHelpers");
 const SyncActivity_1 = require("./SyncActivity");
-const SyncActivityHydration_1 = require("./SyncActivityHydration");
 const MAX_PENDING_MIGRATIONS_LIMIT = 30;
 function ensurePendingMigrationsLimit(pendingMutations) {
     if (pendingMutations.length > MAX_PENDING_MIGRATIONS_LIMIT) {
@@ -77,7 +76,8 @@ class SchemaMigrationActivity extends SyncActivity_1.SyncActivity {
     }
 }
 exports.SchemaMigrationActivity = SchemaMigrationActivity;
-SyncActivityHydration_1.registerSyncActivityType(SyncActivity_1.SyncActivityType.SchemaMigrationActivity, (di, context, p, timeout) => {
+function schemaMigrationActivityHydrator(di, context, p, timeout) {
     return new SchemaMigrationActivity(di, context, p.subpriority, timeout);
-});
+}
+exports.schemaMigrationActivityHydrator = schemaMigrationActivityHydrator;
 //# sourceMappingURL=SchemaMigrationActivity.js.map

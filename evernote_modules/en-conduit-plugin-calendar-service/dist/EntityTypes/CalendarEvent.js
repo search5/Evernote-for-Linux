@@ -3,11 +3,11 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.calendarEventTypeDef = void 0;
+exports.calendarEventTypeDef = exports.CalendarEventContactField = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const CalendarConstants_1 = require("../CalendarConstants");
 const CalendarServiceType_1 = require("../CalendarServiceType");
-const CalendarEventContactField = {
+exports.CalendarEventContactField = {
     email: 'string?',
     displayName: 'string?',
     avatar: 'string?',
@@ -17,7 +17,6 @@ exports.calendarEventTypeDef = {
     syncSource: conduit_storage_1.SyncSource.LOCAL,
     fieldValidation: {},
     schema: {
-        id: 'string',
         provider: 'string',
         calendarUserId: 'string',
         userCalendarExternalId: 'string',
@@ -39,18 +38,18 @@ exports.calendarEventTypeDef = {
         isBusy: 'boolean',
         status: Object.values(CalendarServiceType_1.CalendarEventStatus),
         links: 'string',
-        creator: CalendarEventContactField,
-        organizer: CalendarEventContactField,
+        creator: exports.CalendarEventContactField,
+        organizer: exports.CalendarEventContactField,
         attendees: 'string',
     },
     edges: {
-        parent: {
-            constraint: conduit_storage_1.EdgeConstraint.OPTIONAL,
+        calendarEventLinks: {
+            constraint: conduit_storage_1.EdgeConstraint.MANY,
             type: conduit_storage_1.EdgeType.VIEW,
             from: {
                 type: CalendarConstants_1.CalendarEntityTypes.CalendarEventLink,
-                constraint: conduit_storage_1.EdgeConstraint.MANY,
-                denormalize: 'linkedNotes',
+                constraint: conduit_storage_1.EdgeConstraint.REQUIRED,
+                denormalize: 'calendarEvent',
             },
         },
     },

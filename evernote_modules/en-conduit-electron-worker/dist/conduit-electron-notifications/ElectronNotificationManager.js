@@ -19,6 +19,10 @@ class ElectronNotificationManager extends conduit_core_1.NotificationManager {
         this.notificationConverter = ElectronNotificationConverter_1.getElectronNotificationConverter(di);
     }
     async schedule(notificationData) {
+        if (notificationData.targetClientType && !notificationData.targetClientType.includes('desktop')) {
+            conduit_utils_1.logger.debug(`Notification ID ${notificationData.notification.id} is not targeting desktop client type`);
+            return;
+        }
         const convertedNotification = this.notificationConverter.convert(notificationData.notification);
         conduit_utils_1.logger.debug(`ElectronNotificationsScheduler -- schedule: id: ${convertedNotification.id} `, `-- title: ${convertedNotification.title} `, `-- subtitle: ${convertedNotification.subtitle}`, `-- body: ${convertedNotification.body}`, `-- sendAt: ${notificationData.sendAt} `);
         this.electronNotifications.addPendingNotification(convertedNotification, notificationData.sendAt);

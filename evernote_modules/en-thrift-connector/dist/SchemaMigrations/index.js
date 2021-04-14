@@ -8,6 +8,7 @@ const MembershipMigrations_1 = require("./MembershipMigrations");
 const NoteContentInfoRenameTaskGroups_1 = require("./NoteContentInfoRenameTaskGroups");
 const ProfileMigrations_1 = require("./ProfileMigrations");
 const ScheduledNotificationCachedFields_1 = require("./ScheduledNotificationCachedFields");
+const UserMigrations_1 = require("./UserMigrations");
 // import { registerTagMigrations } from './TagMigrations';
 let isMigrationRegistered = false;
 function registerSchemaMigrations() {
@@ -17,6 +18,7 @@ function registerSchemaMigrations() {
         NoteContentInfoRenameTaskGroups_1.registerRenameNoteContentInfoTaskGroups();
         ScheduledNotificationCachedFields_1.registerScheduledNotificationCachedFields();
         // registerTagMigrations();
+        UserMigrations_1.registerUserMigrations();
         isMigrationRegistered = true;
     }
 }

@@ -3,7 +3,7 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.taskMove = exports.taskUpdate = exports.taskDelete = exports.taskCreate = void 0;
+exports.taskMove = exports.taskAssign = exports.taskUpdate = exports.taskDelete = exports.taskCreate = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
@@ -187,11 +187,7 @@ exports.taskUpdate = {
             taskGroupNoteLevelID: params.taskGroupNoteLevelID,
         };
         const taskRef = { id: params.task, type: TaskConstants_1.TaskEntityTypes.Task };
-        const noteEdge = await ctx.traverseGraph(trc, taskRef, [{ edge: ['inputs', 'parent'], type: en_core_entity_types_1.CoreEntityTypes.Note }]);
-        if (!noteEdge || !noteEdge.length || !noteEdge[0].edge) {
-            throw new conduit_utils_1.NotFoundError('The task does not have parent Note');
-        }
-        const noteID = noteEdge[0].edge.srcID;
+        const noteID = await Task_1.getParentNoteId(trc, ctx, params.task);
         const plan = await genericUpdateExecutionPlan(trc, ctx, params.task, fields);
         if (params.taskGroupNoteLevelID) {
             const taskGroupUpsertPlan = await NoteContentInfo_1.taskGroupUpsertPlanFor(trc, ctx, noteID, params.taskGroupNoteLevelID, params.sourceOfChange);
@@ -271,6 +267,81 @@ exports.taskUpdate = {
             }
         });
         plan.ops.push(...ops);
+        return plan;
+    },
+};
+/* Assign Task */
+exports.taskAssign = {
+    type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
+    requiredParams: {
+        task: 'ID',
+    },
+    optionalParams: {
+        assigneeID: 'ID',
+        sourceOfChange: 'string',
+    },
+    initParams: async (trc, ctx, paramsIn, paramsOut) => {
+        var _a;
+        paramsOut.sourceOfChange = (_a = paramsIn.sourceOfChange) !== null && _a !== void 0 ? _a : '';
+    },
+    execute: async (trc, ctx, params) => {
+        const fields = {
+            sourceOfChange: params.sourceOfChange,
+        };
+        const noteID = await Task_1.getParentNoteId(trc, ctx, params.task);
+        await Task_1.checkNoteEditPermissionByNoteId(trc, ctx, noteID);
+        const taskRef = { id: params.task, type: TaskConstants_1.TaskEntityTypes.Task };
+        const existingTask = await ctx.fetchEntity(trc, taskRef);
+        if (!existingTask) {
+            throw new conduit_utils_1.NotFoundError(params.task, 'Task not found in taskAssign');
+        }
+        // update assignee
+        const existingAssigneeEdge = conduit_utils_1.firstStashEntry(existingTask === null || existingTask === void 0 ? void 0 : existingTask.outputs.assignee);
+        const existingAssigneeId = existingAssigneeEdge ? existingAssigneeEdge.dstID : null;
+        const plan = {
+            results: {},
+            ops: [],
+        };
+        if (existingAssigneeId === params.assigneeID || (!existingAssigneeId && !params.assigneeID)) {
+            return plan;
+        }
+        // delete the existing edge
+        const edgeModifyOps = {
+            changeType: 'Edge:MODIFY',
+            edgesToDelete: [
+                { srcID: params.task, srcType: TaskConstants_1.TaskEntityTypes.Task, srcPort: 'assignee' },
+                { srcID: params.task, srcType: TaskConstants_1.TaskEntityTypes.Task, srcPort: 'assignedBy' },
+            ],
+        };
+        plan.ops.push(edgeModifyOps);
+        if (params.assigneeID) {
+            edgeModifyOps.edgesToCreate = [{
+                    srcID: params.task,
+                    srcType: TaskConstants_1.TaskEntityTypes.Task,
+                    srcPort: 'assignee',
+                    dstID: params.assigneeID,
+                    dstType: en_core_entity_types_1.CoreEntityTypes.Profile,
+                    dstPort: null,
+                }];
+            const profile = await en_core_entity_types_1.getAccountProfileRef(trc, ctx);
+            if (profile) {
+                edgeModifyOps.edgesToCreate.push({
+                    srcID: taskRef.id, srcType: taskRef.type, srcPort: 'assignedBy',
+                    dstID: profile.id, dstType: profile.type, dstPort: null,
+                }, {
+                    srcID: taskRef.id, srcType: taskRef.type, srcPort: 'lastEditor',
+                    dstID: profile.id, dstType: profile.type, dstPort: null,
+                });
+                // create membership
+                const owner = { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note } || ctx.vaultUserID || ctx.userID;
+                await Task_1.createMembership(trc, ctx, plan, owner, taskRef, 'memberships', params.assigneeID, profile);
+            }
+        }
+        plan.ops.push({
+            changeType: 'Node:UPDATE',
+            nodeRef: taskRef,
+            node: ctx.assignFields(TaskConstants_1.TaskEntityTypes.Task, fields),
+        });
         return plan;
     },
 };

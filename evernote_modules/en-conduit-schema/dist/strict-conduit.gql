@@ -563,14 +563,57 @@ type BusinessNotebook {
 }
 
 type CalendarAccount {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  isConnected: Boolean!
+  userCalendarSettings: [UserCalendarSettings!]!
+  userCalendarSettingsCount: Int!
+}
+
+type CalendarAccountResult {
   id: String!
   provider: CalendarProviderField
   calendarUserId: String!
   isConnected: Boolean!
-  calendars: [UserCalendarId!]
+  calendars: [UserCalendarSettingsResult!]
 }
 
 type CalendarEvent {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  provider: String!
+  calendarUserId: String!
+  userCalendarExternalId: String!
+  calendarEventExternalId: String!
+  created: Float!
+  lastModified: Float!
+  deleted: Float
+  isAccountConnected: Boolean!
+  summary: String!
+  displayColor: String
+  description: String
+  location: String
+  isAllDay: Boolean!
+  start: Float!
+  end: Float!
+  recurrentEventId: String
+  recurrence: String
+  iCalendarUid: String!
+  isBusy: Boolean!
+  status: CalendarEventStatus!
+  links: String!
+  creator: CalendarEventCreator!
+  organizer: CalendarEventOrganizer!
+  attendees: String!
+  calendarEventLinks: [CalendarEventLink!]!
+  calendarEventLinksCount: Int!
+}
+
+type CalendarEventByIdResult {
   id: String!
   provider: CalendarProviderField
   calendarUserId: String!
@@ -591,30 +634,104 @@ type CalendarEvent {
   recurrence: String
   iCalendarUid: String!
   isBusy: Boolean!
-  status: CalendarEventStatus!
+  status: CalendarEventByIdResultStatus!
   links: String!
-  creator: CalendarEventCreator!
-  organizer: CalendarEventOrganizer!
+  creator: CalendarEventByIdResultCreator!
+  organizer: CalendarEventByIdResultOrganizer!
   attendees: String!
-  linkedNotes: [CalendarEventLinkedNotes!]
+}
+
+type CalendarEventByIdResultCreator {
+  email: String!
+  displayName: String
+  avatar: String
+}
+
+type CalendarEventByIdResultOrganizer {
+  email: String!
+  displayName: String
+  avatar: String
+}
+
+enum CalendarEventByIdResultStatus {
+  CONFIRMED
+  CANCELED
+  TENTATIVE
 }
 
 type CalendarEventCreator {
-  email: String!
+  email: String
   displayName: String
   avatar: String
 }
 
-type CalendarEventLinkedNotes {
-  noteGuid: String!
+type CalendarEventLink {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
   isLinkedToAllInstances: Boolean!
-  linkTime: Float!
+  linkedTimestamp: Float!
+  calendarEvent: CalendarEvent
+  note: Note
+}
+
+enum CalendarEventLinkCreate_status {
+  CONFIRMED
+  CANCELED
+  TENTATIVE
 }
 
 type CalendarEventOrganizer {
+  email: String
+  displayName: String
+  avatar: String
+}
+
+type CalendarEventResultCreator {
   email: String!
   displayName: String
   avatar: String
+}
+
+type CalendarEventResultOrganizer {
+  email: String!
+  displayName: String
+  avatar: String
+}
+
+enum CalendarEventResultStatus {
+  CONFIRMED
+  CANCELED
+  TENTATIVE
+}
+
+type CalendarEvents {
+  id: String!
+  provider: CalendarProviderField
+  calendarUserId: String!
+  userCalendarExternalId: String!
+  calendarEventExternalId: String!
+  created: Float!
+  lastModified: Float!
+  deleted: Float
+  isAccountConnected: Boolean!
+  summary: String!
+  description: String
+  displayColor: String
+  location: String
+  isAllDay: Boolean!
+  start: Float!
+  end: Float!
+  recurrentEventId: String
+  recurrence: String
+  iCalendarUid: String!
+  isBusy: Boolean!
+  status: CalendarEventResultStatus!
+  links: String!
+  creator: CalendarEventResultCreator!
+  organizer: CalendarEventResultOrganizer!
+  attendees: String!
 }
 
 enum CalendarEventStatus {
@@ -630,7 +747,11 @@ enum CalendarProviderField {
 }
 
 type CalendarSettings {
-  useTemplateForNewNotes: Boolean!
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  useTemplateForNewNote: Boolean!
   desktopReminders: CalendarSettingsDesktopReminders!
   mobileReminders: CalendarSettingsMobileReminders!
 }
@@ -647,6 +768,7 @@ enum CalendarSettingsDesktopRemindersCreateNoteMinutes {
   AT_START
   AT_END
   FIVE_AFTER
+  OFF
 }
 
 enum CalendarSettingsDesktopRemindersOpenNoteMinutes {
@@ -656,6 +778,7 @@ enum CalendarSettingsDesktopRemindersOpenNoteMinutes {
   AT_START
   AT_END
   FIVE_AFTER
+  OFF
 }
 
 type CalendarSettingsMobileReminders {
@@ -670,6 +793,7 @@ enum CalendarSettingsMobileRemindersCreateNoteMinutes {
   AT_START
   AT_END
   FIVE_AFTER
+  OFF
 }
 
 enum CalendarSettingsMobileRemindersOpenNoteMinutes {
@@ -679,6 +803,63 @@ enum CalendarSettingsMobileRemindersOpenNoteMinutes {
   AT_START
   AT_END
   FIVE_AFTER
+  OFF
+}
+
+type CalendarSettingsResult {
+  useTemplateForNewNotes: Boolean!
+  desktopReminders: CalendarSettingsResultDesktopReminders!
+  mobileReminders: CalendarSettingsResultMobileReminders!
+}
+
+type CalendarSettingsResultDesktopReminders {
+  createNoteMinutes: CalendarSettingsResultDesktopRemindersCreateNoteMinutes!
+  openNoteMinutes: CalendarSettingsResultDesktopRemindersOpenNoteMinutes!
+}
+
+enum CalendarSettingsResultDesktopRemindersCreateNoteMinutes {
+  THIRTY_BEFORE
+  TEN_BEFORE
+  FIVE_BEFORE
+  AT_START
+  AT_END
+  FIVE_AFTER
+  OFF
+}
+
+enum CalendarSettingsResultDesktopRemindersOpenNoteMinutes {
+  THIRTY_BEFORE
+  TEN_BEFORE
+  FIVE_BEFORE
+  AT_START
+  AT_END
+  FIVE_AFTER
+  OFF
+}
+
+type CalendarSettingsResultMobileReminders {
+  createNoteMinutes: CalendarSettingsResultMobileRemindersCreateNoteMinutes!
+  openNoteMinutes: CalendarSettingsResultMobileRemindersOpenNoteMinutes!
+}
+
+enum CalendarSettingsResultMobileRemindersCreateNoteMinutes {
+  THIRTY_BEFORE
+  TEN_BEFORE
+  FIVE_BEFORE
+  AT_START
+  AT_END
+  FIVE_AFTER
+  OFF
+}
+
+enum CalendarSettingsResultMobileRemindersOpenNoteMinutes {
+  THIRTY_BEFORE
+  TEN_BEFORE
+  FIVE_BEFORE
+  AT_START
+  AT_END
+  FIVE_AFTER
+  OFF
 }
 
 type CEDataForTemplates {
@@ -1114,6 +1295,10 @@ enum InvitationSortField {
   invitationType
 }
 
+type IterableLogsSwitchResult {
+  iterableLogsEnabled: Boolean!
+}
+
 enum Layout {
   EMBED
   NATIVEEMBED
@@ -1286,6 +1471,7 @@ type MembershipListResults {
 
 enum MembershipPrivilege {
   READ
+  COMPLETE
   EDIT
   MANAGE
 }
@@ -1381,6 +1567,7 @@ enum MembershipSortField {
 
 enum MembershipUpdatePrivilege_privilege {
   READ
+  COMPLETE
   EDIT
   MANAGE
 }
@@ -1520,6 +1707,8 @@ type Note {
   tags: [Tag!]!
   tagsCount: Int!
   shortcut: Shortcut
+  calendarEventLinks: [CalendarEventLink!]!
+  calendarEventLinksCount: Int!
   noteContentInfo: NoteContentInfo
   tasks: [Task!]!
   tasksCount: Int!
@@ -1722,6 +1911,7 @@ enum NotebookFilterField {
 
 enum NotebookInvite_privilege {
   READ
+  COMPLETE
   EDIT
   MANAGE
 }
@@ -1936,6 +2126,23 @@ type NotebooksWithLabelResults {
   numPriorItems: Float
   numRemainingItems: Float
   list: [NotebooksWithLabelResultFields!]!
+}
+
+type NotebooksWithoutStackAndParentResultFields {
+  id: String!
+  type: String!
+  unindexed: Notebook!
+  label: String!
+  childrenCount: Int!
+}
+
+type NotebooksWithoutStackAndParentResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [NotebooksWithoutStackAndParentResultFields!]!
 }
 
 type NotebooksWithoutStackResultFields {
@@ -2192,6 +2399,7 @@ type NoteImportResult {
 
 enum NoteInvite_privilege {
   READ
+  COMPLETE
   EDIT
   MANAGE
 }
@@ -2337,14 +2545,20 @@ type NotesInTrashResults {
   list: [NotesInTrashResultFields!]!
 }
 
+enum NotesInWorkspaceOrderBy {
+  updated
+  label
+  created
+}
+
 type NotesInWorkspaceResultFields {
   id: String!
   type: String!
   unindexed: Note!
-  workspace: Workspace
   updated: Float!
-  created: Float!
   label: String!
+  created: Float!
+  workspace: Workspace
   parent: NotebookOrWorkspace
   hasReminder: Boolean!
 }
@@ -2600,6 +2814,7 @@ type Profile {
   relatedIdentitiesCount: Int!
   parent: Profile
   isRootProfile: Boolean!
+  TasksByAssignee(reverseOrder: Boolean, pageInfo: PageInfo): ProfileTasksByAssigneeResults!
 }
 
 input ProfileFilter {
@@ -2679,6 +2894,19 @@ type ProfilesResults {
 enum ProfileStatus {
   ACTIVE
   INACTIVE
+}
+
+type ProfileTasksByAssigneeResultFields {
+  id: String!
+  type: String!
+  unindexed: Task!
+  assignee: Profile
+  sortWeight: String!
+}
+
+type ProfileTasksByAssigneeResults {
+  count: Int!
+  list: [ProfileTasksByAssigneeResultFields!]!
 }
 
 type Promotion {
@@ -2943,6 +3171,8 @@ type RootMutationType {
   boardDeleteHeaderBG(board: String!): AutoMutatorRes
   boardDeletePreviousHeaderBG(board: String!): AutoMutatorRes
   boardStartFreeTrial(board: String!, durationInDays: Float): AutoMutatorRes
+  calendarEventLinkCreate(eventID: String!, noteID: String!, isLinkedToAllInstances: Boolean!, provider: String!, calendarUserId: String!, userCalendarExternalId: String!, calendarEventExternalId: String!, isAccountConnected: Boolean!, summary: String!, isAllDay: Boolean!, start: Float!, end: Float!, iCalendarUid: String!, isBusy: Boolean!, status: CalendarEventLinkCreate_status!, links: String!, creatorEmail: String!, organizerEmail: String!, attendees: String!, deleted: Float, displayColor: String, description: String, location: String, recurrentEventId: String, recurrence: String, creatorDisplayName: String, creatorAvatar: String, organizerDisplayName: String, organizerAvatar: String): AutoMutatorRes
+  calendarEventLinkDelete(calendarEventLinkId: String!): AutoMutatorRes
   clearNSyncBackoff: Boolean!
   clientLogin(serviceHost: String!, externalServiceHost: String, email: String!, password: String, allowFacadeAsPersonal: Boolean): LoginResult
   clientLoginWithCookies(serviceHost: String!, userSlot: Int): LoginResult
@@ -3062,6 +3292,7 @@ type RootMutationType {
   tagSetName(tag: String!, name: String!, eventLabel: String): AutoMutatorRes
   targetUrlCreate(url: String!, utm_source: String!, utm_medium: String!, host: String, two_factor_token: String, url_params: String): String!
   targetUrlCreateWithOAuth(serviceHost: String!, tokenPayload: String!, serviceProvider: String!, url: String!, utm_source: String!, utm_medium: String!, urlParams: String): String!
+  taskAssign(task: String!, assigneeID: String, sourceOfChange: String): AutoMutatorRes
   taskCreate(container: String!, label: String!, taskGroupNoteLevelID: String!, dueDate: Float, timeZone: String, dueDateUIOption: TaskCreate_dueDateUIOption, flag: Boolean, sortWeight: String, status: String, noteLevelID: String, sourceOfChange: String): AutoMutatorRes
   taskDelete(task: String!, sourceOfChange: String): AutoMutatorRes
   taskGroupCreateDefaultTaskNoteUpsert(defaultTaskNoteLabel: String!, pinDefaultTaskNote: Boolean, noteContent: String): TaskGroupCreateDefaultTaskNoteUpsertResult!
@@ -3117,6 +3348,10 @@ type RootQueryType {
   BetaFeatures(reverseOrder: Boolean, pageInfo: PageInfo): BetaFeaturesResults!
   Board(id: String!): Board
   CEDataForTemplates(noteID: String): CEDataForTemplates!
+  CalendarAccount(id: String!): CalendarAccount
+  CalendarEvent(id: String!): CalendarEvent
+  CalendarEventLink(id: String!): CalendarEventLink
+  CalendarSettings(id: String!): CalendarSettings
   ContentConflictsInWidget(widget: String, reverseOrder: Boolean, pageInfo: PageInfo): ContentConflictsInWidgetResults!
   CrossPromotionsInfo: CrossPromotionInfo
   DashboardsData: DashboardsData!
@@ -3125,6 +3360,9 @@ type RootQueryType {
   HomeBoards(reverseOrder: Boolean, pageInfo: PageInfo): HomeBoardsResults!
   Invitation(id: String!): Invitation
   InvitationsForMe(orderBy: InvitationsForMeOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): InvitationsForMeResults!
+
+  """Get Flag to enable/disable Iterable Datadog Logs"""
+  IterableLogsSwitch(serviceHost: String!, featureRolloutClientType: FeatureRolloutClientType!): IterableLogsSwitchResult!
   MaestroProps(id: String!): MaestroProps
   Membership(id: String!): Membership
   MembershipsForMe(orderBy: MembershipsForMeOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): MembershipsForMeResults!
@@ -3145,10 +3383,11 @@ type RootQueryType {
   NotebooksStacks(reverseOrder: Boolean, pageInfo: PageInfo): NotebooksStacksResults!
   NotebooksWithLabel(label: String, reverseOrder: Boolean, pageInfo: PageInfo): NotebooksWithLabelResults!
   NotebooksWithoutStack(reverseOrder: Boolean, pageInfo: PageInfo): NotebooksWithoutStackResults!
+  NotebooksWithoutStackAndParent(reverseOrder: Boolean, pageInfo: PageInfo): NotebooksWithoutStackAndParentResults!
   NotesInParent(parent: EntityRef, inTrash: Boolean, orderBy: NotesInParentOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NotesInParentResults!
   NotesInStack(stack: String, reverseOrder: Boolean, pageInfo: PageInfo): NotesInStackResults!
   NotesInTrash(orderBy: NotesInTrashOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NotesInTrashResults!
-  NotesInWorkspace(workspace: String, reverseOrder: Boolean, pageInfo: PageInfo): NotesInWorkspaceResults!
+  NotesInWorkspace(orderBy: NotesInWorkspaceOrderBy, workspace: String, reverseOrder: Boolean, pageInfo: PageInfo): NotesInWorkspaceResults!
   NotesNotInTrash(orderBy: NotesNotInTrashOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NotesNotInTrashResults!
   NotesParents(reverseOrder: Boolean, pageInfo: PageInfo): NotesParentsResults!
   NotesWithReminders(parent: EntityRef, doneReminders: Boolean, reminderTimeRange: NotesWithRemindersReminderTimeRange, orderBy: NotesWithRemindersOrderBy, reverseOrder: Boolean, pageInfo: PageInfo): NotesWithRemindersResults!
@@ -3184,10 +3423,12 @@ type RootQueryType {
   Task(id: String!): Task
   TaskNotesNotInTrash(orderBy: TaskNotesNotInTrashOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TaskNotesNotInTrashResults!
   TaskUserSettings(id: String!): TaskUserSettings
+  TasksByAssignee(assignee: String, reverseOrder: Boolean, pageInfo: PageInfo): TasksByAssigneeResults!
   TasksInNote(parent: String, status: Status, reverseOrder: Boolean, pageInfo: PageInfo): TasksInNoteResults!
   Thread(id: String!): Thread
   Threads(reverseOrder: Boolean, pageInfo: PageInfo): ThreadsResults!
   User(id: String!): User
+  UserCalendarSettings(id: String!): UserCalendarSettings
   Widget(id: String!): Widget
   WidgetContentConflict(id: String!): WidgetContentConflict
   WidgetsInBoard(board: String, platform: WidgetsInBoardPlatform!, reverseOrder: Boolean, pageInfo: PageInfo): WidgetsInBoardResults!
@@ -3197,20 +3438,20 @@ type RootQueryType {
   attachmentGetApplicationDataEntry(id: String!, key: String!): AttachmentGetApplicationDataEntryResult!
   authRemoteHost: AuthRemoteHost
 
-  """Get calendarAccounts by provider"""
-  calendarAccount(id: String!): CalendarAccount
+  """Get calendarAccounts by id"""
+  calendarAccountById(id: String!): CalendarAccountResult
 
   """List all calendar accounts with it's calendars"""
-  calendarAccounts(activeCalendarOnly: Boolean): [CalendarAccount]
+  calendarAccounts(activeCalendarOnly: Boolean): [CalendarAccountResult]
 
   """Get an event by id"""
-  calendarEventById(id: String!): CalendarEvent
+  calendarEventById(id: String!): [CalendarEventByIdResult]
 
   """List all events from a specified time window"""
-  calendarEvents(from: Float!, to: Float!, provider: Provider): [CalendarEvent]
+  calendarEvents(from: Float!, to: Float!, provider: Provider): [CalendarEvents]
 
   """Get the event reminder settings for the current user"""
-  calendarSettings: CalendarSettings!
+  calendarSettings: CalendarSettingsResult!
   clientAuthState: AuthState
   currentUserID: String
   debugNode(id: String!, type: String!): DebugNodeSchema
@@ -4011,6 +4252,10 @@ type Task {
   remindersCount: Int!
   creator: Profile
   lastEditor: Profile
+  assignee: Profile
+  assignedBy: Profile
+  memberships: [Membership!]!
+  membershipsCount: Int!
   parent: Note
 }
 
@@ -4048,6 +4293,7 @@ input TaskFilter {
 
 enum TaskFilterField {
   parent
+  assignee
   label
   sortWeight
   status
@@ -4135,6 +4381,23 @@ type TaskNotesNotInTrashResults {
   list: [TaskNotesNotInTrashResultFields!]!
 }
 
+type TasksByAssigneeResultFields {
+  id: String!
+  type: String!
+  unindexed: Task!
+  assignee: Profile
+  sortWeight: String!
+}
+
+type TasksByAssigneeResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [TasksByAssigneeResultFields!]!
+}
+
 input TasksExportData {
   tasks: [TaskCreateSchema!]
   taskGroupNoteLevelIDs: [String]
@@ -4171,6 +4434,7 @@ input TaskSort {
 
 enum TaskSortField {
   parent
+  assignee
   label
   sortWeight
   status
@@ -4404,6 +4668,7 @@ type User {
   timezone: String
   privilege: UserPrivilege!
   serviceLevel: UserServiceLevel!
+  serviceLevelV2: UserServiceLevelV2!
   created: Float!
   updated: Float!
   deleted: Float
@@ -4493,23 +4758,31 @@ enum UserBusinessUserRole {
   NORMAL
 }
 
-type UserCalendar {
+type UserCalendarResult {
   displayName: String!
   displayColor: String
   description: String
   timezone: String
   isPrimary: Boolean!
   isOwned: Boolean!
-  events: [CalendarEvent!]
 }
 
-type UserCalendarId {
+type UserCalendarSettings {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  isActive: Boolean!
+  parent: CalendarAccount
+}
+
+type UserCalendarSettingsResult {
   id: String!
   provider: CalendarProviderField
   calendarUserId: String!
   userCalendarExternalId: String!
   isActive: Boolean!
-  data: UserCalendar!
+  data: UserCalendarResult!
 }
 
 type UserInfo {
@@ -4535,6 +4808,15 @@ enum UserServiceLevel {
   PLUS
   PREMIUM
   BUSINESS
+}
+
+enum UserServiceLevelV2 {
+  FREE
+  PLUS
+  PREMIUM
+  PERSONAL
+  PROFESSIONAL
+  TEAMS
 }
 
 enum UserSetReminderSetting_setting {
@@ -4915,7 +5197,7 @@ type Workspace {
   ownMemberships(orderBy: WorkspaceOwnMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceOwnMembershipsResults!
   childNotes(inTrash: Boolean, orderBy: WorkspaceChildNotesOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceChildNotesResults!
   reminderNotes(doneReminders: Boolean, reminderTimeRange: WorkspaceReminderNotesReminderTimeRange, orderBy: WorkspaceReminderNotesOrderBy, reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceReminderNotesResults!
-  descendentNotes(reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceDescendentNotesResults!
+  descendentNotes(orderBy: WorkspaceDescendentNotesOrderBy, reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceDescendentNotesResults!
   childNotebooks(reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceChildNotebooksResults!
 
   """
@@ -4997,6 +5279,7 @@ type WorkspaceChildNotesResults {
 
 enum WorkspaceCreate_defaultRole {
   READ
+  COMPLETE
   EDIT
   MANAGE
 }
@@ -5009,18 +5292,25 @@ enum WorkspaceCreate_type {
 
 enum WorkspaceDefaultRole {
   READ
+  COMPLETE
   EDIT
   MANAGE
+}
+
+enum WorkspaceDescendentNotesOrderBy {
+  updated
+  label
+  created
 }
 
 type WorkspaceDescendentNotesResultFields {
   id: String!
   type: String!
   unindexed: Note!
-  workspace: Workspace
   updated: Float!
-  created: Float!
   label: String!
+  created: Float!
+  workspace: Workspace
   parent: NotebookOrWorkspace
   hasReminder: Boolean!
 }
@@ -5079,6 +5369,7 @@ enum WorkspaceFilterField {
 
 enum WorkspaceInvite_privilege {
   READ
+  COMPLETE
   EDIT
   MANAGE
 }
@@ -5199,6 +5490,7 @@ type WorkspacesResults {
 
 enum WorkspaceUpdate_defaultRole {
   READ
+  COMPLETE
   EDIT
   MANAGE
 }

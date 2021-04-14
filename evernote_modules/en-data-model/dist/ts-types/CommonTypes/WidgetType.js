@@ -19,5 +19,7 @@ var WidgetType;
     WidgetType["Clipped"] = "Clipped";
     WidgetType["Calendar"] = "Calendar";
     WidgetType["Tasks"] = "Tasks";
+    WidgetType["FilteredNotes"] = "FilteredNotes";
+    WidgetType["Extra"] = "Extra";
 })(WidgetType = exports.WidgetType || (exports.WidgetType = {}));
 //# sourceMappingURL=WidgetType.js.map

@@ -27,6 +27,9 @@ class GoogleServices {
             },
         };
         const httpresponse = await this.httpClient.request(context.trc, requestParams);
+        if (httpresponse.status >= 400) {
+            throw new Error(`listCalendars: could not fetch events, HTTP status code ${httpresponse.status}`);
+        }
         return conduit_utils_1.safeParse(httpresponse.result);
     }
     /**
@@ -109,6 +112,9 @@ class GoogleServices {
             },
         };
         const httpresponse = await this.httpClient.request(context.trc, requestParams);
+        if (httpresponse.status >= 400) {
+            throw new Error(`getEventById: could not fetch events, HTTP status code ${httpresponse.status}`);
+        }
         return conduit_utils_1.safeParse(httpresponse.result);
     }
     async getCalendarById(accessToken, context, userCalendarId) {
@@ -122,6 +128,9 @@ class GoogleServices {
             },
         };
         const httpresponse = await this.httpClient.request(context.trc, requestParams);
+        if (httpresponse.status >= 400) {
+            throw new Error(`getCalendarById: could not fetch events, HTTP status code ${httpresponse.status}`);
+        }
         return conduit_utils_1.safeParse(httpresponse.result);
     }
     /**

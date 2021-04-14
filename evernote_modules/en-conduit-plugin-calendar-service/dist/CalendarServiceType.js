@@ -3,14 +3,10 @@
  * Copyright 2021 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CalendarEventByIdSchemaArgs = exports.CalendarEventsSchemaArgs = exports.CalendarAccountSchemaArgs = exports.CalendarAccountsSchemaArgs = exports.CalendarEventUriType = exports.CalendarEventAttendeeStatus = exports.CalendarEventAttendeeGQLType = exports.CalendarEventStatus = exports.CalendarEventGQLType = exports.UserCalendarGQLType = exports.CalendarAccountGQLType = exports.CalendarProviderSchema = exports.CalendarProvider = exports.CalendarSettingsGQLType = exports.CalendarSettingsSchema = exports.CalendarAccountGQLEndpoint = exports.CalendarSettingsGQLEndpoint = exports.CalendarEventsGQLEndpoint = exports.CalendarServiceGQLEndpoint = void 0;
+exports.CalendarEventByIdSchemaArgs = exports.CalendarEventsSchemaArgs = exports.CalendarAccountSchemaArgs = exports.CalendarAccountsSchemaArgs = exports.CalendarEventUriType = exports.CalendarEventAttendeeStatus = exports.CalendarEventAttendeeGQLType = exports.CalendarEventStatus = exports.CalendarEventByIdGQLType = exports.CalendarEventGQLType = exports.UserCalendarGQLType = exports.CalendarAccountGQLType = exports.CalendarProviderSchema = exports.CalendarProvider = exports.CalendarSettingsGQLType = exports.CalendarSettingsSchema = void 0;
 const conduit_core_1 = require("conduit-core");
 const graphql_1 = require("graphql");
 const CalendarSettings_1 = require("./EntityTypes/CalendarSettings");
-exports.CalendarServiceGQLEndpoint = 'CalendarService';
-exports.CalendarEventsGQLEndpoint = 'CalendarEvents';
-exports.CalendarSettingsGQLEndpoint = 'CalendarSettings';
-exports.CalendarAccountGQLEndpoint = 'CalendarAccount';
 const NotificationOptionsField = Object.keys(CalendarSettings_1.NotificationOptions);
 /** schema for the user's feature wide Settings */
 exports.CalendarSettingsSchema = {
@@ -24,7 +20,7 @@ exports.CalendarSettingsSchema = {
         openNoteMinutes: NotificationOptionsField,
     },
 };
-exports.CalendarSettingsGQLType = conduit_core_1.schemaToGraphQLType(exports.CalendarSettingsSchema, 'CalendarSettings', false);
+exports.CalendarSettingsGQLType = conduit_core_1.schemaToGraphQLType(exports.CalendarSettingsSchema, 'CalendarSettingsResult', false);
 /** Enum of possible providers */
 var CalendarProvider;
 (function (CalendarProvider) {
@@ -42,7 +38,7 @@ const CalendarProviderField = new graphql_1.GraphQLEnumType({
     },
 });
 exports.CalendarAccountGQLType = new graphql_1.GraphQLObjectType({
-    name: 'CalendarAccount',
+    name: 'CalendarAccountResult',
     fields: () => ({
         id: { type: conduit_core_1.schemaToGraphQLType('string') },
         provider: { type: CalendarProviderField },
@@ -52,7 +48,7 @@ exports.CalendarAccountGQLType = new graphql_1.GraphQLObjectType({
     }),
 });
 const UserCalendarSettingsGQLType = new graphql_1.GraphQLObjectType({
-    name: 'UserCalendarId',
+    name: 'UserCalendarSettingsResult',
     fields: () => ({
         id: { type: conduit_core_1.schemaToGraphQLType('string') },
         provider: { type: CalendarProviderField },
@@ -63,7 +59,7 @@ const UserCalendarSettingsGQLType = new graphql_1.GraphQLObjectType({
     }),
 });
 exports.UserCalendarGQLType = new graphql_1.GraphQLObjectType({
-    name: 'UserCalendar',
+    name: 'UserCalendarResult',
     fields: () => ({
         displayName: { type: conduit_core_1.schemaToGraphQLType('string') },
         displayColor: { type: conduit_core_1.schemaToGraphQLType('string?') },
@@ -71,11 +67,10 @@ exports.UserCalendarGQLType = new graphql_1.GraphQLObjectType({
         timezone: { type: conduit_core_1.schemaToGraphQLType('string?') },
         isPrimary: { type: conduit_core_1.schemaToGraphQLType('boolean') },
         isOwned: { type: conduit_core_1.schemaToGraphQLType('boolean') },
-        events: { type: new graphql_1.GraphQLList(new graphql_1.GraphQLNonNull(exports.CalendarEventGQLType)) },
     }),
 });
-exports.CalendarEventGQLType = new graphql_1.GraphQLObjectType({
-    name: 'CalendarEvent',
+exports.CalendarEventGQLType = new graphql_1.GraphQLList(new graphql_1.GraphQLObjectType({
+    name: 'CalendarEvents',
     fields: () => ({
         id: { type: conduit_core_1.schemaToGraphQLType('string') },
         provider: { type: CalendarProviderField },
@@ -98,15 +93,46 @@ exports.CalendarEventGQLType = new graphql_1.GraphQLObjectType({
         iCalendarUid: { type: conduit_core_1.schemaToGraphQLType('string') },
         isBusy: { type: conduit_core_1.schemaToGraphQLType('boolean') },
         status: {
-            type: conduit_core_1.schemaToGraphQLType([CalendarEventStatus.CONFIRMED, CalendarEventStatus.CANCELED, CalendarEventStatus.TENTATIVE], 'CalendarEventStatus'),
+            type: conduit_core_1.schemaToGraphQLType([CalendarEventStatus.CONFIRMED, CalendarEventStatus.CANCELED, CalendarEventStatus.TENTATIVE], 'CalendarEventResultStatus'),
         },
         links: { type: conduit_core_1.schemaToGraphQLType('string') },
-        creator: { type: conduit_core_1.schemaToGraphQLType(CalendarContactSchema, 'CalendarEventCreator', false) },
-        organizer: { type: conduit_core_1.schemaToGraphQLType(CalendarContactSchema, 'CalendarEventOrganizer', false) },
+        creator: { type: conduit_core_1.schemaToGraphQLType(CalendarContactSchema, 'CalendarEventResultCreator', false) },
+        organizer: { type: conduit_core_1.schemaToGraphQLType(CalendarContactSchema, 'CalendarEventResultOrganizer', false) },
         attendees: { type: conduit_core_1.schemaToGraphQLType('string') },
-        linkedNotes: { type: new graphql_1.GraphQLList(CalendarEventLinkedNotesGQLType) },
     }),
-});
+}));
+exports.CalendarEventByIdGQLType = new graphql_1.GraphQLList(new graphql_1.GraphQLObjectType({
+    name: 'CalendarEventByIdResult',
+    fields: () => ({
+        id: { type: conduit_core_1.schemaToGraphQLType('string') },
+        provider: { type: CalendarProviderField },
+        calendarUserId: { type: conduit_core_1.schemaToGraphQLType('string') },
+        userCalendarExternalId: { type: conduit_core_1.schemaToGraphQLType('string') },
+        calendarEventExternalId: { type: conduit_core_1.schemaToGraphQLType('string') },
+        created: { type: conduit_core_1.schemaToGraphQLType('timestamp') },
+        lastModified: { type: conduit_core_1.schemaToGraphQLType('timestamp') },
+        deleted: { type: conduit_core_1.schemaToGraphQLType('timestamp?') },
+        isAccountConnected: { type: conduit_core_1.schemaToGraphQLType('boolean') },
+        summary: { type: conduit_core_1.schemaToGraphQLType('string') },
+        description: { type: conduit_core_1.schemaToGraphQLType('string?') },
+        displayColor: { type: conduit_core_1.schemaToGraphQLType('string?') },
+        location: { type: conduit_core_1.schemaToGraphQLType('string?') },
+        isAllDay: { type: conduit_core_1.schemaToGraphQLType('boolean') },
+        start: { type: conduit_core_1.schemaToGraphQLType('timestamp') },
+        end: { type: conduit_core_1.schemaToGraphQLType('timestamp') },
+        recurrentEventId: { type: conduit_core_1.schemaToGraphQLType('string?') },
+        recurrence: { type: conduit_core_1.schemaToGraphQLType('string?') },
+        iCalendarUid: { type: conduit_core_1.schemaToGraphQLType('string') },
+        isBusy: { type: conduit_core_1.schemaToGraphQLType('boolean') },
+        status: {
+            type: conduit_core_1.schemaToGraphQLType([CalendarEventStatus.CONFIRMED, CalendarEventStatus.CANCELED, CalendarEventStatus.TENTATIVE], 'CalendarEventByIdResultStatus'),
+        },
+        links: { type: conduit_core_1.schemaToGraphQLType('string') },
+        creator: { type: conduit_core_1.schemaToGraphQLType(CalendarContactSchema, 'CalendarEventByIdResultCreator', false) },
+        organizer: { type: conduit_core_1.schemaToGraphQLType(CalendarContactSchema, 'CalendarEventByIdResultOrganizer', false) },
+        attendees: { type: conduit_core_1.schemaToGraphQLType('string') },
+    }),
+}));
 var CalendarEventStatus;
 (function (CalendarEventStatus) {
     CalendarEventStatus["CONFIRMED"] = "CONFIRMED";
@@ -114,7 +140,7 @@ var CalendarEventStatus;
     CalendarEventStatus["TENTATIVE"] = "TENTATIVE";
 })(CalendarEventStatus = exports.CalendarEventStatus || (exports.CalendarEventStatus = {}));
 exports.CalendarEventAttendeeGQLType = new graphql_1.GraphQLObjectType({
-    name: 'CalendarEventAttendee',
+    name: 'CalendarEventAttendeeResult',
     fields: () => ({
         contact: { type: conduit_core_1.schemaToGraphQLType(CalendarContactSchema, 'CalendarEventAttendeeContact', false) },
         isOptional: { type: conduit_core_1.schemaToGraphQLType('boolean') },
@@ -149,11 +175,6 @@ var CalendarEventUriType;
     /** link to the event in the provider's web UI */
     CalendarEventUriType["WEB"] = "WEB";
 })(CalendarEventUriType = exports.CalendarEventUriType || (exports.CalendarEventUriType = {}));
-const CalendarEventLinkedNotesGQLType = conduit_core_1.schemaToGraphQLType({
-    noteGuid: 'string',
-    isLinkedToAllInstances: 'boolean',
-    linkTime: 'timestamp',
-}, 'CalendarEventLinkedNotes', false);
 // Arguments for queries
 exports.CalendarAccountsSchemaArgs = conduit_core_1.schemaToGraphQLArgs({
     activeCalendarOnly: 'boolean?',
