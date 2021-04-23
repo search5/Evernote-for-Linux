@@ -8,10 +8,9 @@ const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 exports.testError = {
     type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
-    requiredParams: {},
-    optionalParams: {
-        grpcErrorCode: 'number',
-        httpErrorCode: 'number',
+    params: {
+        grpcErrorCode: conduit_utils_1.NullableInt,
+        httpErrorCode: conduit_utils_1.NullableInt,
     },
     execute: async (trc, ctx, params) => {
         if (params.grpcErrorCode && params.httpErrorCode) {

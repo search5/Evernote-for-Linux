@@ -3,7 +3,7 @@
  * Copyright 2021 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BoardServiceLevels = exports.WidgetSelectedTabs = exports.BoardTypes = exports.MutableWidgetTypes = exports.WidgetTypes = exports.DeviceFormFactors = exports.BoardDesktopLayouts = exports.BoardMobileLayouts = exports.ClippedTabsSet = exports.CommonTabsSet = exports.calculateUserAdjustedServiceLevel = exports.doesUserHaveWidgetSupport = exports.calculateWidgetAdjustedServiceLevel = exports.formDeterministicBoardIdParts = exports.maskLeadingWidgetSegment = exports.boardTypeNumberMap = exports.widgetTypeNumberMap = exports.BoardTypeNumber = exports.WidgetTypeNumber = exports.DefaultAdjustedServiceLevelV2 = exports.MaxExtraWidgets = void 0;
+exports.BoardBackgroundModes = exports.BoardServiceLevels = exports.WidgetSelectedTabs = exports.BoardTypes = exports.MutableWidgetTypes = exports.WidgetTypes = exports.DeviceFormFactors = exports.BoardDesktopLayouts = exports.BoardMobileLayouts = exports.ClippedTabsSet = exports.CommonTabsSet = exports.calculateUserAdjustedServiceLevel = exports.doesUserHaveWidgetSupport = exports.calculateWidgetAdjustedServiceLevel = exports.formDeterministicBoardIdParts = exports.maskLeadingWidgetSegment = exports.boardTypeNumberMap = exports.widgetTypeNumberMap = exports.BoardTypeNumber = exports.WidgetTypeNumber = exports.DefaultAdjustedServiceLevelV2 = exports.MaxExtraWidgets = void 0;
 const en_ts_utils_1 = require("en-ts-utils");
 const serviceLevelV2Schema_1 = require("./serviceLevelV2Schema");
 const ts_types_1 = require("./ts-types");
@@ -158,4 +158,5 @@ exports.MutableWidgetTypes = Object.values(ts_types_1.MutableWidgetType);
 exports.BoardTypes = Object.values(ts_types_1.BoardType);
 exports.WidgetSelectedTabs = Object.values(ts_types_1.WidgetSelectedTab);
 exports.BoardServiceLevels = [...Object.values(ts_types_1.ServiceLevelV2), ...Object.values(ts_types_1.DeprecatedServiceLevel)];
+exports.BoardBackgroundModes = Object.values(ts_types_1.BoardBackgroundMode);
 //# sourceMappingURL=boardSchema.js.map

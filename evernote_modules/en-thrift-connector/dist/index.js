@@ -13,15 +13,13 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ThriftComm = exports.OfflineSearchIndexActivity = exports.ThriftRemoteMutationExecutor = exports.getLastUpdatedNoteFilters = exports.containerLastUpdated = exports.resolveContent = exports.toUserClientInfo = exports.workspaceFromService = exports.generateResourceUrl = exports.profileFromContact = exports.ProfileConverter = exports.notebookObjectFromService = exports.getOfflineNbsFromLocalSettings = exports.membershipFromWorkspace = exports.makeConverterParams = exports.convertGuidToService = exports.convertGuidFromService = exports.RemoteServiceCredentialGQL = exports.hasNapAuthInfo = exports.getScopedGoogleOAuthCredential = exports.encodeAuthData = exports.decodeAuthData = exports.AuthServiceLevel = void 0;
+exports.ThriftComm = exports.OfflineSearchIndexActivity = exports.ThriftRemoteMutationExecutor = exports.getLastUpdatedNoteFilters = exports.containerLastUpdated = exports.resolveContent = exports.toUserClientInfo = exports.workspaceFromService = exports.generateResourceUrl = exports.profileFromContact = exports.ProfileConverter = exports.notebookObjectFromService = exports.getOfflineNbsFromLocalSettings = exports.membershipFromWorkspace = exports.makeConverterParams = exports.convertGuidToService = exports.convertGuidFromService = exports.hasNapAuthInfo = exports.getScopedGoogleOAuthCredential = exports.encodeAuthData = exports.decodeAuthData = exports.AuthServiceLevel = void 0;
 var Auth_1 = require("./Auth");
 Object.defineProperty(exports, "AuthServiceLevel", { enumerable: true, get: function () { return Auth_1.AuthServiceLevel; } });
 Object.defineProperty(exports, "decodeAuthData", { enumerable: true, get: function () { return Auth_1.decodeAuthData; } });
 Object.defineProperty(exports, "encodeAuthData", { enumerable: true, get: function () { return Auth_1.encodeAuthData; } });
 Object.defineProperty(exports, "getScopedGoogleOAuthCredential", { enumerable: true, get: function () { return Auth_1.getScopedGoogleOAuthCredential; } });
 Object.defineProperty(exports, "hasNapAuthInfo", { enumerable: true, get: function () { return Auth_1.hasNapAuthInfo; } });
-var AuthPlugin_1 = require("./Plugins/AuthPlugin");
-Object.defineProperty(exports, "RemoteServiceCredentialGQL", { enumerable: true, get: function () { return AuthPlugin_1.RemoteServiceCredentialGQL; } });
 var Converters_1 = require("./Converters/Converters");
 Object.defineProperty(exports, "convertGuidFromService", { enumerable: true, get: function () { return Converters_1.convertGuidFromService; } });
 Object.defineProperty(exports, "convertGuidToService", { enumerable: true, get: function () { return Converters_1.convertGuidToService; } });

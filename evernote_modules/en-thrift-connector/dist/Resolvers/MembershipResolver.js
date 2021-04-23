@@ -109,7 +109,7 @@ async function resolveMembershipAccepted(nodeRef, context) {
 function MembershipResolver() {
     const resolvers = {
         'Membership.hasAccepted': {
-            type: conduit_core_1.schemaToGraphQLType('boolean?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableBoolean),
             resolve: async (nodeRef, _, context) => {
                 try {
                     return await resolveMembershipAccepted(nodeRef, context);

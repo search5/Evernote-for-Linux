@@ -71,7 +71,7 @@ function getApplicationDataPlugin() {
                     id: 'ID',
                     key: 'string',
                 }),
-                type: conduit_core_1.schemaToGraphQLType({ value: 'string?' }, 'noteGetApplicationDataEntryResult', false),
+                type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({ value: conduit_utils_1.NullableString }, 'noteGetApplicationDataEntryResult')),
                 resolve: noteApplicationDataEntryResolver,
             },
             attachmentGetApplicationDataEntry: {
@@ -79,7 +79,7 @@ function getApplicationDataPlugin() {
                     id: 'ID',
                     key: 'string',
                 }),
-                type: conduit_core_1.schemaToGraphQLType({ value: 'string?' }, 'attachmentGetApplicationDataEntryResult', false),
+                type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({ value: conduit_utils_1.NullableString }, 'attachmentGetApplicationDataEntryResult')),
                 resolve: attachmentApplicationDataEntryResolver,
             },
         }),

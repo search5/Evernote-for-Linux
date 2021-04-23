@@ -6,11 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.savedSearchIndexConfig = exports.savedSearchTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const EntityConstants_1 = require("../EntityConstants");
-/*
-  * `format` attribute is left out. It has two value and one is never supported.
-  * `scope` attribute is left out temporarily because clients should never be aware of
-  * it. Conduit search plugin should though.
-  */
 exports.savedSearchTypeDef = {
     name: EntityConstants_1.CoreEntityTypes.SavedSearch,
     syncSource: conduit_storage_1.SyncSource.THRIFT,

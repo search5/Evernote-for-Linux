@@ -10,6 +10,7 @@ const en_core_entity_types_1 = require("en-core-entity-types");
 const ReminderStatusContainmentRules_1 = require("../Rules/ReminderStatusContainmentRules");
 const TaskConstants_1 = require("../TaskConstants");
 const NoteContentInfo_1 = require("./Helpers/NoteContentInfo");
+const Permission_1 = require("./Helpers/Permission");
 const Task_1 = require("./Helpers/Task");
 async function genericUpdateExecutionPlan(trc, ctx, taskID, fields) {
     const nodeRef = { id: taskID, type: TaskConstants_1.TaskEntityTypes.Task };
@@ -48,20 +49,18 @@ async function taskUpdateOps(trc, ctx, taskRef, fields) {
 }
 exports.taskCreate = {
     type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
-    requiredParams: {
+    params: {
         container: 'ID',
         label: 'string',
         taskGroupNoteLevelID: 'string',
-    },
-    optionalParams: {
-        dueDate: 'timestamp',
-        timeZone: 'string',
-        dueDateUIOption: Object.values(TaskConstants_1.DueDateUIOption),
-        flag: 'boolean',
-        sortWeight: 'string',
-        status: 'string',
-        noteLevelID: 'string',
-        sourceOfChange: 'string',
+        dueDate: conduit_utils_1.NullableTimestamp,
+        timeZone: conduit_utils_1.NullableString,
+        dueDateUIOption: conduit_utils_1.Nullable(TaskConstants_1.DueDateUIOptionSchema),
+        flag: conduit_utils_1.NullableBoolean,
+        sortWeight: conduit_utils_1.NullableString,
+        status: conduit_utils_1.NullableString,
+        noteLevelID: conduit_utils_1.NullableString,
+        sourceOfChange: conduit_utils_1.NullableString,
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
@@ -89,11 +88,9 @@ exports.taskCreate = {
 /* Delete Task */
 exports.taskDelete = {
     type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
-    requiredParams: {
+    params: {
         task: 'ID',
-    },
-    optionalParams: {
-        sourceOfChange: 'string',
+        sourceOfChange: conduit_utils_1.NullableString,
     },
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
         var _a;
@@ -105,7 +102,7 @@ exports.taskDelete = {
         if (!task) {
             throw new conduit_utils_1.NotFoundError(nodeRef.id, 'Missing task in taskDelete');
         }
-        await Task_1.checkNoteEditPermissionByTask(trc, ctx, task);
+        await Permission_1.checkNoteEditPermissionByTask(trc, ctx, task);
         const parentNodeEdge = conduit_utils_1.firstStashEntry(task.inputs.parent);
         if (!parentNodeEdge) {
             throw new conduit_utils_1.NotFoundError(params.task, `Task's parent not found in taskMove`);
@@ -136,19 +133,17 @@ exports.taskDelete = {
 /* Update Task */
 exports.taskUpdate = {
     type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
-    requiredParams: {
+    params: {
         task: 'ID',
-    },
-    optionalParams: {
-        label: 'string',
-        dueDate: 'timestamp',
-        timeZone: 'string',
-        dueDateUIOption: Object.values(TaskConstants_1.DueDateUIOption),
-        flag: 'boolean',
-        sortWeight: 'string',
-        status: Object.values(TaskConstants_1.TaskStatus),
-        sourceOfChange: 'string',
-        taskGroupNoteLevelID: 'string',
+        label: conduit_utils_1.NullableString,
+        dueDate: conduit_utils_1.NullableTimestamp,
+        timeZone: conduit_utils_1.NullableString,
+        dueDateUIOption: conduit_utils_1.Nullable(TaskConstants_1.DueDateUIOptionSchema),
+        flag: conduit_utils_1.NullableBoolean,
+        sortWeight: conduit_utils_1.NullableString,
+        status: conduit_utils_1.Nullable(TaskConstants_1.TaskStatusSchema),
+        sourceOfChange: conduit_utils_1.NullableString,
+        taskGroupNoteLevelID: conduit_utils_1.NullableString,
     },
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
         var _a;
@@ -196,13 +191,16 @@ exports.taskUpdate = {
             }
         }
         const existingTask = await ctx.fetchEntity(trc, taskRef);
+        if (!existingTask) {
+            throw new conduit_utils_1.NotFoundError(params.task, 'missing task in update');
+        }
         if (params.taskGroupNoteLevelID) {
             const taskGroupUpsertPlan = await NoteContentInfo_1.taskGroupUpsertPlanFor(trc, ctx, noteID, params.taskGroupNoteLevelID, params.sourceOfChange);
             if (taskGroupUpsertPlan.ops.length) {
                 plan.ops.push(...taskGroupUpsertPlan.ops);
             }
         }
-        await Task_1.checkNoteEditPermissionByNoteId(trc, ctx, noteID);
+        await Permission_1.checkTaskEditPermission(trc, ctx, existingTask);
         const reminderRefs = await ctx.traverseGraph(trc, taskRef, [{ edge: ['outputs', 'reminders'], type: TaskConstants_1.TaskEntityTypes.Reminder }]);
         const reminderIds = reminderRefs.map(reminder => {
             return reminder.id;
@@ -273,12 +271,10 @@ exports.taskUpdate = {
 /* Assign Task */
 exports.taskAssign = {
     type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
-    requiredParams: {
+    params: {
         task: 'ID',
-    },
-    optionalParams: {
-        assigneeID: 'ID',
-        sourceOfChange: 'string',
+        assigneeID: conduit_utils_1.NullableID,
+        sourceOfChange: conduit_utils_1.NullableString,
     },
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
         var _a;
@@ -289,12 +285,12 @@ exports.taskAssign = {
             sourceOfChange: params.sourceOfChange,
         };
         const noteID = await Task_1.getParentNoteId(trc, ctx, params.task);
-        await Task_1.checkNoteEditPermissionByNoteId(trc, ctx, noteID);
         const taskRef = { id: params.task, type: TaskConstants_1.TaskEntityTypes.Task };
         const existingTask = await ctx.fetchEntity(trc, taskRef);
         if (!existingTask) {
             throw new conduit_utils_1.NotFoundError(params.task, 'Task not found in taskAssign');
         }
+        await Permission_1.checkTaskEditPermission(trc, ctx, existingTask);
         // update assignee
         const existingAssigneeEdge = conduit_utils_1.firstStashEntry(existingTask === null || existingTask === void 0 ? void 0 : existingTask.outputs.assignee);
         const existingAssigneeId = existingAssigneeEdge ? existingAssigneeEdge.dstID : null;
@@ -311,6 +307,7 @@ exports.taskAssign = {
             edgesToDelete: [
                 { srcID: params.task, srcType: TaskConstants_1.TaskEntityTypes.Task, srcPort: 'assignee' },
                 { srcID: params.task, srcType: TaskConstants_1.TaskEntityTypes.Task, srcPort: 'assignedBy' },
+                { srcID: params.task, srcType: TaskConstants_1.TaskEntityTypes.Task, srcPort: 'memberships' },
             ],
         };
         plan.ops.push(edgeModifyOps);
@@ -334,7 +331,17 @@ exports.taskAssign = {
                 });
                 // create membership
                 const owner = { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note } || ctx.vaultUserID || ctx.userID;
-                await Task_1.createMembership(trc, ctx, plan, owner, taskRef, 'memberships', params.assigneeID, profile);
+                const membershipOps = await en_core_entity_types_1.createMembershipOps(trc, ctx, owner, {
+                    privilege: en_core_entity_types_1.MembershipPrivilege.COMPLETE,
+                    recipientIsMe: profile.id === params.assigneeID,
+                    parentRef: { id: taskRef.id, type: taskRef.type },
+                    profileEdgeMap: {
+                        recipient: params.assigneeID,
+                        sharer: profile.id,
+                        owner: profile.id,
+                    },
+                });
+                plan.ops.push(...membershipOps);
             }
         }
         plan.ops.push({
@@ -348,14 +355,12 @@ exports.taskAssign = {
 /* Move Task */
 exports.taskMove = {
     type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
-    requiredParams: {
+    params: {
         task: 'ID',
         destTaskGroupNoteLevelID: 'string',
         destNoteID: 'ID',
-    },
-    optionalParams: {
-        destNoteOwnerID: 'number',
-        sourceOfChange: 'string',
+        destNoteOwnerID: conduit_utils_1.NullableNumber,
+        sourceOfChange: conduit_utils_1.NullableString,
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
@@ -383,8 +388,8 @@ exports.taskMove = {
             throw new conduit_utils_1.NotFoundError(params.destNoteID, 'Target note not found in taskMove');
         }
         // we need to check permission on both source and target note
-        await Task_1.checkNoteEditPermissionByTask(trc, ctx, task);
-        await Task_1.checkNoteEditPermissionByNoteId(trc, ctx, params.destNoteID);
+        await Permission_1.checkNoteEditPermissionByTask(trc, ctx, task);
+        await Permission_1.checkNoteEditPermissionByNoteId(trc, ctx, params.destNoteID);
         const parentNodeEdge = conduit_utils_1.firstStashEntry(task.inputs.parent);
         if (!parentNodeEdge) {
             throw new conduit_utils_1.NotFoundError(params.task, `Task's parent not found in taskMove`);

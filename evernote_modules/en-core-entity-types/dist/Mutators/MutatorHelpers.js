@@ -3,9 +3,11 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateAccountLimits = exports.validateMaxNoteSize = exports.getNoteSize = void 0;
+exports.createMembershipOps = exports.createMembershipProfileEdges = exports.validateAndCalculateSizeLimits = exports.validateAccountLimits = exports.validateNoteTagsCount = exports.validateMaxNoteSize = exports.getNoteSize = void 0;
 const conduit_utils_1 = require("conduit-utils");
+const AccountLimits_1 = require("../AccountLimits");
 const EntityConstants_1 = require("../EntityConstants");
+const Membership_1 = require("../NodeTypes/Membership");
 async function getNoteSize(trc, context, note) {
     let resourceSize = 0;
     const attachmentIDs = [];
@@ -40,7 +42,40 @@ function validateMaxNoteSize(accountLimits, noteSize) {
     }
 }
 exports.validateMaxNoteSize = validateMaxNoteSize;
-function validateAccountLimits(accountLimits, accountLimitsValidationParams) {
+function validateNoteTagsCount(accountLimits, noteTagsCount) {
+    throwIfAccountLimitsNull(accountLimits);
+    const noteTagCountMax = accountLimits.NodeFields.Limits.noteTagCountMax;
+    if (conduit_utils_1.isNotNullish(noteTagsCount) && noteTagsCount > noteTagCountMax) {
+        throw new conduit_utils_1.ServiceError('LIMIT_REACHED', 'Note.tagGuids', 'type=LIMIT_REACHED thriftExceptionParameter=Note.tagGuids limit=noteTagCountMax');
+    }
+}
+exports.validateNoteTagsCount = validateNoteTagsCount;
+function validateAccountLimits(currentAccountLimits, diff) {
+    throwIfAccountLimitsNull(currentAccountLimits);
+    const limits = currentAccountLimits.NodeFields.Limits;
+    const counts = currentAccountLimits.NodeFields.Counts;
+    throwIfLimitReached(limits.userNoteCountMax, counts.userNoteCount, diff.userNoteCountChange, 'Note', 'userNoteCountMax');
+    throwIfLimitReached(limits.userNotebookCountMax, counts.userNotebookCount, diff.userNotebookCountChange, 'Notebook', 'userNotebookCountMax');
+    throwIfLimitReached(limits.userLinkedNotebookMax, counts.userLinkedNotebookCount, diff.userLinkedNotebookCountChange, 'Notebook', 'userLinkedNotebookMax');
+    throwIfLimitReached(limits.userTagCountMax, counts.userTagCount, diff.userTagCountChange, 'Tag', 'userTagCountMax');
+    throwIfLimitReached(limits.userSavedSearchesMax, counts.userSavedSearchesCount, diff.userSavedSearchesCountChange, 'SavedSearches', 'userSavedSearchesMax');
+    throwIfLimitReached(limits.userDeviceLimit, counts.userDeviceCount, diff.userDeviceCountChange, 'Device', 'userDeviceLimit');
+    throwIfLimitReached(limits.userWorkspaceCountMax, counts.userWorkspaceCount, diff.userWorkspaceCountChange, 'Workspace', 'userWorkspaceCountMax');
+    throwIfLimitReached(limits.uploadLimit, counts.userUploadedAmount, diff.userUploadedAmountChange, 'uploadLimit', 'uploadLimit');
+}
+exports.validateAccountLimits = validateAccountLimits;
+function throwIfLimitReached(limit, currentValue, diff, errorKey, limitName) {
+    if (conduit_utils_1.isNotNullish(diff) && currentValue + diff > limit) {
+        throw new conduit_utils_1.ServiceError('LIMIT_REACHED', errorKey, `type=LIMIT_REACHED thriftExceptionParameter=${errorKey} limit=${limitName}`);
+    }
+}
+function throwIfAccountLimitsNull(accountLimits) {
+    if (!accountLimits) {
+        throw new conduit_utils_1.NotFoundError(AccountLimits_1.ACCOUNT_LIMITS_ID, 'Missing limits');
+    }
+}
+function validateAndCalculateSizeLimits(accountLimits, accountLimitsValidationParams) {
+    throwIfAccountLimitsNull(accountLimits);
     const { prevNoteContentSize, newNoteContentSize, prevNoteResourceSize, uploadResourceSize } = accountLimitsValidationParams;
     // 1. Check monthly upload limits
     // 2. Check resource limits
@@ -68,5 +103,39 @@ function validateAccountLimits(accountLimits, accountLimitsValidationParams) {
         },
     };
 }
-exports.validateAccountLimits = validateAccountLimits;
+exports.validateAndCalculateSizeLimits = validateAndCalculateSizeLimits;
+async function createMembershipProfileEdges(membershipID, profileIDsPerEdge) {
+    return Object.entries(profileIDsPerEdge).map(([srcPort, profileID]) => ({
+        srcID: membershipID, srcType: EntityConstants_1.CoreEntityTypes.Membership, srcPort,
+        dstID: profileID, dstType: EntityConstants_1.CoreEntityTypes.Profile, dstPort: null,
+    }));
+}
+exports.createMembershipProfileEdges = createMembershipProfileEdges;
+async function createMembershipOps(trc, ctx, owner, params) {
+    const membershipGenID = await ctx.generateID(trc, owner, EntityConstants_1.CoreEntityTypes.Membership);
+    const membershipID = membershipGenID[1];
+    const membership = ctx.createEntity({ id: membershipID, type: EntityConstants_1.CoreEntityTypes.Membership }, {
+        privilege: params.privilege,
+        recipientType: Membership_1.MembershipRecipientType.USER,
+        recipientIsMe: params.recipientIsMe,
+    });
+    const membershipProfileEdges = await createMembershipProfileEdges(membershipID, params.profileEdgeMap);
+    return [
+        {
+            changeType: 'Node:CREATE',
+            node: membership,
+            id: membershipGenID,
+        }, {
+            changeType: 'Edge:MODIFY',
+            edgesToCreate: [
+                {
+                    srcID: params.parentRef.id, srcType: params.parentRef.type, srcPort: 'memberships',
+                    dstID: membership.id, dstType: EntityConstants_1.CoreEntityTypes.Membership, dstPort: 'parent',
+                },
+                ...membershipProfileEdges,
+            ],
+        },
+    ];
+}
+exports.createMembershipOps = createMembershipOps;
 //# sourceMappingURL=MutatorHelpers.js.map

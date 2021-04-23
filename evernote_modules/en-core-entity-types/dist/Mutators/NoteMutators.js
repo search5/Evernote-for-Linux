@@ -17,53 +17,44 @@ const NoteMutatorHelpers_1 = require("./Helpers/NoteMutatorHelpers");
 const MutatorHelpers_1 = require("./MutatorHelpers");
 exports.noteCreate = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         untitledNoteLabel: 'string',
-    },
-    optionalParams: {
-        noteContent: 'string',
-        container: 'ID',
-        label: 'string',
-        tags: 'ID[]',
-        created: 'number',
-        updated: 'number',
-        subjectDate: 'number',
-        contentClass: 'string',
-        latitude: 'number',
-        longitude: 'number',
-        altitude: 'number',
-        placeName: 'string',
-        reminderTime: 'number',
-        reminderDoneTime: 'number',
-        reminderOrder: 'number',
-        author: 'string',
-        source: 'string',
-        sourceUrl: 'string',
-        sourceApplication: 'string',
-        attachmentHashes: 'string[]',
-        applicationData: 'map<string>',
+        noteContent: conduit_utils_1.NullableString,
+        container: conduit_utils_1.NullableID,
+        label: conduit_utils_1.NullableString,
+        tags: conduit_utils_1.NullableListOf('ID'),
+        created: conduit_utils_1.NullableNumber,
+        updated: conduit_utils_1.NullableNumber,
+        subjectDate: conduit_utils_1.NullableNumber,
+        contentClass: conduit_utils_1.NullableString,
+        latitude: conduit_utils_1.NullableNumber,
+        longitude: conduit_utils_1.NullableNumber,
+        altitude: conduit_utils_1.NullableNumber,
+        placeName: conduit_utils_1.NullableString,
+        reminderTime: conduit_utils_1.NullableNumber,
+        reminderDoneTime: conduit_utils_1.NullableNumber,
+        reminderOrder: conduit_utils_1.NullableNumber,
+        author: conduit_utils_1.NullableString,
+        source: conduit_utils_1.NullableString,
+        sourceUrl: conduit_utils_1.NullableString,
+        sourceApplication: conduit_utils_1.NullableString,
+        attachmentHashes: conduit_utils_1.NullableListOf('string'),
+        applicationData: conduit_utils_1.NullableMapOf('string'),
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
         paramsOut.noteContent = paramsIn.noteContent || Note_1.DEFAULT_NOTE_CONTENT;
     },
     execute: async (trc, ctx, params) => {
-        var _a;
+        var _a, _b;
         // Check account limit
         const accountLimits = await ctx.fetchEntity(trc, AccountLimits_1.ACCOUNT_LIMITS_REF);
-        if (!accountLimits) {
-            throw new conduit_utils_1.NotFoundError(AccountLimits_1.ACCOUNT_LIMITS_REF.id, 'Missing limits');
-        }
-        const count = accountLimits.NodeFields.Counts.userNoteCount;
-        const max = accountLimits.NodeFields.Limits.userNoteCountMax;
-        if (count >= max) {
-            // TODO: make errors use actual fields once conduit errors are fully separated from thrift errors
-            new conduit_utils_1.ServiceError('LIMIT_REACHED', EntityConstants_1.CoreEntityTypes.Note, 'type=LIMIT_REACHED thriftExceptionParameter=Note limit=userNoteCountMax');
-        }
+        MutatorHelpers_1.validateNoteTagsCount(accountLimits, (_a = params.tags) === null || _a === void 0 ? void 0 : _a.length);
+        MutatorHelpers_1.validateAccountLimits(accountLimits, { userNoteCountChange: 1 });
         // check maxNoteSize and uploaded resources
-        const updatedLimits = MutatorHelpers_1.validateAccountLimits(accountLimits, {
+        const updatedLimits = MutatorHelpers_1.validateAndCalculateSizeLimits(accountLimits, {
             prevNoteContentSize: 0,
-            newNoteContentSize: (_a = params.noteContent.length) !== null && _a !== void 0 ? _a : 0,
+            newNoteContentSize: (_b = params.noteContent.length) !== null && _b !== void 0 ? _b : 0,
             prevNoteResourceSize: 0,
         });
         const plan = {
@@ -83,10 +74,9 @@ exports.noteCreate = {
 };
 exports.noteDelete = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const noteRef = { id: params.note, type: EntityConstants_1.CoreEntityTypes.Note };
         const plan = {
@@ -99,10 +89,9 @@ exports.noteDelete = {
 };
 exports.noteRestore = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const noteRef = { id: params.note, type: EntityConstants_1.CoreEntityTypes.Note };
         const note = await ctx.fetchEntity(trc, noteRef);
@@ -178,12 +167,10 @@ exports.noteRestore = {
 };
 exports.noteSetLabel = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
         untitledNoteLabel: 'string',
-    },
-    optionalParams: {
-        label: 'string',
+        label: conduit_utils_1.NullableString,
     },
     buffering: {
         time: 2000,
@@ -235,10 +222,9 @@ exports.noteSetLabel = {
 };
 exports.noteExpunge = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const noteRef = { id: params.note, type: EntityConstants_1.CoreEntityTypes.Note };
         const note = await ctx.fetchEntity(trc, noteRef);
@@ -262,10 +248,9 @@ exports.noteExpunge = {
 };
 exports.notesExpunge = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
-        notes: 'ID[]',
+    params: {
+        notes: conduit_utils_1.ListOf('ID'),
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         if (!params.notes.length) {
             conduit_utils_1.logger.warn('Empty array of node ids given to expunge');
@@ -294,11 +279,10 @@ exports.notesExpunge = {
 exports.noteMoveInternal = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
     isInternal: true,
-    requiredParams: {
+    params: {
         note: 'ID',
         targetContainer: 'ID',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const noteRef = { id: params.note, type: EntityConstants_1.CoreEntityTypes.Note };
         const note = await ctx.fetchEntity(trc, noteRef);
@@ -331,19 +315,18 @@ exports.noteMoveInternal = {
 };
 exports.noteSetContent = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
         noteContent: 'string',
+        nextActiveAttachments: conduit_utils_1.NullableListOf('string'),
+        nextTaskGroups: conduit_utils_1.NullableListOf('string'),
+        prevNoteHash: conduit_utils_1.NullableString,
+        isInternalUpdate: conduit_utils_1.NullableBoolean,
     },
-    optionalParams: {
-        nextActiveAttachments: 'string[]',
-        nextTaskGroups: 'string[]',
-        prevNoteHash: 'string',
-        isInternalUpdate: 'boolean',
-    },
+    failSafeKey: 'note',
     resultTypes: {
         result: 'string',
-        editSequenceNumber: 'int?',
+        editSequenceNumber: conduit_utils_1.NullableInt,
     },
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
         var _a, _b;
@@ -421,12 +404,9 @@ exports.noteSetContent = {
             throw new conduit_utils_1.PermissionError('Permission Denied: cannot edit note content');
         }
         const accountLimits = await ctx.fetchEntity(trc, AccountLimits_1.ACCOUNT_LIMITS_REF);
-        if (!accountLimits) {
-            throw new conduit_utils_1.NotFoundError(AccountLimits_1.ACCOUNT_LIMITS_ID, 'Missing account limits');
-        }
         const { contentSize, resourceSize, attachments, activeAttachmentHashes } = await MutatorHelpers_1.getNoteSize(trc, ctx, note);
         // check account limits
-        const updatedLimits = MutatorHelpers_1.validateAccountLimits(accountLimits, {
+        const updatedLimits = MutatorHelpers_1.validateAndCalculateSizeLimits(accountLimits, {
             prevNoteContentSize: contentSize,
             newNoteContentSize: (_b = (_a = params.noteContent) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0,
             prevNoteResourceSize: resourceSize,
@@ -546,11 +526,10 @@ exports.noteSetContent = {
 };
 exports.noteSetSharePublic = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
         enable: 'boolean',
     },
-    optionalParams: {},
     execute: null,
     executeOnService: async (trc, ctx, params) => {
         const noteRef = { id: params.note, type: EntityConstants_1.CoreEntityTypes.Note };
@@ -568,14 +547,12 @@ exports.noteSetSharePublic = {
 };
 exports.noteSendByEmail = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
-    },
-    optionalParams: {
-        toEmails: 'string[]',
-        ccEmails: 'string[]',
-        subject: 'string',
-        message: 'string',
+        toEmails: conduit_utils_1.NullableListOf('string'),
+        ccEmails: conduit_utils_1.NullableListOf('string'),
+        subject: conduit_utils_1.NullableString,
+        message: conduit_utils_1.NullableString,
     },
     execute: null,
     executeOnService: async (trc, ctx, params) => {
@@ -594,13 +571,12 @@ exports.noteSendByEmail = {
 };
 exports.noteSetLocation = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
         latitude: 'number',
         longitude: 'number',
         altitude: 'number',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const noteRef = { id: params.note, type: EntityConstants_1.CoreEntityTypes.Note };
         const note = await ctx.fetchEntity(trc, noteRef);
@@ -629,11 +605,10 @@ exports.noteSetLocation = {
 };
 exports.noteSetPlaceName = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
         placeName: 'string',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const noteRef = { id: params.note, type: EntityConstants_1.CoreEntityTypes.Note };
         const note = await ctx.fetchEntity(trc, noteRef);
@@ -660,11 +635,10 @@ exports.noteSetPlaceName = {
 };
 exports.noteSetSubjectDate = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
         date: 'timestamp',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const noteRef = { id: params.note, type: EntityConstants_1.CoreEntityTypes.Note };
         const note = await ctx.fetchEntity(trc, noteRef);
@@ -706,12 +680,10 @@ async function genericNoteUpdatePlan(trc, ctx, noteID, fields) {
 }
 exports.noteSetReminder = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
-    },
-    optionalParams: {
-        reminderTime: 'timestamp',
-        eventLabel: 'string',
+        reminderTime: conduit_utils_1.NullableTimestamp,
+        eventLabel: conduit_utils_1.NullableString,
     },
     execute: async (trc, ctx, params) => {
         const noteRef = { id: params.note, type: EntityConstants_1.CoreEntityTypes.Note };
@@ -748,10 +720,9 @@ exports.noteSetReminder = {
 };
 exports.noteClearReminder = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const noteRef = { id: params.note, type: EntityConstants_1.CoreEntityTypes.Note };
         const note = await ctx.fetchEntity(trc, noteRef);
@@ -787,11 +758,10 @@ exports.noteClearReminder = {
 };
 exports.noteSetReminderDone = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
         reminderDoneTime: 'timestamp',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const fields = {
             'Attributes.Reminder.reminderDoneTime': params.reminderDoneTime,
@@ -801,11 +771,10 @@ exports.noteSetReminderDone = {
 };
 exports.noteSetReminderOrder = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
         reminderOrder: 'timestamp',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const fields = {
             'Attributes.Reminder.reminderOrder': params.reminderOrder,
@@ -815,11 +784,9 @@ exports.noteSetReminderOrder = {
 };
 exports.noteSetContentClass = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
-    },
-    optionalParams: {
-        contentClass: 'string',
+        contentClass: conduit_utils_1.NullableString,
     },
     execute: async (trc, ctx, params) => {
         var _a;
@@ -831,11 +798,10 @@ exports.noteSetContentClass = {
 };
 exports.noteSetSource = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
         source: 'string',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const fields = {
             'Attributes.Source.source': params.source,
@@ -845,11 +811,10 @@ exports.noteSetSource = {
 };
 exports.noteSetSourceUrl = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
         url: 'url',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const fields = {
             'Attributes.Source.sourceURL': params.url,
@@ -859,11 +824,10 @@ exports.noteSetSourceUrl = {
 };
 exports.noteSetSourceApplication = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
         application: 'string',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const fields = {
             'Attributes.Source.sourceApplication': params.application,
@@ -873,11 +837,10 @@ exports.noteSetSourceApplication = {
 };
 exports.noteSetAuthor = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
         author: 'string',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const fields = {
             'Attributes.Editor.author': params.author,
@@ -887,15 +850,13 @@ exports.noteSetAuthor = {
 };
 exports.noteInvite = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
-        privilege: Object.values(MembershipPrivilege_1.MembershipPrivilege),
-    },
-    optionalParams: {
-        emails: 'string[]',
-        userIDs: 'ID[]',
-        profileIDs: 'ID[]',
-        message: 'string',
+        privilege: MembershipPrivilege_1.MembershipPrivilegeSchema,
+        emails: conduit_utils_1.NullableListOf('string'),
+        userIDs: conduit_utils_1.NullableListOf('ID'),
+        profileIDs: conduit_utils_1.NullableListOf('ID'),
+        message: conduit_utils_1.NullableString,
     },
     execute: null,
     executeOnService: async (trc, ctx, params) => {
@@ -914,11 +875,10 @@ exports.noteInvite = {
 };
 exports.noteUnlinkConflictBackup = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
         conflictNote: 'ID',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const noteRef = { id: params.note, type: EntityConstants_1.CoreEntityTypes.Note };
         const conflictNoteRef = { id: params.conflictNote, type: EntityConstants_1.CoreEntityTypes.Note };
@@ -937,11 +897,10 @@ exports.noteUnlinkConflictBackup = {
 };
 exports.noteSetCreated = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         note: 'ID',
         created: 'timestamp',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const noteRef = { id: params.note, type: EntityConstants_1.CoreEntityTypes.Note };
         const note = await ctx.fetchEntity(trc, noteRef);
@@ -969,12 +928,10 @@ exports.noteSetCreated = {
 };
 exports.noteSetApplicationDataEntry = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         id: 'ID',
         key: 'string',
-    },
-    optionalParams: {
-        value: 'string',
+        value: conduit_utils_1.NullableString,
     },
     executeOnService: async (trc, ctx, params) => {
         const nodeRef = { id: params.id, type: EntityConstants_1.CoreEntityTypes.Note };

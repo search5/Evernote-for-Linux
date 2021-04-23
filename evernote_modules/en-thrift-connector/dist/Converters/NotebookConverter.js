@@ -45,7 +45,6 @@ const LinkedNotebookHelpers_1 = require("./LinkedNotebookHelpers");
 const MembershipConverter_1 = require("./MembershipConverter");
 const MessageConverter_1 = require("./MessageConverter");
 const ProfileConverter_1 = require("./ProfileConverter");
-const ShortcutConverter_1 = require("./ShortcutConverter");
 const WorkspaceConverter_1 = require("./WorkspaceConverter");
 const OFFLINE_NBS_LOCALDB_KEY = 'NotebooksMarkedOffline';
 var OfflineEntityDownloadState;
@@ -557,6 +556,7 @@ class NotebookConverterClass {
         return true;
     }
     async customToService(trc, params, commandRun, syncContext) {
+        var _a;
         switch (commandRun.command) {
             case 'NotebookInvite': {
                 if (!params.personalAuth) {
@@ -635,40 +635,6 @@ class NotebookConverterClass {
                 // A common case is resending a pending invitation.
                 return null;
             }
-            case 'NotebookLeave': {
-                if (!params.personalAuth) {
-                    throw new Error('Unable to leave notebook without personal auth token');
-                }
-                const nbID = commandRun.params.notebook;
-                const node = await params.graphTransaction.getNode(trc, null, { id: nbID, type: en_core_entity_types_1.CoreEntityTypes.Notebook });
-                if (!node) {
-                    throw new conduit_utils_1.NotFoundError(nbID, 'Unable to leave a not found notebook');
-                }
-                const serviceGuid = exports.NotebookConverter.convertGuidToService(nbID);
-                const metadata = await params.graphTransaction.getSyncContextMetadata(trc, null, syncContext);
-                let noteStoreUrl;
-                if (!metadata || !metadata.sharedNotebookGlobalID) {
-                    // Either shared notebook that belongs to the same business.
-                    // Or internal error, then rely on service backend to reject invalid request.
-                    noteStoreUrl = params.personalAuth.urls.noteStoreUrl;
-                }
-                else {
-                    noteStoreUrl = await params.graphTransaction.getSyncState(trc, null, ['sharing', 'sharedNotebooks', metadata.sharedNotebookGlobalID, 'noteStoreUrl']);
-                }
-                if (!noteStoreUrl) {
-                    throw new conduit_utils_1.InvalidOperationError('noteStoreUrl not provided');
-                }
-                const authToken = params.personalAuth.token;
-                const noteStore = params.thriftComm.getNoteStore(noteStoreUrl);
-                const recipientSettings = new en_conduit_sync_types_1.TNotebookRecipientSettings({ recipientStatus: en_conduit_sync_types_1.TRecipientStatus.NOT_IN_MY_LIST });
-                await noteStore.setNotebookRecipientSettings(trc, authToken, serviceGuid, recipientSettings);
-                const shortcutID = Converters_1.convertGuidFromService(`Notebook:${nbID}`, en_core_entity_types_1.CoreEntityTypes.Shortcut);
-                const shortcut = await params.graphTransaction.getNode(trc, null, { id: shortcutID, type: en_core_entity_types_1.CoreEntityTypes.Shortcut });
-                if (shortcut) {
-                    await ShortcutConverter_1.updateShortcutsToService(trc, params, [], [shortcutID]);
-                }
-                return null;
-            }
             case 'NotebookAcceptShare': {
                 const nbID = commandRun.params.notebook;
                 const node = await params.graphTransaction.getNode(trc, null, { id: nbID, type: en_core_entity_types_1.CoreEntityTypes.Notebook });
@@ -695,6 +661,45 @@ class NotebookConverterClass {
                 const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
                 const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
                 await noteStore.unpublishNotebook(trc, auth.token, serviceGuid, false);
+                return null;
+            }
+            case 'NotebookJoin': {
+                const nbID = commandRun.params.notebook;
+                const serviceGuid = Converters_1.convertGuidToService(nbID, en_core_entity_types_1.CoreEntityTypes.Notebook);
+                // for setNotebookRecipientSettings had to use personal auth
+                const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, conduit_core_1.PERSONAL_USER_CONTEXT);
+                const authToken = auth.token;
+                const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
+                const recipientSettings = new en_conduit_sync_types_1.TNotebookRecipientSettings({ recipientStatus: en_conduit_sync_types_1.TRecipientStatus.IN_MY_LIST });
+                await noteStore.setNotebookRecipientSettings(trc, authToken, serviceGuid, recipientSettings);
+                return null;
+            }
+            case 'NotebookPublish': {
+                const nbID = commandRun.params.notebook;
+                const node = await params.graphTransaction.getNode(trc, null, { id: nbID, type: en_core_entity_types_1.CoreEntityTypes.Notebook });
+                if (!node) {
+                    throw new conduit_utils_1.NotFoundError(nbID, 'Notebook not found in graph');
+                }
+                const businessAuth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, conduit_core_1.VAULT_USER_CONTEXT);
+                if (!businessAuth || !businessAuth.token || !((_a = businessAuth.urls) === null || _a === void 0 ? void 0 : _a.noteStoreUrl)) {
+                    throw new Error('No business auth found');
+                }
+                const serviceData = {
+                    guid: Converters_1.convertGuidToService(nbID, en_core_entity_types_1.CoreEntityTypes.Notebook),
+                    name: node.label,
+                    published: true,
+                    businessNotebook: {
+                        privilege: MembershipConverter_1.membershipPrivilegeToSharedNotebookPrivilege(commandRun.params.privilege),
+                        recommended: Boolean(commandRun.params.recommended),
+                        notebookDescription: commandRun.params.description,
+                    },
+                };
+                const notestore = params.thriftComm.getNoteStore(businessAuth.urls.noteStoreUrl);
+                await notestore.updateNotebookWithResultSpec(trc, businessAuth.token, serviceData, {
+                    includeNotebookRecipientSettings: false,
+                    includeNotebookRestrictions: false,
+                    includeSharedNotebooks: false,
+                });
                 return null;
             }
             default:

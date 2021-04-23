@@ -2427,6 +2427,36 @@
   },
   "Notebook": {
     "indexes": {
+      "12824109a7d0c2ba9f470d72939b844a": {
+        "index": [
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "created",
+            "order": "ASC",
+            "type": "timestamp"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "childrenCount",
+            "order": "ASC",
+            "type": "int"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      },
       "348b53353be026a16409f134ad3b0fab": {
         "index": [
           {
@@ -2641,6 +2671,36 @@
           }
         ]
       },
+      "e347612a163d6ababc364002e3f058bd": {
+        "index": [
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "childrenCount",
+            "order": "ASC",
+            "type": "int"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      },
       "f498b0499ba27728705cd29ee3f76edd": {
         "index": [
           {
@@ -2665,6 +2725,36 @@
             "value": false
           }
         ]
+      },
+      "fcbbca2d4748fee41a7cf9df89cd8a06": {
+        "index": [
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "childrenCount",
+            "order": "ASC",
+            "type": "int"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
       },
       "label": {
         "index": [
@@ -3424,7 +3514,7 @@
   },
   "Widget": {
     "indexes": {
-      "970ded93efef0684fe147e35a8a20f4f": {
+      "9ac7b9a675622ef11bb273ea27fa676e": {
         "index": [
           {
             "field": "parent",
@@ -3432,7 +3522,7 @@
             "type": "ID"
           },
           {
-            "field": "desktop_sortWeight",
+            "field": "mobile_sortWeight",
             "order": "ASC",
             "type": "string"
           },
@@ -3445,16 +3535,28 @@
             "field": "widgetType",
             "order": "ASC",
             "type": [
-              "Clipped",
-              "Notebooks",
-              "Notes",
+              "Tags",
+              "Shortcuts",
+              "Pinned",
               "OnboardingChecklist",
+              "ScratchPad",
+              "Notes",
+              "Notebooks",
+              "Clipped",
+              "Calendar",
+              "Tasks",
+              "FilteredNotes",
+              "Extra"
+            ]
+          },
+          {
+            "field": "mutableWidgetType",
+            "order": "ASC",
+            "type": [
               "Pinned",
               "ScratchPad",
-              "Shortcuts",
-              "Tags",
-              "Calendar",
-              "Tasks"
+              "FilteredNotes",
+              "?"
             ]
           },
           {
@@ -3466,13 +3568,13 @@
             "field": "selectedTab",
             "order": "ASC",
             "type": [
-              "Recent",
-              "Suggested",
               "WebClips",
+              "Audio",
               "Emails",
               "Images",
-              "Audio",
               "Documents",
+              "Recent",
+              "Suggested",
               "?"
             ]
           },
@@ -3482,11 +3584,6 @@
             "type": "ID?"
           },
           {
-            "field": "mobile_sortWeight",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
             "field": "id",
             "order": "ASC",
             "type": "ID"
@@ -3494,22 +3591,17 @@
         ],
         "indexCondition": [
           {
-            "field": "isSupportedV2",
+            "field": "isSupportedV3",
             "value": true
           }
         ]
       },
-      "a6d032e3773f516621fb9177a283f3f1": {
+      "ce9b74a35277018ec5e205ee10731460": {
         "index": [
           {
             "field": "parent",
             "order": "ASC",
             "type": "ID"
-          },
-          {
-            "field": "mobile_sortWeight",
-            "order": "ASC",
-            "type": "string"
           },
           {
             "field": "created",
@@ -3520,16 +3612,28 @@
             "field": "widgetType",
             "order": "ASC",
             "type": [
-              "Clipped",
-              "Notebooks",
-              "Notes",
+              "Tags",
+              "Shortcuts",
+              "Pinned",
               "OnboardingChecklist",
+              "ScratchPad",
+              "Notes",
+              "Notebooks",
+              "Clipped",
+              "Calendar",
+              "Tasks",
+              "FilteredNotes",
+              "Extra"
+            ]
+          },
+          {
+            "field": "mutableWidgetType",
+            "order": "ASC",
+            "type": [
               "Pinned",
               "ScratchPad",
-              "Shortcuts",
-              "Tags",
-              "Calendar",
-              "Tasks"
+              "FilteredNotes",
+              "?"
             ]
           },
           {
@@ -3541,13 +3645,13 @@
             "field": "selectedTab",
             "order": "ASC",
             "type": [
-              "Recent",
-              "Suggested",
               "WebClips",
+              "Audio",
               "Emails",
               "Images",
-              "Audio",
               "Documents",
+              "Recent",
+              "Suggested",
               "?"
             ]
           },
@@ -3557,7 +3661,7 @@
             "type": "ID?"
           },
           {
-            "field": "desktop_sortWeight",
+            "field": "mobile_sortWeight",
             "order": "ASC",
             "type": "string"
           },
@@ -3569,7 +3673,7 @@
         ],
         "indexCondition": [
           {
-            "field": "isSupportedV2",
+            "field": "isSupportedV3",
             "value": true
           }
         ]

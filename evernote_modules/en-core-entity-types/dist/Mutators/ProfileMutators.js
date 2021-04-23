@@ -10,11 +10,10 @@ const EntityConstants_1 = require("../EntityConstants");
 const Profile_1 = require("../NodeTypes/Profile");
 exports.profileUpdateBlockStatus = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         profile: 'ID',
         blockStatus: 'boolean',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const profileEntity = await ctx.fetchEntity(trc, { id: params.profile, type: EntityConstants_1.CoreEntityTypes.Profile });
         if (!profileEntity) {

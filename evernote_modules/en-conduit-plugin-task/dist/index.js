@@ -25,8 +25,9 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getENTaskPlugin = exports.genScheduledNotificationId = exports.parseAndValidateTasksExportData = exports.getTaskUserSettingsIdByUserId = exports.getTasksExportData = exports.genTasksDataCreateOps = exports.getNoteContentInfoIDByNoteID = void 0;
+exports.getENTaskPlugin = exports.genScheduledNotificationId = exports.TasksExportDataSchema = exports.parseAndValidateTasksExportData = exports.getTaskUserSettingsIdByUserId = exports.getTasksExportData = exports.genTasksDataCreateOps = exports.getNoteContentInfoIDByNoteID = void 0;
 const conduit_core_1 = require("conduit-core");
+const conduit_utils_1 = require("conduit-utils");
 const NoteContentInfoConverter_1 = require("./Converters/NoteContentInfoConverter");
 const ReminderConverter_1 = require("./Converters/ReminderConverter");
 const TaskConverter_1 = require("./Converters/TaskConverter");
@@ -57,6 +58,7 @@ var TaskUtils_1 = require("./TaskUtils");
 Object.defineProperty(exports, "getTasksExportData", { enumerable: true, get: function () { return TaskUtils_1.getTasksExportData; } });
 Object.defineProperty(exports, "getTaskUserSettingsIdByUserId", { enumerable: true, get: function () { return TaskUtils_1.getTaskUserSettingsIdByUserId; } });
 Object.defineProperty(exports, "parseAndValidateTasksExportData", { enumerable: true, get: function () { return TaskUtils_1.parseAndValidateTasksExportData; } });
+Object.defineProperty(exports, "TasksExportDataSchema", { enumerable: true, get: function () { return TaskUtils_1.TasksExportDataSchema; } });
 var ScheduledNotificationUtils_1 = require("./ScheduledNotifications/ScheduledNotificationUtils");
 Object.defineProperty(exports, "genScheduledNotificationId", { enumerable: true, get: function () { return ScheduledNotificationUtils_1.genScheduledNotificationId; } });
 var NSyncEntityType;
@@ -80,16 +82,16 @@ function getENTaskPlugin() {
             const queries = {
                 getTaskUserSettings: {
                     args: {},
-                    type: conduit_core_1.schemaToGraphQLType({
+                    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableStruct({
                         id: 'ID',
                         type: 'string',
-                        defaultTaskNoteId: 'ID?',
-                        defaultTaskNoteLabel: 'string?',
-                        isDefaultTaskNoteInTrash: 'boolean?',
-                        defaultReminder: 'boolean?',
-                        defaultRemindersOffsets: 'number[]?',
-                        pinDefaultTaskNote: 'boolean?',
-                    }, 'getTaskUserSettingsResult', true),
+                        defaultTaskNoteId: conduit_utils_1.NullableID,
+                        defaultTaskNoteLabel: conduit_utils_1.NullableString,
+                        isDefaultTaskNoteInTrash: conduit_utils_1.NullableBoolean,
+                        defaultReminder: conduit_utils_1.NullableBoolean,
+                        defaultRemindersOffsets: conduit_utils_1.NullableListOf('number'),
+                        pinDefaultTaskNote: conduit_utils_1.NullableBoolean,
+                    }, 'getTaskUserSettingsResult')),
                     resolve: GetTaskUserSettingsQuery_1.getTaskUserSettings,
                     description: 'Getting the TaskUserSetting for the current user.',
                 },

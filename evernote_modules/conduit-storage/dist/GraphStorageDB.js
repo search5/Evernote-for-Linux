@@ -28,7 +28,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GraphStorageDB = exports.GraphTransactionContext = exports.GraphStorageBase = exports.tableForNodeType = exports.isNodeTable = void 0;
+exports.GraphStorageDB = exports.GraphTransactionContext = exports.GraphStorageBase = exports.tableForNodeType = exports.isNodeTable = exports.NSYNC_CONTEXT = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const DeclarativeExpr_1 = require("./DeclarativeExpr");
@@ -42,6 +42,7 @@ const ReadWriteIndexingTree_1 = require("./ReadWriteIndexingTree");
 const StorageEventEmitter_1 = require("./StorageEventEmitter");
 const NODES_PER_REINDEX_BATCH = 200;
 const INDEX_TRAVERSALS_CHUNK_SIZE = 200;
+exports.NSYNC_CONTEXT = 'NSyncContext';
 function isGraphEdgeChange(change) {
     return 'edge' in change;
 }
@@ -206,6 +207,32 @@ class GraphStorageBase extends StorageEventEmitter_1.StorageEventEmitter {
         const results = await indexer.getList(trc, watcher, tree, query.type, nodeTypeDef, params, false);
         return results.list;
     }
+    async getNodeImmediateAncestor(trc, watcher, node) {
+        var _a;
+        const nodeTypeDef = (_a = this.config.nodeTypes) === null || _a === void 0 ? void 0 : _a[node.type];
+        if (!nodeTypeDef) {
+            throw new conduit_utils_1.InternalError(`Missing node type definition for ${node.type}`);
+        }
+        if (!nodeTypeDef.ancestorPort) {
+            return null;
+        }
+        const parentEdge = conduit_utils_1.firstStashEntry(node.inputs[nodeTypeDef.ancestorPort]);
+        if (!parentEdge) {
+            return null;
+        }
+        return await this.getNode(trc, watcher, { id: parentEdge.srcID, type: parentEdge.srcType });
+    }
+    async getNodeAncestors(trc, watcher, node) {
+        const ancestors = [];
+        let parent = node;
+        while (parent) {
+            parent = await this.getNodeImmediateAncestor(trc, watcher, parent);
+            if (parent) {
+                ancestors.push(parent);
+            }
+        }
+        return ancestors;
+    }
     async isIndexLoadedInMemory(trc, type, index) {
         const indexTable = tableForIndex(type, index);
         return this.ephemeralStorage.baseStorage.getValidatedValue(trc, null, Tables.LoadedInMemory, indexTable, KeyValStorage_1.validateIsBoolean);
@@ -267,7 +294,7 @@ class GraphStorageBase extends StorageEventEmitter_1.StorageEventEmitter {
     }
     async getIndexesForType(trc, type) {
         const indexes = await this.indexes.getData(trc);
-        return Object.values(indexes).filter(entry => entry.type === type && entry.tableName !== localeKey).map(entry => entry.indexItem || entry.lookupField);
+        return Object.values(indexes).filter(entry => entry.type === type && entry.tableName !== localeKey).map(entry => GraphIndexTypes_1.fromStoredIndexItem(entry.indexItem) || entry.lookupField);
     }
     async getNode(trc, watcher, nodeRef, getDummy = false) {
         return await this.storage.getValidatedValue(trc, watcher, tableForNodeType(nodeRef.type), nodeRef.id, getDummy ? validateIsGraphNode : validateIsRealGraphNode);
@@ -733,7 +760,7 @@ class GraphTransactionContext extends GraphStorageBase {
                 if (newIndex) {
                     if (tableName !== localeKey) {
                         toReindex[newIndex.type] = toReindex[newIndex.type] || [];
-                        toReindex[newIndex.type].push(newIndex.indexItem || newIndex.lookupField);
+                        toReindex[newIndex.type].push(GraphIndexTypes_1.fromStoredIndexItem(newIndex.indexItem) || newIndex.lookupField);
                     }
                 }
             }
@@ -1128,9 +1155,90 @@ class GraphTransactionContext extends GraphStorageBase {
         });
     }
     async deleteNode(trc, syncContext, nodeRef, deleteDummy = false, timestamp) {
-        return this.deleteNodeInternal(trc, syncContext, nodeRef, deleteDummy, timestamp);
+        return this.deleteNodeInternal(trc, syncContext, nodeRef, false, deleteDummy, timestamp);
     }
-    async deleteNodeInternal(trc, syncContext, nodeRef, deleteDummy = false, timestamp, propagatedFrom, originalSyncSource) {
+    async hasAccessToNode(trc, node, typeConfig, propagatedFrom) {
+        /* TODO need to get access to the personal UserID
+        if (node.owner === personalUserID) {
+          return true;
+        }
+        */
+        for (const port in typeConfig.inputs) {
+            const inputConfig = typeConfig.inputs[port];
+            if (inputConfig.type !== GraphTypes_1.EdgeType.ANCESTRY && inputConfig.type !== GraphTypes_1.EdgeType.ANCESTRY_LINK) {
+                continue;
+            }
+            const edges = node.inputs[port];
+            for (const localTerminus in edges) {
+                const edge = edges[localTerminus];
+                if (edge.srcID === propagatedFrom.id && edge.srcType === propagatedFrom.type) {
+                    continue;
+                }
+                // still has access from a parent
+                return true;
+            }
+        }
+        // check if this node has memberships with recipientIsMe where the membership !== propagatedFrom
+        const membershipIDs = [];
+        let membershipType = null;
+        for (const port in typeConfig.outputs) {
+            const outputConfig = typeConfig.outputs[port];
+            if (outputConfig.type !== GraphTypes_1.EdgeType.MEMBERSHIP) {
+                continue;
+            }
+            const edges = node.outputs[port];
+            for (const localTerminus in edges) {
+                const edge = edges[localTerminus];
+                if (edge.dstID === propagatedFrom.id && edge.dstType === propagatedFrom.type) {
+                    continue;
+                }
+                membershipType = edge.dstType;
+                membershipIDs.push(edge.dstID);
+            }
+        }
+        if (membershipType && membershipIDs.length) {
+            const memberships = await this.batchGetNodes(trc, null, membershipType, membershipIDs);
+            for (const membership of memberships) {
+                if ((membership === null || membership === void 0 ? void 0 : membership.NodeFields.recipientIsMe) === true) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    async propagateNodeDelete(trc, syncContext, node, typeConfig, isAccessLoss, deleteDummy, timestamp, propagatedFrom, originalSyncSource) {
+        for (const port in typeConfig.inputs) {
+            const inputConfig = typeConfig.inputs[port];
+            // Is this a hack? Yeah, sort of. It presumes that any membership has a recipientIsMe field;
+            // I (Conor) think this is ok though since in V2 we will have memberships as a first class type in graph storage.
+            if (inputConfig.type === GraphTypes_1.EdgeType.MEMBERSHIP && node.NodeFields.recipientIsMe === true) {
+                const edges = node.inputs[port];
+                for (const localTerminus in edges) {
+                    const edge = edges[localTerminus];
+                    if (propagatedFrom && edge.srcID === propagatedFrom.id && edge.srcType === propagatedFrom.type) {
+                        // caller is already deleting it
+                        continue;
+                    }
+                    await this.deleteNodeInternal(trc, syncContext, { id: edge.srcID, type: edge.srcType }, true, deleteDummy, timestamp, node, originalSyncSource);
+                }
+            }
+        }
+        for (const port in typeConfig.outputs) {
+            const outputConfig = typeConfig.outputs[port];
+            if (outputConfig.type === GraphTypes_1.EdgeType.ANCESTRY || outputConfig.type === GraphTypes_1.EdgeType.ANCESTRY_LINK || outputConfig.type === GraphTypes_1.EdgeType.MEMBERSHIP) {
+                const edges = node.outputs[port];
+                for (const localTerminus in edges) {
+                    const edge = edges[localTerminus];
+                    if (propagatedFrom && edge.dstID === propagatedFrom.id && edge.dstType === propagatedFrom.type) {
+                        // caller is already deleting it
+                        continue;
+                    }
+                    await this.deleteNodeInternal(trc, syncContext, { id: edge.dstID, type: edge.dstType }, isAccessLoss, deleteDummy, timestamp, node, originalSyncSource);
+                }
+            }
+        }
+    }
+    async deleteNodeInternal(trc, syncContext, nodeRef, isAccessLoss, deleteDummy = false, timestamp, propagatedFrom, originalSyncSource) {
         var _a;
         if (syncContext !== '*' && !await this.assertSyncContext(trc, syncContext)) {
             return false;
@@ -1146,36 +1254,10 @@ class GraphTransactionContext extends GraphStorageBase {
             syncContext = node.syncContexts[0];
         }
         if (typeConfig) {
-            for (const port in typeConfig.inputs) {
-                const inputConfig = typeConfig.inputs[port];
-                // Is this a hack? Yeah, sort of. It presumes that any membership has a recipientIsMe field;
-                // I (Conor) think this is ok though since in V2 we will have memberships as a first class type in graph storage.
-                if (inputConfig.type === GraphTypes_1.EdgeType.MEMBERSHIP && node.NodeFields.recipientIsMe === true) {
-                    const edges = node.inputs[port];
-                    for (const localTerminus in edges) {
-                        const edge = edges[localTerminus];
-                        if (propagatedFrom && edge.srcID === propagatedFrom.id && edge.srcType === propagatedFrom.type) {
-                            // caller is already deleting it
-                            continue;
-                        }
-                        await this.deleteNodeInternal(trc, syncContext, { id: edge.srcID, type: edge.srcType }, deleteDummy, timestamp, node, originalSyncSource);
-                    }
-                }
+            if (isAccessLoss && propagatedFrom && syncContext === exports.NSYNC_CONTEXT && await this.hasAccessToNode(trc, node, typeConfig, propagatedFrom)) {
+                return false;
             }
-            for (const port in typeConfig.outputs) {
-                const outputConfig = typeConfig.outputs[port];
-                if (outputConfig.type === GraphTypes_1.EdgeType.ANCESTRY || outputConfig.type === GraphTypes_1.EdgeType.ANCESTRY_LINK || outputConfig.type === GraphTypes_1.EdgeType.MEMBERSHIP) {
-                    const edges = node.outputs[port];
-                    for (const localTerminus in edges) {
-                        const edge = edges[localTerminus];
-                        if (propagatedFrom && edge.dstID === propagatedFrom.id && edge.dstType === propagatedFrom.type) {
-                            // caller is already deleting it
-                            continue;
-                        }
-                        await this.deleteNodeInternal(trc, syncContext, { id: edge.dstID, type: edge.dstType }, deleteDummy, timestamp, node, originalSyncSource);
-                    }
-                }
-            }
+            await this.propagateNodeDelete(trc, syncContext, node, typeConfig, isAccessLoss, deleteDummy, timestamp, propagatedFrom, originalSyncSource);
         }
         const isDummyNode = node.dummy;
         if (isDummyNode) {
@@ -1865,7 +1947,7 @@ class GraphStorageDB extends GraphStorageBase {
                     indexConfigVersion: GraphIndexTypes_1.INDEX_CONFIG_VERSION,
                     type,
                     tableName,
-                    indexItem,
+                    indexItem: GraphIndexTypes_1.toStoredIndexItem(indexItem),
                 };
             }
             for (const lookupField of typeConfig.lookups) {

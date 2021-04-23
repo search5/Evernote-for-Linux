@@ -3,7 +3,7 @@
  * Copyright 2018 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.diffError = exports.deserializeError = exports.serializeError = exports.replaceCircular = exports.AccessBlockedError = exports.ServiceNotActiveError = exports.InvalidOperationError = exports.ServiceError = exports.RetryErrorReason = exports.PermissionError = exports.NotFoundError = exports.MissingParameterError = exports.MalformedDataError = exports.InternalError = exports.CachedQueryError = exports.NoUserError = exports.PartialCreationError = exports.NoAccessError = exports.ConflictError = exports.GraphNodeError = exports.MultiError = exports.SignupError = exports.SignupErrorCode = exports.NAPAuthError = exports.NAPAuthErrorCode = exports.AuthError = exports.GWAuthError = exports.hashTokenForAuthError = exports.AuthErrorCode = void 0;
+exports.diffError = exports.deserializeError = exports.serializeError = exports.replaceCircular = exports.AccessBlockedError = exports.ServiceNotActiveError = exports.InvalidOperationError = exports.ServiceError = exports.RetryErrorReason = exports.PermissionError = exports.NotFoundError = exports.MissingParameterError = exports.InternalError = exports.CachedQueryError = exports.NoUserError = exports.PartialCreationError = exports.NoAccessError = exports.ConflictError = exports.GraphNodeError = exports.MultiError = exports.SignupError = exports.SignupErrorCode = exports.NAPAuthError = exports.NAPAuthErrorCode = exports.AuthError = exports.GWAuthError = exports.hashTokenForAuthError = exports.AuthErrorCode = void 0;
 const en_ts_utils_1 = require("en-ts-utils");
 const index_1 = require("./index");
 var AuthErrorCode;
@@ -196,13 +196,6 @@ class InternalError extends Error {
     }
 }
 exports.InternalError = InternalError;
-class MalformedDataError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = 'MalformedDataError';
-    }
-}
-exports.MalformedDataError = MalformedDataError;
 class MissingParameterError extends Error {
     constructor(message = 'missing parameter') {
         super(message);
@@ -269,7 +262,7 @@ const knownErrors = {
     GraphNodeError,
     InternalError,
     InvalidOperationError,
-    MalformedDataError,
+    MalformedDataError: en_ts_utils_1.MalformedDataError,
     MissingParameterError,
     MultiError,
     NAPAuthError,

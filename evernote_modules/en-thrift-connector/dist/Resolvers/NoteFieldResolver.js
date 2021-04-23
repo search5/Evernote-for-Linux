@@ -141,14 +141,14 @@ function NoteFieldResolver() {
     }
     const resolvers = {
         'Note.snippet': {
-            type: conduit_core_1.schemaToGraphQLType('string?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableString),
             description: 'NOTE: has to fetch from the service on demand if not in cache',
             resolve: async (nodeRef, _, context) => {
                 return resolveNoteCardSnippet(context, nodeRef.id);
             },
         },
         'Note.shareUrl': {
-            type: conduit_core_1.schemaToGraphQLType('string?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableString),
             description: 'NOTE: has to fetch from the service on demand if not in cache',
             resolve: async (nodeRef, _, context) => {
                 return resolveNoteShareUrl(context, nodeRef.id);

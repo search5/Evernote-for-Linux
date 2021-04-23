@@ -6,24 +6,31 @@ exports.createBoardCustomizeDefinition = void 0;
  */
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const graphql_1 = require("graphql");
-const WidgetCustomizeInput = new graphql_1.GraphQLInputObjectType({
-    name: 'WidgetCustomizeInput',
-    fields: {
-        widget: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-        desktopSortWeight: { type: graphql_1.GraphQLString },
-        desktopWidth: { type: graphql_1.GraphQLFloat },
-        mobileSortWeight: { type: graphql_1.GraphQLString },
-        isEnabled: { type: graphql_1.GraphQLBoolean },
-        noteToPin: { type: graphql_1.GraphQLString },
-        noteToUnpin: { type: graphql_1.GraphQLString },
-    },
-});
+const BoardConstants_1 = require("./BoardConstants");
+const BoardMutators_1 = require("./Mutators/BoardMutators");
 const createBoardCustomizeDefinition = () => {
     return {
-        args: {
-            widgetMutations: { type: new graphql_1.GraphQLList(WidgetCustomizeInput) },
-        },
+        args: conduit_core_1.schemaToGraphQLArgs({
+            boardMutations: conduit_utils_1.NullableStruct({
+                board: 'ID',
+                isCustomized: conduit_utils_1.NullableBoolean,
+                headerFields: BoardMutators_1.BoardHeaderFieldsSchema,
+            }, 'BoardCustomizeParams'),
+            widgetMutations: conduit_utils_1.Nullable(conduit_utils_1.ListOfStructs({
+                widget: 'ID',
+                desktopSortWeight: conduit_utils_1.NullableString,
+                desktopWidth: conduit_utils_1.NullableInt,
+                mobileSortWeight: conduit_utils_1.NullableString,
+                isEnabled: conduit_utils_1.NullableBoolean,
+                noteToPin: conduit_utils_1.NullableID,
+                noteToUnpin: conduit_utils_1.NullableID,
+                mutableWidgetType: conduit_utils_1.Nullable(BoardConstants_1.MutableWidgetTypeSchema),
+                filteredNotesQueryString: conduit_utils_1.NullableString,
+                label: conduit_utils_1.NullableString,
+                lightBGColor: conduit_utils_1.NullableString,
+                darkBGColor: conduit_utils_1.NullableString,
+            }, 'WidgetCustomizeParams')),
+        }),
         type: conduit_core_1.GenericMutationResult,
         resolve: async function resolver(parent, args, context) {
             // Validate arguments...
@@ -33,7 +40,7 @@ const createBoardCustomizeDefinition = () => {
             // Validate database...
             conduit_core_1.validateDB(context);
             const promises = [];
-            const { widgetMutations } = args;
+            const { boardMutations, widgetMutations } = args;
             if (widgetMutations) {
                 const widgetIds = new Set();
                 // Validate that there are no duplicates first.  If the Ids are invalid, the mutators will catch that.
@@ -47,6 +54,14 @@ const createBoardCustomizeDefinition = () => {
                 }
                 for (const widgetCustomParams of widgetMutations) {
                     promises.push(context.db.runMutator(context.trc, 'widgetCustomize', widgetCustomParams));
+                }
+            }
+            if (boardMutations) {
+                if (typeof boardMutations.isCustomized === 'boolean') {
+                    promises.push(context.db.runMutator(context.trc, 'boardSetIsCustomized', { board: boardMutations.board, isCustomized: boardMutations.isCustomized }));
+                }
+                if (boardMutations.headerFields) {
+                    promises.push(context.db.runMutator(context.trc, 'boardHeaderCustomize', { board: boardMutations.board, fields: boardMutations.headerFields }));
                 }
             }
             if (promises.length) {

@@ -7,7 +7,6 @@ exports.getENMaestroPlugin = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_thrift_connector_1 = require("en-thrift-connector");
-const graphql_1 = require("graphql");
 const EnMaestroServiceRequest_1 = require("./EnMaestroServiceRequest");
 const POLL_INTERVAL = conduit_utils_1.MILLIS_IN_ONE_DAY / 2;
 function getENMaestroPlugin() {
@@ -81,63 +80,39 @@ function getENMaestroPlugin() {
         init: clearMaestroPropsCache,
         defineQueries: () => ({
             getMaestroProps: {
-                type: conduit_core_1.schemaToGraphQLType({ props: 'string?' }, 'getMaestroProps', true),
-                args: {
+                type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({ props: conduit_utils_1.NullableString }, 'getMaestroProps')),
+                args: conduit_core_1.schemaToGraphQLArgs({
                     // TGetPropsRequest
-                    clientType: {
-                        type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLEnumType({
-                            name: 'MaestroClientType',
-                            values: {
-                                ION: { value: 6 },
-                                NEUTRON: { value: 8 },
-                                BORON: { value: 9 },
-                            },
-                        })),
-                    },
-                    overridingArmIds: {
-                        type: new graphql_1.GraphQLList(new graphql_1.GraphQLNonNull(new graphql_1.GraphQLInputObjectType({
-                            name: 'MaestroOverridingArmIds',
-                            fields: {
-                                experimentName: {
-                                    type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString),
-                                },
-                                experimentArmName: {
-                                    type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString),
-                                },
-                            },
-                        }))),
-                    },
-                    platform: {
-                        type: new graphql_1.GraphQLEnumType({
-                            name: 'MaestroPlatform',
-                            values: {
-                                PLATFORM_UNKNOWN: { value: 'PLATFORM_UNKNOWN' },
-                                PLATFORM_ANDROID: { value: 'PLATFORM_ANDROID' },
-                                PLATFORM_IOS: { value: 'PLATFORM_IOS' },
-                                PLATFORM_LINUX: { value: 'PLATFORM_LINUX' },
-                                PLATFORM_MAC: { value: 'PLATFORM_MAC' },
-                                PLATFORM_WINDOWS: { value: 'PLATFORM_WINDOWS' },
-                            },
-                        }),
-                    },
-                    requestingEnvironment: {
-                        type: new graphql_1.GraphQLEnumType({
-                            name: 'MaestroRequestingEnvironment',
-                            values: {
-                                LOCALHOST: { value: 'localhost' },
-                                PREPROD: { value: 'preprod' },
-                                STAGE: { value: 'stage' },
-                                PRODUCTION: { value: 'production' },
-                                ETNC: { value: 'etnc ' },
-                            },
-                        }),
-                    },
-                },
+                    clientType: conduit_utils_1.EnumWithKeys({
+                        ION: 6,
+                        NEUTRON: 8,
+                        BORON: 9,
+                    }, 'MaestroClientType'),
+                    overridingArmIds: conduit_utils_1.ListOf(conduit_utils_1.NullableStruct({
+                        experimentName: 'string',
+                        experimentArmName: 'string',
+                    }, 'MaestroOverridingArmIds')),
+                    platform: conduit_utils_1.Enum([
+                        'PLATFORM_UNKNOWN',
+                        'PLATFORM_ANDROID',
+                        'PLATFORM_IOS',
+                        'PLATFORM_LINUX',
+                        'PLATFORM_MAC',
+                        'PLATFORM_WINDOWS',
+                    ], 'MaestroPlatform'),
+                    requestingEnvironment: conduit_utils_1.NullableEnumWithKeys({
+                        LOCALHOST: 'localhost',
+                        PREPROD: 'preprod',
+                        STAGE: 'stage',
+                        PRODUCTION: 'production',
+                        ETNC: 'etnc',
+                    }, 'MaestroRequestingEnvironment'),
+                }),
                 resolve: maestroPropsResolver,
                 deprecationReason: 'MaestroProps moved to graph. Kept only for QA purposes\nThis plugin allows to query with overridingArmIds',
             },
             getMaestroServiceState: {
-                type: conduit_core_1.schemaToGraphQLType({ serviceState: 'string?' }, 'getMaestroServiceState', true),
+                type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({ serviceState: conduit_utils_1.NullableString }, 'getMaestroServiceState')),
                 args: conduit_core_1.schemaToGraphQLArgs({ clientType: 'number' }),
                 resolve: maestroServiceStateResolver,
             },

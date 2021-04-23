@@ -8,28 +8,19 @@ const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const AccountLimits_1 = require("../AccountLimits");
 const EntityConstants_1 = require("../EntityConstants");
+const MutatorHelpers_1 = require("./MutatorHelpers");
 exports.savedSearchCreate = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         label: 'string',
         query: 'string',
-    },
-    optionalParams: {
-        eventLabel: 'string',
+        eventLabel: conduit_utils_1.NullableString,
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     execute: async (trc, ctx, params) => {
         // Check account limit
         const limits = await ctx.fetchEntity(trc, AccountLimits_1.ACCOUNT_LIMITS_REF);
-        if (!limits) {
-            throw new conduit_utils_1.NotFoundError(AccountLimits_1.ACCOUNT_LIMITS_REF.id, 'Missing limits');
-        }
-        const count = limits.NodeFields.Counts.userSavedSearchesCount;
-        const max = limits.NodeFields.Limits.userSavedSearchesMax;
-        if (count >= max) {
-            // TODO: make errors use actual fields once conduit errors are fully separated from thrift errors
-            new conduit_utils_1.ServiceError('LIMIT_REACHED', EntityConstants_1.CoreEntityTypes.SavedSearch, 'type=LIMIT_REACHED thriftExceptionParameter=SavedSearch limit=userSavedSearchesMax');
-        }
+        MutatorHelpers_1.validateAccountLimits(limits, { userSavedSearchesCountChange: 1 });
         // SavedSearch is always in the user account, not the vault
         const owner = ctx.userID;
         const savedSearchGenID = await ctx.generateID(trc, owner, EntityConstants_1.CoreEntityTypes.SavedSearch);
@@ -66,11 +57,10 @@ exports.savedSearchCreate = {
 };
 exports.savedSearchSetLabel = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         search: 'ID',
         label: 'string',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const searchRef = { id: params.search, type: EntityConstants_1.CoreEntityTypes.SavedSearch };
         const search = await ctx.fetchEntity(trc, searchRef);
@@ -93,11 +83,10 @@ exports.savedSearchSetLabel = {
 };
 exports.savedSearchSetQuery = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         search: 'ID',
         query: 'string',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const searchRef = { id: params.search, type: EntityConstants_1.CoreEntityTypes.SavedSearch };
         const search = await ctx.fetchEntity(trc, searchRef);
@@ -120,11 +109,9 @@ exports.savedSearchSetQuery = {
 };
 exports.savedSearchDelete = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         search: 'ID',
-    },
-    optionalParams: {
-        eventLabel: 'string',
+        eventLabel: conduit_utils_1.NullableString,
     },
     execute: async (trc, ctx, params) => {
         const searchRef = { id: params.search, type: EntityConstants_1.CoreEntityTypes.SavedSearch };

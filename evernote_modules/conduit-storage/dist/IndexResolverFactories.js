@@ -7,11 +7,11 @@ exports.getIndexByResolverForDenormalizedEdgeCount = exports.getIndexByResolverF
 const conduit_utils_1 = require("conduit-utils");
 const GraphTypes_1 = require("./GraphTypes");
 function getIndexByResolverForPrimitives(nodeTypeDef, path, useLocaleCompare) {
-    let schemaType = 'unknown';
+    let schemaType = null;
     let graphqlPath = path;
     if (path[0] === 'NodeFields') {
         graphqlPath = path.slice(1);
-        schemaType = conduit_utils_1.walkObjectPathSupportsNumeric(nodeTypeDef.schema, graphqlPath);
+        schemaType = conduit_utils_1.traverseSchema(nodeTypeDef.schema, graphqlPath);
     }
     else if (path[0] === 'label') {
         schemaType = 'string';
@@ -23,6 +23,9 @@ function getIndexByResolverForPrimitives(nodeTypeDef, path, useLocaleCompare) {
     if (!schemaType) {
         throw new Error(`Cannot find schema type for index resolver (${path.join('.')})`);
     }
+    if (!conduit_utils_1.fieldTypeIsBasic(schemaType)) {
+        throw new Error(`Unindexable schema type (${schemaType}) for index resolver (${path.join('.')})`);
+    }
     return {
         schemaType,
         resolver: path,
@@ -32,14 +35,14 @@ function getIndexByResolverForPrimitives(nodeTypeDef, path, useLocaleCompare) {
 }
 exports.getIndexByResolverForPrimitives = getIndexByResolverForPrimitives;
 function buildResolverForEdge(entityRefTypes, path, constraint) {
-    const needsFullRef = entityRefTypes.length !== 1;
+    const needsFullRef = !Array.isArray(entityRefTypes) || entityRefTypes.length !== 1;
     let schemaType = 'ID';
     if (needsFullRef) {
         schemaType = 'EntityRef';
     }
     if (constraint === GraphTypes_1.EdgeConstraint.OPTIONAL) {
         // make it nullable
-        schemaType = schemaType + '?';
+        schemaType = conduit_utils_1.Nullable(schemaType);
     }
     const useSrc = path[0] === 'inputs';
     async function resolver(trc, node, nodeFieldLookup) {
@@ -63,6 +66,19 @@ function buildResolverForEdge(entityRefTypes, path, constraint) {
         graphqlPath: needsFullRef ? path.slice(1) : path.slice(1).concat('id'),
     };
 }
+function getEntityRefTypes(nodeTypeDef, edgePath) {
+    var _a;
+    const edgeConfig = (_a = nodeTypeDef[edgePath[0]]) === null || _a === void 0 ? void 0 : _a[edgePath[1]];
+    const { endpoint } = GraphTypes_1.getEdgeDefinitionEndpoint(edgeConfig);
+    const entityRefTypes = [];
+    if (GraphTypes_1.isEdgeEndpointConstraint(endpoint)) {
+        entityRefTypes.push(...conduit_utils_1.toArray(endpoint.type));
+    }
+    else {
+        entityRefTypes.push(...conduit_utils_1.toArray(endpoint));
+    }
+    return entityRefTypes;
+}
 function getIndexByResolverForEdge(nodeTypeDef, edgePath) {
     var _a;
     const edgeConfig = (_a = nodeTypeDef[edgePath[0]]) === null || _a === void 0 ? void 0 : _a[edgePath[1]];
@@ -72,16 +88,15 @@ function getIndexByResolverForEdge(nodeTypeDef, edgePath) {
     if (edgeConfig.constraint === GraphTypes_1.EdgeConstraint.MANY) {
         throw new Error('EdgeConstraint.MANY edges currently not supported by getIndexByResolverForEdge()');
     }
-    const { isInput, endpoint } = GraphTypes_1.getEdgeDefinitionEndpoint(edgeConfig);
+    const { isInput } = GraphTypes_1.getEdgeDefinitionEndpoint(edgeConfig);
     const path = [isInput ? 'inputs' : 'outputs'];
-    const entityRefTypes = [];
-    if (GraphTypes_1.isEdgeEndpointConstraint(endpoint)) {
-        entityRefTypes.push(...conduit_utils_1.toArray(endpoint.type));
-    }
-    else {
-        entityRefTypes.push(...conduit_utils_1.toArray(endpoint));
-    }
     path.push(edgePath[1]);
+    let entityRefTypes = getEntityRefTypes(nodeTypeDef, edgePath);
+    if (entityRefTypes.length === 0) {
+        entityRefTypes = (def) => {
+            return getEntityRefTypes(def, edgePath);
+        };
+    }
     return buildResolverForEdge(entityRefTypes, path, edgeConfig.constraint);
 }
 exports.getIndexByResolverForEdge = getIndexByResolverForEdge;

@@ -41,8 +41,8 @@ function WorkspacePinnedContentsResolver() {
     return {
         'Workspace.pinnedContents': autoResolverData => {
             const configMap = {};
-            for (const field in en_core_entity_types_1.pinnedContentDef) {
-                conduit_core_1.schemaFieldToGraphQL(autoResolverData, configMap, field, en_core_entity_types_1.pinnedContentDef[field], 'pinnedContents', [en_core_entity_types_1.CoreEntityTypes.Note, en_core_entity_types_1.CoreEntityTypes.Notebook]);
+            for (const field in en_core_entity_types_1.pinnedContentDef.fields) {
+                conduit_core_1.schemaFieldToGraphQL(autoResolverData, configMap, field, en_core_entity_types_1.pinnedContentDef.fields[field], 'pinnedContents', [en_core_entity_types_1.CoreEntityTypes.Note, en_core_entity_types_1.CoreEntityTypes.Notebook]);
             }
             return {
                 type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(new graphql_1.GraphQLNonNull(new graphql_1.GraphQLObjectType({

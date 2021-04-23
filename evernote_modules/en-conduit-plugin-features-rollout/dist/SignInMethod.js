@@ -3,14 +3,15 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.stringToByteArr = exports.getFallbackSignInMethodValue = exports.isSignInMethodEnum = exports.determineSignInMethod = exports.SignInMethodTypeSchema = exports.SignInMethodEnum = void 0;
+exports.stringToByteArr = exports.getFallbackSignInMethodValue = exports.isSignInMethodEnum = exports.determineSignInMethod = exports.SignInMethodSchema = exports.SignInMethodEnum = void 0;
 const conduit_utils_1 = require("conduit-utils");
 var SignInMethodEnum;
 (function (SignInMethodEnum) {
     SignInMethodEnum["NAP"] = "NAP";
     SignInMethodEnum["Legacy"] = "Legacy";
 })(SignInMethodEnum = exports.SignInMethodEnum || (exports.SignInMethodEnum = {}));
-exports.SignInMethodTypeSchema = ['NAP', 'Legacy'];
+exports.SignInMethodSchema = conduit_utils_1.Enum(SignInMethodEnum, 'SignInMethod');
+const SignInMethodType = Object.keys(SignInMethodEnum);
 function determineSignInMethod(md5String, data) {
     const bytes = stringToByteArr(md5String !== null && md5String !== void 0 ? md5String : '');
     const num = bytes ? bytes[0] / 256 : 1;
@@ -21,7 +22,7 @@ function determineSignInMethod(md5String, data) {
 }
 exports.determineSignInMethod = determineSignInMethod;
 function isSignInMethodEnum(a) {
-    return exports.SignInMethodTypeSchema.includes(a);
+    return SignInMethodType.includes(a);
 }
 exports.isSignInMethodEnum = isSignInMethodEnum;
 async function getFallbackSignInMethodValue(trc, localSettings) {

@@ -12,7 +12,7 @@ exports.widgetContentConflictTypeDef = {
     nsyncFeatureGroup: 'Home',
     syncSource: conduit_storage_1.SyncSource.NSYNC,
     schema: {
-        content: en_core_entity_types_1.BlobV2SchemaWithContent,
+        content: en_core_entity_types_1.BlobV2WithContentSchema,
         created: 'timestamp',
         updated: 'timestamp',
     },

@@ -13,7 +13,7 @@ const NoteContentInfo_1 = require("./Mutators/Helpers/NoteContentInfo");
 const TaskConstants_1 = require("./TaskConstants");
 function NoteContentInfoTaskGroupsResolver(autoResolverData) {
     return {
-        type: conduit_core_1.schemaToGraphQLType('string[]?'),
+        type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableListOf('string')),
         resolve: async (node) => node.taskGroupNoteLevelIDs,
         deprecationReason: 'Use taskGroupNoteLevelIDs',
     };

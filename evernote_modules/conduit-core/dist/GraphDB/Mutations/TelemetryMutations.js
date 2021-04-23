@@ -46,20 +46,20 @@ function getTelemetryMutators() {
         resolve: flushResolver,
     };
     out.EventsRecord = {
-        args: DataSchemaGQL_1.schemaToGraphQLArgs({ propertiesJsonStr: 'string', selectiveDestinations: 'string?' }),
+        args: DataSchemaGQL_1.schemaToGraphQLArgs({ propertiesJsonStr: 'string', selectiveDestinations: conduit_utils_1.NullableString }),
         type: ResolverHelpers_1.GenericMutationResult,
         resolve: eventsResolver,
     };
     out.MetricsRecord = {
-        args: DataSchemaGQL_1.schemaToGraphQLArgs({ propertiesJsonStr: 'string', selectiveDestinations: 'string?' }),
+        args: DataSchemaGQL_1.schemaToGraphQLArgs({ propertiesJsonStr: 'string', selectiveDestinations: conduit_utils_1.NullableString }),
         type: ResolverHelpers_1.GenericMutationResult,
         resolve: metricsResolver,
     };
     out.ExceptionRecord = {
         args: DataSchemaGQL_1.schemaToGraphQLArgs({
             message: 'string',
-            fatal: 'boolean?',
-            callstack: 'string?',
+            fatal: conduit_utils_1.NullableBoolean,
+            callstack: conduit_utils_1.NullableString,
         }),
         type: ResolverHelpers_1.GenericMutationResult,
         resolve: exceptionsResolver,

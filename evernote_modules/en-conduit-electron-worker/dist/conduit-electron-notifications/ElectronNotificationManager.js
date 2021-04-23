@@ -10,12 +10,12 @@ exports.ElectronNotificationManager = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const electron_1 = __importDefault(require("electron"));
-const electron_local_notifications_1 = require("electron-local-notifications");
+const en_electron_local_notifications_1 = require("en-electron-local-notifications");
 const ElectronNotificationConverter_1 = require("./ElectronNotificationConverter");
 class ElectronNotificationManager extends conduit_core_1.NotificationManager {
     constructor(di) {
         super(di);
-        this.electronNotifications = new electron_local_notifications_1.ElectronNotifications(electron_1.default.remote.Notification);
+        this.electronNotifications = new en_electron_local_notifications_1.ElectronNotifications(electron_1.default.remote.Notification);
         this.notificationConverter = ElectronNotificationConverter_1.getElectronNotificationConverter(di);
     }
     async schedule(notificationData) {

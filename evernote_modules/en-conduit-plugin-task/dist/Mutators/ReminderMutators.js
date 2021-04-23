@@ -30,16 +30,14 @@ async function validateReminderParams(trc, ctx, taskId, reminderDateUIOption, re
 /* Create Reminder */
 exports.reminderCreate = {
     type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
-    requiredParams: {
+    params: {
         source: 'ID',
-    },
-    optionalParams: {
-        reminderDate: 'timestamp',
-        timeZone: 'string',
-        reminderDateUIOption: Object.values(TaskConstants_1.ReminderDateUIOption),
-        dueDateOffset: 'number',
-        noteLevelID: 'string',
-        sourceOfChange: 'string',
+        reminderDate: conduit_utils_1.NullableTimestamp,
+        timeZone: conduit_utils_1.NullableString,
+        reminderDateUIOption: conduit_utils_1.Nullable(TaskConstants_1.ReminderDateUIOptionSchema),
+        dueDateOffset: conduit_utils_1.NullableNumber,
+        noteLevelID: conduit_utils_1.NullableString,
+        sourceOfChange: conduit_utils_1.NullableString,
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
@@ -95,10 +93,9 @@ exports.reminderCreate = {
 /* Delete Reminder */
 exports.reminderDelete = {
     type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
-    requiredParams: {
+    params: {
         reminder: 'ID',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const nodeRef = { id: params.reminder, type: TaskConstants_1.TaskEntityTypes.Reminder };
         const reminder = await ctx.fetchEntity(trc, nodeRef);
@@ -130,15 +127,13 @@ exports.reminderDelete = {
 /* Update Reminder */
 exports.reminderUpdate = {
     type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
-    requiredParams: {
+    params: {
         reminder: 'ID',
-        reminderDateUIOption: Object.values(TaskConstants_1.ReminderDateUIOption),
-    },
-    optionalParams: {
-        reminderDate: 'timestamp',
-        timeZone: 'string',
-        dueDateOffset: 'number',
-        sourceOfChange: 'string',
+        reminderDateUIOption: TaskConstants_1.ReminderDateUIOptionSchema,
+        reminderDate: conduit_utils_1.NullableTimestamp,
+        timeZone: conduit_utils_1.NullableString,
+        dueDateOffset: conduit_utils_1.NullableNumber,
+        sourceOfChange: conduit_utils_1.NullableString,
     },
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
         var _a;

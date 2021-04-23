@@ -106,7 +106,7 @@ exports.noteCopyMutations = {
         args: conduit_core_1.schemaToGraphQLArgs({
             note: 'ID',
             container: 'ID',
-            label: 'string?',
+            label: conduit_utils_1.NullableString,
         }),
     },
     noteMove: {

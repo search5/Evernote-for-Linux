@@ -30,6 +30,7 @@ const MutationRollup_1 = require("../MutationRollup");
 const GraphMutationTypes_1 = require("../Types/GraphMutationTypes");
 const ROUNDTRIP_AGEOUT_THRESHOLD = conduit_utils_1.MILLIS_IN_ONE_MINUTE;
 const CORRUPT_MUTATIONS_TABLE = 'CorruptMutations';
+const FAIL_SAFE_TABLE = 'FailedMutations';
 const OPTIMISTIC_MUTATIONS_TABLE = 'OptimisticMutations';
 const REMOTE_MUTATIONS_TABLE = 'RemoteMutations';
 const MUTATION_RESULTS_TABLE = 'MutationUpsyncResults';
@@ -37,7 +38,7 @@ const MUTATION_RESULTS_TABLE = 'MutationUpsyncResults';
 const VERBOSE_LEVEL = 'trace';
 function validateMutation(m, def) {
     try {
-        conduit_utils_1.validateSchemaType(def.requiredParams, 'root', m.params, false);
+        conduit_utils_1.validateSchemaType(conduit_utils_1.Struct(def.params), 'root', m.params, false);
         return conduit_utils_1.getTypeOf(m.timestamp) === 'number' && conduit_utils_1.getTypeOf(m.guids) === 'object';
     }
     catch (e) {
@@ -115,6 +116,34 @@ class MutationManager {
         }
         return remoteMutations;
     }
+    async storeFailSafeMutation(trc, failure) {
+        await this.storage.transact(trc, 'storeFailSafeMutation', async (tx) => {
+            await tx.setValue(trc, FAIL_SAFE_TABLE, failure.key, failure);
+        });
+    }
+    async loadFailedMutations(trc) {
+        const keys = await this.storage.getKeys(trc, null, FAIL_SAFE_TABLE);
+        const mutations = await this.storage.batchGetValues(trc, null, FAIL_SAFE_TABLE, keys);
+        const res = Object.values(mutations).filter(conduit_utils_1.isNotNullish);
+        return res.sort((a, b) => {
+            return a.timestamp - b.timestamp;
+        });
+    }
+    async backupFailSafeMutation(trc, failure) {
+        await this.storage.transact(trc, 'backupFailSafeMutation', async (tx) => {
+            await tx.setValue(trc, CORRUPT_MUTATIONS_TABLE, failure.key, failure);
+        });
+    }
+    async clearFailSafeMutation(trc, failure) {
+        await this.storage.transact(trc, 'clearFailSafeMutation', async (tx) => {
+            await tx.removeValue(trc, FAIL_SAFE_TABLE, failure.key);
+        });
+    }
+    async clearFailSafeTable(trc) {
+        await this.storage.transact(trc, 'clearFailedMutations', async (tx) => {
+            await tx.clearTable(trc, FAIL_SAFE_TABLE);
+        });
+    }
     getOptimisticMutations() {
         return this.optimisticMutations;
     }
@@ -138,6 +167,15 @@ class MutationManager {
             await db.setValue(trc, REMOTE_MUTATIONS_TABLE, mutation.mutationID, mutation);
         });
         this.optimisticMutations.push(mutation);
+    }
+    async addMutations(trc, mutations) {
+        await this.storage.transact(trc, 'MutationManager.addMutations', async (db) => {
+            for (const mutation of mutations) {
+                await db.setValue(trc, OPTIMISTIC_MUTATIONS_TABLE, mutation.mutationID, mutation);
+                await db.setValue(trc, REMOTE_MUTATIONS_TABLE, mutation.mutationID, mutation);
+            }
+        });
+        this.optimisticMutations.push(...mutations);
     }
     async rollupForUpsync(trc, mutatorDefs, remoteMutations) {
         const { changes, mutations, errors } = MutationRollup_1.rollupPendingMutations(remoteMutations, mutatorDefs);

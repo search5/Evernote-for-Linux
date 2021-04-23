@@ -11,28 +11,35 @@ const CommandPolicyRules_1 = require("../CommandPolicyRules");
 const EntityConstants_1 = require("../EntityConstants");
 const ShareUtils_1 = require("../ShareUtils");
 const TagMutatorHelpers_1 = require("./Helpers/TagMutatorHelpers");
+const MutatorHelpers_1 = require("./MutatorHelpers");
 exports.tagCreate = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         name: 'string',
-    },
-    optionalParams: {
-        note: 'ID',
-        creationEventLabel: 'string',
-        tagAddNoteEventLabel: 'string',
+        note: conduit_utils_1.NullableID,
+        creationEventLabel: conduit_utils_1.NullableString,
+        tagAddNoteEventLabel: conduit_utils_1.NullableString,
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     execute: async (trc, ctx, params) => {
         // Check account limit
         const limits = await ctx.fetchEntity(trc, AccountLimits_1.ACCOUNT_LIMITS_REF);
-        if (!limits) {
-            throw new conduit_utils_1.NotFoundError(AccountLimits_1.ACCOUNT_LIMITS_REF.id, 'Missing limits');
-        }
-        const count = limits.NodeFields.Counts.userTagCount;
-        const max = limits.NodeFields.Limits.userTagCountMax;
-        if (count >= max) {
-            // TODO: make errors use actual fields once conduit errors are fully separated from thrift errors
-            new conduit_utils_1.ServiceError('LIMIT_REACHED', EntityConstants_1.CoreEntityTypes.Tag, 'type=LIMIT_REACHED thriftExceptionParameter=Tag limit=userTagCountMax');
+        MutatorHelpers_1.validateAccountLimits(limits, { userTagCountChange: 1 });
+        if (conduit_utils_1.isNotNullish(params.note)) {
+            const note = await ctx.fetchEntity(trc, { id: params.note, type: EntityConstants_1.CoreEntityTypes.Note });
+            if (!note) {
+                throw new conduit_utils_1.NotFoundError(params.note, 'note id listed is not valid');
+            }
+            /*
+            // race condition in client syncing causes memberships to not be there to check for the
+            // container's privilege in some automated tests. Try this again once nsync is in
+            const permContext: MutationPermissionContext = new MutationPermissionContext(trc, ctx);
+            const policy = await commandPolicyOfNote(note.id, permContext);
+            if (!policy.canTag || !policy.canCreateTag) {
+              throw new PermissionError('Permission Denied: cannot create tag');
+            }
+            */
+            MutatorHelpers_1.validateNoteTagsCount(limits, Object.keys(note.outputs.tags).length + 1);
         }
         // filled in below
         const plan = {
@@ -47,12 +54,10 @@ exports.tagCreate = {
 };
 exports.tagSetName = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         tag: 'ID',
         name: 'string',
-    },
-    optionalParams: {
-        eventLabel: 'string',
+        eventLabel: conduit_utils_1.NullableString,
     },
     execute: async (trc, ctx, params) => {
         if (ctx.vaultUserID) {
@@ -105,12 +110,10 @@ async function traverseChildrenRecursive(trc, context, root) {
 }
 exports.tagDelete = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         tag: 'ID',
-    },
-    optionalParams: {
-        removeChildren: 'boolean',
-        eventLabel: 'string',
+        removeChildren: conduit_utils_1.NullableBoolean,
+        eventLabel: conduit_utils_1.NullableString,
     },
     execute: async (trc, ctx, params) => {
         if (ctx.vaultUserID) {
@@ -171,12 +174,10 @@ exports.tagDelete = {
 };
 exports.tagAddNote = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         tag: 'ID',
         note: 'ID',
-    },
-    optionalParams: {
-        eventLabel: 'string',
+        eventLabel: conduit_utils_1.NullableString,
     },
     execute: async (trc, ctx, params) => {
         const tagRef = { id: params.tag, type: EntityConstants_1.CoreEntityTypes.Tag };
@@ -195,6 +196,9 @@ exports.tagAddNote = {
         if (!policy.canTag) {
             throw new conduit_utils_1.PermissionError('Permission Denied: cannot add tag');
         }
+        // Check account limit
+        const limits = await ctx.fetchEntity(trc, AccountLimits_1.ACCOUNT_LIMITS_REF);
+        MutatorHelpers_1.validateNoteTagsCount(limits, Object.keys(note.outputs.tags).length + 1);
         const plan = {
             results: {},
             ops: [{
@@ -221,12 +225,10 @@ exports.tagAddNote = {
 };
 exports.tagRemoveNote = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         tag: 'ID',
         note: 'ID',
-    },
-    optionalParams: {
-        eventLabel: 'string',
+        eventLabel: conduit_utils_1.NullableString,
     },
     execute: async (trc, ctx, params) => {
         const tagRef = { id: params.tag, type: EntityConstants_1.CoreEntityTypes.Tag };
@@ -266,11 +268,10 @@ exports.tagRemoveNote = {
 };
 exports.tagAddChildTag = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         parent: 'ID',
         child: 'ID',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const parentRef = { id: params.parent, type: EntityConstants_1.CoreEntityTypes.Tag };
         const childRef = { id: params.child, type: EntityConstants_1.CoreEntityTypes.Tag };
@@ -302,10 +303,9 @@ exports.tagAddChildTag = {
 };
 exports.tagRemoveParent = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         tag: 'ID',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const tagRef = { id: params.tag, type: EntityConstants_1.CoreEntityTypes.Tag };
         // fetching for validation...

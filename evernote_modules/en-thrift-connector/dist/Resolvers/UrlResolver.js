@@ -17,8 +17,8 @@ async function resolveUrl(context, nodeRef, parentKey, field, urlEncoder) {
     if (!url) {
         return null;
     }
-    const activeUserID = await context.multiUserProvider.getCurrentUserID(context.trc, context.watcher);
-    if (activeUserID === null) {
+    const activeUserID = await context.db.getCurrentUserID(context);
+    if (conduit_utils_1.isNullish(activeUserID)) {
         throw new conduit_utils_1.NoUserError('Missing current user');
     }
     return await urlEncoder(parentKey, null, url, conduit_utils_1.keyStringForUserID(activeUserID));
@@ -29,19 +29,19 @@ function UrlResolver(urlEncoder) {
     }
     return {
         'User.photoUrl': {
-            type: conduit_core_1.schemaToGraphQLType('string?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableString),
             resolve: async (nodeRef, _, context) => {
                 return resolveUrl(context, { id: nodeRef.id, type: en_core_entity_types_1.CoreEntityTypes.User }, 'UPP', 'photoUrl', urlEncoder);
             },
         },
         'Profile.photoUrl': {
-            type: conduit_core_1.schemaToGraphQLType('string?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableString),
             resolve: async (nodeRef, _, context) => {
                 return resolveUrl(context, { id: nodeRef.id, type: en_core_entity_types_1.CoreEntityTypes.Profile }, 'UPP', 'photoUrl', urlEncoder);
             },
         },
         'Note.thumbnailUrl': {
-            type: conduit_core_1.schemaToGraphQLType('url?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableUrl),
             resolve: async (nodeRef, _, context) => {
                 return resolveUrl(context, { id: nodeRef.id, type: en_core_entity_types_1.CoreEntityTypes.Note }, nodeRef.id, 'thumbnailUrl', urlEncoder);
             },

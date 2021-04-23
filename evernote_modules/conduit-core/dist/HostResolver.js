@@ -24,6 +24,9 @@ class HostResolver {
         this.cachedHostInfo = this.hostDefaults;
     }
     validateSchema(newSchema) {
+        if (!newSchema || typeof newSchema !== 'object') {
+            return false;
+        }
         if (typeof newSchema.version !== 'number') {
             return false;
         }
@@ -44,7 +47,7 @@ class HostResolver {
             conduit_utils_1.logger.warn('Invalid host info schema');
             return;
         }
-        if (newInfo.version <= this.cachedHostInfo.version) {
+        if (newInfo.version < this.cachedHostInfo.version) {
             return;
         }
         // For safety, we are going to keep all old fields that might be getting deleted. This is to
@@ -82,7 +85,7 @@ class HostResolver {
                     }
                 }
                 catch (e) {
-                    conduit_utils_1.logger.error('Unable to read host file', e);
+                    conduit_utils_1.logger.error('Unable to read host file result', e);
                 }
                 finally {
                     this.inFlight = null;
@@ -97,13 +100,14 @@ class HostResolver {
         if (etncHostInformation) {
             this.etncHostInformation = etncHostInformation;
         }
-        // Try to read in last version saved to disk
-        const current = conduit_utils_1.safeParse(await localSettings.getConduitValue(trc, conduit_utils_1.NullUserID, HOSTINFO_KEY));
-        if (current && current.version > this.hostDefaults.version) {
-            this.cachedHostInfo = current;
-        }
-        else if (!current || current.version < this.cachedHostInfo.version) {
-            await this.updateCachedHostInfo(trc, this.cachedHostInfo);
+        if (localSettings) {
+            // Try to read in last version saved to disk
+            const current = conduit_utils_1.safeParse(await localSettings.getConduitValue(trc, conduit_utils_1.NullUserID, HOSTINFO_KEY));
+            if (!this.validateSchema(current) || current.version < this.cachedHostInfo.version) {
+                await this.localSettings.setConduitValue(trc, conduit_utils_1.NullUserID, HOSTINFO_KEY, conduit_utils_1.safeStringify(this.cachedHostInfo) || '');
+                return;
+            }
+            await this.updateCachedHostInfo(trc, current);
         }
     }
     async getServiceHost(trc, authHost, service) {

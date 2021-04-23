@@ -4,8 +4,8 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createInitialNode = exports.mergeNodesAndEdges = exports.toBlobV2WithContentFields = exports.toBlobV2Fields = void 0;
+const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
-const index_1 = require("../index");
 function toBlobV2Fields(nsyncBlobv2Ref) {
     return {
         localChangeTimestamp: 0,
@@ -56,7 +56,7 @@ function createInitialNode(instance) {
         label: instance.label || 'Untitled',
         localChangeTimestamp: 0,
         NodeFields: {},
-        syncContexts: [index_1.NSYNC_CONTEXT],
+        syncContexts: [conduit_storage_1.NSYNC_CONTEXT],
         inputs: {},
         outputs: {},
         owner: instance.ownerId ? instance.ownerId : conduit_utils_1.NullUserID,

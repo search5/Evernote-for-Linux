@@ -3,43 +3,39 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.calendarEventTypeDef = exports.CalendarEventContactField = void 0;
+exports.calendarEventTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
+const conduit_utils_1 = require("conduit-utils");
 const CalendarConstants_1 = require("../CalendarConstants");
 const CalendarServiceType_1 = require("../CalendarServiceType");
-exports.CalendarEventContactField = {
-    email: 'string?',
-    displayName: 'string?',
-    avatar: 'string?',
-};
 exports.calendarEventTypeDef = {
     name: CalendarConstants_1.CalendarEntityTypes.CalendarEvent,
     syncSource: conduit_storage_1.SyncSource.LOCAL,
     fieldValidation: {},
     schema: {
-        provider: 'string',
+        provider: CalendarServiceType_1.CalendarProviderSchema,
         calendarUserId: 'string',
         userCalendarExternalId: 'string',
         calendarEventExternalId: 'string',
         created: 'timestamp',
         lastModified: 'timestamp',
-        deleted: 'timestamp?',
+        deletionTime: conduit_utils_1.NullableTimestamp,
         isAccountConnected: 'boolean',
-        summary: 'string',
-        displayColor: 'string?',
-        description: 'string?',
-        location: 'string?',
+        summary: conduit_utils_1.NullableString,
+        displayColor: conduit_utils_1.NullableString,
+        description: conduit_utils_1.NullableString,
+        location: conduit_utils_1.NullableString,
         isAllDay: 'boolean',
         start: 'timestamp',
         end: 'timestamp',
-        recurrentEventId: 'string?',
-        recurrence: 'string?',
+        recurrentEventId: conduit_utils_1.NullableString,
+        recurrence: conduit_utils_1.NullableString,
         iCalendarUid: 'string',
         isBusy: 'boolean',
-        status: Object.values(CalendarServiceType_1.CalendarEventStatus),
+        status: CalendarServiceType_1.CalendarEventStatusSchema,
         links: 'string',
-        creator: exports.CalendarEventContactField,
-        organizer: exports.CalendarEventContactField,
+        eventCreator: CalendarServiceType_1.CalendarContactSchema,
+        eventOrganizer: CalendarServiceType_1.CalendarContactSchema,
         attendees: 'string',
     },
     edges: {

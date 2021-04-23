@@ -36,6 +36,7 @@ function getENNsvcAuthzToken() {
             const userId = conduit_utils_1.keyStringForUserID(user.NodeFields.internal_userID);
             return await resolveStorage(tokenCache, context, authorizedToken, tokenType, userId);
         }
+        return null;
     }
     /**
      * Load token from tokenStorage or if token is expired,
@@ -59,8 +60,11 @@ function getENNsvcAuthzToken() {
         name: 'ENNvscAuthzToken',
         defineQueries: () => ({
             NsvcAuthzToken: {
-                type: conduit_core_1.schemaToGraphQLType({ token: 'string?', expiresAt: 'number?' }, 'NsvcAuthzToken', true),
-                args: conduit_core_1.schemaToGraphQLArgs({ tokenType: 'string?' }),
+                type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableStruct({
+                    token: conduit_utils_1.NullableString,
+                    expiresAt: conduit_utils_1.NullableTimestamp,
+                }, 'NsvcAuthzToken')),
+                args: conduit_core_1.schemaToGraphQLArgs({ tokenType: conduit_utils_1.NullableString }),
                 resolve: tokenResolver,
             },
         }),

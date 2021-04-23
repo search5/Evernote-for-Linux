@@ -13,7 +13,7 @@ async function clearGraphResolver(_, args, context) {
         conduit_utils_1.logger.debug('Missing graphql context or db');
         return res;
     }
-    const currentUserID = await context.multiUserProvider.getCurrentUserID(context.trc, null);
+    const currentUserID = await context.db.getCurrentUserID(context);
     if (!currentUserID) {
         conduit_utils_1.logger.warn('Attempt to clear graph while there is no user graph');
         return res;
@@ -185,18 +185,18 @@ async function forceUpsyncResolver(_, args, context) {
 function getGraphMutators() {
     const out = {};
     out.ClearGraph = {
-        args: DataSchemaGQL_1.schemaToGraphQLArgs({ clearAuth: 'boolean?' }),
+        args: DataSchemaGQL_1.schemaToGraphQLArgs({ clearAuth: conduit_utils_1.NullableBoolean }),
         type: ResolverHelpers_1.GenericMutationResult,
         resolve: clearGraphResolver,
     };
     out.ForceDownsync = {
         args: DataSchemaGQL_1.schemaToGraphQLArgs({
             wait: 'boolean',
-            flushMutations: 'boolean?',
-            waitForRoundtrip: 'boolean?',
-            retry: 'number?',
+            flushMutations: conduit_utils_1.NullableBoolean,
+            waitForRoundtrip: conduit_utils_1.NullableBoolean,
+            retry: conduit_utils_1.NullableInt,
         }),
-        type: DataSchemaGQL_1.schemaToGraphQLType({ success: 'boolean', mutationCount: 'number' }, 'ForceDownsyncResult', false),
+        type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.Struct({ success: 'boolean', mutationCount: 'number' }, 'ForceDownsyncResult')),
         resolve: forceDownsyncResolver,
     };
     out.PauseSync = {
@@ -210,8 +210,8 @@ function getGraphMutators() {
         resolve: resumeDownsyncResolver,
     };
     out.ImmediateNotesDownsync = {
-        args: DataSchemaGQL_1.schemaToGraphQLArgs({ wait: 'boolean?', maxNotes: 'int?', notesPerFetch: 'int?', maxTime: 'int?' }),
-        type: DataSchemaGQL_1.schemaToGraphQLType({ success: 'boolean', needsSync: 'boolean' }, 'ImmediateNotesDownsyncResult', false),
+        args: DataSchemaGQL_1.schemaToGraphQLArgs({ wait: conduit_utils_1.NullableBoolean, maxNotes: conduit_utils_1.NullableInt, notesPerFetch: conduit_utils_1.NullableInt, maxTime: conduit_utils_1.NullableInt }),
+        type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.Struct({ success: 'boolean', needsSync: 'boolean' }, 'ImmediateNotesDownsyncResult')),
         resolve: notesDownsyncResolver,
     };
     out.CancelImmediateNotesDownsync = {
@@ -220,8 +220,8 @@ function getGraphMutators() {
         resolve: cancelNotesDownsyncResolver,
     };
     out.ImmediateContentFetchSync = {
-        args: DataSchemaGQL_1.schemaToGraphQLArgs({ wait: 'boolean?', maxTime: 'int?', maxResources: 'int?' }),
-        type: DataSchemaGQL_1.schemaToGraphQLType({ success: 'boolean', needsSync: 'boolean' }, 'StartContentFetchResult', false),
+        args: DataSchemaGQL_1.schemaToGraphQLArgs({ wait: conduit_utils_1.NullableBoolean, maxTime: conduit_utils_1.NullableInt, maxResources: conduit_utils_1.NullableInt }),
+        type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.Struct({ success: 'boolean', needsSync: 'boolean' }, 'StartContentFetchResult')),
         resolve: immediateContentFetchResolver,
     };
     out.CancelImmediateContentFetchSync = {
@@ -231,7 +231,7 @@ function getGraphMutators() {
     };
     out.ForceUpsync = {
         args: DataSchemaGQL_1.schemaToGraphQLArgs({
-            retry: 'number?',
+            retry: conduit_utils_1.NullableInt,
         }),
         type: ResolverHelpers_1.GenericMutationResult,
         resolve: forceUpsyncResolver,

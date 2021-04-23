@@ -170,15 +170,18 @@ async function noteMergeResolver(parent, args, context, info) {
     return { mergedNoteID: mutation.results.result, failedNotes };
 }
 exports.noteMerge = {
-    type: conduit_core_1.schemaToGraphQLType({ mergedNoteID: 'string', failedNotes: 'ID[]' }, 'noteMergeResult', true),
-    resolve: noteMergeResolver,
     args: conduit_core_1.schemaToGraphQLArgs({
-        noteIDs: 'ID[]',
-        container: 'ID?',
+        noteIDs: conduit_utils_1.ListOf('ID'),
+        container: conduit_utils_1.NullableID,
         label: 'string',
         separateContent: 'boolean',
         keepLabels: 'boolean',
         keepOriginalNotes: 'boolean',
     }),
+    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableStruct({
+        mergedNoteID: 'string',
+        failedNotes: conduit_utils_1.ListOf('ID'),
+    }, 'noteMergeResult')),
+    resolve: noteMergeResolver,
 };
 //# sourceMappingURL=NoteMerge.js.map

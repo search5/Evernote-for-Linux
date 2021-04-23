@@ -78,8 +78,8 @@ function addNoteMutators(out, offlineContentStrategy) {
         };
     }
     out.noteCheckForUpdates = {
-        args: conduit_core_1.schemaToGraphQLArgs({ id: 'ID', fetchContent: 'boolean?' }),
-        type: conduit_core_1.schemaToGraphQLType({ didUpdate: 'boolean', isOffline: 'boolean' }, 'NoteCheckForUpdatesResult', false),
+        args: conduit_core_1.schemaToGraphQLArgs({ id: 'ID', fetchContent: conduit_utils_1.NullableBoolean }),
+        type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({ didUpdate: 'boolean', isOffline: 'boolean' }, 'NoteCheckForUpdatesResult')),
         resolve: noteCheckForUpdatesResolver,
     };
 }

@@ -174,31 +174,31 @@ function WorkspaceUIPreferencesResolver() {
     }
     return {
         'Workspace.layoutStyle': {
-            type: conduit_core_1.schemaToGraphQLType([...en_core_entity_types_1.WorkspaceLayoutStyleSchema, '?'], 'layoutStyle'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Nullable(en_core_entity_types_1.WorkspaceLayoutStyleSchema)),
             resolve: async (nodeRef, _, context) => {
                 return resolveWorkspacePreferences(context, nodeRef.id, en_core_entity_types_1.CoreEntityTypes.Workspace, 'layoutStyle');
             },
         },
         'Workspace.notebookDisplayOrder': {
-            type: conduit_core_1.schemaToGraphQLType('ID[]?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableListOf('ID')),
             resolve: async (nodeRef, _, context) => {
                 return resolveWorkspacePreferences(context, nodeRef.id, en_core_entity_types_1.CoreEntityTypes.Workspace, 'notebookDisplayOrder');
             },
         },
         'Workspace.noteDisplayOrder': {
-            type: conduit_core_1.schemaToGraphQLType('ID[]?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableListOf('ID')),
             resolve: async (nodeRef, _, context) => {
                 return resolveWorkspacePreferences(context, nodeRef.id, en_core_entity_types_1.CoreEntityTypes.Workspace, 'noteDisplayOrder');
             },
         },
         'Notebook.displayColor': {
-            type: conduit_core_1.schemaToGraphQLType('int?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableInt),
             resolve: async (nodeRef, _, context) => {
                 return resolveWorkspacePreferences(context, nodeRef.id, en_core_entity_types_1.CoreEntityTypes.Notebook, 'displayColor');
             },
         },
         'Notebook.noteDisplayOrder': {
-            type: conduit_core_1.schemaToGraphQLType('ID[]?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableListOf('ID')),
             resolve: async (nodeRef, _, context) => {
                 return resolveWorkspacePreferences(context, nodeRef.id, en_core_entity_types_1.CoreEntityTypes.Notebook, 'noteDisplayOrder');
             },

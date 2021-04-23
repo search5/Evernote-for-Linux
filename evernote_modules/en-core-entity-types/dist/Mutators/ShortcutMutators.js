@@ -26,11 +26,10 @@ async function getSourceNodeForCreateShortcut(trc, ctx, nodeID) {
 }
 exports.shortcutSetSortOrder = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         shortcut: 'ID',
         sortOrder: 'string',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const nodeRef = { id: params.shortcut, type: EntityConstants_1.CoreEntityTypes.Shortcut };
         const shortcutEntity = await ctx.fetchEntity(trc, nodeRef);
@@ -50,15 +49,13 @@ exports.shortcutSetSortOrder = {
 };
 exports.shortcutRemove = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         shortcut: 'ID',
-    },
-    optionalParams: {
-        eventLabel: 'string',
+        eventLabel: conduit_utils_1.NullableString,
     },
     derivedParams: {
-        tag: 'ID?',
-        search: 'ID?',
+        tag: conduit_utils_1.NullableID,
+        search: conduit_utils_1.NullableID,
     },
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
         const source = (await ctx.traverseGraph(trc, { type: EntityConstants_1.CoreEntityTypes.Shortcut, id: paramsIn.shortcut }, [{
@@ -120,12 +117,10 @@ exports.shortcutRemove = {
 };
 exports.shortcutCreate = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         source: 'ID',
         sortOrder: 'string',
-    },
-    optionalParams: {
-        eventLabel: 'string',
+        eventLabel: conduit_utils_1.NullableString,
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     execute: async (trc, ctx, params) => {

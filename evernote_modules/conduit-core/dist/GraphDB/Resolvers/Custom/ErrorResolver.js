@@ -5,8 +5,17 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addQueries = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const graphql_1 = require("graphql");
 const DataSchemaGQL_1 = require("../../../Types/DataSchemaGQL");
+const ErrorSchema = conduit_utils_1.Struct({
+    errorKey: conduit_utils_1.NullableString,
+    errorType: conduit_utils_1.NullableString,
+    id: 'string',
+    marked: 'boolean',
+    message: 'string',
+    mutationName: 'string',
+    mutationID: 'string',
+    mutationArgsJson: 'string',
+}, 'Error');
 function makeErrorReturnObject(errObj) {
     let errorKey = '';
     let errorType = '';
@@ -51,24 +60,14 @@ async function errorGetListResolver(_, args, context) {
     return res;
 }
 function addQueries(out) {
-    const errorType = DataSchemaGQL_1.schemaToGraphQLType({
-        errorKey: 'string?',
-        errorType: 'string?',
-        id: 'ID',
-        marked: 'boolean',
-        message: 'string',
-        mutationName: 'string',
-        mutationID: 'string',
-        mutationArgsJson: 'string',
-    }, 'Error', true);
     out.errorGet = {
         args: DataSchemaGQL_1.schemaToGraphQLArgs({ id: 'ID' }),
-        type: errorType,
+        type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.Nullable(ErrorSchema)),
         resolve: errorGetResolver,
     };
     out.errorGetList = {
-        args: DataSchemaGQL_1.schemaToGraphQLArgs({ markedValue: 'boolean?' }),
-        type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(errorType)),
+        args: DataSchemaGQL_1.schemaToGraphQLArgs({ markedValue: conduit_utils_1.NullableBoolean }),
+        type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.ListOf(ErrorSchema)),
         resolve: errorGetListResolver,
     };
 }

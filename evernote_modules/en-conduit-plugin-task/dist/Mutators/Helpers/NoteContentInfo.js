@@ -7,6 +7,7 @@ exports.genTasksDataCreateOps = exports.taskGroupUpsertPlanFor = exports.taskGro
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const TaskConstants_1 = require("../../TaskConstants");
+const Permission_1 = require("./Permission");
 const Task_1 = require("./Task");
 async function getNoteContentInfoID(trc, ctx, noteRef, copyOwnerRef) {
     // if the Note container is available, it will be used to resolve the actual ownerID
@@ -28,7 +29,7 @@ async function taskGroupUpsertPlan(trc, ctx, params, copyOwnerRef) {
         if (!note) {
             throw new conduit_utils_1.NotFoundError(params.noteID, `Not found TaskGroup's Note ${params.noteID}`);
         }
-        await Task_1.checkNoteEditPermissionByNoteId(trc, ctx, params.noteID);
+        await Permission_1.checkNoteEditPermissionByNoteId(trc, ctx, params.noteID);
     }
     const { noteContentInfoIDGen, noteContentInfoID } = await getNoteContentInfoID(trc, ctx, containerRef, copyOwnerRef);
     const noteContentInfoRef = { id: noteContentInfoID, type: TaskConstants_1.TaskEntityTypes.NoteContentInfo };

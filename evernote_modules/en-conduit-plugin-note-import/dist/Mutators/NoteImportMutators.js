@@ -11,55 +11,48 @@ const en_core_entity_types_1 = require("en-core-entity-types");
 exports.noteImportInternal = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
     isInternal: true,
-    requiredParams: {
+    params: {
         noteContent: 'string',
         untitledNoteLabel: 'string',
-        noteGenID: 'string[]',
+        noteGenID: conduit_utils_1.ListOf('string'),
         attachments: 'string',
-    },
-    optionalParams: {
-        tags: 'ID[]',
-        newTagLabels: 'string[]',
-        tasksData: 'string',
-        container: 'ID',
-        label: 'string',
-        created: 'number',
-        updated: 'number',
-        subjectDate: 'number',
-        contentClass: 'string',
-        latitude: 'number',
-        longitude: 'number',
-        altitude: 'number',
-        placeName: 'string',
-        reminderTime: 'number',
-        reminderDoneTime: 'number',
-        reminderOrder: 'number',
-        author: 'string',
-        source: 'string',
-        sourceUrl: 'string',
-        sourceApplication: 'string',
-        applicationData: 'map<string>',
-        sourceNoteID: 'ID',
-        deleteSourceNote: 'boolean',
-        notesToTrash: 'ID[]',
+        tags: conduit_utils_1.NullableListOf('ID'),
+        newTagLabels: conduit_utils_1.NullableListOf('string'),
+        tasksData: conduit_utils_1.NullableString,
+        container: conduit_utils_1.NullableID,
+        label: conduit_utils_1.NullableString,
+        created: conduit_utils_1.NullableTimestamp,
+        updated: conduit_utils_1.NullableTimestamp,
+        subjectDate: conduit_utils_1.NullableTimestamp,
+        contentClass: conduit_utils_1.NullableString,
+        latitude: conduit_utils_1.NullableNumber,
+        longitude: conduit_utils_1.NullableNumber,
+        altitude: conduit_utils_1.NullableNumber,
+        placeName: conduit_utils_1.NullableString,
+        reminderTime: conduit_utils_1.NullableTimestamp,
+        reminderDoneTime: conduit_utils_1.NullableTimestamp,
+        reminderOrder: conduit_utils_1.NullableTimestamp,
+        author: conduit_utils_1.NullableString,
+        source: conduit_utils_1.NullableString,
+        sourceUrl: conduit_utils_1.NullableString,
+        sourceApplication: conduit_utils_1.NullableString,
+        applicationData: conduit_utils_1.NullableMapOf('string'),
+        sourceNoteID: conduit_utils_1.NullableID,
+        deleteSourceNote: conduit_utils_1.NullableBoolean,
+        notesToTrash: conduit_utils_1.NullableListOf('ID'),
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     execute: async (trc, ctx, params) => {
-        var _a;
+        var _a, _b, _c;
         const attachments = en_core_entity_types_1.parseAndValidateAttachmentCreateData(params.attachments);
         // Check account limit
         const accountLimits = await ctx.fetchEntity(trc, en_core_entity_types_1.ACCOUNT_LIMITS_REF);
-        if (!accountLimits) {
-            throw new conduit_utils_1.NotFoundError(en_core_entity_types_1.ACCOUNT_LIMITS_REF.id, 'Missing limits');
-        }
-        const count = accountLimits.NodeFields.Counts.userNoteCount;
-        const max = accountLimits.NodeFields.Limits.userNoteCountMax;
-        if (count >= max) {
-            // TODO: make errors use actual fields once conduit errors are fully separated from thrift errors
-            new conduit_utils_1.ServiceError('LIMIT_REACHED', en_core_entity_types_1.CoreEntityTypes.Note, 'type=LIMIT_REACHED thriftExceptionParameter=Note limit=userNoteCountMax');
-        }
+        const newTagsCount = ((_a = params.newTagLabels) === null || _a === void 0 ? void 0 : _a.length) || 0;
+        const noteTagsCount = ((_b = params.tags) === null || _b === void 0 ? void 0 : _b.length) || 0;
+        en_core_entity_types_1.validateNoteTagsCount(accountLimits, newTagsCount + noteTagsCount);
+        en_core_entity_types_1.validateAccountLimits(accountLimits, { userNoteCountChange: 1, userTagCountChange: newTagsCount });
         // check maxNoteSize and uploaded resources
-        const updatedLimits = en_core_entity_types_1.validateAccountLimits(accountLimits, {
+        const updatedLimits = en_core_entity_types_1.validateAndCalculateSizeLimits(accountLimits, {
             prevNoteContentSize: 0,
             prevNoteResourceSize: 0,
             newNoteContentSize: params.noteContent.length,
@@ -76,13 +69,13 @@ exports.noteImportInternal = {
                 }],
         };
         const { noteID, owner } = await en_core_entity_types_1.genNoteCreate(trc, ctx, Object.assign(Object.assign({}, params), { attachmentHashes: attachments.map(data => data.hash) }), plan);
-        const tagLabels = (_a = params.newTagLabels) !== null && _a !== void 0 ? _a : [];
+        const tagLabels = (_c = params.newTagLabels) !== null && _c !== void 0 ? _c : [];
         for (let i = 0; i < tagLabels.length; i++) {
             const tagLabel = tagLabels[i];
             tagLabel && await en_core_entity_types_1.genTagCreate(trc, ctx, {
                 name: tagLabel,
                 note: noteID,
-            }, plan, false, i);
+            }, plan, null, i);
         }
         plan.results.result = noteID;
         const noteRef = { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note };

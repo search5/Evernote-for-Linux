@@ -5,27 +5,33 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getWidgetNode = void 0;
 const conduit_utils_1 = require("conduit-utils");
+const en_data_model_1 = require("en-data-model");
 const en_nsync_connector_1 = require("en-nsync-connector");
 const BoardConstants_1 = require("../BoardConstants");
 const getWidgetNode = async (trc, instance, context) => {
-    var _a, _b, _c, _d;
     const initial = en_nsync_connector_1.createInitialNode(instance);
     if (!initial) {
         conduit_utils_1.logger.error('Missing initial values');
         return null;
     }
     let selectedTab;
-    if (instance.widgetType === BoardConstants_1.WidgetType.Clipped) {
+    if (instance.widgetType === en_data_model_1.WidgetType.Clipped) {
         // Fall back to a supported tab for forwards compatibility.
-        selectedTab = (_b = BoardConstants_1.ClippedTabs[(_a = instance.selectedTab) !== null && _a !== void 0 ? _a : '']) !== null && _b !== void 0 ? _b : BoardConstants_1.ClippedTabs.WebClips;
+        selectedTab = en_data_model_1.BoardSchema.ClippedTabsSet.has(instance.selectedTab)
+            ? instance.selectedTab
+            : en_data_model_1.WidgetSelectedTab.WebClips;
     }
-    else if (instance.widgetType === BoardConstants_1.WidgetType.Notebooks || instance.widgetType === BoardConstants_1.WidgetType.Notes) {
+    else if (instance.widgetType === en_data_model_1.WidgetType.Notebooks || instance.widgetType === en_data_model_1.WidgetType.Notes) {
         // Fall back to a supported tab for forwards compatibility.
-        selectedTab = (_d = BoardConstants_1.CommonTabs[(_c = instance.selectedTab) !== null && _c !== void 0 ? _c : '']) !== null && _d !== void 0 ? _d : BoardConstants_1.CommonTabs.Recent;
+        selectedTab = en_data_model_1.BoardSchema.CommonTabsSet.has(instance.selectedTab)
+            ? instance.selectedTab
+            : en_data_model_1.WidgetSelectedTab.Recent;
     }
     const widget = Object.assign(Object.assign({}, initial), { type: BoardConstants_1.BoardEntityTypes.Widget, NodeFields: {
             boardType: instance.boardType,
             widgetType: instance.widgetType,
+            internalID: instance.internalID,
+            mutableWidgetType: instance.mutableWidgetType,
             created: instance.created,
             updated: instance.updated,
             isEnabled: instance.isEnabled,
@@ -38,6 +44,8 @@ const getWidgetNode = async (trc, instance, context) => {
             desktop: Object.assign({}, instance.desktop),
             selectedTab,
             content: en_nsync_connector_1.toBlobV2WithContentFields(instance.content),
+            filteredNotesQuery: instance.filteredNotesQuery,
+            backgroundColor: instance.backgroundColor,
         }, inputs: {
             parent: {},
         }, outputs: {

@@ -3,9 +3,9 @@
  * Copyright 2021 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getCalendarServicePlugin = void 0;
+exports.getCalendarServicePlugin = exports.fakeBackend = void 0;
+const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const graphql_1 = require("graphql");
 const CalendarConstants_1 = require("./CalendarConstants");
 const CalendarServiceType_1 = require("./CalendarServiceType");
 const CalendarAccount_1 = require("./EntityTypes/CalendarAccount");
@@ -13,43 +13,71 @@ const CalendarEvent_1 = require("./EntityTypes/CalendarEvent");
 const CalendarEventLink_1 = require("./EntityTypes/CalendarEventLink");
 const CalendarSettings_1 = require("./EntityTypes/CalendarSettings");
 const UserCalendarSettings_1 = require("./EntityTypes/UserCalendarSettings");
+const CalendarAccountMutators_1 = require("./Mutators/CalendarAccountMutators");
 const CalendarEventLinkMutators_1 = require("./Mutators/CalendarEventLinkMutators");
+const CalendarSettingsMutators_1 = require("./Mutators/CalendarSettingsMutators");
+const UserCalendarSettings_2 = require("./Mutators/UserCalendarSettings");
 const FakeBackend_1 = require("./Services/FakeBackend");
 function getCalendarServicePlugin(httpClient) {
-    let fakeBackend;
-    async function settingsResolver(parent, args, context) {
-        const result = {
-            useTemplateForNewNotes: false,
-            desktopReminders: {
-                createNoteMinutes: CalendarSettings_1.NotificationOptions.FIVE_AFTER,
-                openNoteMinutes: CalendarSettings_1.NotificationOptions.AT_START,
-            },
-            mobileReminders: {
-                createNoteMinutes: CalendarSettings_1.NotificationOptions.AT_END,
-                openNoteMinutes: CalendarSettings_1.NotificationOptions.FIVE_BEFORE,
-            },
-        };
-        return result;
+    async function calendarSettingsResolver(parent, args, context) {
+        conduit_core_1.validateDB(context, 'Must be authenticated to retrieve Google Calendar data.');
+        const userID = await context.db.getCurrentUserID(context);
+        if (conduit_utils_1.isNullish(userID)) {
+            throw new conduit_utils_1.NotFoundError('userID not found');
+        }
+        const settingsId = CalendarConstants_1.CalendarSettingsDeterministicIdGenerator.createId({ userID, entityType: CalendarConstants_1.CalendarEntityTypes.CalendarSettings });
+        const settings = await context.db.getNode(context, { id: settingsId, type: CalendarConstants_1.CalendarEntityTypes.CalendarSettings });
+        if (!settings) {
+            const settingsDefault = {
+                useTemplateForNewNotes: false,
+                desktopReminders: {
+                    createNoteMinutes: CalendarSettings_1.NotificationOptions.FIVE_BEFORE,
+                    openNoteMinutes: CalendarSettings_1.NotificationOptions.FIVE_BEFORE,
+                },
+                mobileReminders: {
+                    createNoteMinutes: CalendarSettings_1.NotificationOptions.FIVE_BEFORE,
+                    openNoteMinutes: CalendarSettings_1.NotificationOptions.FIVE_BEFORE,
+                },
+            };
+            const mutationArgs = {
+                useTemplateForNewNotes: settingsDefault.useTemplateForNewNotes,
+                mobileOpenNoteMinutes: settingsDefault.mobileReminders.openNoteMinutes,
+                mobileCreateNoteMinutes: settingsDefault.mobileReminders.createNoteMinutes,
+                desktopOpenNoteMinutes: settingsDefault.desktopReminders.openNoteMinutes,
+                desktopCreateNoteMinutes: settingsDefault.desktopReminders.createNoteMinutes,
+            };
+            await context.db.runMutator(context.trc, 'calendarSettingsUpsert', mutationArgs);
+            return settingsDefault;
+        }
+        return settings.NodeFields;
     }
     async function calendarAccountsResolver(parent, args, context) {
-        const calendarAccounts = await fakeBackend.getCalendarAccounts(context);
+        conduit_core_1.validateDB(context, 'Must be authenticated to retrieve Google Calendar data.');
+        const accessToken = await exports.fakeBackend.getAccessToken(context);
+        const calendarAccounts = await exports.fakeBackend.getCalendarAccounts(context, accessToken);
         return calendarAccounts;
     }
     async function calendarAccountResolver(parent, args, context) {
-        const calendarAccount = await fakeBackend.getCalendarAccount(args.id, context);
+        conduit_core_1.validateDB(context, 'Must be authenticated to retrieve Google Calendar data.');
+        const accessToken = await exports.fakeBackend.getAccessToken(context);
+        const calendarAccount = await exports.fakeBackend.getCalendarAccount(context, accessToken, args.id);
         return calendarAccount;
     }
     async function eventsResolver(parent, args, context) {
-        const events = await fakeBackend.getEvents(args.from, args.to, args.provider, context);
+        conduit_core_1.validateDB(context, 'Must be authenticated to retrieve Google Calendar data.');
+        const accessToken = await exports.fakeBackend.getAccessToken(context);
+        const events = await exports.fakeBackend.getEvents(context, accessToken, args.from, args.to, args.provider);
         return events;
     }
     async function eventResolver(parent, args, context) {
-        const event = await fakeBackend.getEvent(args.id, context);
+        conduit_core_1.validateDB(context, 'Must be authenticated to retrieve Google Calendar data.');
+        const accessToken = await exports.fakeBackend.getAccessToken(context);
+        const event = await exports.fakeBackend.getEvent(context, accessToken, args.id);
         return event;
     }
     const initCalendarPlugin = async () => {
         conduit_utils_1.logger.info('Calendar plugin initialized');
-        fakeBackend = new FakeBackend_1.FakeBackend(httpClient);
+        exports.fakeBackend = new FakeBackend_1.FakeBackend(httpClient);
     };
     return {
         name: 'ENCalendarService',
@@ -57,31 +85,31 @@ function getCalendarServicePlugin(httpClient) {
         defineQueries: () => {
             const queries = {
                 calendarSettings: {
-                    type: CalendarServiceType_1.CalendarSettingsGQLType,
-                    resolve: settingsResolver,
-                    description: 'Get the event reminder settings for the current user',
+                    type: conduit_core_1.schemaToGraphQLType(CalendarServiceType_1.CalendarSettingsSchema),
+                    resolve: calendarSettingsResolver,
+                    description: `Get the user's calendar settings`,
                 },
                 calendarAccounts: {
                     args: CalendarServiceType_1.CalendarAccountsSchemaArgs,
-                    type: new graphql_1.GraphQLList(CalendarServiceType_1.CalendarAccountGQLType),
+                    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.ListOf(CalendarServiceType_1.CalendarAccountSchema)),
                     resolve: calendarAccountsResolver,
                     description: `List all calendar accounts with it's calendars`,
                 },
                 calendarAccountById: {
                     args: CalendarServiceType_1.CalendarAccountSchemaArgs,
-                    type: CalendarServiceType_1.CalendarAccountGQLType,
+                    type: conduit_core_1.schemaToGraphQLType(CalendarServiceType_1.CalendarAccountSchema),
                     resolve: calendarAccountResolver,
                     description: 'Get calendarAccounts by id',
                 },
                 calendarEvents: {
                     args: CalendarServiceType_1.CalendarEventsSchemaArgs,
-                    type: CalendarServiceType_1.CalendarEventGQLType,
+                    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.ListOf(CalendarServiceType_1.CalendarEventSchema)),
                     resolve: eventsResolver,
                     description: 'List all events from a specified time window',
                 },
                 calendarEventById: {
                     args: CalendarServiceType_1.CalendarEventByIdSchemaArgs,
-                    type: CalendarServiceType_1.CalendarEventByIdGQLType,
+                    type: conduit_core_1.schemaToGraphQLType(CalendarServiceType_1.CalendarEventSchema),
                     resolve: eventResolver,
                     description: 'Get an event by id',
                 },
@@ -113,6 +141,12 @@ function getCalendarServicePlugin(httpClient) {
             return {
                 calendarEventLinkCreate: CalendarEventLinkMutators_1.calendarEventLinkCreate,
                 calendarEventLinkDelete: CalendarEventLinkMutators_1.calendarEventLinkDelete,
+                calendarSettingsUpsert: CalendarSettingsMutators_1.calendarSettingsUpsert,
+                calendarAccountUpdate: CalendarAccountMutators_1.calendarAccountUpdate,
+                calendarAccountCreate: CalendarAccountMutators_1.calendarAccountCreate,
+                userCalendarSettingsUpdate: // only to be used internally. To be deleted once Nsync connection done
+                UserCalendarSettings_2.userCalendarSettingsUpdate,
+                userCalendarSettingsCreate: UserCalendarSettings_2.userCalendarSettingsCreate,
             };
         },
         mutationRules: () => ([]),

@@ -2,69 +2,36 @@
 /*!
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.responseSchemaType = exports.clientTypeEnumType = exports.supportedPlacementEnumType = exports.eventType = exports.enumToGraphQLEnumValues = void 0;
-const conduit_core_1 = require("conduit-core");
+exports.ResponseSchema = exports.ClientTypeSchema = exports.SupportedPlacementSchema = exports.CommEventSchema = void 0;
+const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
-const graphql_1 = require("graphql");
-const graphql_tag_1 = __importDefault(require("graphql-tag"));
-const enumToGraphQLEnumValues = enumObject => {
-    const obj = {};
-    for (const [key, value] of Object.entries(enumObject)) {
-        obj[key] = { value };
-    }
-    return obj;
-};
-exports.enumToGraphQLEnumValues = enumToGraphQLEnumValues;
-exports.eventType = new graphql_1.GraphQLInputObjectType({
-    name: 'CommEvent',
-    fields: Object.assign({}, conduit_core_1.schemaToGraphQLArgs({
-        timeOccurred: 'timestamp',
-        messageKey: 'string',
-        label: 'string?',
-    }), {
-        type: { type: new graphql_1.GraphQLEnumType({
-                name: 'CommEngineEventType',
-                values: exports.enumToGraphQLEnumValues(en_conduit_sync_types_1.TCommEngineEventType),
-            }) },
-    }),
-});
-exports.supportedPlacementEnumType = new graphql_1.GraphQLEnumType({
-    name: 'SupportedPlacement',
-    values: exports.enumToGraphQLEnumValues(en_conduit_sync_types_1.TCommEnginePlacement),
-});
-exports.clientTypeEnumType = new graphql_1.GraphQLEnumType({
-    name: 'ClientType',
-    values: exports.enumToGraphQLEnumValues(en_conduit_sync_types_1.TCommEngineClientType),
-});
+exports.CommEventSchema = conduit_utils_1.Struct({
+    timeOccurred: 'timestamp',
+    messageKey: 'string',
+    label: conduit_utils_1.NullableString,
+    type: conduit_utils_1.NullableEnumWithKeys(en_conduit_sync_types_1.TCommEngineEventType, 'CommEngineEventType'),
+}, 'CommEvent');
+exports.SupportedPlacementSchema = conduit_utils_1.EnumWithKeys(en_conduit_sync_types_1.TCommEnginePlacement, 'SupportedPlacement');
+exports.ClientTypeSchema = conduit_utils_1.EnumWithKeys(en_conduit_sync_types_1.TCommEngineClientType, 'CommEngineClientType');
 // MessageContent is deprecated, remove on next breaking change
-exports.responseSchemaType = conduit_core_1.fromSchema('CommEngineResponseSchema', graphql_tag_1.default `
-type MessageContent {
-  templateUri: String
-  contentVariablesJson: String
-}
-
-type InAppMessage {
-  key: String
-  priority: Int
-  content: MessageContent
-  messageContent: MessageContent
-  placement: Int
-  offline: Boolean
-  expires: Float
-}
-
-type Config {
-  cooldownPeriodMillis: Int
-}
-
-type CommEngineResponseSchema {
-  messages: [InAppMessage]
-  messageRequestGuid: String
-  config: Config
-}
-`);
+const MessageContentSchema = conduit_utils_1.Struct({
+    templateUri: 'string',
+    contentVariablesJson: 'string',
+}, 'CommEngineMessageContent');
+exports.ResponseSchema = conduit_utils_1.Struct({
+    messages: conduit_utils_1.ListOfStructs({
+        key: 'string',
+        priority: 'int',
+        content: MessageContentSchema,
+        messageContent: MessageContentSchema,
+        placement: 'int',
+        offline: 'boolean',
+        expires: 'number',
+    }, 'CommEngineMessage'),
+    messageRequestGuid: 'string',
+    config: conduit_utils_1.Struct({
+        cooldownPeriodMillis: 'int',
+    }, 'CommEngineConfig'),
+}, 'CommEngineResponseSchema');
 //# sourceMappingURL=CommEngineSchemaTypes.js.map

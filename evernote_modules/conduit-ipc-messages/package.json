@@ -1,6 +1,6 @@
 {
   "name": "conduit-ipc-messages",
-  "version": "1.32.4",
+  "version": "1.33.4",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -10,7 +10,7 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-utils": "1.32.4",
-    "conduit-view-types": "1.32.4"
+    "conduit-utils": "1.33.4",
+    "conduit-view-types": "1.33.4"
   }
 }

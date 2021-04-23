@@ -5,6 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getGoogleServicesPlugin = exports.transformOAuthToServiceCredential = void 0;
 const conduit_core_1 = require("conduit-core");
+const conduit_utils_1 = require("conduit-utils");
 const en_thrift_connector_1 = require("en-thrift-connector");
 const GoogleDrive_1 = require("./GoogleDrive");
 const GoogleServicesTypes_1 = require("./GoogleServicesTypes");
@@ -108,14 +109,14 @@ function getGoogleServicesPlugin(httpClient) {
         defineQueries: () => {
             const queries = {
                 getGoogleAuthCredential: {
-                    args: GoogleServicesTypes_1.GoogleServicesQueryArgs,
-                    type: GoogleServicesTypes_1.GoogleApiCredentialGQLType,
+                    args: conduit_core_1.schemaToGraphQLArgs({ service: 'string' }),
+                    type: conduit_core_1.schemaToGraphQLType(GoogleServicesTypes_1.GoogleApiCredentialSchema),
                     resolve: getGoogleApiCredentialResolver,
                     description: 'Retrieves credentials that will include a GAPI access token.',
                 },
                 getGoogleDriveFiles: {
-                    args: GoogleServicesTypes_1.GoogleDriveFileQueryArgs,
-                    type: GoogleServicesTypes_1.GoogleDriveResponseListGQLType,
+                    args: conduit_core_1.schemaToGraphQLArgs({ resourceIds: conduit_utils_1.ListOf('string') }),
+                    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.ListOf(GoogleServicesTypes_1.GoogleDriveResponseSchema)),
                     resolve: getGoogleDriveFilesResolver,
                     description: 'Retrieves response metadata for file resources hosted and managed by Google Drive.',
                 },

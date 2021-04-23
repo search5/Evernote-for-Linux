@@ -4,6 +4,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addQueries = void 0;
+const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
 const DataSchemaGQL_1 = require("../../../Types/DataSchemaGQL");
 const LocalSettingsMutations_1 = require("../../Mutations/LocalSettingsMutations");
@@ -31,7 +32,7 @@ function genArgs(setType) {
         key: 'string',
     };
     if (setType === conduit_view_types_1.LocalSettingsType.User) {
-        args.userID = 'string?';
+        args.userID = conduit_utils_1.NullableString;
     }
     return DataSchemaGQL_1.schemaToGraphQLArgs(args);
 }
@@ -41,7 +42,7 @@ function addQueries(out) {
         for (const valType in conduit_view_types_1.LocalSettingsValueType) {
             out[`${setType.toLowerCase()}SettingsGet${valType}`] = {
                 args,
-                type: DataSchemaGQL_1.schemaToGraphQLType(`${valType.toLowerCase()}?`, `${setType}Get${valType}Schema`, true),
+                type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.Nullable(`${valType.toLowerCase()}`)),
                 resolve: setType === conduit_view_types_1.LocalSettingsType.System
                     ? systemSettingsGetResolver
                     : userSettingsGetResolver,

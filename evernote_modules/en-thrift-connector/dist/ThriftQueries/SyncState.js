@@ -10,10 +10,6 @@ const conduit_view_types_1 = require("conduit-view-types");
 const Auth_1 = require("../Auth");
 const SyncHelpers_1 = require("../SyncFunctions/SyncHelpers");
 const SyncActivity_1 = require("../SyncManagement/SyncActivity");
-const AdaptiveDownsyncTypeEnum = Object.keys(conduit_view_types_1.AdaptiveDownsyncType);
-AdaptiveDownsyncTypeEnum.__enumName = 'AdaptiveDownsyncTypeEnum';
-const SyncProgressTypeEnum = Object.keys(conduit_view_types_1.SyncProgressType);
-SyncProgressTypeEnum.__enumName = 'SyncProgressTypeEnum';
 function addSyncStateMutators(out) {
     async function addSessionResolver(parent, args, context) {
         conduit_core_1.validateDB(context);
@@ -38,7 +34,7 @@ function addSyncStateMutators(out) {
     }
     out.recordSession = {
         args: conduit_core_1.schemaToGraphQLArgs({}),
-        type: conduit_core_1.schemaToGraphQLType({ latestSessionBlock: 'number' }, 'SyncStateRecordSessionResult', false),
+        type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({ latestSessionBlock: 'number' }, 'SyncStateRecordSessionResult')),
         resolve: addSessionResolver,
     };
 }
@@ -75,13 +71,11 @@ function addSyncStateQueries(out) {
         conduit_core_1.validateDB(context);
         const lastSyncTime = await context.db.getSyncState(context.trc, context.watcher, ['lastSyncTime']) || 0;
         const syncDisabled = await context.db.getEphemeralFlag(context.trc, context.watcher, 'SyncManager', 'syncDisabled');
-        const nsyncDisabled = await context.db.getEphemeralFlag(context.trc, context.watcher, 'SyncManager', 'nsyncDisabled');
         const authState = await context.db.getAuthTokenAndState(context.trc, context.watcher);
         if ((authState === null || authState === void 0 ? void 0 : authState.state) !== conduit_view_types_1.AuthState.Authorized) {
             return {
                 progressPercent: 0,
                 paused: syncDisabled,
-                nsyncEnabled: !nsyncDisabled,
                 lastSyncTime,
                 backgroundProgressPercent: 0,
                 contentFetchSyncProgressPercent: 0,
@@ -102,7 +96,6 @@ function addSyncStateQueries(out) {
         const syncProgressType = syncType.syncProgressType || conduit_view_types_1.SyncProgressType.NONE;
         const ret = {
             paused: syncDisabled,
-            nsyncEnabled: !nsyncDisabled,
             lastSyncTime,
             backgroundProgressPercent,
             contentFetchSyncProgressPercent,
@@ -129,18 +122,17 @@ function addSyncStateQueries(out) {
     }
     out.SyncState = {
         args: conduit_core_1.schemaToGraphQLArgs({
-            precision: 'int?',
+            precision: conduit_utils_1.NullableInt,
         }),
-        type: conduit_core_1.schemaToGraphQLType({
+        type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({
             progressPercent: 'number',
             backgroundProgressPercent: 'number',
             contentFetchSyncProgressPercent: 'number',
             paused: 'boolean',
-            nsyncEnabled: 'boolean',
             lastSyncTime: 'timestamp',
-            adaptiveDownsyncType: AdaptiveDownsyncTypeEnum,
-            syncProgressType: SyncProgressTypeEnum,
-        }, 'SyncState', false),
+            adaptiveDownsyncType: conduit_utils_1.Enum(conduit_view_types_1.AdaptiveDownsyncType, 'AdaptiveDownsyncTypeEnum'),
+            syncProgressType: conduit_utils_1.Enum(conduit_view_types_1.SyncProgressType, 'SyncProgressTypeEnum'),
+        }, 'SyncState')),
         resolve: syncStateResolver,
     };
 }

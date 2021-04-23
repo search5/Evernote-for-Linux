@@ -3,7 +3,7 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.serviceResultsToMutationDeps = exports.membershipRefToDepKey = exports.associationRefToDepKey = exports.entityRefToDepKey = exports.getEdge = exports.getMembership = exports.getEntityAndEdges = exports.CoreEntityNSyncConverters = exports.generateMembershipID = exports.generateProfileID = void 0;
+exports.serviceResultsToMutationDeps = exports.membershipRefToDepKey = exports.associationRefToDepKey = exports.entityRefToDepKey = exports.getEdge = exports.getMembership = exports.getEntityAndEdges = exports.CoreEntityNSyncConverters = exports.generateMembershipID = exports.generateInvitationID = exports.generateProfileID = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
@@ -22,6 +22,10 @@ function generateProfileID(source, id) {
     return `Profile:${source}:${id}`;
 }
 exports.generateProfileID = generateProfileID;
+function generateInvitationID(ref) {
+    return `Invitation:${ref.dst.type}_${ref.dst.id}:${ref.src.type}_${ref.src.id}`;
+}
+exports.generateInvitationID = generateInvitationID;
 function generateMembershipID(ref) {
     return `Membership:${ref.dst.type}_${ref.dst.id}:${ref.src.type}_${ref.src.id}`;
 }
@@ -72,6 +76,88 @@ async function getEntityAndEdges(trc, instance, currentUserID, eventManager, tx,
     return context.converters[instance.ref.type](trc, instance, context);
 }
 exports.getEntityAndEdges = getEntityAndEdges;
+function getInvitationNode(instance, params, out) {
+    const node = {
+        localChangeTimestamp: 0,
+        id: generateInvitationID(instance.ref),
+        label: instance.label,
+        syncContexts: [],
+        version: instance.version,
+        type: en_core_entity_types_1.CoreEntityTypes.Invitation,
+        NodeFields: {
+            created: instance.created,
+            snippet: instance.label,
+            invitationType: en_core_entity_types_1.InvitationType.UNKNOWN,
+            internal_attachment: {},
+        },
+        inputs: {},
+        outputs: {
+            owner: {},
+            sharer: {},
+        },
+    };
+    out.edges = out.edges || { edgesToCreate: [], edgesToDelete: [] };
+    out.nodes = out.nodes || { nodesToUpsert: [], nodesToDelete: [] };
+    params.sharerProfileID && out.edges.edgesToCreate.push({
+        srcID: node.id, srcType: node.type, srcPort: 'sharer',
+        dstID: params.sharerProfileID, dstType: en_core_entity_types_1.CoreEntityTypes.Profile, dstPort: null,
+    });
+    out.nodes.nodesToUpsert.push(node);
+    out.nodes.nodesToDelete.push({
+        id: generateMembershipID(instance.ref),
+        type: en_core_entity_types_1.CoreEntityTypes.Membership,
+    });
+}
+function getMembershipNode(instance, params, out) {
+    const node = {
+        localChangeTimestamp: 0,
+        id: generateMembershipID(instance.ref),
+        label: `Membership for ${params.targetRef.type} to ${params.recipientIsMe ? 'Me' : params.recipientSource}`,
+        syncContexts: [],
+        version: instance.version,
+        type: en_core_entity_types_1.CoreEntityTypes.Membership,
+        NodeFields: {
+            created: instance.created,
+            updated: instance.updated,
+            privilege: params.privilege,
+            recipientIsMe: params.recipientIsMe,
+            recipientType: params.recipientType,
+            invitedTime: null,
+            internal_sharedNotebookID: 0,
+        },
+        inputs: {
+            parent: {},
+        },
+        outputs: {
+            owner: {},
+            recipient: {},
+            sharer: {},
+        },
+    };
+    out.edges = out.edges || { edgesToCreate: [], edgesToDelete: [] };
+    out.nodes = out.nodes || { nodesToUpsert: [], nodesToDelete: [] };
+    out.edges.edgesToCreate.push({
+        srcID: params.targetRef.id, srcType: params.targetRef.type, srcPort: 'memberships',
+        dstID: node.id, dstType: node.type, dstPort: 'parent',
+    });
+    out.edges.edgesToCreate.push({
+        srcID: node.id, srcType: node.type, srcPort: 'recipient',
+        dstID: params.recipientProfileID, dstType: en_core_entity_types_1.CoreEntityTypes.Profile, dstPort: null,
+    });
+    params.sharerProfileID && out.edges.edgesToCreate.push({
+        srcID: node.id, srcType: node.type, srcPort: 'sharer',
+        dstID: params.sharerProfileID, dstType: en_core_entity_types_1.CoreEntityTypes.Profile, dstPort: null,
+    });
+    out.edges.edgesToCreate.push({
+        srcID: node.id, srcType: node.type, srcPort: 'owner',
+        dstID: params.ownerProfileID, dstType: en_core_entity_types_1.CoreEntityTypes.Profile, dstPort: null,
+    });
+    out.nodes.nodesToUpsert.push(node);
+    out.nodes.nodesToDelete.push({
+        id: generateInvitationID(instance.ref),
+        type: en_core_entity_types_1.CoreEntityTypes.Invitation,
+    });
+}
 function getMembership(eventManager, instance, currentUserID) {
     var _a;
     if (instance.ref.src.type === null || instance.ref.src.type === undefined) {
@@ -86,7 +172,8 @@ function getMembership(eventManager, instance, currentUserID) {
     if (instance.ref.dst.id === null || instance.ref.dst.id === undefined) {
         throw new Error('Missing membership dst ref id');
     }
-    const privilege = (_a = en_conduit_sync_types_1.NSyncPrivilegeMap[instance.role]) !== null && _a !== void 0 ? _a : en_core_entity_types_1.MembershipPrivilege.READ;
+    const instanceRole = en_data_model_1.ClientNSyncTypes.Role[instance.role];
+    const privilege = (_a = en_conduit_sync_types_1.NSyncPrivilegeMap[instanceRole]) !== null && _a !== void 0 ? _a : en_core_entity_types_1.MembershipPrivilege.READ;
     const recipientType = en_conduit_sync_types_1.NSyncAgentToRecipientMap[instance.ref.src.type];
     if (recipientType === undefined) {
         throw new Error('Missing agent/recipient type in membership');
@@ -110,57 +197,31 @@ function getMembership(eventManager, instance, currentUserID) {
     if (!nodeType) {
         throw new Error(`Unhandled nsync type ${instance.ref.dst.type} for membership`);
     }
-    // TODO create Invitation if instance.ref.type is invitation
-    // const sharedNotebookID = instance.ref.dst.type === NSyncEntityType.NOTEBOOK ? instance.ref.dst.id : null;
-    const node = {
-        localChangeTimestamp: 0,
-        id: generateMembershipID(instance.ref),
-        label: `Membership for ${nodeType} to ${recipientIsMe ? 'Me' : recipientSource}`,
-        syncContexts: [],
-        version: instance.version,
-        type: en_core_entity_types_1.CoreEntityTypes.Membership,
-        NodeFields: {
-            created: instance.created,
-            updated: instance.updated,
-            privilege,
-            recipientIsMe,
-            recipientType,
-            invitedTime: null,
-            internal_sharedNotebookID: 0,
-        },
-        inputs: {
-            parent: {},
-        },
-        outputs: {
-            owner: {},
-            recipient: {},
-            sharer: {},
-        },
+    const targetRef = {
+        id: instance.ref.dst.id,
+        type: nodeType,
     };
-    const edgesToCreate = [];
-    const edgesToDelete = [];
-    edgesToCreate.push({
-        srcID: instance.ref.dst.id,
-        srcType: nodeType, srcPort: 'memberships',
-        dstID: node.id || '',
-        dstType: en_core_entity_types_1.CoreEntityTypes.Membership, dstPort: 'parent',
-    });
     const recipientProfileID = generateProfileID(recipientSource, instance.ref.src.id);
-    const sharerProfileID = instance.sharerId && generateProfileID(en_core_entity_types_1.PROFILE_SOURCE.User, instance.sharerId);
-    edgesToCreate.push({
-        srcID: node.id,
-        srcType: en_core_entity_types_1.CoreEntityTypes.Membership, srcPort: 'recipient',
-        dstID: recipientProfileID, dstType: en_core_entity_types_1.CoreEntityTypes.Profile, dstPort: null,
-    });
-    sharerProfileID && edgesToCreate.push({
-        srcID: node.id,
-        srcType: en_core_entity_types_1.CoreEntityTypes.Membership, srcPort: 'sharer',
-        dstID: sharerProfileID, dstType: en_core_entity_types_1.CoreEntityTypes.Profile, dstPort: null,
-    });
-    return {
-        nodes: { nodesToUpsert: [node], nodesToDelete: [] },
-        edges: { edgesToCreate, edgesToDelete },
+    const sharerProfileID = instance.sharerId ? generateProfileID(en_core_entity_types_1.PROFILE_SOURCE.User, instance.sharerId) : null;
+    const ownerProfileID = generateProfileID(en_core_entity_types_1.PROFILE_SOURCE.User, instance.ownerId);
+    const out = {};
+    const params = {
+        privilege,
+        recipientType,
+        recipientSource,
+        recipientIsMe,
+        recipientProfileID,
+        sharerProfileID,
+        ownerProfileID,
+        targetRef,
     };
+    if (instance.ref.type === en_data_model_1.ClientNSyncTypes.MembershipType.INVITATION) {
+        getInvitationNode(instance, params, out);
+    }
+    else {
+        getMembershipNode(instance, params, out);
+    }
+    return out;
 }
 exports.getMembership = getMembership;
 function getEdge(eventManager, instance) {

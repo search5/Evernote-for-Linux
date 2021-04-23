@@ -30,9 +30,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SyncManager = void 0;
 const conduit_core_1 = require("conduit-core");
+const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
-const en_nsync_connector_1 = require("en-nsync-connector");
 const Auth = __importStar(require("../Auth"));
 const NotebookConverter_1 = require("../Converters/NotebookConverter");
 const Migrations_1 = require("../SyncFunctions/Migrations");
@@ -194,7 +194,7 @@ class SyncManager {
                 if (auth.vaultAuth) {
                     await this.activityContext.syncEngine.initUserSyncContext(trc, graphTransaction, conduit_core_1.VAULT_USER_CONTEXT, auth.vaultAuth);
                 }
-                await this.activityContext.syncEngine.initUserSyncContext(trc, graphTransaction, en_nsync_connector_1.NSYNC_CONTEXT, null);
+                await this.activityContext.syncEngine.initUserSyncContext(trc, graphTransaction, conduit_storage_1.NSYNC_CONTEXT, null);
             });
         }
         else {
@@ -353,11 +353,11 @@ class SyncManager {
     getSchemaMigrationActivity(trc) {
         return new SchemaMigrationActivity_1.SchemaMigrationActivity(this.di, this.activityContext, HybridInitialDownsyncActivity_1.FINAL_ACTIVITY_ORDER.SCHEMA_MIGRATION);
     }
-    getReindexingActivity(trc) {
-        return new ReindexActivity_1.ReindexActivity(this.di, this.activityContext, HybridInitialDownsyncActivity_1.FINAL_ACTIVITY_ORDER.REINDEX_ACTIVITY);
+    getReindexingActivity(trc, makeImmediate) {
+        return new ReindexActivity_1.ReindexActivity(this.di, this.activityContext, makeImmediate ? 0 : HybridInitialDownsyncActivity_1.FINAL_ACTIVITY_ORDER.REINDEX_ACTIVITY);
     }
-    async addReindexingActivity(trc, graphTransaction) {
-        await this.addActivity(trc, this.getReindexingActivity(trc), graphTransaction);
+    async addReindexingActivity(trc, graphTransaction, makeImmediate) {
+        await this.addActivity(trc, this.getReindexingActivity(trc, makeImmediate), graphTransaction);
     }
     async onSyncStateChange(trc, skipSyncEventManager) {
         var _a;
@@ -365,7 +365,7 @@ class SyncManager {
         const syncDisabled = await this.activityContext.syncEngine.getEphemeralFlag(trc, 'SyncManager', 'syncDisabled');
         const nSyncDisabled = await this.activityContext.syncEngine.getEphemeralFlag(trc, 'SyncManager', 'nsyncDisabled');
         const shouldSync = this.auth !== null && !syncPaused && !syncDisabled;
-        await ((_a = this.activityContext.syncEventManager) === null || _a === void 0 ? void 0 : _a.onSyncStateChange(trc, nSyncDisabled || syncDisabled));
+        await ((_a = this.activityContext.syncEventManager) === null || _a === void 0 ? void 0 : _a.onSyncStateChange(trc, nSyncDisabled || syncDisabled, syncPaused));
         if (shouldSync === this.isSyncing) {
             return;
         }

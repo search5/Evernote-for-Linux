@@ -13,12 +13,10 @@ const NoteContentInfo_1 = require("./Helpers/NoteContentInfo");
 /* Insert/Update TaskGroups in NoteContentInfo */
 exports.taskGroupUpsertInNoteContentInfo = {
     type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
-    requiredParams: {
-        taskGroupNoteLevelIDs: 'string[]',
-    },
-    optionalParams: {
-        noteID: 'ID',
-        sourceOfChange: 'string',
+    params: {
+        taskGroupNoteLevelIDs: conduit_utils_1.ListOf('string'),
+        noteID: conduit_utils_1.NullableID,
+        sourceOfChange: conduit_utils_1.NullableString,
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     initParams: async (trc, ctx, paramsIn, paramsOut) => {

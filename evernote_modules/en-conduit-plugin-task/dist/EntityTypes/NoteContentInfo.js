@@ -5,6 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.noteContentInfoIndexConfig = exports.noteContentInfoTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
+const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const TaskConstants_1 = require("../TaskConstants");
 exports.noteContentInfoTypeDef = {
@@ -13,10 +14,10 @@ exports.noteContentInfoTypeDef = {
     nsyncFeatureGroup: 'Tasks',
     fieldValidation: {},
     schema: {
-        taskGroupNoteLevelIDs: 'string[]?',
+        taskGroupNoteLevelIDs: conduit_utils_1.NullableListOf('string'),
         created: 'timestamp',
         updated: 'timestamp',
-        sourceOfChange: 'string?',
+        sourceOfChange: conduit_utils_1.NullableString,
     },
     edges: {
         parent: {

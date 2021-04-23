@@ -3,23 +3,10 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSupportTicketPlugin = exports.SupportTicketArgs = void 0;
+exports.getSupportTicketPlugin = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_thrift_connector_1 = require("en-thrift-connector");
-const graphql_1 = require("graphql");
-exports.SupportTicketArgs = conduit_core_1.schemaToGraphQLArgs({
-    subject: 'string',
-    body: 'string',
-    logUri: 'string?',
-    applicationVersion: 'string?',
-    carrierInfo: 'string?',
-    osInfo: 'string?',
-    connectionInfo: 'string?',
-    contactEmail: 'string?',
-    deviceInfo: 'string?',
-    tags: 'string[]?',
-});
 function getSupportTicketPlugin(filesystemClient) {
     async function readLogFile(trc, logUri) {
         if (!logUri) {
@@ -73,15 +60,19 @@ function getSupportTicketPlugin(filesystemClient) {
         defineMutators: () => {
             const mutators = {
                 fileSupportTicket: {
-                    args: exports.SupportTicketArgs,
-                    type: new graphql_1.GraphQLObjectType({
-                        name: 'SupportTicketResult',
-                        fields: () => {
-                            return {
-                                success: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLBoolean) },
-                            };
-                        },
+                    args: conduit_core_1.schemaToGraphQLArgs({
+                        subject: 'string',
+                        body: 'string',
+                        logUri: conduit_utils_1.NullableString,
+                        applicationVersion: conduit_utils_1.NullableString,
+                        carrierInfo: conduit_utils_1.NullableString,
+                        osInfo: conduit_utils_1.NullableString,
+                        connectionInfo: conduit_utils_1.NullableString,
+                        contactEmail: conduit_utils_1.NullableString,
+                        deviceInfo: conduit_utils_1.NullableString,
+                        tags: conduit_utils_1.NullableListOf('string'),
                     }),
+                    type: conduit_core_1.GenericMutationResult,
                     resolve: fillSupportTicketResolver,
                     description: 'fill the support ticket',
                 },

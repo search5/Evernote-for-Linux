@@ -24,23 +24,7 @@ async function resolveTagLabelConflict(trc, ctx, tagName) {
         label = `${tagName}_${suffix}`;
     }
 }
-async function genTagCreate(trc, ctx, params, plan, checkNote = true, key) {
-    let note = null;
-    if (checkNote && params.note) {
-        note = await ctx.fetchEntity(trc, { id: params.note, type: EntityConstants_1.CoreEntityTypes.Note });
-        if (!note) {
-            throw new conduit_utils_1.NotFoundError(params.note, 'note id listed is not valid');
-        }
-        /*
-        // race condition in client syncing causes memberships to not be there to check for the
-        // container's privilege in some automated tests. Try this again once nsync is in
-        const permContext: MutationPermissionContext = new MutationPermissionContext(trc, ctx);
-        const policy = await commandPolicyOfNote(note.id, permContext);
-        if (!policy.canTag || !policy.canCreateTag) {
-          throw new PermissionError('Permission Denied: cannot create tag');
-        }
-        */
-    }
+async function genTagCreate(trc, ctx, params, plan, note = null, key) {
     const owner = note || ctx.vaultUserID || ctx.userID;
     const tagGenID = await ctx.generateID(trc, owner, EntityConstants_1.CoreEntityTypes.Tag, key);
     const label = await resolveTagLabelConflict(trc, ctx, params.name);

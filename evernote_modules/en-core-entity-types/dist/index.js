@@ -13,7 +13,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WORKCHAT_MESSAGE_BODY_LEN_MAX = exports.validateAccountLimits = exports.getAccountProfileRef = exports.genTagCreate = exports.genNoteCreate = exports.parseAndValidateAttachmentCreateData = exports.genAttachmentCreateOps = exports.ACCOUNT_LIMITS_REF = exports.ACCOUNT_LIMITS_ID = void 0;
+exports.shortcutSourceTypes = exports.WORKCHAT_MESSAGE_BODY_LEN_MAX = exports.validateNoteTagsCount = exports.validateAndCalculateSizeLimits = exports.validateAccountLimits = exports.createMembershipOps = exports.getAccountProfileRef = exports.genTagCreate = exports.genNoteCreate = exports.parseAndValidateAttachmentCreateData = exports.genAttachmentCreateOps = exports.ACCOUNT_LIMITS_REF = exports.ACCOUNT_LIMITS_ID = void 0;
 var AccountLimits_1 = require("./AccountLimits");
 Object.defineProperty(exports, "ACCOUNT_LIMITS_ID", { enumerable: true, get: function () { return AccountLimits_1.ACCOUNT_LIMITS_ID; } });
 Object.defineProperty(exports, "ACCOUNT_LIMITS_REF", { enumerable: true, get: function () { return AccountLimits_1.ACCOUNT_LIMITS_REF; } });
@@ -27,9 +27,14 @@ Object.defineProperty(exports, "genTagCreate", { enumerable: true, get: function
 var Profile_1 = require("./Mutators/Helpers/Profile");
 Object.defineProperty(exports, "getAccountProfileRef", { enumerable: true, get: function () { return Profile_1.getAccountProfileRef; } });
 var MutatorHelpers_1 = require("./Mutators/MutatorHelpers");
+Object.defineProperty(exports, "createMembershipOps", { enumerable: true, get: function () { return MutatorHelpers_1.createMembershipOps; } });
 Object.defineProperty(exports, "validateAccountLimits", { enumerable: true, get: function () { return MutatorHelpers_1.validateAccountLimits; } });
+Object.defineProperty(exports, "validateAndCalculateSizeLimits", { enumerable: true, get: function () { return MutatorHelpers_1.validateAndCalculateSizeLimits; } });
+Object.defineProperty(exports, "validateNoteTagsCount", { enumerable: true, get: function () { return MutatorHelpers_1.validateNoteTagsCount; } });
 var Message_1 = require("./NodeTypes/Message");
 Object.defineProperty(exports, "WORKCHAT_MESSAGE_BODY_LEN_MAX", { enumerable: true, get: function () { return Message_1.WORKCHAT_MESSAGE_BODY_LEN_MAX; } });
+var Shortcut_1 = require("./NodeTypes/Shortcut");
+Object.defineProperty(exports, "shortcutSourceTypes", { enumerable: true, get: function () { return Shortcut_1.shortcutSourceTypes; } });
 __exportStar(require("./CommandPolicyRules"), exports);
 __exportStar(require("./EvernoteDataModel"), exports);
 __exportStar(require("./MaestroProps"), exports);

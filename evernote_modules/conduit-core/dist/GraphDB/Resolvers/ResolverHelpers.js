@@ -3,9 +3,9 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPortCountName = exports.fromSchema = exports.retrieveAuthorizedToken = exports.validateDB = exports.GenericMutationResultWithData = exports.GenericMutationResult = exports.AutoResolverData = void 0;
+exports.getPortCountName = exports.retrieveAuthorizedToken = exports.validateDB = exports.GenericMutationResultWithData = exports.GenericMutationResult = exports.AutoResolverData = void 0;
+const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
-const graphql_1 = require("graphql");
 const DataSchemaGQL_1 = require("../../Types/DataSchemaGQL");
 class AutoResolverData {
     constructor() {
@@ -15,8 +15,8 @@ class AutoResolverData {
     }
 }
 exports.AutoResolverData = AutoResolverData;
-exports.GenericMutationResult = DataSchemaGQL_1.schemaToGraphQLType({ success: 'boolean' }, 'GenericMutationResult', false);
-exports.GenericMutationResultWithData = DataSchemaGQL_1.schemaToGraphQLType({ success: 'boolean', result: 'string?' }, 'AutoMutatorRes', true);
+exports.GenericMutationResult = DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.Struct({ success: 'boolean' }, 'GenericMutationResult'));
+exports.GenericMutationResultWithData = DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.Struct({ success: 'boolean', result: conduit_utils_1.NullableString }, 'AutoMutatorRes'));
 function validateDB(context, msg) {
     if (!context || !context.db) {
         throw new Error(msg !== null && msg !== void 0 ? msg : 'Unable to run resolver without valid GraphDB');
@@ -32,12 +32,6 @@ async function retrieveAuthorizedToken(context) {
     return auth.token;
 }
 exports.retrieveAuthorizedToken = retrieveAuthorizedToken;
-function fromSchema(name, schemaStr) {
-    const Schema = graphql_1.buildASTSchema(schemaStr);
-    const schemaType = Schema.getType(name);
-    return graphql_1.isOutputType(schemaType) ? schemaType : undefined;
-}
-exports.fromSchema = fromSchema;
 function getPortCountName(portName) {
     return `${portName}Count`;
 }

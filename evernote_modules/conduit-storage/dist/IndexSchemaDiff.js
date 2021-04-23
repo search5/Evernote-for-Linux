@@ -22,9 +22,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.extractDiffableIndexConfig = exports.haveStoredIndexesChanged = exports.hasStoredIndexChanged = void 0;
+exports.extractDiffableIndexConfig = exports.haveStoredIndexesChanged = exports.hasStoredIndexChanged = exports.isBreakingSchemaChange = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const SimplyImmutable = __importStar(require("simply-immutable"));
+const GraphIndexTypes_1 = require("./GraphIndexTypes");
 function objectKeysAsSet(...args) {
     const keys = new Set();
     for (const obj of args) {
@@ -34,16 +35,35 @@ function objectKeysAsSet(...args) {
     }
     return keys;
 }
-function isBreakingSchemaChange(oldType, newType) {
-    if (conduit_utils_1.isEqual(oldType, newType)) {
-        return false;
+function isSchemaCompatible(oldType, newType) {
+    if (conduit_utils_1.fieldTypeIsNullable(newType)) {
+        if (!conduit_utils_1.fieldTypeIsNullable(oldType)) {
+            // allow going from non-null to nullable
+            return isSchemaCompatible(oldType, newType.nullableType);
+        }
+        return isSchemaCompatible(newType.nullableType, oldType.nullableType);
     }
-    // allow going from non-null to nullable
-    if (conduit_utils_1.isEqual(conduit_utils_1.fieldForceRequired(oldType, false), newType)) {
-        return false;
+    else if (conduit_utils_1.fieldTypeIsEnum(newType)) {
+        if (!conduit_utils_1.fieldTypeIsEnum(oldType)) {
+            return false;
+        }
+        // ignore name, just compare enums
+        return conduit_utils_1.isEqual(newType.enumMap, oldType.enumMap);
     }
-    return true;
+    else {
+        return newType === oldType;
+    }
 }
+function isBreakingSchemaChange(oldType, newType) {
+    try {
+        return !isSchemaCompatible(GraphIndexTypes_1.fromStoredIndexSchema(oldType), GraphIndexTypes_1.fromStoredIndexSchema(newType));
+    }
+    catch (err) {
+        conduit_utils_1.logger.warn('isBreakingChange threw an error', { err, oldType, newType });
+        return true;
+    }
+}
+exports.isBreakingSchemaChange = isBreakingSchemaChange;
 function hasIndexItemChanged(oldItem, newItem) {
     if (!oldItem || !newItem) {
         // if one is defined and the other isn't, then that's a change; if they are both undefined then it is not a change
@@ -115,7 +135,7 @@ function extractDiffableIndexConfig(config) {
             for (const field of indexConfig.index) {
                 delete field.isMatchField;
             }
-            indexes[indexKey] = indexConfig;
+            indexes[indexKey] = GraphIndexTypes_1.toStoredIndexItem(indexConfig);
         }
         res[type] = {
             indexes,

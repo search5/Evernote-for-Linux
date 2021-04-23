@@ -11,6 +11,13 @@ const NoteContentInfo_1 = require("../Mutators/Helpers/NoteContentInfo");
 const TaskConstants_1 = require("../TaskConstants");
 const TaskUtils_1 = require("../TaskUtils");
 const Utilities_1 = require("../Utilities");
+const MutatorResultSchema = conduit_utils_1.Struct({
+    success: 'boolean',
+    result: conduit_utils_1.Struct({
+        taskGroupID: 'string',
+        defaultTaskNoteID: 'string',
+    }),
+}, 'TaskGroupCreateDefaultTaskNoteUpsertResult');
 async function resolver(parent, argsIn, context) {
     const args = argsIn;
     if (!args) {
@@ -90,16 +97,10 @@ async function taskGroupUpdateForDefaultTaskNote(context, taskGroupNoteLevelID) 
 exports.taskGroupCreateDefaultTaskNoteUpsert = {
     args: conduit_core_1.schemaToGraphQLArgs({
         defaultTaskNoteLabel: 'string',
-        pinDefaultTaskNote: 'boolean?',
-        noteContent: 'string?',
+        pinDefaultTaskNote: conduit_utils_1.NullableBoolean,
+        noteContent: conduit_utils_1.NullableString,
     }),
-    type: conduit_core_1.schemaToGraphQLType({
-        success: 'boolean',
-        result: {
-            taskGroupID: 'string',
-            defaultTaskNoteID: 'string',
-        },
-    }, 'TaskGroupCreateDefaultTaskNoteUpsertResult', false),
+    type: conduit_core_1.schemaToGraphQLType(MutatorResultSchema),
     resolve: resolver,
 };
 //# sourceMappingURL=DefaultTaskNote.js.map

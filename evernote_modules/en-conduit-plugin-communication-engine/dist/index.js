@@ -5,8 +5,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getENCommEnginePlugin = void 0;
 const conduit_core_1 = require("conduit-core");
+const conduit_utils_1 = require("conduit-utils");
 const en_thrift_connector_1 = require("en-thrift-connector");
-const graphql_1 = require("graphql");
 const CommEngineSchemaTypes_1 = require("./CommEngineSchemaTypes");
 const EnThriftCommEngine_1 = require("./EnThriftCommEngine");
 function getENCommEnginePlugin() {
@@ -27,24 +27,21 @@ function getENCommEnginePlugin() {
         name: 'ENCommEngine',
         defineMutators: () => {
             const mutators = {};
-            if (CommEngineSchemaTypes_1.responseSchemaType) {
-                mutators.SyncMessages = {
-                    type: CommEngineSchemaTypes_1.responseSchemaType,
-                    args: Object.assign({}, conduit_core_1.schemaToGraphQLArgs({
-                        guid: 'string?',
-                        knownMessages: 'string[]?',
-                        locale: 'string?',
-                        commEngineJsVersion: 'int?',
-                        nativeClientVersion: 'int?',
-                        uiLanguage: 'string?',
-                    }), {
-                        supportedPlacements: { type: new graphql_1.GraphQLList(CommEngineSchemaTypes_1.supportedPlacementEnumType) },
-                        events: { type: new graphql_1.GraphQLList(CommEngineSchemaTypes_1.eventType) },
-                        clientType: { type: CommEngineSchemaTypes_1.clientTypeEnumType },
-                    }),
-                    resolve: commEngineResolver,
-                };
-            }
+            mutators.SyncMessages = {
+                args: conduit_core_1.schemaToGraphQLArgs({
+                    guid: conduit_utils_1.NullableString,
+                    knownMessages: conduit_utils_1.NullableListOf('string'),
+                    locale: conduit_utils_1.NullableString,
+                    commEngineJsVersion: conduit_utils_1.NullableInt,
+                    nativeClientVersion: conduit_utils_1.NullableInt,
+                    uiLanguage: conduit_utils_1.NullableString,
+                    supportedPlacements: conduit_utils_1.NullableListOf(CommEngineSchemaTypes_1.SupportedPlacementSchema),
+                    events: conduit_utils_1.NullableListOf(CommEngineSchemaTypes_1.CommEventSchema),
+                    clientType: conduit_utils_1.Nullable(CommEngineSchemaTypes_1.ClientTypeSchema),
+                }),
+                type: conduit_core_1.schemaToGraphQLType(CommEngineSchemaTypes_1.ResponseSchema),
+                resolve: commEngineResolver,
+            };
             return mutators;
         },
     };

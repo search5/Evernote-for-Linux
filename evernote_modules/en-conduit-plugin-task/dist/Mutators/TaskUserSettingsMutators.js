@@ -9,7 +9,7 @@ const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const TaskConstants_1 = require("../TaskConstants");
 const TaskUtils_1 = require("../TaskUtils");
-const Task_1 = require("./Helpers/Task");
+const Permission_1 = require("./Helpers/Permission");
 async function getNewTaskUserSettingsOps(trc, ctx, id, ref, defaultRemindersOffsets) {
     const settingsGenID = await ensureTaskUserSettingsID(trc, ctx);
     if (settingsGenID[1] !== id) {
@@ -35,11 +35,9 @@ async function ensureTaskUserSettingsID(trc, ctx) {
 }
 exports.taskUserSettingsSetDefaultTaskNote = {
     type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
-    requiredParams: {
+    params: {
         noteID: 'ID',
-    },
-    optionalParams: {
-        pinDefaultTaskNote: 'boolean',
+        pinDefaultTaskNote: conduit_utils_1.NullableBoolean,
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     execute: async (trc, ctx, params) => {
@@ -50,7 +48,7 @@ exports.taskUserSettingsSetDefaultTaskNote = {
         if (!note) {
             throw new conduit_utils_1.NotFoundError(nodeRef.id, 'missing note in set as default');
         }
-        await Task_1.checkNoteEditPermissionByNoteId(trc, ctx, note.id);
+        await Permission_1.checkNoteEditPermissionByNoteId(trc, ctx, note.id);
         const taskUserSettingsRef = { id: taskUserSettingsID, type: TaskConstants_1.TaskEntityTypes.TaskUserSettings };
         // get existing default-task-note
         const taskUserSettings = await ctx.fetchEntity(trc, taskUserSettingsRef);
@@ -90,10 +88,9 @@ exports.taskUserSettingsSetDefaultTaskNote = {
 };
 exports.taskUserSettingsUpsert = {
     type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
-    requiredParams: {},
-    optionalParams: {
-        defaultReminder: 'boolean',
-        defaultRemindersOffsets: 'number[]',
+    params: {
+        defaultReminder: conduit_utils_1.NullableBoolean,
+        defaultRemindersOffsets: conduit_utils_1.NullableListOf('number'),
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     execute: async (trc, ctx, params) => {

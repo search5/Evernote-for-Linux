@@ -5,6 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getMockQueryPlugin = void 0;
 const conduit_core_1 = require("conduit-core");
+const conduit_utils_1 = require("conduit-utils");
 const TEST_QUERY = `
 query($n: Int!) {
   multiplyByTwo(n: $n) {
@@ -30,7 +31,7 @@ function getMockQueryPlugin() {
                 args: conduit_core_1.schemaToGraphQLArgs({
                     n: 'int',
                 }),
-                type: conduit_core_1.schemaToGraphQLType({ result: 'int' }, 'multiplyByTwoResult', false),
+                type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({ result: 'int' }, 'multiplyByTwoResult')),
                 resolve: resolveMultiplyByTwo,
             },
         }),

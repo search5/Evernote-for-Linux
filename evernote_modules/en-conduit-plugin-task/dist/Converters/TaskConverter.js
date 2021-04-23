@@ -104,12 +104,28 @@ const getTaskNodeAndEdges = async (trc, instance, context) => {
         const assigneeID = assigneeIdentityID ?
             convertGuidFromService(assigneeIdentityID, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.Identity) :
             convertGuidFromService(assigneeUserID, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
-        edgesToCreate.push({
-            dstType: en_core_entity_types_1.CoreEntityTypes.Profile,
-            dstID: assigneeID,
-            dstPort: null,
-            srcType: task.type, srcID: task.id, srcPort: 'assignee',
-        });
+        let reassigned = true;
+        const currentTask = await context.tx.getNode(trc, null, { type: TaskConstants_1.TaskEntityTypes.Task, id: task.id });
+        const currentAssigneeEdge = conduit_utils_1.firstStashEntry(currentTask === null || currentTask === void 0 ? void 0 : currentTask.outputs.assignee);
+        if (currentAssigneeEdge) {
+            const currentAssigneeID = currentAssigneeEdge.dstID;
+            if (assigneeID === currentAssigneeID) {
+                reassigned = false;
+            }
+            else {
+                edgesToDelete.push({
+                    srcType: task.type, srcID: task.id, srcPort: 'assignee',
+                });
+            }
+        }
+        if (reassigned) {
+            edgesToCreate.push({
+                dstType: en_core_entity_types_1.CoreEntityTypes.Profile,
+                dstID: assigneeID,
+                dstPort: null,
+                srcType: task.type, srcID: task.id, srcPort: 'assignee',
+            });
+        }
     }
     else {
         edgesToDelete.push({

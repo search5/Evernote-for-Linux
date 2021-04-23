@@ -3,11 +3,11 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.membershipIndexConfig = exports.membershipTypeDef = exports.MembershipRecipientType = exports.MembershipRecipientTypeSchema = void 0;
+exports.membershipIndexConfig = exports.membershipTypeDef = exports.MembershipRecipientType = void 0;
 const conduit_storage_1 = require("conduit-storage");
+const conduit_utils_1 = require("conduit-utils");
 const EntityConstants_1 = require("../EntityConstants");
 const MembershipPrivilege_1 = require("../MembershipPrivilege");
-exports.MembershipRecipientTypeSchema = ['USER', 'IDENTITY', 'EMAIL', 'BUSINESS'];
 var MembershipRecipientType;
 (function (MembershipRecipientType) {
     MembershipRecipientType["USER"] = "USER";
@@ -19,21 +19,21 @@ exports.membershipTypeDef = {
     name: EntityConstants_1.CoreEntityTypes.Membership,
     syncSource: conduit_storage_1.SyncSource.THRIFT,
     schema: {
-        privilege: Object.values(MembershipPrivilege_1.MembershipPrivilege),
-        recipientType: exports.MembershipRecipientTypeSchema,
+        privilege: MembershipPrivilege_1.MembershipPrivilegeSchema,
+        recipientType: conduit_utils_1.Enum(MembershipRecipientType, 'MembershipRecipientType'),
         recipientIsMe: 'boolean',
         created: 'timestamp',
         updated: 'timestamp',
-        invitedTime: 'timestamp?',
-        internal_sharedNotebookID: 'int?',
+        invitedTime: conduit_utils_1.NullableTimestamp,
+        internal_sharedNotebookID: conduit_utils_1.NullableInt,
     },
     edges: {
         parent: {
             constraint: conduit_storage_1.EdgeConstraint.REQUIRED,
             type: conduit_storage_1.EdgeType.MEMBERSHIP,
             from: {
-                type: [EntityConstants_1.CoreEntityTypes.Workspace, EntityConstants_1.CoreEntityTypes.Notebook, EntityConstants_1.CoreEntityTypes.Note],
                 constraint: conduit_storage_1.EdgeConstraint.MANY,
+                type: [],
                 // TODO switch to traversalQuery using MembershipsInParent, when we are ready to take the client conversion hit
                 denormalize: 'memberships',
             },

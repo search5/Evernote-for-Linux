@@ -23,6 +23,7 @@ exports.NSyncPrivilegeMap = {
     [en_data_model_1.ClientNSyncTypes.Role.ADMIN]: en_core_entity_types_1.MembershipPrivilege.MANAGE,
     [en_data_model_1.ClientNSyncTypes.Role.OWNER]: en_core_entity_types_1.MembershipPrivilege.MANAGE,
     [en_data_model_1.ClientNSyncTypes.Role.ACTIVITY_VIEWER]: en_core_entity_types_1.MembershipPrivilege.READ,
+    [en_data_model_1.ClientNSyncTypes.Role.COMPLETER]: en_core_entity_types_1.MembershipPrivilege.COMPLETE,
 };
 exports.NSyncAgentToRecipientMap = {
     [en_data_model_1.ClientNSyncTypes.AgentType.USER]: en_core_entity_types_1.MembershipRecipientType.USER,

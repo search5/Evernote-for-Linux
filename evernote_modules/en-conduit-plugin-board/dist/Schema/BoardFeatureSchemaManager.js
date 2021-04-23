@@ -21,26 +21,43 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BoardFeatureSchemaManager = void 0;
 const conduit_utils_1 = require("conduit-utils");
+const en_data_model_1 = require("en-data-model");
 const BoardConstants_1 = require("../BoardConstants");
 const Utilities = __importStar(require("../Utilities"));
 const calendar_1 = require("./calendar");
+const core_1 = require("./core");
+const extra_1 = require("./extra");
+const filteredNotes_1 = require("./filteredNotes");
 const tasks_1 = require("./tasks");
+const WidgetDefaultsFactory_1 = require("./WidgetDefaultsFactory");
 class BoardFeatureSchemaManager {
     constructor(di) {
         this.di = di;
         this.featureVersionPiplines = this.createFeatureVersionPipelines();
     }
+    static createHomeGAWidgetTypes() {
+        return [
+            en_data_model_1.WidgetType.Clipped,
+            en_data_model_1.WidgetType.Notebooks,
+            en_data_model_1.WidgetType.Notes,
+            en_data_model_1.WidgetType.OnboardingChecklist,
+            en_data_model_1.WidgetType.Pinned,
+            en_data_model_1.WidgetType.ScratchPad,
+            en_data_model_1.WidgetType.Shortcuts,
+            en_data_model_1.WidgetType.Tags,
+        ];
+    }
     getUpgradePipeline(board, feature, requestedVersion) {
         const featurePipeline = this.featureVersionPiplines.get(feature);
         if (!featurePipeline || featurePipeline.length === 0) {
-            throw new conduit_utils_1.NotFoundError(`No feature pipeline for ${feature}`);
+            throw new conduit_utils_1.NotFoundError(feature, `No feature pipeline for ${feature}`);
         }
-        if (requestedVersion - 1 >= featurePipeline.length) {
-            throw new conduit_utils_1.NotFoundError(`Feature pipeline for ${feature} does not support version ${requestedVersion}`);
+        if (requestedVersion - 1 >= featurePipeline.length || requestedVersion <= 0) {
+            throw new conduit_utils_1.NotFoundError(feature, `Feature pipeline for ${feature} does not support version ${requestedVersion}`);
         }
         let currentVersion = 0;
         if (board) {
-            const currentVersionFromKey = board[BoardFeatureSchemaManager.formFeatureKey(feature)];
+            const currentVersionFromKey = board.NodeFields[BoardFeatureSchemaManager.formFeatureKey(feature)];
             if (typeof currentVersionFromKey === 'number') {
                 currentVersion = currentVersionFromKey;
             }
@@ -53,30 +70,13 @@ class BoardFeatureSchemaManager {
     static formFeatureKey(feature) {
         return `${feature}Version`;
     }
-    static formDeterministicBoardIdParts(boardType = BoardConstants_1.BoardType.Home, boardIndex = 0, widgetType, widgetIndex = 0) {
-        const boardNumber = BoardConstants_1.boardTypeNumberMap.get(boardType);
-        if (boardNumber === undefined) {
-            throw new conduit_utils_1.InvalidParameterError('BoardType not mapped to number');
-        }
-        const boardParts = { parts: [boardNumber, boardIndex] };
-        if (!widgetType) {
-            return [boardParts];
-        }
-        const widgetNumber = BoardConstants_1.widgetTypeNumberMap.get(widgetType);
-        if (widgetNumber === undefined) {
-            throw new conduit_utils_1.InvalidParameterError('WidgetType not mapped to number');
-        }
-        return [
-            {
-                parts: [widgetNumber, widgetIndex],
-            },
-            boardParts,
-        ];
-    }
     createFeatureVersionPipelines() {
         return new Map([
-            [BoardConstants_1.Feature.Calendar, [calendar_1.calendarFeatureVersionOne]],
-            [BoardConstants_1.Feature.Tasks, [tasks_1.tasksFeatureVersionOne]],
+            [en_data_model_1.BoardFeature.Calendar, [calendar_1.calendarFeatureVersionOne]],
+            [en_data_model_1.BoardFeature.Tasks, [tasks_1.tasksFeatureVersionOne]],
+            [en_data_model_1.BoardFeature.FilteredNotes, [filteredNotes_1.filteredNotesFeatureVersionOne]],
+            [en_data_model_1.BoardFeature.Core, [core_1.coreFeatureVersionOne]],
+            [en_data_model_1.BoardFeature.Extra, [extra_1.extraFeatureVersionOne]],
         ]);
     }
     filterFeaturesRequested(featuresRequested, featureVersionsRequested) {
@@ -105,7 +105,7 @@ class BoardFeatureSchemaManager {
         }
         const featuresRequestedResult = [];
         const featureVersionsRequestedResult = [];
-        for (const feature of Object.values(BoardConstants_1.Feature)) {
+        for (const feature of Object.values(en_data_model_1.BoardFeature)) {
             const currentVersion = board.NodeFields[BoardFeatureSchemaManager.formFeatureKey(feature)];
             const indexOfFeature = featuresRequested.indexOf(feature);
             // The board already has a feature version number, and we need to run a comparison.
@@ -132,149 +132,35 @@ class BoardFeatureSchemaManager {
             featureVersions: featureVersionsRequestedResult,
         };
     }
-    async generateDefaultLayout(trc, ctx, isBasicLayout, features, featureVersions, boardType = BoardConstants_1.BoardType.Home, boardIndex = 0) {
-        var _a;
-        const lexoRankHandler = new conduit_utils_1.LexoRankHandler(50);
-        const featureWidgetTypeConfig = [];
+    async generateDefaultLayout(trc, ctx, userAdjustedServiceLevelV2, features, featureVersions, boardType = en_data_model_1.BoardType.Home, boardInternalID = 0, useServiceLevelV2Layouts = false) {
+        // This is the original list of widgets determined at Home Feature launch and is part of the Core Board Schema Definition.
+        const widgetTypes = BoardFeatureSchemaManager.createHomeGAWidgetTypes();
         for (let i = 0; i < features.length; i++) {
             const feature = features[i];
             const featureVersion = featureVersions[i];
-            // For this effort, we just pass an empty board, as we always calculate this from start to current version.
+            /*
+            * For this effort, we just pass an empty board, as we always calculate this from start to current version.
+            * Because we call mergeToMinimumFeatureVersions before this, we always get the available Board widgetTypes
+            *  no matter the version numbers passed in by the client.  This solves part of our compatibility problems.
+            */
             const featureWidgetTypesSteps = this.getUpgradePipeline(null, feature, featureVersion);
             if (featureWidgetTypesSteps) {
                 const steps = featureWidgetTypesSteps.slice(0, featureVersion);
                 for (const step of steps) {
-                    const widgetTypes = step.widgetTypeGenerator();
-                    for (const widgetType of widgetTypes) {
-                        featureWidgetTypeConfig.push(widgetType);
-                    }
+                    widgetTypes.push(...step.widgetTypeGenerator());
                 }
             }
         }
-        const mobileRankings = lexoRankHandler.distribute(8 + featureWidgetTypeConfig.length);
-        const desktopRankings = lexoRankHandler.distribute(7 + featureWidgetTypeConfig.length);
-        const widgetDefaults = [
-            {
-                boardType,
-                widgetType: BoardConstants_1.WidgetType.OnboardingChecklist,
-                mobileSortWeight: mobileRankings[0],
-                // Purposefully offsetting this one until Product decides this belongs in Boron/Neutron; if it is ever enabled will have to lazily distribute
-                desktopSortWeight: conduit_utils_1.LexoRankMinChar,
-                desktopWidth: 1,
-                isEnabled: true,
-                widgetIndex: 0,
-            }, {
-                boardType,
-                widgetType: BoardConstants_1.WidgetType.Notes,
-                mobileSortWeight: mobileRankings[1],
-                desktopSortWeight: desktopRankings[0],
-                desktopWidth: isBasicLayout ? 3 : 2,
-                isEnabled: true,
-                selectedTab: BoardConstants_1.CommonTabs.Recent,
-                widgetIndex: 0,
-            }, {
-                boardType,
-                widgetType: BoardConstants_1.WidgetType.ScratchPad,
-                mobileSortWeight: mobileRankings[2],
-                desktopSortWeight: desktopRankings[1],
-                desktopWidth: 1,
-                isEnabled: true,
-                widgetIndex: 0,
-            }, {
-                boardType,
-                widgetType: BoardConstants_1.WidgetType.Pinned,
-                mobileSortWeight: mobileRankings[3],
-                desktopSortWeight: desktopRankings[2],
-                desktopWidth: 1,
-                isEnabled: !isBasicLayout,
-                widgetIndex: 0,
-            }, {
-                boardType,
-                widgetType: BoardConstants_1.WidgetType.Clipped,
-                mobileSortWeight: mobileRankings[4],
-                desktopSortWeight: desktopRankings[3],
-                desktopWidth: 2,
-                isEnabled: true,
-                selectedTab: BoardConstants_1.ClippedTabs.WebClips,
-                widgetIndex: 0,
-            }, {
-                boardType,
-                widgetType: BoardConstants_1.WidgetType.Notebooks,
-                mobileSortWeight: mobileRankings[5],
-                desktopSortWeight: desktopRankings[4],
-                desktopWidth: 1,
-                isEnabled: !isBasicLayout,
-                selectedTab: BoardConstants_1.CommonTabs.Recent,
-                widgetIndex: 0,
-            }, {
-                boardType,
-                widgetType: BoardConstants_1.WidgetType.Tags,
-                mobileSortWeight: mobileRankings[6],
-                desktopSortWeight: desktopRankings[5],
-                desktopWidth: 1,
-                isEnabled: !isBasicLayout,
-                widgetIndex: 0,
-            }, {
-                boardType,
-                widgetType: BoardConstants_1.WidgetType.Shortcuts,
-                mobileSortWeight: mobileRankings[7],
-                desktopSortWeight: desktopRankings[6],
-                desktopWidth: 1,
-                isEnabled: !isBasicLayout,
-                widgetIndex: 0,
-            },
-        ];
-        // The default board counts by widget for Widget Indexes.
-        const widgetCountsByWidgetType = new Map([
-            [BoardConstants_1.WidgetType.OnboardingChecklist, 1],
-            [BoardConstants_1.WidgetType.Pinned, 1],
-            [BoardConstants_1.WidgetType.Shortcuts, 1],
-            [BoardConstants_1.WidgetType.ScratchPad, 1],
-            [BoardConstants_1.WidgetType.Notes, 1],
-            [BoardConstants_1.WidgetType.Notebooks, 1],
-            [BoardConstants_1.WidgetType.Tags, 1],
-            [BoardConstants_1.WidgetType.Clipped, 1],
-        ]);
-        // Capture these before we get into the feature widgets.
-        const maxDesktopSortWeight = desktopRankings[widgetDefaults.length - 2];
-        const maxMobileSortWeight = mobileRankings[widgetDefaults.length - 1];
-        for (const widgetTypeConfig of featureWidgetTypeConfig) {
-            const { widgetType, isPremiumWidget, } = widgetTypeConfig;
-            let countByWidgetType = (_a = widgetCountsByWidgetType.get(widgetType)) !== null && _a !== void 0 ? _a : 1;
-            // For now, just put these at the end.
-            widgetDefaults.push({
-                boardType,
-                widgetType,
-                mobileSortWeight: mobileRankings[widgetDefaults.length],
-                desktopSortWeight: desktopRankings[widgetDefaults.length - 1],
-                desktopWidth: 1,
-                isEnabled: isPremiumWidget ? !isBasicLayout : true,
-                widgetIndex: countByWidgetType - 1,
-                appendToEnd: true,
-            });
-            countByWidgetType++;
-            widgetCountsByWidgetType.set(widgetType, countByWidgetType);
-        }
-        const ret = new Map();
-        for (const defaults of widgetDefaults) {
-            const idGen = await ctx.generateDeterministicID(trc, ctx.userID, BoardConstants_1.BoardEntityTypes.Widget, BoardConstants_1.BoardDeterministicIdGenerator, BoardFeatureSchemaManager.formDeterministicBoardIdParts(boardType, boardIndex, defaults.widgetType, defaults.widgetIndex));
-            ret.set(idGen[1], {
-                defaults,
-                idGen,
-            });
-        }
-        return {
-            widgetDefaultsById: ret,
-            maxDesktopSortWeight,
-            maxMobileSortWeight,
-            lexoRankHandler,
-        };
+        const widgetDefaultsFactory = new WidgetDefaultsFactory_1.WidgetDefaultsFactory(useServiceLevelV2Layouts);
+        return await widgetDefaultsFactory.create(trc, ctx, userAdjustedServiceLevelV2, boardType, widgetTypes, boardInternalID);
     }
     applyWidgetDefaults(widget, defaults, platform) {
         widget.widgetType = defaults.widgetType;
         widget.boardType = defaults.boardType;
         widget.isEnabled = defaults.isEnabled;
-        if (!platform || platform === BoardConstants_1.FormFactor.Desktop) {
+        widget.internalID = defaults.internalID;
+        widget.mutableWidgetType = defaults.mutableWidgetType;
+        if (!platform || platform === en_data_model_1.DeviceFormFactor.Desktop) {
             if (!widget.desktop) {
                 widget.desktop = {
                     panelKey: undefined,
@@ -284,7 +170,7 @@ class BoardFeatureSchemaManager {
             widget.desktop.width = defaults.desktopWidth;
             widget.desktop.sortWeight = defaults.desktopSortWeight;
         }
-        if (!platform || platform === BoardConstants_1.FormFactor.Mobile) {
+        if (!platform || platform === en_data_model_1.DeviceFormFactor.Mobile) {
             if (!widget.mobile) {
                 widget.mobile = {
                     panelKey: undefined,
@@ -303,7 +189,7 @@ class BoardFeatureSchemaManager {
             boardLayoutSummary.maxMobileSortWeight = widget.NodeFields.mobile.sortWeight;
         }
     }
-    async createWidgetAndEdge(ctx, boardID, boardLayoutSummary, widgetID, defaults) {
+    async createWidgetAndEdge(ctx, boardID, boardLayoutSummary, widgetID, defaults, isCustomized) {
         const { selectedTab, } = defaults;
         const [, widgetNodeID] = widgetID;
         const widgetStash = {
@@ -322,7 +208,7 @@ class BoardFeatureSchemaManager {
             mobileSortWeight: defaults.mobileSortWeight,
             desktopSortWeight: defaults.desktopSortWeight,
         };
-        if (defaults.appendToEnd) {
+        if (defaults.serviceLevelV1Upgrade) {
             if (defaultRankingsToUse.mobileSortWeight <= boardLayoutSummary.maxMobileSortWeight) {
                 try {
                     defaultRankingsToUse.mobileSortWeight = boardLayoutSummary.lexoRankHandler.between(boardLayoutSummary.maxMobileSortWeight, conduit_utils_1.LexoRankEndWeight);
@@ -344,7 +230,7 @@ class BoardFeatureSchemaManager {
             boardLayoutSummary.maxDesktopSortWeight = defaultRankingsToUse.desktopSortWeight;
             boardLayoutSummary.maxMobileSortWeight = defaultRankingsToUse.mobileSortWeight;
         }
-        this.applyWidgetDefaults(widgetStash, Object.assign(Object.assign({}, defaults), defaultRankingsToUse));
+        this.applyWidgetDefaults(widgetStash, Object.assign(Object.assign(Object.assign({}, defaults), defaultRankingsToUse), { isEnabled: !isCustomized || defaults.serviceLevelV1Upgrade ? defaults.isEnabled : false }));
         return {
             widget: widgetStash,
             edge: {
@@ -355,6 +241,10 @@ class BoardFeatureSchemaManager {
     }
     async upgradeSchema(params) {
         const { feature, featureVersion, widgetMutations, boardMutation, board, } = params;
+        /*
+         * For this effort, we just pass in the actual Board, which will grab only the required pipeline steps to actually
+         *  perform Schema mutation operations.  This prevents this logic from firing twice.
+         */
         const upgradePipeline = this.getUpgradePipeline(board, feature, featureVersion);
         if (upgradePipeline.length === 0) {
             return;

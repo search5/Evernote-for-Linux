@@ -3,7 +3,7 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isNotebook = exports.notebookIndexConfig = exports.notebookTypeDef = void 0;
+exports.notebookIndexConfig = exports.notebookTypeDef = exports.isNotebook = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const EntityConstants_1 = require("../EntityConstants");
@@ -13,7 +13,10 @@ const DEFAULT_CACHE_TIMEOUT = 30 * conduit_utils_1.MILLIS_IN_ONE_SECOND;
  * and use the regexs defined in the thrift calls to transpile to a ES2015 format */
 // tslint:disable: max-line-length
 const NOTEBOOK_LABEL_REGEX = /^[!-~\xA1-\u167F\u1681-\u1FFF\u200B-\u2027\u202A-\u202E\u2030-\u205E\u2060-\u2FFF\u3001-\u{10FFFF}]([ -~\xA0-\u2027\u202A-\u{10FFFF}]{0,98}[!-~\xA1-\u167F\u1681-\u1FFF\u200B-\u2027\u202A-\u202E\u2030-\u205E\u2060-\u2FFF\u3001-\u{10FFFF}])?$/u;
-// tslint:enable: max-line-length
+function isNotebook(node) {
+    return node.type === EntityConstants_1.CoreEntityTypes.Notebook;
+}
+exports.isNotebook = isNotebook;
 exports.notebookTypeDef = {
     name: EntityConstants_1.CoreEntityTypes.Notebook,
     syncSource: conduit_storage_1.SyncSource.THRIFT,
@@ -26,10 +29,13 @@ exports.notebookTypeDef = {
         reminderNotifyEmail: 'boolean',
         reminderNotifyInApp: 'boolean',
         markedForOffline: 'boolean',
-        contentDownloaded: 'boolean?',
+        contentDownloaded: conduit_utils_1.NullableBoolean,
         isPartialNotebook: 'boolean',
-        internal_shareCountProfiles: 'map<number>',
-        internal_linkedNotebookParams: 'unknown',
+        internal_shareCountProfiles: conduit_utils_1.MapOf('number'),
+        internal_linkedNotebookParams: conduit_utils_1.NullableStruct({
+            shardId: conduit_utils_1.NullableString,
+            noteStoreUrl: conduit_utils_1.NullableString,
+        }),
     },
     fieldValidation: {
         label: {
@@ -40,18 +46,23 @@ exports.notebookTypeDef = {
     },
     cache: {
         displayColor: {
-            type: 'int?',
+            type: conduit_utils_1.NullableInt,
             allowStale: true,
         },
         noteDisplayOrder: {
-            type: 'ID[]?',
+            type: conduit_utils_1.NullableListOf('ID'),
             allowStale: true,
         },
         internal_membershipsAcceptStatus: {
-            type: 'map<boolean>',
+            type: conduit_utils_1.MapOf('boolean'),
             allowStale: true,
             cacheTimeout: DEFAULT_CACHE_TIMEOUT,
         },
+    },
+    hasMemberships: {
+        constraint: conduit_storage_1.EdgeConstraint.MANY,
+        type: conduit_storage_1.EdgeType.MEMBERSHIP,
+        to: EntityConstants_1.CoreEntityTypes.Membership,
     },
     edges: {
         parent: {
@@ -160,10 +171,17 @@ exports.notebookIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(expo
         },
         NotebooksInWorkspace: {
             traversalName: 'childNotebooks',
-            sort: [{ field: 'label', order: 'ASC' }],
             params: {
                 workspace: {
                     match: { field: 'parent' },
+                },
+                orderBy: {
+                    defaultValue: 'label',
+                    sort: {
+                        label: [{ field: 'label', order: 'ASC' }, { field: 'updated', order: 'DESC' }],
+                        updated: [{ field: 'updated', order: 'DESC' }, { field: 'label', order: 'ASC' }],
+                        created: [{ field: 'created', order: 'ASC' }, { field: 'label', order: 'ASC' }],
+                    },
                 },
             },
             includeFields: ['childrenCount'],
@@ -232,8 +250,4 @@ exports.notebookIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(expo
         },
     },
 });
-function isNotebook(node) {
-    return node.type === EntityConstants_1.CoreEntityTypes.Notebook;
-}
-exports.isNotebook = isNotebook;
 //# sourceMappingURL=Notebook.js.map

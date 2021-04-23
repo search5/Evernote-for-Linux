@@ -1,6 +1,30 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getENBoardPlugin = exports.WidgetType = exports.FormFactor = void 0;
+exports.getENBoardPlugin = exports.MutableWidgetType = exports.WidgetType = exports.DeviceFormFactor = exports.BoardFeature = void 0;
+/*
+ * Copyright 2020 Evernote Corporation. All rights reserved.
+ */
+const conduit_core_1 = require("conduit-core");
+const conduit_utils_1 = require("conduit-utils");
 const BoardBootstrap_1 = require("./BoardBootstrap");
 const BoardConstants_1 = require("./BoardConstants");
 const BoardCustomize_1 = require("./BoardCustomize");
@@ -14,9 +38,12 @@ const BoardMutators_1 = require("./Mutators/BoardMutators");
 const WidgetMutators_1 = require("./Mutators/WidgetMutators");
 const NotePin_1 = require("./NotePin");
 const BoardRules_1 = require("./Rules/BoardRules");
-var BoardConstants_2 = require("./BoardConstants");
-Object.defineProperty(exports, "FormFactor", { enumerable: true, get: function () { return BoardConstants_2.FormFactor; } });
-Object.defineProperty(exports, "WidgetType", { enumerable: true, get: function () { return BoardConstants_2.WidgetType; } });
+const Utilities = __importStar(require("./Utilities"));
+var en_data_model_1 = require("en-data-model");
+Object.defineProperty(exports, "BoardFeature", { enumerable: true, get: function () { return en_data_model_1.BoardFeature; } });
+Object.defineProperty(exports, "DeviceFormFactor", { enumerable: true, get: function () { return en_data_model_1.DeviceFormFactor; } });
+Object.defineProperty(exports, "WidgetType", { enumerable: true, get: function () { return en_data_model_1.WidgetType; } });
+Object.defineProperty(exports, "MutableWidgetType", { enumerable: true, get: function () { return en_data_model_1.MutableWidgetType; } });
 const FIVE_MB_BASE64 = 7182747; // ceil(5 MiB limit * 1.37 approximation of average increase) for Base64 encoding without compression.
 var NSyncEntityType;
 (function (NSyncEntityType) {
@@ -36,9 +63,17 @@ function getENBoardPlugin() {
             return mutators;
         },
         defineQueries: di => {
+            const boardFeatureSchema = Utilities.getBoardPluginFeatures(di).schema;
             const queries = {
                 'Board.headerBG': di.fileResolver(BoardConstants_1.BoardEntityTypes.Board, 'headerBG', false),
                 'Board.headerBGPreviousUpload': di.fileResolver(BoardConstants_1.BoardEntityTypes.Board, 'headerBGPreviousUpload', false),
+                ['Widget.mutableWidgetType']: {
+                    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Nullable(BoardConstants_1.MutableWidgetTypeSchema)),
+                    resolve: async (widget, _, context) => {
+                        const { boardType, mutableWidgetType, } = widget;
+                        return Utilities.safeMutableWidgetType(boardFeatureSchema, boardType, mutableWidgetType);
+                    },
+                },
             };
             return queries;
         },

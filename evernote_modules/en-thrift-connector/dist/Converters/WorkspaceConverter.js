@@ -94,16 +94,16 @@ function toServicePrivilegeLevel(t) {
 function getAccessStatus(isMember, accessInfo, wsType) {
     var _a;
     if (isMember) {
-        return en_core_entity_types_1.WorkspaceAccessStatusEnum.MEMBER;
+        return en_core_entity_types_1.WorkspaceAccessStatus.MEMBER;
     }
     if (wsType === en_core_entity_types_1.WorkspaceType.OPEN) {
-        return en_core_entity_types_1.WorkspaceAccessStatusEnum.OPEN;
+        return en_core_entity_types_1.WorkspaceAccessStatus.OPEN;
     }
     const accessRequestedTime = (_a = accessInfo === null || accessInfo === void 0 ? void 0 : accessInfo.accessRequestedTimestamp) !== null && _a !== void 0 ? _a : null;
     if (accessRequestedTime) {
-        return en_core_entity_types_1.WorkspaceAccessStatusEnum.PENDING;
+        return en_core_entity_types_1.WorkspaceAccessStatus.PENDING;
     }
-    return en_core_entity_types_1.WorkspaceAccessStatusEnum.DISCOVERABLE;
+    return en_core_entity_types_1.WorkspaceAccessStatus.DISCOVERABLE;
 }
 function workspaceFromService(serviceData) {
     var _a, _b, _c, _d, _e, _f;

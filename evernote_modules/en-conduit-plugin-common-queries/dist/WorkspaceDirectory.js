@@ -14,34 +14,6 @@ const graphql_1 = require("graphql");
 const gWorkspaceListFetch = {};
 const gWorkspaceListResult = {};
 const WORKSPACE_DIRECTORY_FETCH_INTERVAL = 15000;
-function buildArgs() {
-    return {
-        includedWorkspaceGuids: {
-            type: conduit_core_1.schemaToGraphQLType('string[]?'),
-        },
-        limit: {
-            type: conduit_core_1.schemaToGraphQLType('number?'),
-        },
-        filters: {
-            type: new graphql_1.GraphQLList(new graphql_1.GraphQLInputObjectType({
-                name: 'WorkspaceDirectoryFilter',
-                fields: {
-                    field: { type: conduit_core_1.schemaToGraphQLType(['label', 'description'], 'WorkspaceDirectoryFilterField', false) },
-                    search: { type: conduit_core_1.schemaToGraphQLType('string') },
-                },
-            })),
-        },
-        sorts: {
-            type: new graphql_1.GraphQLList(new graphql_1.GraphQLInputObjectType({
-                name: `WorkspaceDirectorySort`,
-                fields: {
-                    field: { type: conduit_core_1.schemaToGraphQLType(['label', 'created', 'updated', 'memberCount', 'accessStatus'], 'WorkspaceDirectorySortField', false) },
-                    order: { type: conduit_core_1.IndexOrderType },
-                },
-            })),
-        },
-    };
-}
 function convertSortToService(sort) {
     if (!sort) {
         return {
@@ -152,8 +124,9 @@ async function getList(thriftComm, context, filters, params) {
         includedWorkspaceGuids: params.includedWorkspaceGuids,
         sorts: params.sorts,
     };
-    const userID = await context.multiUserProvider.getCurrentUserID(context.trc, context.watcher);
-    if (!userID) {
+    conduit_core_1.validateDB(context);
+    const userID = await context.db.getCurrentUserID(context);
+    if (conduit_utils_1.isNullish(userID)) {
         throw new Error(`Not authorized`);
     }
     if (gWorkspaceListFetch.hasOwnProperty(userID) &&
@@ -217,8 +190,19 @@ async function resolveWorkspaceDirectory(parent, args, context) {
 }
 const workspaceDirectoryPlugin = (autoResolverData) => {
     return {
-        type: new graphql_1.GraphQLList(autoResolverData.NodeGraphQLTypes.Workspace),
-        args: buildArgs(),
+        type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(autoResolverData.NodeGraphQLTypes.Workspace)),
+        args: conduit_core_1.schemaToGraphQLArgs({
+            includedWorkspaceGuids: conduit_utils_1.NullableListOf('string'),
+            limit: conduit_utils_1.NullableInt,
+            filters: conduit_utils_1.NullableListOf(conduit_utils_1.Struct({
+                field: conduit_utils_1.Enum(['label', 'description'], 'WorkspaceDirectoryFilterField'),
+                search: 'string',
+            }, 'WorkspaceDirectoryFilter')),
+            sorts: conduit_utils_1.NullableListOf(conduit_utils_1.Struct({
+                field: conduit_utils_1.Enum(['label', 'created', 'updated', 'memberCount', 'accessStatus'], 'WorkspaceDirectorySortField'),
+                order: conduit_utils_1.Nullable(conduit_core_1.IndexOrderTypeSchema),
+            }, 'WorkspaceDirectorySort')),
+        }),
         resolve: resolveWorkspaceDirectory,
     };
 };

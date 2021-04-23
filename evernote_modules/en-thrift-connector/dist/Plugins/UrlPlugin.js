@@ -169,10 +169,10 @@ function getUrlPlugin(tokenRefreshManager) {
             noteHistoryUrl: {
                 args: conduit_core_1.schemaToGraphQLArgs({
                     note: 'string',
-                    layout: [
+                    layout: conduit_utils_1.Enum([
                         'EMBED', 'NATIVEEMBED', 'WEB', 'IPHONE', 'ANDROID', 'IPAD', 'WP7', 'APP',
                         'MICRO', 'OAUTHMICRO', 'SMALL', 'MOBILE', 'WEBEMBED', 'MAC',
-                    ],
+                    ], 'NoteHistoryLayout'),
                 }),
                 type: conduit_core_1.schemaToGraphQLType('string'),
                 resolve: noteHistoryUrlResolver,
@@ -184,9 +184,9 @@ function getUrlPlugin(tokenRefreshManager) {
                     url: 'string',
                     utm_source: 'string',
                     utm_medium: 'string',
-                    host: 'string?',
-                    two_factor_token: 'string?',
-                    url_params: 'string?',
+                    host: conduit_utils_1.NullableString,
+                    two_factor_token: conduit_utils_1.NullableString,
+                    url_params: conduit_utils_1.NullableString,
                 }),
                 type: conduit_core_1.schemaToGraphQLType('string'),
                 resolve: targetUrlResolver,
@@ -199,7 +199,7 @@ function getUrlPlugin(tokenRefreshManager) {
                     url: 'string',
                     utm_source: 'string',
                     utm_medium: 'string',
-                    urlParams: 'string?',
+                    urlParams: conduit_utils_1.NullableString,
                 }),
                 type: conduit_core_1.schemaToGraphQLType('string'),
                 resolve: targetUrlCreateWithOAuthResolver,

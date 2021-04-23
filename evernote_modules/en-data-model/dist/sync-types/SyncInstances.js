@@ -22,6 +22,7 @@ var Role;
     Role[Role["ADMIN"] = 5] = "ADMIN";
     Role[Role["OWNER"] = 6] = "OWNER";
     Role[Role["ACTIVITY_VIEWER"] = 7] = "ACTIVITY_VIEWER";
+    Role[Role["COMPLETER"] = 8] = "COMPLETER";
 })(Role = exports.Role || (exports.Role = {}));
 var ContentAccess;
 (function (ContentAccess) {

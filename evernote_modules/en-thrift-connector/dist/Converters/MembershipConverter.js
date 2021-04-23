@@ -14,20 +14,21 @@ const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
+const Helpers_1 = require("../Helpers");
 const Converters_1 = require("./Converters");
-const Helpers_1 = require("./Helpers");
+const Helpers_2 = require("./Helpers");
 const MessageAttachmentConverter_1 = require("./MessageAttachmentConverter");
+const NotebookConverter_1 = require("./NotebookConverter");
 const ProfileConverter_1 = require("./ProfileConverter");
 function membershipPrivilegeToShareRelationship(privilege) {
     switch (privilege) {
         case en_core_entity_types_1.MembershipPrivilege.READ:
+        case en_core_entity_types_1.MembershipPrivilege.COMPLETE:
             return en_conduit_sync_types_1.TShareRelationshipPrivilegeLevel.READ_NOTEBOOK_PLUS_ACTIVITY;
         case en_core_entity_types_1.MembershipPrivilege.EDIT:
             return en_conduit_sync_types_1.TShareRelationshipPrivilegeLevel.MODIFY_NOTEBOOK_PLUS_ACTIVITY;
         case en_core_entity_types_1.MembershipPrivilege.MANAGE:
             return en_conduit_sync_types_1.TShareRelationshipPrivilegeLevel.FULL_ACCESS;
-        case en_core_entity_types_1.MembershipPrivilege.COMPLETE:
-            throw new Error(`invalid privilege ${privilege}`);
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
     }
@@ -35,13 +36,12 @@ function membershipPrivilegeToShareRelationship(privilege) {
 function membershipPrivilegeToSharedNotebookPrivilege(privilege) {
     switch (privilege) {
         case en_core_entity_types_1.MembershipPrivilege.READ:
+        case en_core_entity_types_1.MembershipPrivilege.COMPLETE:
             return en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.READ_NOTEBOOK_PLUS_ACTIVITY;
         case en_core_entity_types_1.MembershipPrivilege.EDIT:
             return en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.MODIFY_NOTEBOOK_PLUS_ACTIVITY;
         case en_core_entity_types_1.MembershipPrivilege.MANAGE:
             return en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.FULL_ACCESS;
-        case en_core_entity_types_1.MembershipPrivilege.COMPLETE:
-            throw new Error(`invalid privilege ${privilege}`);
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
     }
@@ -65,13 +65,12 @@ function membershipPrivilegeFromSharedNotebookPrivilege(privilege) {
 function membershipPrivilegeToWorkspacePrivilege(privilege) {
     switch (privilege) {
         case en_core_entity_types_1.MembershipPrivilege.READ:
+        case en_core_entity_types_1.MembershipPrivilege.COMPLETE:
             return en_conduit_sync_types_1.TWorkspacePrivilegeLevel.READ;
         case en_core_entity_types_1.MembershipPrivilege.EDIT:
             return en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT;
         case en_core_entity_types_1.MembershipPrivilege.MANAGE:
             return en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT_AND_MANAGE;
-        case en_core_entity_types_1.MembershipPrivilege.COMPLETE:
-            throw new Error(`invalid privilege ${privilege}`);
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
     }
@@ -92,13 +91,12 @@ function membershipPrivilegeFromWorkspacePrivilege(privilege) {
 function membershipPrivilegeToSharedNotePrivilegeLevel(privilege) {
     switch (privilege) {
         case en_core_entity_types_1.MembershipPrivilege.READ:
+        case en_core_entity_types_1.MembershipPrivilege.COMPLETE:
             return en_conduit_sync_types_1.TSharedNotePrivilegeLevel.READ_NOTE;
         case en_core_entity_types_1.MembershipPrivilege.EDIT:
             return en_conduit_sync_types_1.TSharedNotePrivilegeLevel.MODIFY_NOTE;
         case en_core_entity_types_1.MembershipPrivilege.MANAGE:
             return en_conduit_sync_types_1.TSharedNotePrivilegeLevel.FULL_ACCESS;
-        case en_core_entity_types_1.MembershipPrivilege.COMPLETE:
-            throw new Error(`invalid privilege ${privilege}`);
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
     }
@@ -613,7 +611,7 @@ class MembershipConverterClass {
                 if (!parentEdge) {
                     throw new Error('No parent edge found');
                 }
-                const { auth } = await Helpers_1.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, membership);
+                const { auth } = await Helpers_2.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, membership);
                 switch (parentEdge.srcType) {
                     case en_core_entity_types_1.CoreEntityTypes.Workspace: {
                         return await removeMembershipFromWorkspace(trc, params, auth, parentEdge.srcID, membership);
@@ -649,10 +647,38 @@ class MembershipConverterClass {
             }
             if (parentEdge.srcType === en_core_entity_types_1.CoreEntityTypes.Workspace) {
                 const workspace = parentEdge.srcID;
-                const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+                const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
                 const utilityStore = params.thriftComm.getUtilityStore(auth.urls.utilityUrl);
                 const workspaceId = Converters_1.convertGuidToService(workspace, en_core_entity_types_1.CoreEntityTypes.Workspace);
                 await utilityStore.leaveWorkspace(trc, auth.token, workspaceId);
+            }
+            else if (parentEdge.srcType === en_core_entity_types_1.CoreEntityTypes.Notebook) {
+                const nbID = parentEdge.srcID;
+                const serviceGuid = NotebookConverter_1.NotebookConverter.convertGuidToService(nbID);
+                const metadata = await params.graphTransaction.getSyncContextMetadata(trc, null, syncContext);
+                let noteStoreUrl;
+                if (!metadata || !metadata.sharedNotebookGlobalID) {
+                    // Either shared notebook that belongs to the same business.
+                    // Or internal error, then rely on service backend to reject invalid request.
+                    noteStoreUrl = params.personalAuth.urls.noteStoreUrl;
+                }
+                else {
+                    noteStoreUrl = await params.graphTransaction.getSyncState(trc, null, ['sharing', 'sharedNotebooks', metadata.sharedNotebookGlobalID, 'noteStoreUrl']);
+                }
+                if (!noteStoreUrl) {
+                    throw new conduit_utils_1.InvalidOperationError(`notebookLeave: Cannot fetch noteStoreUrl for notebook ${nbID}`);
+                }
+                const authToken = params.personalAuth.token;
+                const noteStore = params.thriftComm.getNoteStore(noteStoreUrl);
+                const recipientSettings = new en_conduit_sync_types_1.TNotebookRecipientSettings({ recipientStatus: en_conduit_sync_types_1.TRecipientStatus.NOT_IN_MY_LIST });
+                await noteStore.setNotebookRecipientSettings(trc, authToken, serviceGuid, recipientSettings);
+                if (metadata && metadata.sharedNotebookGlobalID && syncContext.match(Helpers_1.LINKED_CONTEXT_REGEX)) {
+                    // clean up linkedNb syncContext for shared nbs to avoid race with a pending invitationAccept
+                    const syncStatePath = ['sharing', 'sharedNotebooks', metadata.sharedNotebookGlobalID];
+                    await params.graphTransaction.deleteSyncState(trc, syncStatePath);
+                    await params.graphTransaction.deleteSyncContext(trc, syncContext);
+                    await params.graphTransaction.deleteSyncState(trc, [syncContext]);
+                }
             }
         }
         return false;
@@ -665,7 +691,7 @@ class MembershipConverterClass {
             throw new Error('No parent edge found');
         }
         if (diff.NodeFields && diff.NodeFields.privilege) {
-            const { auth } = await Helpers_1.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, membership);
+            const { auth } = await Helpers_2.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, membership);
             switch (parentEdge.srcType) {
                 case en_core_entity_types_1.CoreEntityTypes.Workspace: {
                     await updateWorkspaceMembershipPrivilege(trc, params, auth, membershipRef.id, parentEdge.srcID, diff.NodeFields.privilege);

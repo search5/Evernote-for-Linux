@@ -1,0 +1,24 @@
+{
+  "name": "en-electron-local-notifications",
+  "version": "1.33.4",
+  "publishConfig": {
+    "registry": "http://localhost:4873"
+  },
+  "description": "Electron module for scheduling and showing local notification",
+  "main": "dist/index",
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "electron": "^11.3.0",
+    "sinon": "^7.3.2",
+    "sinon-chai": "^3.3.0"
+  },
+  "peerDependencies": {
+    "electron": "^11.3.0"
+  },
+  "dependencies": {
+    "conduit-utils": "1.33.4"
+  }
+}

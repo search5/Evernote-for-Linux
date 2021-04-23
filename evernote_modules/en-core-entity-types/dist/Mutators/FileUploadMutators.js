@@ -33,7 +33,7 @@ const deprecatedBlobDefLookup = {
 exports.uploadFileInternal = {
     type: conduit_core_1.MutatorRemoteExecutorType.Local,
     isInternal: true,
-    requiredParams: {
+    params: {
         parentID: 'ID',
         parentType: 'string',
         blobRef: 'string',
@@ -42,16 +42,14 @@ exports.uploadFileInternal = {
         size: 'number',
         stagedBlobID: 'string',
         fileLocation: 'string',
-    },
-    optionalParams: {
-        blobDef: {
+        blobDef: conduit_utils_1.NullableStruct({
             customCommandName: 'string',
             paramIDName: 'string',
             maxSize: 'number',
-            mimeParam: 'string?',
-            fileParam: 'string?',
-            allowedMimeTypes: 'string[]?',
-        },
+            mimeParam: conduit_utils_1.NullableString,
+            fileParam: conduit_utils_1.NullableString,
+            allowedMimeTypes: conduit_utils_1.NullableListOf('string'),
+        }),
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     execute: async (trc, ctx, params) => {

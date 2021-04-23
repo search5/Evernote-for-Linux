@@ -8,6 +8,7 @@ const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_plugin_google_services_1 = require("en-conduit-plugin-google-services");
 const en_thrift_connector_1 = require("en-thrift-connector");
+const CalendarConstants_1 = require("../CalendarConstants");
 const CalendarServiceType_1 = require("../CalendarServiceType");
 const GoogleServices_1 = require("./GoogleServices");
 /**
@@ -16,7 +17,6 @@ const GoogleServices_1 = require("./GoogleServices");
  */
 class FakeBackend {
     constructor(httpClient) {
-        this.OAuthCredential = null;
         this.googleServices = new GoogleServices_1.GoogleServices(httpClient);
     }
     /**
@@ -26,52 +26,75 @@ class FakeBackend {
     async getAccessToken(context) {
         // TODO: extend for multiple accouns when ready
         try {
-            if (this.OAuthCredential === null || this.OAuthCredential.expiresAfter < Date.now()) {
-                const authToken = await conduit_core_1.retrieveAuthorizedToken(context);
-                const googleOAuth = await en_thrift_connector_1.getScopedGoogleOAuthCredential(context.trc, context.thriftComm, authToken || '', '/auth/calendar');
-                const gapiCredential = en_conduit_plugin_google_services_1.transformOAuthToServiceCredential(googleOAuth);
-                this.OAuthCredential = gapiCredential;
-            }
-            return this.OAuthCredential.accessToken;
+            const authToken = await conduit_core_1.retrieveAuthorizedToken(context);
+            const googleOAuth = await en_thrift_connector_1.getScopedGoogleOAuthCredential(context.trc, context.thriftComm, authToken || '', '/auth/calendar');
+            const gapiCredential = en_conduit_plugin_google_services_1.transformOAuthToServiceCredential(googleOAuth);
+            return gapiCredential.accessToken;
         }
         catch (err) {
-            throw new Error('getAccessToken: Could not get access token from the monolith');
+            throw new Error(`getAccessToken: Could not get access token from the monolith. ${err}`);
         }
     }
     /**
-     * @param  {ENThriftGraphQLContext} context?
+     * @param  {string} accessToken
+     * @param  {TracingContext} trc
      * @returns Promise
      */
-    async getCalendarAccounts(context) {
+    async getCalendarAccounts(context, accessToken) {
         // TODO: adapt for multiple accounts when ready
-        conduit_core_1.validateDB(context, 'Must be authenticated to retrieve Google Calendar File data.');
-        const accessToken = await this.getAccessToken(context);
-        const googleCalendars = await this.googleServices.listCalendars(accessToken, context);
-        return [{
-                id: 'GOOGLE;example@gmail.com',
+        conduit_core_1.validateDB(context);
+        const calendarAccounts = await context.db.getGraphNodesByType(context.trc, null, CalendarConstants_1.CalendarEntityTypes.CalendarAccount);
+        let calendarAccount;
+        if (!calendarAccounts.length) {
+            const mutation = await context.db.runMutator(context.trc, 'calendarAccountCreate', {
+                calendarAccountId: 'GOOGLE;example@gmail.com',
+                isConnected: true
+            });
+            calendarAccount = {
+                id: mutation.results.result,
                 provider: CalendarServiceType_1.CalendarProvider.GOOGLE,
                 calendarUserId: 'example@gmail.com',
                 isConnected: true,
-                calendars: googleCalendars.items.map((calendar) => this.transformUserCalendar(calendar)),
-            }];
+                calendars: [],
+            };
+        }
+        else {
+            calendarAccount = {
+                id: calendarAccounts[0].id,
+                provider: CalendarServiceType_1.CalendarProvider.GOOGLE,
+                calendarUserId: 'example@gmail.com',
+                isConnected: calendarAccounts[0].NodeFields.isConnected,
+                calendars: [],
+            };
+        }
+        const calendars = await this.getCalendarsForAccount(context, accessToken, calendarAccount);
+        calendarAccount.calendars = calendars;
+        return [calendarAccount];
     }
     /**
-     * Should be different from the query above once multiple accounts are supported
-     * @param  {ENThriftGraphQLContext} context?
+     * Will be different from the query above once multiple accounts are supported
+     * @param  {string} accessToken
+     * @param  {TracingContext} trc
+     * @param  {string} id
      * @returns Promise
      */
-    async getCalendarAccount(id, context) {
+    async getCalendarAccount(context, accessToken, id) {
+        conduit_core_1.validateDB(context);
         // TODO: adapt for multiple accounts when ready
-        conduit_core_1.validateDB(context, 'Must be authenticated to retrieve Google Calendar File data.');
-        const accessToken = await this.getAccessToken(context);
-        const googleCalendars = await this.googleServices.listCalendars(accessToken, context);
-        return {
-            id: 'GOOGLE;example@gmail.com',
+        const calendarAccountNode = await context.db.getNode(context, { id: id, type: CalendarConstants_1.CalendarEntityTypes.CalendarAccount });
+        if (!calendarAccountNode) {
+            throw new conduit_utils_1.NotFoundError('calendarAccountById: calendarAccount not found in graphDB');
+        }
+        const calendarAccount = {
+            id: calendarAccountNode.id,
             provider: CalendarServiceType_1.CalendarProvider.GOOGLE,
             calendarUserId: 'example@gmail.com',
-            isConnected: true,
-            calendars: googleCalendars.items.map((calendar) => this.transformUserCalendar(calendar)),
+            isConnected: calendarAccountNode.NodeFields.isConnected,
+            calendars: [],
         };
+        const calendars = await this.getCalendarsForAccount(context, accessToken, calendarAccount);
+        calendarAccount.calendars = calendars;
+        return calendarAccount;
     }
     /**
      * @param  {string} from
@@ -79,11 +102,9 @@ class FakeBackend {
      * @param  {CalendarProvider} provider?
      * @param  {ENThriftGraphQLContext} context?
      */
-    async getEvents(from, to, provider, context) {
+    async getEvents(context, accessToken, from, to, provider) {
         // TODO: get all the accounts the user is connected to from all providers
-        conduit_core_1.validateDB(context, 'Must be authenticated to retrieve Google Calendar data.');
-        const accessToken = await this.getAccessToken(context);
-        const calendarAccounts = await this.getCalendarAccounts(context);
+        const calendarAccounts = await this.getCalendarAccounts(context, accessToken);
         const events = [];
         let userCalendarExternalId;
         const promises = [];
@@ -91,7 +112,7 @@ class FakeBackend {
             for (const calendar of account.calendars) {
                 userCalendarExternalId = calendar.userCalendarExternalId;
                 (calendarId => {
-                    promises.push(this.googleServices.listEvents(accessToken, context, from, to, calendarId)
+                    promises.push(this.googleServices.listEvents(context.trc, accessToken, from, to, calendarId)
                         .then(result => {
                         return result.items.map((externalEvent) => this.transformCalendarEvent(externalEvent, calendarId, calendar.data.displayColor));
                     }));
@@ -108,7 +129,7 @@ class FakeBackend {
                 else {
                     // no need for a regex, we can just get the enclosing brackets of the id to extract it from the error message
                     const idFromErrorMessage = ErrOrData.err.message.slice(49, ErrOrData.err.message.indexOf(']', 49));
-                    const retry = await this.googleServices.listEvents(accessToken, context, from, to, idFromErrorMessage)
+                    const retry = await this.googleServices.listEvents(context.trc, accessToken, from, to, idFromErrorMessage)
                         .then(result => {
                         return result.items.map((externalEvent) => this.transformCalendarEvent(externalEvent, idFromErrorMessage, null));
                     }).catch(err => {
@@ -127,24 +148,46 @@ class FakeBackend {
      * @param  {string} userCalendarExternalId
      * @param  {string} calendarEventExternalId
      */
-    async getEvent(id, context) {
+    async getEvent(context, accessToken, id) {
         // TODO: Use provider and user id to find the correct event. Wait for multiple accounts
-        conduit_core_1.validateDB(context, 'Must be authenticated to retrieve Google Calendar File data.');
         id = id.replace('_CalendarEvent', '');
         const [userCalendarExternalId, calendarEventExternalId] = id.split(';');
-        const accessToken = await this.getAccessToken(context);
-        const calendarResponse = await this.googleServices.getCalendarById(accessToken, context, userCalendarExternalId);
-        const calendar = this.transformUserCalendar(calendarResponse);
-        const externalEvent = await this.googleServices.getEventById(accessToken, context, userCalendarExternalId, calendarEventExternalId);
-        const event = this.transformCalendarEvent(externalEvent, userCalendarExternalId, calendar.data.displayColor);
+        const calendarResponse = await this.googleServices.getCalendarById(context.trc, accessToken, userCalendarExternalId);
+        const externalEvent = await this.googleServices.getEventById(context.trc, accessToken, userCalendarExternalId, calendarEventExternalId);
+        const event = this.transformCalendarEvent(externalEvent, userCalendarExternalId, this.getCalendarColor(calendarResponse));
         return event;
+    }
+    async getCalendarsForAccount(context, accessToken, calendarAccount) {
+        conduit_core_1.validateDB(context);
+        const googleCalendars = await this.googleServices.listCalendars(context.trc, accessToken);
+        const calendars = googleCalendars.items.map((calendar) => this.transformUserCalendar(calendar, calendarAccount.id));
+        const calendarNodes = await context.db.batchGetNodes(context, CalendarConstants_1.CalendarEntityTypes.UserCalendarSettings, calendars.map((cal) => `${cal.id}_UserCalendarSettings`));
+        let calendarNode;
+        const isActiveDefault = true;
+        for (let i = 0; i < calendars.length; i++) {
+            calendarNode = calendarNodes[i];
+            if (!calendarNode) {
+                const mutation = await context.db.runMutator(context.trc, 'userCalendarSettingsCreate', {
+                    userCalendarSettingsId: calendars[i].id,
+                    parentAccount: calendarAccount.id,
+                    isActive: isActiveDefault,
+                });
+                calendars[i].id = mutation.results.result;
+                calendars[i].isActive = isActiveDefault;
+            }
+            else {
+                calendars[i].id = calendarNode.id;
+                calendars[i].isActive = calendarNode.NodeFields.isActive;
+            }
+        }
+        return calendars;
     }
     /**
      * CONVERTERS: These private methods just perform a transformation from what we receive from google to what the plugin will receive from the ms.
      */
-    transformUserCalendar(externalCalendar) {
+    transformUserCalendar(externalCalendar, calendarAccountId) {
         return {
-            id: 'GOOGLE;example@gmail.com',
+            id: `${calendarAccountId};${externalCalendar.id}`,
             provider: CalendarServiceType_1.CalendarProvider.GOOGLE,
             calendarUserId: 'example@gmail.com',
             userCalendarExternalId: externalCalendar.id,
@@ -155,7 +198,7 @@ class FakeBackend {
                 displayColor: this.getCalendarColor(externalCalendar),
                 timezone: externalCalendar.timeZone ? externalCalendar.timeZone : null,
                 isPrimary: externalCalendar.primary ? externalCalendar.primary : false,
-                isOwned: true,
+                isOwned: externalCalendar.accessRole && externalCalendar.accessRole === 'owner' ? true : false,
             },
         };
     }
@@ -175,7 +218,7 @@ class FakeBackend {
             status: this.getEventStatus(externalEvent),
             location: externalEvent.location ? externalEvent.location : null,
             recurrentEventId: this.isEventRecurrent(externalEvent) ? externalEvent.recurringEventId : null,
-            recurrence: undefined,
+            recurrence: null,
             start: this.isEventAllDay(externalEvent) ? this.ExternalDateStringToTimestamp(externalEvent.start.date) : this.ExternalDateStringToTimestamp(externalEvent.start.dateTime),
             end: this.isEventAllDay(externalEvent) ? this.ExternalDateStringToTimestamp(externalEvent.end.date) : this.ExternalDateStringToTimestamp(externalEvent.end.dateTime),
             isAllDay: this.isEventAllDay(externalEvent),
@@ -183,16 +226,17 @@ class FakeBackend {
             displayColor: externalEvent.colorId ? this.googleServices.getColorById(externalEvent.colorId, 'event') : calendarColor,
             iCalendarUid: externalEvent.iCalUID,
             links: JSON.stringify(this.getLinks(externalEvent)),
-            creator: {
+            eventCreator: {
                 email: externalEvent.creator.email,
                 displayName: externalEvent.creator.displayName,
                 avatar: null,
             },
-            organizer: {
+            eventOrganizer: {
                 email: externalEvent.organizer.email,
                 displayName: externalEvent.organizer.displayName,
                 avatar: null,
             },
+            deletionTime: this.getDeletionTime(externalEvent),
         };
     }
     getCalendarColor(calendar) {
@@ -303,6 +347,8 @@ class FakeBackend {
                     },
                     responseStatus: status,
                     isOptional: attendee.optional ? attendee.optional : false,
+                    isResource: attendee.resource ? attendee.resource : false,
+                    isSelf: attendee.self ? attendee.self : false,
                 };
             });
         }
@@ -318,6 +364,12 @@ class FakeBackend {
             throw new Error('ExternalDateStringToTimestamp: Could not parse date string');
         }
         return result;
+    }
+    getDeletionTime(event) {
+        if (event.status === 'cancelled') {
+            return Date.now();
+        }
+        return null;
     }
 }
 exports.FakeBackend = FakeBackend;

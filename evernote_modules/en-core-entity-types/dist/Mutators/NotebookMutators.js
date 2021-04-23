@@ -3,17 +3,18 @@
  * Copyright 2018 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.notebookUnpublish = exports.notebookAcceptInvite = exports.notebookChangeInAppReminderSetting = exports.notebookChangeEmailReminderSetting = exports.notebookSetDisplayColor = exports.notebookSetNoteDisplayOrder = exports.notebookSetAsDefault = exports.notebookLeave = exports.notebookInvite = exports.notebookRemoveFromWorkspace = exports.notebookMoveToWorkspace = exports.notebookDelete = exports.notebookRename = exports.notebookCreate = void 0;
+exports.notebookPublish = exports.notebookJoin = exports.notebookUnpublish = exports.notebookAcceptInvite = exports.notebookChangeInAppReminderSetting = exports.notebookChangeEmailReminderSetting = exports.notebookSetDisplayColor = exports.notebookSetNoteDisplayOrder = exports.notebookSetAsDefault = exports.notebookLeave = exports.notebookInvite = exports.notebookRemoveFromWorkspace = exports.notebookMoveToWorkspace = exports.notebookDelete = exports.notebookRename = exports.notebookCreate = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const AccountLimits_1 = require("../AccountLimits");
 const CommandPolicyRules_1 = require("../CommandPolicyRules");
 const EntityConstants_1 = require("../EntityConstants");
 const MembershipPrivilege_1 = require("../MembershipPrivilege");
-const Membership_1 = require("../NodeTypes/Membership");
 const ShareUtils_1 = require("../ShareUtils");
+const MiscHelpers_1 = require("./Helpers/MiscHelpers");
 const NoteMutatorHelpers_1 = require("./Helpers/NoteMutatorHelpers");
 const Profile_1 = require("./Helpers/Profile");
+const MutatorHelpers_1 = require("./MutatorHelpers");
 function getParentID(notebook) {
     const parentEdge = conduit_utils_1.firstStashEntry(notebook.inputs.parent);
     return parentEdge ? parentEdge.srcID : null;
@@ -36,11 +37,9 @@ async function genericNotebookUpdatePlan(trc, ctx, noteID, fields) {
 }
 exports.notebookCreate = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         label: 'string',
-    },
-    optionalParams: {
-        container: 'ID',
+        container: conduit_utils_1.NullableID,
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     execute: async (trc, ctx, params) => {
@@ -58,15 +57,7 @@ exports.notebookCreate = {
         */
         // Check account limits
         const limits = await ctx.fetchEntity(trc, AccountLimits_1.ACCOUNT_LIMITS_REF);
-        if (!limits) {
-            throw new conduit_utils_1.NotFoundError(AccountLimits_1.ACCOUNT_LIMITS_ID, 'Missing limits');
-        }
-        const bookCount = limits.NodeFields.Counts.userNotebookCount;
-        const bookMax = limits.NodeFields.Limits.userNotebookCountMax;
-        if (bookCount >= bookMax) {
-            // TODO: make errors use actual fields once conduit errors are fully separated from thrift errors
-            throw new conduit_utils_1.ServiceError('LIMIT_REACHED', EntityConstants_1.CoreEntityTypes.Notebook, 'type=LIMIT_REACHED thriftExceptionParameter=Notebook limit=userNotebookCountMax');
-        }
+        MutatorHelpers_1.validateAccountLimits(limits, { userNotebookCountChange: 1 });
         // determine which account this notebook should be created in
         const owner = container || ctx.vaultUserID || ctx.userID;
         const notebookGenID = await ctx.generateID(trc, owner, EntityConstants_1.CoreEntityTypes.Notebook);
@@ -114,37 +105,27 @@ exports.notebookCreate = {
                     }],
             });
         }
-        else if (ctx.isOptimistic && ctx.vaultUserID) {
-            // self-share unparented Notebooks in biz account (because vault is the owner and otherwise the user doesn't have access)
-            const membershipGenID = await ctx.generateID(trc, owner, EntityConstants_1.CoreEntityTypes.Membership);
-            const membershipID = membershipGenID[1];
-            const membership = ctx.createEntity({ id: membershipID, type: EntityConstants_1.CoreEntityTypes.Membership }, {
-                privilege: MembershipPrivilege_1.MembershipPrivilege.MANAGE,
-                recipientType: Membership_1.MembershipRecipientType.USER,
+        else if (ctx.isOptimistic && ctx.vaultUserID && profile) {
+            const membershipOps = await MutatorHelpers_1.createMembershipOps(trc, ctx, owner, {
                 recipientIsMe: true,
+                privilege: MembershipPrivilege_1.MembershipPrivilege.MANAGE,
+                parentRef: { id: notebookID, type: EntityConstants_1.CoreEntityTypes.Notebook },
+                profileEdgeMap: {
+                    recipient: profile.id,
+                    sharer: profile.id,
+                },
             });
-            plan.ops.push({
-                changeType: 'Node:CREATE',
-                node: membership,
-                id: membershipGenID,
-            }, {
-                changeType: 'Edge:MODIFY',
-                edgesToCreate: [{
-                        srcID: notebookID, srcType: EntityConstants_1.CoreEntityTypes.Notebook, srcPort: 'memberships',
-                        dstID: membership.id, dstType: EntityConstants_1.CoreEntityTypes.Membership, dstPort: 'parent',
-                    }],
-            });
+            plan.ops.push(...membershipOps);
         }
         return plan;
     },
 };
 exports.notebookRename = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         notebook: 'ID',
         label: 'string',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const nodeRef = { id: params.notebook, type: EntityConstants_1.CoreEntityTypes.Notebook };
         const notebook = await ctx.fetchEntity(trc, nodeRef);
@@ -189,10 +170,9 @@ exports.notebookRename = {
 };
 exports.notebookDelete = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         notebook: 'ID',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const nodeRef = { id: params.notebook, type: EntityConstants_1.CoreEntityTypes.Notebook };
         const notebook = await ctx.fetchEntity(trc, nodeRef);
@@ -247,11 +227,10 @@ exports.notebookDelete = {
 };
 exports.notebookMoveToWorkspace = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         notebook: 'ID',
         workspace: 'ID',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const nodeRef = { id: params.notebook, type: EntityConstants_1.CoreEntityTypes.Notebook };
         const notebook = await ctx.fetchEntity(trc, nodeRef);
@@ -294,11 +273,9 @@ exports.notebookMoveToWorkspace = {
 };
 exports.notebookRemoveFromWorkspace = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         notebook: 'ID',
-    },
-    optionalParams: {
-        workspace: 'ID',
+        workspace: conduit_utils_1.NullableID,
     },
     execute: async (trc, ctx, params) => {
         const nodeRef = { id: params.notebook, type: EntityConstants_1.CoreEntityTypes.Notebook };
@@ -335,24 +312,20 @@ exports.notebookRemoveFromWorkspace = {
             const ownMemberships = await ctx.queryGraph(trc, EntityConstants_1.CoreEntityTypes.Membership, 'MembershipsForMeInParent', { parent: { id: params.notebook, type: EntityConstants_1.CoreEntityTypes.Notebook } });
             if (!ownMemberships.length) {
                 const owner = ctx.vaultUserID;
-                const membershipGenID = await ctx.generateID(trc, owner, EntityConstants_1.CoreEntityTypes.Membership);
-                const membershipID = membershipGenID[1];
-                const membership = ctx.createEntity({ id: membershipID, type: EntityConstants_1.CoreEntityTypes.Membership }, {
-                    privilege: MembershipPrivilege_1.MembershipPrivilege.MANAGE,
-                    recipientType: Membership_1.MembershipRecipientType.USER,
+                const profile = await Profile_1.getAccountProfileRef(trc, ctx);
+                if (conduit_utils_1.isNullish(profile)) {
+                    throw new conduit_utils_1.NotFoundError('', 'Failed to find current user profile');
+                }
+                const membershipOps = await MutatorHelpers_1.createMembershipOps(trc, ctx, owner, {
                     recipientIsMe: true,
+                    privilege: MembershipPrivilege_1.MembershipPrivilege.MANAGE,
+                    parentRef: { id: params.notebook, type: EntityConstants_1.CoreEntityTypes.Notebook },
+                    profileEdgeMap: {
+                        recipient: profile.id,
+                        sharer: profile.id,
+                    },
                 });
-                plan.ops.push({
-                    changeType: 'Node:CREATE',
-                    node: membership,
-                    id: membershipGenID,
-                }, {
-                    changeType: 'Edge:MODIFY',
-                    edgesToCreate: [{
-                            srcID: params.notebook, srcType: EntityConstants_1.CoreEntityTypes.Notebook, srcPort: 'memberships',
-                            dstID: membership.id, dstType: EntityConstants_1.CoreEntityTypes.Membership, dstPort: 'parent',
-                        }],
-                });
+                plan.ops.push(...membershipOps);
             }
         }
         return plan;
@@ -360,15 +333,13 @@ exports.notebookRemoveFromWorkspace = {
 };
 exports.notebookInvite = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         notebook: 'ID',
-        privilege: Object.values(MembershipPrivilege_1.MembershipPrivilege),
-    },
-    optionalParams: {
-        emails: 'string[]',
-        userIDs: 'ID[]',
-        profileIDs: 'ID[]',
-        message: 'string',
+        privilege: MembershipPrivilege_1.MembershipPrivilegeSchema,
+        emails: conduit_utils_1.NullableListOf('string'),
+        userIDs: conduit_utils_1.NullableListOf('ID'),
+        profileIDs: conduit_utils_1.NullableListOf('ID'),
+        message: conduit_utils_1.NullableString,
     },
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
         var _a;
@@ -391,31 +362,28 @@ exports.notebookInvite = {
 };
 exports.notebookLeave = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         notebook: 'ID',
     },
-    optionalParams: {},
-    execute: null,
-    executeOnService: async (trc, ctx, params) => {
+    execute: async (trc, ctx, params) => {
         const nodeRef = { id: params.notebook, type: EntityConstants_1.CoreEntityTypes.Notebook };
         const notebook = await ctx.fetchEntity(trc, nodeRef);
         if (!notebook) {
             throw new conduit_utils_1.NotFoundError(nodeRef.id, 'missing notebook in leave');
         }
-        return {
-            command: 'NotebookLeave',
-            nodeType: EntityConstants_1.CoreEntityTypes.Notebook,
-            params,
-            owner: nodeRef,
+        const plan = {
+            results: {},
+            ops: [],
         };
+        await MiscHelpers_1.genEntityLeaveOps(trc, ctx, notebook, plan);
+        return plan;
     },
 };
 exports.notebookSetAsDefault = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         notebook: 'ID',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const nodeRef = { id: params.notebook, type: EntityConstants_1.CoreEntityTypes.Notebook };
         const notebook = await ctx.fetchEntity(trc, nodeRef);
@@ -447,11 +415,10 @@ exports.notebookSetAsDefault = {
 };
 exports.notebookSetNoteDisplayOrder = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         notebook: 'ID',
-        noteDisplayOrder: 'ID[]',
+        noteDisplayOrder: conduit_utils_1.ListOf('ID'),
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const fields = {
             noteDisplayOrder: params.noteDisplayOrder,
@@ -461,11 +428,10 @@ exports.notebookSetNoteDisplayOrder = {
 };
 exports.notebookSetDisplayColor = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         notebook: 'ID',
         displayColor: 'int',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const fields = {
             displayColor: params.displayColor,
@@ -475,11 +441,10 @@ exports.notebookSetDisplayColor = {
 };
 exports.notebookChangeEmailReminderSetting = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         notebook: 'ID',
         emailReminder: 'boolean',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const fields = {
             reminderNotifyEmail: params.emailReminder,
@@ -489,11 +454,10 @@ exports.notebookChangeEmailReminderSetting = {
 };
 exports.notebookChangeInAppReminderSetting = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         notebook: 'ID',
         inAppReminder: 'boolean',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const fields = {
             reminderNotifyInApp: params.inAppReminder,
@@ -503,10 +467,9 @@ exports.notebookChangeInAppReminderSetting = {
 };
 exports.notebookAcceptInvite = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         notebook: 'ID',
     },
-    optionalParams: {},
     execute: null,
     executeOnService: async (trc, ctx, params) => {
         const nodeRef = { id: params.notebook, type: EntityConstants_1.CoreEntityTypes.Notebook };
@@ -527,10 +490,9 @@ exports.notebookAcceptInvite = {
 };
 exports.notebookUnpublish = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         notebook: 'ID',
     },
-    optionalParams: {},
     executeOnService: async (trc, ctx, params) => {
         const nodeRef = { id: params.notebook, type: EntityConstants_1.CoreEntityTypes.Notebook };
         const notebook = await ctx.fetchEntity(trc, nodeRef);
@@ -545,5 +507,47 @@ exports.notebookUnpublish = {
         };
     },
     execute: null,
+};
+exports.notebookJoin = {
+    type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
+    params: {
+        notebook: 'ID',
+    },
+    execute: null,
+    executeOnService: async (trc, ctx, params) => {
+        if (!params.notebook) {
+            throw new conduit_utils_1.MissingParameterError('missing notebook id');
+        }
+        const nodeRef = { id: params.notebook, type: EntityConstants_1.CoreEntityTypes.Notebook };
+        return {
+            command: 'NotebookJoin',
+            nodeType: EntityConstants_1.CoreEntityTypes.Notebook,
+            params,
+            owner: nodeRef,
+        };
+    },
+};
+exports.notebookPublish = {
+    type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
+    params: {
+        notebook: 'ID',
+        description: 'string',
+        privilege: MembershipPrivilege_1.MembershipPrivilegeSchema,
+        recommended: conduit_utils_1.NullableBoolean,
+    },
+    execute: null,
+    executeOnService: async (trc, ctx, params) => {
+        const nodeRef = { id: params.notebook, type: EntityConstants_1.CoreEntityTypes.Notebook };
+        const notebook = await ctx.fetchEntity(trc, nodeRef);
+        if (!notebook) {
+            throw new conduit_utils_1.NotFoundError(nodeRef.id, 'missing notebook to publish');
+        }
+        return {
+            command: 'NotebookPublish',
+            nodeType: EntityConstants_1.CoreEntityTypes.Notebook,
+            params,
+            owner: nodeRef,
+        };
+    },
 };
 //# sourceMappingURL=NotebookMutators.js.map

@@ -10,7 +10,6 @@ const EntityConstants_1 = require("../EntityConstants");
  * and use the regexs defined in the thrift calls to transpile to a ES2015 format */
 // tslint:disable: max-line-length
 const STACK_LABEL_REGEX = /^[!-~\xA1-\u167F\u1681-\u1FFF\u200B-\u2027\u202A-\u202E\u2030-\u205E\u2060-\u2FFF\u3001-\u{10FFFF}]([ -~\xA0-\u2027\u202A-\u{10FFFF}]{0,98}[!-~\xA1-\u167F\u1681-\u1FFF\u200B-\u2027\u202A-\u202E\u2030-\u205E\u2060-\u2FFF\u3001-\u{10FFFF}])?$/u;
-// tslint:enable: max-line-length
 exports.stackTypeDef = {
     name: EntityConstants_1.CoreEntityTypes.Stack,
     syncSource: conduit_storage_1.SyncSource.THRIFT,

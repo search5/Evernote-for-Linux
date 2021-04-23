@@ -3,12 +3,10 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSharerID = exports.getRecipientID = exports.getOwnerID = exports.getOwnMemberships = exports.getAncestors = exports.getParent = exports.MutationPermissionContext = exports.GraphQLPermissionContext = void 0;
+exports.getSharerID = exports.getRecipientID = exports.getOwnerID = exports.getOwnMemberships = exports.MutationPermissionContext = exports.GraphQLPermissionContext = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const EntityConstants_1 = require("./EntityConstants");
-const Notebook_1 = require("./NodeTypes/Notebook");
-const Workspace_1 = require("./NodeTypes/Workspace");
 // Adapter for GraphQLContext
 class GraphQLPermissionContext {
     constructor(context) {
@@ -74,35 +72,8 @@ class MutationPermissionContext {
     }
 }
 exports.MutationPermissionContext = MutationPermissionContext;
-async function getParent(context, node) {
-    const parentEdge = conduit_utils_1.firstStashEntry(node.inputs.parent);
-    if (parentEdge) {
-        return await context.getNode({ id: parentEdge.srcID, type: parentEdge.srcType });
-    }
-    return null;
-}
-exports.getParent = getParent;
-async function getAncestors(context, node) {
-    if (Workspace_1.isWorkspace(node)) {
-        return [];
-    }
-    const ancestors = [];
-    const parent = await getParent(context, node);
-    if (parent) {
-        ancestors.push(parent);
-        if (Notebook_1.isNotebook(parent)) {
-            // get possible workspace
-            const ws = await getParent(context, parent);
-            if (ws) {
-                ancestors.push(ws);
-            }
-        }
-    }
-    return ancestors;
-}
-exports.getAncestors = getAncestors;
-async function getOwnMemberships(node, context) {
-    const membershipsRes = await context.queryGraph(EntityConstants_1.CoreEntityTypes.Membership, 'MembershipsForMeInParent', { parent: { id: node.id, type: node.type } });
+async function getOwnMemberships(ref, context) {
+    const membershipsRes = await context.queryGraph(EntityConstants_1.CoreEntityTypes.Membership, 'MembershipsForMeInParent', { parent: ref });
     if (membershipsRes.length === 0) {
         return [];
     }

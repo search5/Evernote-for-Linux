@@ -9,9 +9,10 @@ const conduit_utils_1 = require("conduit-utils");
 const AccountLimits_1 = require("../AccountLimits");
 const EntityConstants_1 = require("../EntityConstants");
 const MembershipPrivilege_1 = require("../MembershipPrivilege");
-const Membership_1 = require("../NodeTypes/Membership");
 const Workspace_1 = require("../NodeTypes/Workspace");
+const MiscHelpers_1 = require("./Helpers/MiscHelpers");
 const Profile_1 = require("./Helpers/Profile");
+const MutatorHelpers_1 = require("./MutatorHelpers");
 function getNodeRef(workspaceID) {
     return { id: workspaceID, type: EntityConstants_1.CoreEntityTypes.Workspace };
 }
@@ -46,13 +47,11 @@ async function generateGeneralUpdateExecutionPlan(trc, ctx, workspaceID, fields)
 }
 exports.workspaceCreate = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         label: 'string',
         type: Workspace_1.WorkspaceTypeSchema,
-    },
-    optionalParams: {
-        description: 'string',
-        defaultRole: Object.values(MembershipPrivilege_1.MembershipPrivilege),
+        description: conduit_utils_1.NullableString,
+        defaultRole: conduit_utils_1.Nullable(MembershipPrivilege_1.MembershipPrivilegeSchema),
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     execute: async (trc, ctx, params) => {
@@ -66,20 +65,10 @@ exports.workspaceCreate = {
             throw new conduit_utils_1.ServiceError('DATA_REQUIRED', EntityConstants_1.CoreEntityTypes.Workspace, 'Workspace.defaultRole');
         }
         const accountLimits = await ctx.fetchEntity(trc, AccountLimits_1.ACCOUNT_LIMITS_REF);
-        if (!accountLimits) {
-            throw new conduit_utils_1.NotFoundError(AccountLimits_1.ACCOUNT_LIMITS_REF.id, 'Missing limits');
-        }
-        const currentWorkspaces = accountLimits.NodeFields.Counts.userWorkspaceCount;
-        const maxWorkspaces = accountLimits.NodeFields.Limits.userWorkspaceCountMax;
-        if (currentWorkspaces >= maxWorkspaces) {
-            // TODO: make errors use actual fields once conduit errors are fully separated from thrift errors
-            throw new conduit_utils_1.ServiceError('LIMIT_REACHED', EntityConstants_1.CoreEntityTypes.Workspace, 'type=LIMIT_REACHED thriftExceptionParameter=Workspace limit=userWorkspaceCountMax');
-        }
+        MutatorHelpers_1.validateAccountLimits(accountLimits, { userWorkspaceCountChange: 1 });
         const owner = ctx.vaultUserID;
         const workspaceGenID = await ctx.generateID(trc, owner, EntityConstants_1.CoreEntityTypes.Workspace);
         const workspaceID = workspaceGenID[1];
-        const membershipGenID = await ctx.generateID(trc, owner, EntityConstants_1.CoreEntityTypes.Membership);
-        const membershipID = membershipGenID[1];
         const profile = await Profile_1.getAccountProfileRef(trc, ctx);
         const workspaceEntity = ctx.createEntity({ id: workspaceID, type: EntityConstants_1.CoreEntityTypes.Workspace }, {
             label: params.label,
@@ -91,11 +80,6 @@ exports.workspaceCreate = {
             // optimistically count active business user as a share when creating new workspace like service does.
             internal_shareCountProfiles: ctx.isOptimistic && ctx.vaultUserID && profile ? { [profile.id]: 1 } : {},
         });
-        const membershipEntity = ctx.createEntity({ id: membershipID, type: EntityConstants_1.CoreEntityTypes.Membership }, {
-            privilege: MembershipPrivilege_1.MembershipPrivilege.MANAGE,
-            recipientType: Membership_1.MembershipRecipientType.USER,
-            recipientIsMe: true,
-        });
         const plan = {
             results: {
                 result: workspaceID,
@@ -106,32 +90,29 @@ exports.workspaceCreate = {
                     id: workspaceGenID,
                 }],
         };
-        if (ctx.isOptimistic) {
-            plan.ops.push({
-                changeType: 'Node:CREATE',
-                node: membershipEntity,
-                id: membershipGenID,
-            }, {
-                changeType: 'Edge:MODIFY',
-                edgesToCreate: [{
-                        srcID: workspaceID, srcType: EntityConstants_1.CoreEntityTypes.Workspace, srcPort: 'memberships',
-                        dstID: membershipID, dstType: EntityConstants_1.CoreEntityTypes.Membership, dstPort: 'parent',
-                    }],
+        if (ctx.isOptimistic && profile) {
+            const membershipOps = await MutatorHelpers_1.createMembershipOps(trc, ctx, owner, {
+                privilege: MembershipPrivilege_1.MembershipPrivilege.MANAGE,
+                recipientIsMe: true,
+                parentRef: { id: workspaceID, type: EntityConstants_1.CoreEntityTypes.Workspace },
+                profileEdgeMap: {
+                    recipient: profile.id,
+                    sharer: profile.id,
+                },
             });
+            plan.ops.push(...membershipOps);
         }
         return plan;
     },
 };
 exports.workspaceUpdate = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         workspace: 'ID',
-    },
-    optionalParams: {
-        label: 'string',
-        description: 'string',
-        type: Object.values(Workspace_1.WorkspaceType),
-        defaultRole: Object.values(MembershipPrivilege_1.MembershipPrivilege),
+        label: conduit_utils_1.NullableString,
+        description: conduit_utils_1.NullableString,
+        type: conduit_utils_1.Nullable(Workspace_1.WorkspaceTypeSchema),
+        defaultRole: conduit_utils_1.Nullable(MembershipPrivilege_1.MembershipPrivilegeSchema),
     },
     execute: async (trc, ctx, params) => {
         const nodeRef = getNodeRef(params.workspace);
@@ -189,10 +170,9 @@ exports.workspaceUpdate = {
 };
 exports.workspaceJoin = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         workspace: 'ID',
     },
-    optionalParams: {},
     execute: null,
     executeOnService: async (trc, ctx, params) => {
         return await generateGeneralexecuteOnServicePlan(trc, ctx, params, 'WorkspaceJoin');
@@ -200,10 +180,9 @@ exports.workspaceJoin = {
 };
 exports.workspaceLeave = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         workspace: 'ID',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const nodeRef = getNodeRef(params.workspace);
         const workspaceEntity = await ctx.fetchEntity(trc, nodeRef);
@@ -214,37 +193,15 @@ exports.workspaceLeave = {
         if (!workspaceEntity) {
             return plan;
         }
-        const userMemberships = await ctx.queryGraph(trc, EntityConstants_1.CoreEntityTypes.Membership, 'MembershipsForMeInParent', {
-            parent: { id: nodeRef.id, type: nodeRef.type },
-        });
-        for (const ownMembership of userMemberships) {
-            plan.ops.push({
-                changeType: 'Node:DELETE',
-                nodeRef: { id: ownMembership.id, type: EntityConstants_1.CoreEntityTypes.Membership },
-            });
-        }
-        const shortcuts = Object.values(workspaceEntity.outputs.shortcut).map(edge => ({ id: edge.dstID, type: edge.dstType }));
-        for (const shortcut of shortcuts) {
-            plan.ops.push({
-                changeType: 'Node:DELETE',
-                nodeRef: { id: shortcut.id, type: shortcut.type },
-            });
-        }
-        // run this operation on remote as well to immediately cleanup node in graph
-        // instead of having to wait for expunges to come in next downsync cycle.
-        plan.ops.push({
-            changeType: 'Node:DELETE',
-            nodeRef,
-        });
+        await MiscHelpers_1.genEntityLeaveOps(trc, ctx, workspaceEntity, plan);
         return plan;
     },
 };
 exports.workspaceRequestAccess = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         workspace: 'ID',
     },
-    optionalParams: {},
     execute: null,
     executeOnService: async (trc, ctx, params) => {
         return await generateGeneralexecuteOnServicePlan(trc, ctx, params, 'WorkspaceRequestAccess');
@@ -252,12 +209,11 @@ exports.workspaceRequestAccess = {
 };
 exports.workspaceInvite = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         workspace: 'ID',
-        users: 'ID[]',
-        privilege: Object.values(MembershipPrivilege_1.MembershipPrivilege),
+        users: conduit_utils_1.ListOf('ID'),
+        privilege: MembershipPrivilege_1.MembershipPrivilegeSchema,
     },
-    optionalParams: {},
     execute: null,
     executeOnService: async (trc, ctx, params) => {
         return await generateGeneralexecuteOnServicePlan(trc, ctx, params, 'WorkspaceInvite');
@@ -265,11 +221,10 @@ exports.workspaceInvite = {
 };
 exports.workspaceSetLayoutStyle = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         workspace: 'ID',
-        layoutStyle: Object.values(Workspace_1.WorkspaceLayoutStyle),
+        layoutStyle: Workspace_1.WorkspaceLayoutStyleSchema,
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const fields = {
             layoutStyle: params.layoutStyle,
@@ -279,11 +234,10 @@ exports.workspaceSetLayoutStyle = {
 };
 exports.workspaceSetNoteDisplayOrder = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         workspace: 'ID',
-        noteDisplayOrder: 'ID[]',
+        noteDisplayOrder: conduit_utils_1.ListOf('ID'),
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const fields = {
             noteDisplayOrder: params.noteDisplayOrder,
@@ -293,11 +247,10 @@ exports.workspaceSetNoteDisplayOrder = {
 };
 exports.workspaceSetNotebookDisplayOrder = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         workspace: 'ID',
-        notebookDisplayOrder: 'ID[]',
+        notebookDisplayOrder: conduit_utils_1.ListOf('ID'),
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const fields = {
             notebookDisplayOrder: params.notebookDisplayOrder,
@@ -307,24 +260,21 @@ exports.workspaceSetNotebookDisplayOrder = {
 };
 exports.workspaceSetViewed = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         workspace: 'ID',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         return await generateGeneralUpdateExecutionPlan(trc, ctx, params.workspace, { viewed: true });
     },
 };
 exports.workspacePinnedContentsUpdate = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         workspace: 'ID',
-    },
-    optionalParams: {
-        noteIDsToAdd: 'ID[]',
-        noteIDsToRemove: 'ID[]',
-        nbIDsToAdd: 'ID[]',
-        nbIDsToRemove: 'ID[]',
+        noteIDsToAdd: conduit_utils_1.NullableListOf('ID'),
+        noteIDsToRemove: conduit_utils_1.NullableListOf('ID'),
+        nbIDsToAdd: conduit_utils_1.NullableListOf('ID'),
+        nbIDsToRemove: conduit_utils_1.NullableListOf('ID'),
     },
     execute: null,
     executeOnService: async (trc, ctx, params) => {
@@ -333,12 +283,11 @@ exports.workspacePinnedContentsUpdate = {
 };
 exports.workspaceChangePinnedContentPosition = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         workspace: 'ID',
         contentNodeID: 'string',
         index: 'int',
     },
-    optionalParams: {},
     execute: null,
     executeOnService: async (trc, ctx, params) => {
         return await generateGeneralexecuteOnServicePlan(trc, ctx, params, 'WorkspaceChangePinnedContentPosition');

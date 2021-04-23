@@ -1,6 +1,10 @@
 "use strict";
+/*
+ * Copyright 2019 Evernote Corporation. All rights reserved.
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.mergeMutationDependencies = exports.mutationUpsyncError = exports.isMutationUpsyncSuccess = exports.GraphMutationRuleWhen = exports.GenericMutatorResultsSchema = exports.MutatorRemoteExecutorType = void 0;
+const conduit_utils_1 = require("conduit-utils");
 var MutatorRemoteExecutorType;
 (function (MutatorRemoteExecutorType) {
     MutatorRemoteExecutorType["Thrift"] = "Thrift";
@@ -8,7 +12,7 @@ var MutatorRemoteExecutorType;
     MutatorRemoteExecutorType["Local"] = "Local";
 })(MutatorRemoteExecutorType = exports.MutatorRemoteExecutorType || (exports.MutatorRemoteExecutorType = {}));
 exports.GenericMutatorResultsSchema = {
-    result: 'string?',
+    result: conduit_utils_1.NullableString,
 };
 var GraphMutationRuleWhen;
 (function (GraphMutationRuleWhen) {

@@ -31,12 +31,10 @@ async function createShortcutOpsForRenameStack(trc, ctx, sourceID, sortOrder) {
 }
 exports.stackCreate = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         name: 'string',
         notebook: 'ID',
-    },
-    optionalParams: {
-        eventLabel: 'string',
+        eventLabel: conduit_utils_1.NullableString,
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     execute: async (trc, ctx, params) => {
@@ -89,11 +87,9 @@ exports.stackCreate = {
 };
 exports.stackDelete = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         stack: 'ID',
-    },
-    optionalParams: {
-        eventLabel: 'string',
+        eventLabel: conduit_utils_1.NullableString,
     },
     execute: async (trc, ctx, params) => {
         const nodeRef = { id: params.stack, type: EntityConstants_1.CoreEntityTypes.Stack };
@@ -128,13 +124,12 @@ exports.stackDelete = {
 };
 exports.stackRename = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         stack: 'ID',
         name: 'string',
     },
-    optionalParams: {},
     derivedParams: {
-        shortcutSortOrder: 'string?',
+        shortcutSortOrder: conduit_utils_1.NullableString,
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
@@ -195,12 +190,10 @@ exports.stackRename = {
 };
 exports.stackAddNotebook = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         stack: 'ID',
         notebook: 'ID',
-    },
-    optionalParams: {
-        eventLabel: 'string',
+        eventLabel: conduit_utils_1.NullableString,
     },
     execute: async (trc, ctx, params) => {
         const stackEntity = await ctx.fetchEntity(trc, { id: params.stack, type: EntityConstants_1.CoreEntityTypes.Stack });
@@ -240,15 +233,13 @@ exports.stackAddNotebook = {
 // deleted (harder to solve, because the delete needs to be upsynced)
 exports.stackRemoveNotebook = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         notebook: 'ID',
-    },
-    optionalParams: {
-        stack: 'ID',
-        eventLabel: 'string',
+        stack: conduit_utils_1.NullableID,
+        eventLabel: conduit_utils_1.NullableString,
     },
     derivedParams: {
-        stack: 'ID?',
+        stack: conduit_utils_1.NullableID,
     },
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
         var _a;

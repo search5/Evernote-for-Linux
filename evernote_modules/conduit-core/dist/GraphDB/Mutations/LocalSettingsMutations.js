@@ -81,7 +81,7 @@ function genArgs(setType, valType) {
         value: valType.toLowerCase(),
     };
     if (setType === conduit_view_types_1.LocalSettingsType.User) {
-        args.userID = 'string?';
+        args.userID = conduit_utils_1.NullableString;
     }
     return DataSchemaGQL_1.schemaToGraphQLArgs(args);
 }
@@ -104,7 +104,7 @@ function getLocalSettingsMutators() {
         resolve: systemSettingsRemoveResolver,
     };
     out.userSettingsRemove = {
-        args: DataSchemaGQL_1.schemaToGraphQLArgs({ key: 'string', userID: 'string?' }),
+        args: DataSchemaGQL_1.schemaToGraphQLArgs({ key: 'string', userID: conduit_utils_1.NullableString }),
         type: ResolverHelpers_1.GenericMutationResult,
         resolve: userSettingsRemoveResolver,
     };
@@ -114,7 +114,7 @@ function getLocalSettingsMutators() {
         resolve: systemSettingsClearResolver,
     };
     out.userSettingsClear = {
-        args: DataSchemaGQL_1.schemaToGraphQLArgs({ userID: 'string?' }),
+        args: DataSchemaGQL_1.schemaToGraphQLArgs({ userID: conduit_utils_1.NullableString }),
         type: ResolverHelpers_1.GenericMutationResult,
         resolve: userSettingsClearResolver,
     };

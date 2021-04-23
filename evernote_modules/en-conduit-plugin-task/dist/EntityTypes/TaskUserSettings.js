@@ -5,6 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.taskUserSettingsIndexConfig = exports.taskUserSettingsDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
+const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const TaskConstants_1 = require("../TaskConstants");
 exports.taskUserSettingsDef = {
@@ -15,9 +16,9 @@ exports.taskUserSettingsDef = {
     schema: {
         created: 'timestamp',
         updated: 'timestamp',
-        defaultReminder: 'boolean?',
-        defaultRemindersOffsets: 'number[]?',
-        pinDefaultTaskNote: 'boolean?',
+        defaultReminder: conduit_utils_1.NullableBoolean,
+        defaultRemindersOffsets: conduit_utils_1.NullableListOf('number'),
+        pinDefaultTaskNote: conduit_utils_1.NullableBoolean,
     },
     edges: {
         defaultTaskNote: {

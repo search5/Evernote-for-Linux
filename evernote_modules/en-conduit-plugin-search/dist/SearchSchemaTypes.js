@@ -5,6 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LogRequestArgs = exports.SearchLogEventType = exports.SearchExSchema = exports.GraphQLSearchExCustomResult = exports.GraphQLSearchExMeta = exports.GraphQLSearchExResultGroup = exports.GraphQLSearchExResult = exports.GraphQLSearchExNote = exports.GraphQLSearchExBaseResult = exports.GraphQlSearchExHighlight = exports.SearchExSchemaArgs = exports.SearchExResultType = exports.SuggestSchemaArgs = exports.SuggestSchema = exports.SearchSchemaArgs = exports.SearchSchema = void 0;
 const conduit_core_1 = require("conduit-core");
+const conduit_utils_1 = require("conduit-utils");
 const graphql_1 = require("graphql");
 /** Information that is required for SendLogRequest mutation. */
 const SearchLogInfoType = new graphql_1.GraphQLObjectType({
@@ -35,12 +36,12 @@ exports.SearchSchema = new graphql_1.GraphQLObjectType({
         searchLogInfo: { type: SearchLogInfoType },
     },
 });
-exports.SearchSchemaArgs = Object.assign({}, conduit_core_1.schemaToGraphQLArgs({
-    searchStr: 'string?',
-    offset: 'int?',
-    maxNotes: 'int?',
-    order: 'int?',
-}));
+exports.SearchSchemaArgs = conduit_core_1.schemaToGraphQLArgs({
+    searchStr: conduit_utils_1.NullableString,
+    offset: conduit_utils_1.NullableInt,
+    maxNotes: conduit_utils_1.NullableInt,
+    order: conduit_utils_1.NullableInt,
+});
 const SuggestResultType = new graphql_1.GraphQLObjectType({
     name: 'SuggestResult',
     fields: {
@@ -58,13 +59,13 @@ exports.SuggestSchema = new graphql_1.GraphQLObjectType({
         searchLogInfo: { type: SearchLogInfoType },
     },
 });
-exports.SuggestSchemaArgs = Object.assign({}, conduit_core_1.schemaToGraphQLArgs({
-    searchStr: 'string?',
-    filters: 'string[]?',
-    maxResults: 'int?',
-    searchExecuted: 'boolean?',
-    locale: 'string?',
-}));
+exports.SuggestSchemaArgs = conduit_core_1.schemaToGraphQLArgs({
+    searchStr: conduit_utils_1.NullableString,
+    filters: conduit_utils_1.NullableListOf('string'),
+    maxResults: conduit_utils_1.NullableInt,
+    searchExecuted: conduit_utils_1.NullableBoolean,
+    locale: conduit_utils_1.NullableString,
+});
 /** Field for a text search */
 const GraphQLSearchExTextField = new graphql_1.GraphQLEnumType({
     name: 'SearchExTextField',
@@ -334,9 +335,9 @@ const SearchLogEventTypeProperty = new graphql_1.GraphQLEnumType({
     },
 });
 exports.LogRequestArgs = Object.assign({}, conduit_core_1.schemaToGraphQLArgs({
-    selectedObjectID: 'ID?',
-    selectTime: 'timestamp?',
-    exitTime: 'timestamp?',
+    selectedObjectID: conduit_utils_1.NullableID,
+    selectTime: conduit_utils_1.NullableTimestamp,
+    exitTime: conduit_utils_1.NullableTimestamp,
 }), {
     /** Clicked object type. Default is NOTE. */
     selectedObjectType: { type: graphql_1.GraphQLString },

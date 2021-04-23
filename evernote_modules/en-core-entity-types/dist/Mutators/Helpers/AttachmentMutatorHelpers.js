@@ -12,10 +12,10 @@ const AttachmentCreateDataSchema = {
     hash: 'string',
     size: 'number',
     stagedBlobID: 'string',
-    applicationData: 'map<string>?',
-    url: 'string?',
-    attachmentGenID: 'string[]?',
-    sourceURL: 'string?',
+    applicationData: conduit_utils_1.NullableMapOf('string'),
+    url: conduit_utils_1.NullableUrl,
+    attachmentGenID: conduit_utils_1.NullableListOf('string'),
+    sourceURL: conduit_utils_1.NullableUrl,
 };
 function parseAndValidateAttachmentCreateData(jsonStr) {
     const res = conduit_utils_1.safeParse(jsonStr);

@@ -22,8 +22,8 @@ function addMarkedForOfflineMutators(out, resourceManager, offlineContentStrateg
         }
         conduit_core_1.validateDB(context);
         const { setOffline, clearData } = args;
-        const userID = await context.multiUserProvider.getCurrentUserID(context.trc, context.watcher);
-        if (userID === null) {
+        const userID = await context.db.getCurrentUserID(context);
+        if (conduit_utils_1.isNullish(userID)) {
             throw new Error('No current user for setting local settings');
         }
         const nbRef = { id: args.id, type: en_core_entity_types_1.CoreEntityTypes.Notebook };
@@ -118,7 +118,7 @@ function addMarkedForOfflineMutators(out, resourceManager, offlineContentStrateg
         return ({ success: true });
     }
     out.notebookToggleAvailableOffline = {
-        args: conduit_core_1.schemaToGraphQLArgs({ id: 'ID', setOffline: 'boolean', clearData: 'boolean?' }),
+        args: conduit_core_1.schemaToGraphQLArgs({ id: 'ID', setOffline: 'boolean', clearData: conduit_utils_1.NullableBoolean }),
         type: conduit_core_1.GenericMutationResult,
         resolve: markedForOfflineResolver,
     };

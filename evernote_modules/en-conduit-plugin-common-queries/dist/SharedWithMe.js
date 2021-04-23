@@ -16,19 +16,6 @@ const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_thrift_connector_1 = require("en-thrift-connector");
 const graphql_1 = require("graphql");
-function buildArgs() {
-    return {
-        sort: {
-            type: new graphql_1.GraphQLInputObjectType({
-                name: `SharedWithMeSort`,
-                fields: {
-                    field: { type: conduit_core_1.schemaToGraphQLType(['created', 'label', '?'], 'SharedWithMeField') },
-                    order: { type: conduit_core_1.IndexOrderType },
-                },
-            }),
-        },
-    };
-}
 const allowedMemberships = {
     [en_core_entity_types_1.CoreEntityTypes.Notebook]: true,
     [en_core_entity_types_1.CoreEntityTypes.Note]: true,
@@ -157,7 +144,12 @@ async function listResolver(parent, args, context, info) {
 }
 const sharedWithMePlugin = (autoResolverData) => {
     return {
-        args: buildArgs(),
+        args: conduit_core_1.schemaToGraphQLArgs({
+            sort: conduit_utils_1.NullableStruct({
+                field: conduit_utils_1.NullableEnum(['created', 'label'], 'SharedWithMeField'),
+                order: conduit_utils_1.Nullable(conduit_core_1.IndexOrderTypeSchema),
+            }, 'SharedWithMeSort'),
+        }),
         type: new graphql_1.GraphQLObjectType({
             name: 'SharedWithMeResult',
             fields: () => {

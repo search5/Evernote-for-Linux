@@ -9,10 +9,9 @@ const conduit_utils_1 = require("conduit-utils");
 const EntityConstants_1 = require("../EntityConstants");
 exports.promotionOptOut = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         promotion: 'ID',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const nodeRef = { id: params.promotion, type: EntityConstants_1.CoreEntityTypes.Promotion };
         const node = await ctx.fetchEntity(trc, nodeRef);
@@ -32,10 +31,9 @@ exports.promotionOptOut = {
 };
 exports.promotionMarkShown = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         promotion: 'ID',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const nodeRef = { id: params.promotion, type: EntityConstants_1.CoreEntityTypes.Promotion };
         const node = await ctx.fetchEntity(trc, nodeRef);

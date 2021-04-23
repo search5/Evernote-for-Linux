@@ -54,6 +54,9 @@ function getIncomingShortcuts(prefs) {
                 conduit_utils_1.logger.error('Unable to create shortcut for entry', sc);
             }
         }
+        else {
+            conduit_utils_1.logger.warn('Unknown or invalid data type for shortcut entry', sc);
+        }
     });
     return { nodes, nodeMap };
 }

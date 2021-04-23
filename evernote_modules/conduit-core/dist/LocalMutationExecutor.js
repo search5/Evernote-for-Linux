@@ -48,7 +48,7 @@ class LocalGraphInterface {
         };
         this.resolveOwnerRef = async (trc, owner) => {
             const syncContext = await this.getNodeBestSyncContext(trc, this.storage, owner);
-            if (syncContext === 'NSyncContext') {
+            if (syncContext === conduit_storage_1.NSYNC_CONTEXT) {
                 // SyncContext for all NSync entities is the personal context, which does not relate to the owner anymore.
                 // Instead, grab the entity and find the owner there.
                 const node = await this.fetchEntity(trc, owner);

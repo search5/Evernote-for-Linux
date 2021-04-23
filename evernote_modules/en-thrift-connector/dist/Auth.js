@@ -3,7 +3,7 @@
  * Copyright 2018 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.invalidateAuthToken = exports.refreshJWTFromMonolith = exports.registerSession = exports.refreshAuthToken = exports.needMonolithTokenRefresh = exports.getOAuthCredential = exports.setOAuthCredential = exports.getScopedGoogleOAuthCredential = exports.fixupAuth = exports.revalidateSyncContextAuth = exports.getUser = exports.authenticateToSharedNotebook = exports.authenticateToNote = exports.acquireSessionToken = exports.revokeNAPToken = exports.revokeSDMSSession = exports.logoutThrift = exports.userSignupandLogin = exports.loginWithServiceToken = exports.loginWithAuthInQueue = exports.loginWithExistingAuth = exports.loginWithTwoFactor = exports.loginWithNAP = exports.login = exports.getLoginInfo = exports.getAuthFromSyncContext = exports.toServiceToken = exports.RevalidateShareError = exports.RefreshUserTokenError = exports.TokenRefreshSource = exports.NAP_MIGRATION_STATE_ENUM = exports.SERVICE_PROVIDER_STRING_TO_ENUM = exports.SERVICE_PROVIDER_OPTIONAL_ENUM = exports.SERVICE_PROVIDER_ENUM = exports.NapMigrationStateType = exports.BusinessUserType = exports.LoginStatus = exports.hasNAPData = exports.hasNapAuthInfo = exports.encodeAuthData = exports.decodeAuthData = exports.AuthServiceLevel = void 0;
+exports.invalidateAuthToken = exports.refreshJWTFromMonolith = exports.registerSession = exports.refreshAuthToken = exports.needMonolithTokenRefresh = exports.getOAuthCredential = exports.setOAuthCredential = exports.getScopedGoogleOAuthCredential = exports.fixupAuth = exports.revalidateSyncContextAuth = exports.getUser = exports.authenticateToSharedNotebook = exports.authenticateToNote = exports.acquireSessionToken = exports.revokeNAPToken = exports.revokeSDMSSession = exports.logoutThrift = exports.userSignupandLogin = exports.loginWithServiceToken = exports.loginWithAuthInQueue = exports.loginWithExistingAuth = exports.loginWithTwoFactor = exports.loginWithNAP = exports.login = exports.getLoginInfo = exports.getAuthFromSyncContext = exports.toServiceToken = exports.OAuthCredentialSchema = exports.RevalidateShareError = exports.RefreshUserTokenError = exports.TokenRefreshSource = exports.SERVICE_PROVIDER_STRING_TO_ENUM = exports.ServiceProviderSchema = exports.ServiceProvider = exports.NapMigrationStateTypeSchema = exports.NapMigrationStateType = exports.BusinessUserTypeSchema = exports.BusinessUserType = exports.LoginStatusSchema = exports.LoginStatus = exports.hasNAPData = exports.hasNapAuthInfo = exports.encodeAuthData = exports.decodeAuthData = exports.AuthServiceLevel = void 0;
 const conduit_auth_shared_1 = require("conduit-auth-shared");
 const conduit_core_1 = require("conduit-core");
 const conduit_nap_1 = require("conduit-nap");
@@ -32,6 +32,7 @@ var LoginStatus;
     LoginStatus["PASSWORD"] = "PASSWORD";
     LoginStatus["SSO"] = "SSO";
 })(LoginStatus = exports.LoginStatus || (exports.LoginStatus = {}));
+exports.LoginStatusSchema = conduit_utils_1.Enum(LoginStatus, 'LoginStatus');
 var BusinessUserType;
 (function (BusinessUserType) {
     BusinessUserType["UNKNOWN"] = "UNKNOWN";
@@ -39,6 +40,7 @@ var BusinessUserType;
     BusinessUserType["LEGACY"] = "LEGACY";
     BusinessUserType["BUSINESS_ONLY"] = "BUSINESS_ONLY";
 })(BusinessUserType = exports.BusinessUserType || (exports.BusinessUserType = {}));
+exports.BusinessUserTypeSchema = conduit_utils_1.Enum(BusinessUserType, 'BusinessUserType');
 var NapMigrationStateType;
 (function (NapMigrationStateType) {
     NapMigrationStateType["UNKNOWN"] = "UNKNOWN";
@@ -49,21 +51,17 @@ var NapMigrationStateType;
     NapMigrationStateType["MIGRATED_NAP_ONLY"] = "MIGRATED_NAP_ONLY";
     NapMigrationStateType["NOT_FOUND"] = "NOT_FOUND";
 })(NapMigrationStateType = exports.NapMigrationStateType || (exports.NapMigrationStateType = {}));
-exports.SERVICE_PROVIDER_ENUM = ['GOOGLE', 'FACEBOOK'];
-exports.SERVICE_PROVIDER_OPTIONAL_ENUM = [...exports.SERVICE_PROVIDER_ENUM, '?'];
+exports.NapMigrationStateTypeSchema = conduit_utils_1.Enum(NapMigrationStateType, 'NapMigrationStateType');
+var ServiceProvider;
+(function (ServiceProvider) {
+    ServiceProvider["GOOGLE"] = "GOOGLE";
+    ServiceProvider["FACEBOOK"] = "FACEBOOK";
+})(ServiceProvider = exports.ServiceProvider || (exports.ServiceProvider = {}));
+exports.ServiceProviderSchema = conduit_utils_1.Enum(ServiceProvider, 'ServiceProvider');
 exports.SERVICE_PROVIDER_STRING_TO_ENUM = {
     GOOGLE: en_conduit_sync_types_1.TServiceProvider.GOOGLE,
     FACEBOOK: en_conduit_sync_types_1.TServiceProvider.FACEBOOK,
 };
-exports.NAP_MIGRATION_STATE_ENUM = [
-    'UNKNOWN',
-    'LEGACY',
-    'MIGRATE_ON_LOGIN',
-    'MIGRATED',
-    'MIGRATION_FAILED',
-    'MIGRATED_NAP_ONLY',
-    'NOT_FOUND',
-];
 const THRIFT_LOGIN_STATUS_CONVERTER = {
     [en_conduit_sync_types_1.TLoginStatus.UNKNOWN]: LoginStatus.UNKNOWN,
     [en_conduit_sync_types_1.TLoginStatus.INVALID_FORMAT]: LoginStatus.INVALID_FORMAT,
@@ -100,6 +98,17 @@ class RevalidateShareError extends Error {
     }
 }
 exports.RevalidateShareError = RevalidateShareError;
+exports.OAuthCredentialSchema = conduit_utils_1.Struct({
+    serviceId: conduit_utils_1.NullableNumber,
+    oAuthVersion: conduit_utils_1.NullableNumber,
+    accessToken: conduit_utils_1.NullableString,
+    scope: conduit_utils_1.NullableString,
+    created: conduit_utils_1.NullableTimestamp,
+    updated: conduit_utils_1.NullableTimestamp,
+    expires: conduit_utils_1.NullableTimestamp,
+    refreshAfter: conduit_utils_1.NullableNumber,
+    instanceUrl: conduit_utils_1.NullableUrl,
+}, 'OAuthCredential');
 // TODO: remove all this in followup PR very shortly (03/18/2021)
 function thriftServiceLevelToAuthServiceLevel(tLevel) {
     switch (tLevel) {
@@ -365,6 +374,7 @@ async function getLoginInfo(trc, thriftComm, thriftHost, urlHost, clientName, us
         throw new Error('No token or username');
     }
     const userStore = thriftComm.getUserStore(`${thriftHost}/edam/user`);
+    logger.info('Checking client version');
     // first check if client version is compatible
     if (!await userStore.checkVersion(trc, clientName)) {
         throw new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.CLIENT_NOT_SUPPORTED, '', `client ${clientName} checkVersion failed`);
@@ -373,6 +383,7 @@ async function getLoginInfo(trc, thriftComm, thriftHost, urlHost, clientName, us
     const req = usernameOrEmail
         ? { usernameOrEmail }
         : { openIdCredential: { tokenPayload: tokenPayload, serviceProvider: en_conduit_sync_types_1.TServiceProvider.GOOGLE } };
+    logger.info('Requesting user login information');
     const res = await userStore.getLoginInfo(trc, req);
     const pendingInvites = [];
     if (res.pendingInvites && res.pendingInvites.length) {
@@ -382,6 +393,7 @@ async function getLoginInfo(trc, thriftComm, thriftHost, urlHost, clientName, us
             }
         }
     }
+    logger.info('GetLoginInfo executed, returning');
     return {
         loginStatus: res.loginStatus && THRIFT_LOGIN_STATUS_CONVERTER[res.loginStatus] || LoginStatus.NOT_FOUND,
         businessUserType: res.businessUserType && THRIFT_BUSINESS_USER_TYPE_CONVERTER[res.businessUserType] || BusinessUserType.UNKNOWN,

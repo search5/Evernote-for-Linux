@@ -12,6 +12,9 @@ const getBoardNode = async (trc, instance, context) => {
     }
     const board = Object.assign(Object.assign({}, initial), { type: BoardConstants_1.BoardEntityTypes.Board, NodeFields: {
             boardType: instance.boardType,
+            isCustomized: instance.isCustomized,
+            internalID: instance.internalID,
+            serviceLevel: instance.serviceLevel,
             created: instance.created,
             updated: instance.updated,
             headerBG: en_nsync_connector_1.toBlobV2Fields(instance.headerBG),
@@ -20,6 +23,9 @@ const getBoardNode = async (trc, instance, context) => {
             headerBGPreviousUpload: en_nsync_connector_1.toBlobV2Fields(instance.headerBGPreviousUpload),
             headerBGPreviousUploadMime: instance.headerBGPreviousUploadMime,
             headerBGPreviousUploadFileName: instance.headerBGPreviousUploadFileName,
+            headerBGMode: instance.headerBGMode,
+            headerBGColor: instance.headerBGColor,
+            greetingText: instance.greetingText,
             freeTrialExpiration: instance.freeTrialExpiration,
             desktop: {
                 layout: instance.desktop.layout,
@@ -29,6 +35,9 @@ const getBoardNode = async (trc, instance, context) => {
             },
             calendarVersion: instance.calendarVersion,
             tasksVersion: instance.tasksVersion,
+            coreVersion: instance.coreVersion,
+            extraVersion: instance.extraVersion,
+            filteredNotesVersion: instance.filteredNotesVersion,
         }, inputs: {}, outputs: {
             children: {},
         }, CacheFields: undefined, CacheState: undefined });

@@ -18,9 +18,9 @@ async function dashboardsData(parent, args, context) {
     };
 }
 exports.dashboardsDataPlugin = {
-    type: conduit_core_1.schemaToGraphQLType({
+    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({
         businessShard: 'string',
-    }, 'DashboardsData', false),
+    }, 'DashboardsData')),
     resolve: dashboardsData,
 };
 //# sourceMappingURL=DashboardsData.js.map

@@ -3,7 +3,8 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.highestPrivilege = exports.MembershipPrivilege = void 0;
+exports.highestPrivilege = exports.MembershipPrivilegeSchema = exports.MembershipPrivilege = void 0;
+const conduit_utils_1 = require("conduit-utils");
 var MembershipPrivilege;
 (function (MembershipPrivilege) {
     MembershipPrivilege["READ"] = "READ";
@@ -11,6 +12,7 @@ var MembershipPrivilege;
     MembershipPrivilege["EDIT"] = "EDIT";
     MembershipPrivilege["MANAGE"] = "MANAGE";
 })(MembershipPrivilege = exports.MembershipPrivilege || (exports.MembershipPrivilege = {}));
+exports.MembershipPrivilegeSchema = conduit_utils_1.Enum(MembershipPrivilege, 'MembershipPrivilege');
 const PRIVILEGE_ORDER = Object.values(MembershipPrivilege);
 function highestPrivilege(a, b) {
     const numericalPrivilegeA = PRIVILEGE_ORDER.indexOf(a);

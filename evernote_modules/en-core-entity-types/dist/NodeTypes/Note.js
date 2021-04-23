@@ -16,7 +16,6 @@ exports.DEFAULT_NOTE_CONTENT = '<!DOCTYPE en-note SYSTEM "http://xml.evernote.co
  * and use the regexs defined in the thrift calls to transpile to a ES2015 format */
 // tslint:disable: max-line-length
 const NOTE_LABEL_REGEX = /^[!-~\xA1-\u167F\u1681-\u1FFF\u200B-\u2027\u202A-\u202E\u2030-\u205E\u2060-\u2FFF\u3001-\u{10FFFF}]([ -~\xA0-\u2027\u202A-\u{10FFFF}]{0,253}[!-~\xA1-\u167F\u1681-\u1FFF\u200B-\u2027\u202A-\u202E\u2030-\u205E\u2060-\u2FFF\u3001-\u{10FFFF}])?$/u;
-// tslint:enable: max-line-length
 exports.noteTypeDef = {
     name: EntityConstants_1.CoreEntityTypes.Note,
     syncSource: conduit_storage_1.SyncSource.THRIFT,
@@ -32,65 +31,70 @@ exports.noteTypeDef = {
         isUntitled: 'boolean',
         created: 'timestamp',
         updated: 'timestamp',
-        deleted: 'timestamp?',
+        deleted: conduit_utils_1.NullableTimestamp,
         isExternal: 'boolean',
         content: Blob_1.BlobBaseSchema,
-        thumbnailUrl: 'url?',
+        thumbnailUrl: conduit_utils_1.NullableUrl,
         shareUrlPlaceholder: 'url',
-        contentDownloaded: 'boolean?',
-        Attributes: {
-            subjectDate: 'timestamp?',
-            contentClass: 'string?',
-            Location: {
-                latitude: 'number?',
-                longitude: 'number?',
-                altitude: 'number?',
-                placeName: 'string?',
-            },
-            Reminder: {
-                reminderOrder: 'timestamp?',
-                reminderDoneTime: 'timestamp?',
-                reminderTime: 'timestamp?',
-            },
-            Share: {
-                shareDate: 'timestamp?',
-                sharedWithBusiness: 'boolean?',
-            },
-            Editor: {
-                author: 'string?',
-                lastEditedBy: 'string?',
-            },
-            Source: {
-                source: 'string?',
-                sourceURL: 'url?',
-                sourceApplication: 'string?',
-            },
-        },
+        contentDownloaded: conduit_utils_1.NullableBoolean,
+        Attributes: conduit_utils_1.Struct({
+            subjectDate: conduit_utils_1.NullableTimestamp,
+            contentClass: conduit_utils_1.NullableString,
+            Location: conduit_utils_1.Struct({
+                latitude: conduit_utils_1.NullableNumber,
+                longitude: conduit_utils_1.NullableNumber,
+                altitude: conduit_utils_1.NullableNumber,
+                placeName: conduit_utils_1.NullableString,
+            }),
+            Reminder: conduit_utils_1.Struct({
+                reminderOrder: conduit_utils_1.NullableTimestamp,
+                reminderDoneTime: conduit_utils_1.NullableTimestamp,
+                reminderTime: conduit_utils_1.NullableTimestamp,
+            }),
+            Share: conduit_utils_1.Struct({
+                shareDate: conduit_utils_1.NullableTimestamp,
+                sharedWithBusiness: conduit_utils_1.NullableBoolean,
+            }),
+            Editor: conduit_utils_1.Struct({
+                author: conduit_utils_1.NullableString,
+                lastEditedBy: conduit_utils_1.NullableString,
+            }),
+            Source: conduit_utils_1.Struct({
+                source: conduit_utils_1.NullableString,
+                sourceURL: conduit_utils_1.NullableUrl,
+                sourceApplication: conduit_utils_1.NullableString,
+            }),
+        }),
         // note limitations.
-        noteResourceCountMax: 'number?',
-        uploadLimit: 'number?',
-        resourceSizeMax: 'number?',
-        noteSizeMax: 'number?',
-        uploaded: 'number?',
-        internal_shareCountProfiles: 'map<number>',
+        noteResourceCountMax: conduit_utils_1.NullableNumber,
+        uploadLimit: conduit_utils_1.NullableNumber,
+        resourceSizeMax: conduit_utils_1.NullableNumber,
+        noteSizeMax: conduit_utils_1.NullableNumber,
+        uploaded: conduit_utils_1.NullableNumber,
+        internal_shareCountProfiles: conduit_utils_1.MapOf('number'),
     },
     cache: Object.assign(Object.assign({}, Blob_1.BlobCache('content', exports.NOTE_CONTENT_LOOKASIDE_THRESHOLD)), { ['content.editSequenceNumber']: {
             type: 'int',
             allowStale: false,
         }, snippet: {
-            type: 'string?',
+            type: conduit_utils_1.NullableString,
             allowStale: true,
             dependentFields: ['updated'],
             cacheTimeout: conduit_utils_1.MILLIS_IN_ONE_DAY,
         }, shareUrl: {
-            type: 'url?',
+            type: conduit_utils_1.NullableUrl,
             allowStale: false,
             dependentFields: ['Attributes.Share.shareDate'],
         }, internal_membershipsAcceptStatus: {
-            type: 'map<boolean>',
+            type: conduit_utils_1.MapOf('boolean'),
             allowStale: true,
             cacheTimeout: DEFAULT_CACHE_TIMEOUT,
         } }),
+    hasMemberships: {
+        constraint: conduit_storage_1.EdgeConstraint.MANY,
+        type: conduit_storage_1.EdgeType.MEMBERSHIP,
+        to: EntityConstants_1.CoreEntityTypes.Membership,
+    },
     edges: {
         parent: {
             constraint: conduit_storage_1.EdgeConstraint.OPTIONAL,
@@ -179,7 +183,7 @@ exports.noteIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
             isUnSyncedField: true,
         },
         workspace: {
-            schemaType: 'ID?',
+            schemaType: conduit_utils_1.NullableID,
             entityRefTypes: [EntityConstants_1.CoreEntityTypes.Workspace],
             resolver: async (trc, node, nodeFieldLookup) => {
                 const parentRef = getParentNodeRef(node);
@@ -206,7 +210,7 @@ exports.noteIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
             },
         },
         stack: {
-            schemaType: 'ID?',
+            schemaType: conduit_utils_1.NullableID,
             entityRefTypes: [EntityConstants_1.CoreEntityTypes.Stack],
             resolver: async (trc, node, nodeFieldLookup) => {
                 const parentRef = getParentNodeRef(node);

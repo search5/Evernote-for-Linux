@@ -3,8 +3,9 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.profileIndexConfig = exports.profileTypeDef = exports.ProfileStatusEnum = exports.ProfileStatusSchema = exports.PROFILE_SOURCE = void 0;
+exports.profileIndexConfig = exports.profileTypeDef = exports.ProfileStatusSchema = exports.ProfileStatusEnum = exports.PROFILE_SOURCE = void 0;
 const conduit_storage_1 = require("conduit-storage");
+const conduit_utils_1 = require("conduit-utils");
 const EntityConstants_1 = require("../EntityConstants");
 var PROFILE_SOURCE;
 (function (PROFILE_SOURCE) {
@@ -12,28 +13,28 @@ var PROFILE_SOURCE;
     PROFILE_SOURCE["Identity"] = "IDN";
     PROFILE_SOURCE["Contact"] = "CON";
 })(PROFILE_SOURCE = exports.PROFILE_SOURCE || (exports.PROFILE_SOURCE = {}));
-exports.ProfileStatusSchema = ['ACTIVE', 'INACTIVE'];
 var ProfileStatusEnum;
 (function (ProfileStatusEnum) {
     ProfileStatusEnum["ACTIVE"] = "ACTIVE";
     ProfileStatusEnum["INACTIVE"] = "INACTIVE";
 })(ProfileStatusEnum = exports.ProfileStatusEnum || (exports.ProfileStatusEnum = {}));
+exports.ProfileStatusSchema = conduit_utils_1.Enum(ProfileStatusEnum, 'ProfileStatus');
 exports.profileTypeDef = {
     name: EntityConstants_1.CoreEntityTypes.Profile,
     syncSource: conduit_storage_1.SyncSource.THRIFT,
     schema: {
         email: 'string',
-        photoLastUpdated: 'timestamp?',
+        photoLastUpdated: conduit_utils_1.NullableTimestamp,
         photoUrl: 'url',
         name: 'string',
         username: 'string',
         rootID: 'ID',
         isSameBusiness: 'boolean',
-        isBlocked: 'boolean?',
+        isBlocked: conduit_utils_1.NullableBoolean,
         isConnected: 'boolean',
         internal_source: 'string',
-        internal_userId: 'number?',
-        status: [...exports.ProfileStatusSchema, '?'],
+        internal_userId: conduit_utils_1.NullableNumber,
+        status: conduit_utils_1.Nullable(exports.ProfileStatusSchema),
     },
     edges: {
         parent: {

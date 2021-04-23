@@ -9,14 +9,12 @@ const en_core_entity_types_1 = require("en-core-entity-types");
 // fetch and dedupe shareCountProfiles(profiles pointing to all memberships recipient and owner edges)
 // of node and it's ancestors if present.
 async function getProfileIDs(context, node) {
-    if (node.NodeFields.internal_shareCountProfiles === null) {
-        return [];
-    }
-    const profiles = new Set(Object.keys(node.NodeFields.internal_shareCountProfiles));
-    const permissionsContext = new en_core_entity_types_1.GraphQLPermissionContext(context);
-    const ancestors = await en_core_entity_types_1.getAncestors(permissionsContext, node);
+    var _a, _b;
+    conduit_core_1.validateDB(context);
+    const profiles = new Set(Object.keys((_a = node.NodeFields.internal_shareCountProfiles) !== null && _a !== void 0 ? _a : {}));
+    const ancestors = await context.db.getNodeAncestors(context, node);
     for (const ancestor of ancestors) {
-        for (const profileID of Object.keys(ancestor.NodeFields.internal_shareCountProfiles)) {
+        for (const profileID in (_b = ancestor.NodeFields.internal_shareCountProfiles) !== null && _b !== void 0 ? _b : {}) {
             profiles.add(profileID);
         }
     }
@@ -25,20 +23,21 @@ async function getProfileIDs(context, node) {
 function ShareCountResolver() {
     async function getShareCount(context, nodeRef) {
         conduit_core_1.validateDB(context);
-        const profileMap = {};
         const node = await context.db.getNode(context, nodeRef);
-        if (node) {
-            const profileIDs = await getProfileIDs(context, node);
-            const profiles = await context.db.batchGetNodes(context, en_core_entity_types_1.CoreEntityTypes.Profile, profileIDs);
-            for (const i in profiles) {
-                const profile = profiles[i];
-                if (profile) {
-                    profileMap[profile.NodeFields.rootID] = true;
-                }
-                else {
-                    // We don't know about this profile, but we should still count it
-                    profileMap[profileIDs[i]] = true;
-                }
+        if (!node) {
+            return 0;
+        }
+        const profileIDs = await getProfileIDs(context, node);
+        const profileMap = {};
+        const profiles = await context.db.batchGetNodes(context, en_core_entity_types_1.CoreEntityTypes.Profile, profileIDs);
+        for (const profileID in profiles) {
+            const profile = profiles[profileID];
+            if (profile) {
+                profileMap[profile.NodeFields.rootID] = true;
+            }
+            else {
+                // We don't know about this profile, but we should still count it
+                profileMap[profileIDs[profileID]] = true;
             }
         }
         return Object.getOwnPropertyNames(profileMap).length;

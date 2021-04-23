@@ -3,9 +3,17 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.shortcutIndexConfig = exports.shortcutTypeDef = void 0;
+exports.shortcutIndexConfig = exports.shortcutTypeDef = exports.shortcutSourceTypes = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const EntityConstants_1 = require("../EntityConstants");
+exports.shortcutSourceTypes = [
+    EntityConstants_1.CoreEntityTypes.Note,
+    EntityConstants_1.CoreEntityTypes.Notebook,
+    EntityConstants_1.CoreEntityTypes.Stack,
+    EntityConstants_1.CoreEntityTypes.Workspace,
+    EntityConstants_1.CoreEntityTypes.Tag,
+    EntityConstants_1.CoreEntityTypes.SavedSearch,
+];
 exports.shortcutTypeDef = {
     name: EntityConstants_1.CoreEntityTypes.Shortcut,
     syncSource: conduit_storage_1.SyncSource.THRIFT,
@@ -17,14 +25,7 @@ exports.shortcutTypeDef = {
             constraint: conduit_storage_1.EdgeConstraint.OPTIONAL,
             type: conduit_storage_1.EdgeType.LINK,
             from: {
-                type: [
-                    EntityConstants_1.CoreEntityTypes.Note,
-                    EntityConstants_1.CoreEntityTypes.Notebook,
-                    EntityConstants_1.CoreEntityTypes.Stack,
-                    EntityConstants_1.CoreEntityTypes.Workspace,
-                    EntityConstants_1.CoreEntityTypes.Tag,
-                    EntityConstants_1.CoreEntityTypes.SavedSearch,
-                ],
+                type: exports.shortcutSourceTypes,
                 constraint: conduit_storage_1.EdgeConstraint.OPTIONAL,
                 denormalize: 'shortcut',
             },

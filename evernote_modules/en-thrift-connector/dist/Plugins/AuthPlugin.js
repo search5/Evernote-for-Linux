@@ -22,46 +22,30 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAuthPlugin = exports.loginWithCookies = exports.setLoginAuthData = exports.RemoteServiceCredentialGQL = void 0;
+exports.getAuthPlugin = exports.loginWithCookies = exports.setLoginAuthData = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
-const graphql_1 = require("graphql");
 const Auth = __importStar(require("../Auth"));
 const AccountLimitsConverter_1 = require("../Converters/AccountLimitsConverter");
 const UserConverter_1 = require("../Converters/UserConverter");
 const ThriftSyncEngine_1 = require("../ThriftSyncEngine");
-const AuthStateEnum = Object.keys(conduit_view_types_1.AuthState);
-AuthStateEnum.__enumName = 'AuthStateEnum';
-const LoginResultGQL = conduit_core_1.schemaToGraphQLType({
-    state: AuthStateEnum,
-    secondFactorDeliveryHint: 'string?',
-    usernameOrEmail: 'string?',
-    secondFactorTempToken: 'string?',
-}, 'LoginResult', true);
-const LoginInfoGQL = conduit_core_1.schemaToGraphQLType({
-    loginStatus: Object.keys(Auth.LoginStatus),
-    pendingInvites: 'int[]',
-    businessUserType: Object.keys(Auth.BusinessUserType),
+const AuthStateSchema = conduit_utils_1.Enum(conduit_view_types_1.AuthState, 'AuthStateEnum');
+const LoginResultGQL = conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({
+    state: AuthStateSchema,
+    secondFactorDeliveryHint: conduit_utils_1.NullableString,
+    usernameOrEmail: conduit_utils_1.NullableString,
+    secondFactorTempToken: conduit_utils_1.NullableString,
+}, 'LoginResult'));
+const LoginInfoGQL = conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableStruct({
+    loginStatus: Auth.LoginStatusSchema,
+    pendingInvites: conduit_utils_1.ListOf('int'),
+    businessUserType: Auth.BusinessUserTypeSchema,
     facadeEnabled: 'boolean',
-    napMigrationState: Auth.NAP_MIGRATION_STATE_ENUM,
-    signedUsernameOrEmail: 'string?',
-}, 'LoginInfo', true);
-exports.RemoteServiceCredentialGQL = new graphql_1.GraphQLInterfaceType({
-    name: 'RemoteServiceCredential',
-    fields: {
-        apiKey: {
-            type: graphql_1.GraphQLString,
-            description: 'API Key used to authorize requests against a remote service.',
-        },
-        clientId: {
-            type: graphql_1.GraphQLString,
-            description: 'String identifying what kind of client is making the remote service requests.',
-        },
-    },
-    description: 'Interface for managing authentication credentials to external, remote services.',
-});
+    napMigrationState: Auth.NapMigrationStateTypeSchema,
+    signedUsernameOrEmail: conduit_utils_1.NullableString,
+}, 'LoginInfo'));
 function validateMUPAndKeys(context) {
     if (context && context.multiUserProvider && context.clientCredentials) {
         return true;
@@ -192,6 +176,7 @@ async function loginWithCookies(context, thriftComm, serviceHost, userSlot = nul
 exports.loginWithCookies = loginWithCookies;
 function getAuthPlugin(httpClient, tokenRefreshManager, deviceIdentifier) {
     async function getLoginInfoResolver(_, args, context) {
+        conduit_utils_1.logger.info('getLoginInfo');
         if (validateMUPAndKeys(context)) {
             if (!args || !args.serviceHost || (!args.usernameOrEmail && !args.tokenPayload)) {
                 throw new Error('Missing arguments for getLoginInfo');
@@ -474,10 +459,10 @@ function getAuthPlugin(httpClient, tokenRefreshManager, deviceIdentifier) {
                 clientLogin: {
                     args: conduit_core_1.schemaToGraphQLArgs({
                         serviceHost: 'string',
-                        externalServiceHost: 'string?',
+                        externalServiceHost: conduit_utils_1.NullableString,
                         email: 'string',
-                        password: 'string?',
-                        allowFacadeAsPersonal: 'boolean?',
+                        password: conduit_utils_1.NullableString,
+                        allowFacadeAsPersonal: conduit_utils_1.NullableBoolean,
                     }),
                     type: LoginResultGQL,
                     resolve: loginResolver,
@@ -485,7 +470,7 @@ function getAuthPlugin(httpClient, tokenRefreshManager, deviceIdentifier) {
                 clientLoginWithCookies: {
                     args: conduit_core_1.schemaToGraphQLArgs({
                         serviceHost: 'string',
-                        userSlot: 'int?',
+                        userSlot: conduit_utils_1.NullableInt,
                     }),
                     type: LoginResultGQL,
                     resolve: loginWithCookiesResolver,
@@ -493,9 +478,9 @@ function getAuthPlugin(httpClient, tokenRefreshManager, deviceIdentifier) {
                 clientMultiLoginWithSplitTokens: {
                     args: conduit_core_1.schemaToGraphQLArgs({
                         serviceHost: 'string',
-                        externalServiceHost: 'string?',
+                        externalServiceHost: conduit_utils_1.NullableString,
                         token1: 'string',
-                        token2: 'string?',
+                        token2: conduit_utils_1.NullableString,
                     }),
                     type: LoginResultGQL,
                     resolve: loginWithSplitTokensResolver,
@@ -503,7 +488,7 @@ function getAuthPlugin(httpClient, tokenRefreshManager, deviceIdentifier) {
                 clientLoginWithSSO: {
                     args: conduit_core_1.schemaToGraphQLArgs({
                         serviceHost: 'string',
-                        externalServiceHost: 'string?',
+                        externalServiceHost: conduit_utils_1.NullableString,
                         email: 'string',
                         ssoLoginToken: 'string',
                     }),
@@ -514,9 +499,9 @@ function getAuthPlugin(httpClient, tokenRefreshManager, deviceIdentifier) {
                     type: LoginResultGQL,
                     args: conduit_core_1.schemaToGraphQLArgs({
                         serviceHost: 'string',
-                        externalServiceHost: 'string?',
+                        externalServiceHost: conduit_utils_1.NullableString,
                         tokenPayload: 'string',
-                        serviceProvider: Auth.SERVICE_PROVIDER_ENUM,
+                        serviceProvider: Auth.ServiceProviderSchema,
                     }),
                     resolve: loginWithOAuthResolver,
                 },
@@ -524,17 +509,17 @@ function getAuthPlugin(httpClient, tokenRefreshManager, deviceIdentifier) {
                     type: LoginResultGQL,
                     args: conduit_core_1.schemaToGraphQLArgs({
                         serviceHost: 'string',
-                        externalServiceHost: 'string?',
-                        token: 'string?',
-                        userSlot: 'number?',
-                        allowFacadeAsPersonal: 'boolean?',
+                        externalServiceHost: conduit_utils_1.NullableString,
+                        token: conduit_utils_1.NullableString,
+                        userSlot: conduit_utils_1.NullableInt,
+                        allowFacadeAsPersonal: conduit_utils_1.NullableBoolean,
                     }),
                     resolve: loginWithServiceTokenResolver,
                 },
                 clientLoginWithTwoFactor: {
                     args: conduit_core_1.schemaToGraphQLArgs({
                         serviceHost: 'string',
-                        externalServiceHost: 'string?',
+                        externalServiceHost: conduit_utils_1.NullableString,
                         oneTimeCode: 'string',
                         secondFactorTempToken: 'string',
                     }),
@@ -544,15 +529,15 @@ function getAuthPlugin(httpClient, tokenRefreshManager, deviceIdentifier) {
                 clientLogout: {
                     args: conduit_core_1.schemaToGraphQLArgs({
                         reason: 'string',
-                        nextUserID: 'string?',
-                        all: 'boolean?',
-                        keepData: 'boolean?',
+                        nextUserID: conduit_utils_1.NullableString,
+                        all: conduit_utils_1.NullableBoolean,
+                        keepData: conduit_utils_1.NullableBoolean,
                     }),
-                    type: conduit_core_1.schemaToGraphQLType({
+                    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({
                         success: 'boolean',
-                        napAddress: 'string?',
-                        currentUserID: 'string?',
-                    }, 'LogoutResult', false),
+                        napAddress: conduit_utils_1.NullableString,
+                        currentUserID: conduit_utils_1.NullableString,
+                    }, 'LogoutResult')),
                     resolve: logoutResolver,
                 },
                 sessionToken: {
@@ -584,7 +569,7 @@ function getAuthPlugin(httpClient, tokenRefreshManager, deviceIdentifier) {
                     args: conduit_core_1.schemaToGraphQLArgs({
                         serviceHost: 'string',
                         tokenPayload: 'string',
-                        oAuthProvider: Auth.SERVICE_PROVIDER_ENUM,
+                        oAuthProvider: Auth.ServiceProviderSchema,
                     }),
                     type: LoginResultGQL,
                     resolve: userSignupResolver,
@@ -610,9 +595,9 @@ function getAuthPlugin(httpClient, tokenRefreshManager, deviceIdentifier) {
                 getLoginInfo: {
                     args: conduit_core_1.schemaToGraphQLArgs({
                         serviceHost: 'string',
-                        externalServiceHost: 'string?',
-                        usernameOrEmail: 'string?',
-                        tokenPayload: 'string?',
+                        externalServiceHost: conduit_utils_1.NullableString,
+                        usernameOrEmail: conduit_utils_1.NullableString,
+                        tokenPayload: conduit_utils_1.NullableString,
                         clientName: 'string',
                     }),
                     type: LoginInfoGQL,
@@ -620,17 +605,24 @@ function getAuthPlugin(httpClient, tokenRefreshManager, deviceIdentifier) {
                 },
                 clientAuthState: {
                     args: conduit_core_1.schemaToGraphQLArgs({}),
-                    type: conduit_core_1.schemaToGraphQLType({ authState: AuthStateEnum }, 'AuthState', true),
+                    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableStruct({
+                        authState: AuthStateSchema,
+                    }, 'AuthState')),
                     resolve: authStateResolver,
                 },
                 authRemoteHost: {
                     args: conduit_core_1.schemaToGraphQLArgs({}),
-                    type: conduit_core_1.schemaToGraphQLType({ remoteHost: 'string' }, 'AuthRemoteHost', true),
+                    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableStruct({
+                        remoteHost: 'string',
+                    }, 'AuthRemoteHost')),
                     resolve: authRemoteHostResolver,
                 },
                 twoFactorAuthMaskedPhoneNumbers: {
                     args: conduit_core_1.schemaToGraphQLArgs({ serviceHost: 'string', token: 'string' }),
-                    type: conduit_core_1.schemaToGraphQLType({ primary: 'string?', secondary: 'string?' }, 'TwoFactorAuthMaskedPhoneNumbers', false),
+                    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({
+                        primary: conduit_utils_1.NullableString,
+                        secondary: conduit_utils_1.NullableString,
+                    }, 'TwoFactorAuthMaskedPhoneNumbers')),
                     resolve: twoFactorAuthMaskedPhoneNumbersResolver,
                 },
             };

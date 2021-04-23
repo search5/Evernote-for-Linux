@@ -25,25 +25,19 @@ exports.createNotePinDefinition = void 0;
  */
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const graphql_1 = require("graphql");
+const en_data_model_1 = require("en-data-model");
 const BoardConstants_1 = require("./BoardConstants");
-const BoardFeatureSchemaManager_1 = require("./Schema/BoardFeatureSchemaManager");
 const Utilities = __importStar(require("./Utilities"));
 const createNotePinDefinition = () => {
     return {
-        args: {
-            note: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-            widget: { type: graphql_1.GraphQLString },
-        },
-        type: new graphql_1.GraphQLObjectType({
-            name: 'NotePinResult',
-            fields: () => {
-                return {
-                    success: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLBoolean) },
-                    result: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-                };
-            },
+        args: conduit_core_1.schemaToGraphQLArgs({
+            note: 'ID',
+            widget: conduit_utils_1.NullableID,
         }),
+        type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({
+            success: 'boolean',
+            result: 'string',
+        }, 'NotePinResult')),
         resolve: async function resolver(parent, args, context) {
             // Validate arguments...
             if ((!args) || (!args.note)) {
@@ -53,14 +47,14 @@ const createNotePinDefinition = () => {
             conduit_core_1.validateDB(context);
             // Get the current User...
             const userNode = await Utilities.getCurrentUserNode(context);
-            const boardID = BoardConstants_1.BoardDeterministicIdGenerator.createId({
-                entityType: 'Board',
+            const boardID = en_data_model_1.DefaultDeterministicIdGenerator.createId({
+                entityType: BoardConstants_1.BoardEntityTypes.Board,
                 userID: userNode.NodeFields.internal_userID,
-                leadingSegments: BoardFeatureSchemaManager_1.BoardFeatureSchemaManager.formDeterministicBoardIdParts(),
+                leadingSegments: en_data_model_1.BoardSchema.formDeterministicBoardIdParts(userNode.NodeFields.internal_userID),
             });
             const widgetEdges = await context.db.traverseGraph(context, { type: BoardConstants_1.BoardEntityTypes.Board, id: boardID }, [{ edge: ['outputs', 'children'], type: BoardConstants_1.BoardEntityTypes.Widget }]);
             const matchingPinnedNote = (await context.db.batchGetNodes(context, BoardConstants_1.BoardEntityTypes.Widget, widgetEdges.map(widgetEdge => widgetEdge.id)))
-                .find(w => !!w && ((!args.widget || w.id === args.widget) && (w.NodeFields.widgetType === BoardConstants_1.WidgetType.Pinned)));
+                .find(w => !!w && (!args.widget && w.NodeFields.widgetType === en_data_model_1.WidgetType.Pinned || w.id === args.widget));
             // Check that a matching widget was found
             if (!matchingPinnedNote) {
                 throw new conduit_utils_1.InternalError('Could not find Pinned Widget');

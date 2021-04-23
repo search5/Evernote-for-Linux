@@ -8,17 +8,6 @@ const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const RolloutData_1 = require("./RolloutData");
 const SignInMethod_1 = require("./SignInMethod");
-const GetRolloutReleaseDataArgs = conduit_core_1.schemaToGraphQLArgs({
-    serviceHost: 'string',
-    featureRolloutClientType: RolloutData_1.ClientTypeSchema,
-});
-const SignInMethodResultType = conduit_core_1.schemaToGraphQLType({
-    siwg: SignInMethod_1.SignInMethodTypeSchema,
-    siwa: SignInMethod_1.SignInMethodTypeSchema,
-}, 'FeatureRolloutDataResult', true);
-const IterableLogsSwitchResultType = conduit_core_1.schemaToGraphQLType({
-    iterableLogsEnabled: 'boolean',
-}, 'IterableLogsSwitchResult', false);
 const PollInterval = conduit_utils_1.MILLIS_IN_ONE_HOUR;
 function getFeatureRolloutPlugin(httpClient) {
     const cachedRolloutData = { expiration: 0 };
@@ -100,14 +89,25 @@ function getFeatureRolloutPlugin(httpClient) {
         defineQueries: () => {
             const queries = {
                 SignInMethod: {
-                    args: GetRolloutReleaseDataArgs,
-                    type: SignInMethodResultType,
+                    args: conduit_core_1.schemaToGraphQLArgs({
+                        serviceHost: 'string',
+                        featureRolloutClientType: RolloutData_1.ClientTypeSchema,
+                    }),
+                    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({
+                        siwg: SignInMethod_1.SignInMethodSchema,
+                        siwa: SignInMethod_1.SignInMethodSchema,
+                    }, 'SignInMethods')),
                     resolve: getSignInMethodResolver,
                     description: 'Get Gradual Release Feature Flag',
                 },
                 IterableLogsSwitch: {
-                    args: GetRolloutReleaseDataArgs,
-                    type: IterableLogsSwitchResultType,
+                    args: conduit_core_1.schemaToGraphQLArgs({
+                        serviceHost: 'string',
+                        featureRolloutClientType: RolloutData_1.ClientTypeSchema,
+                    }),
+                    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({
+                        iterableLogsEnabled: 'boolean',
+                    }, 'IterableLogsSwitch')),
                     resolve: getIterableLogsSwitchResolver,
                     description: 'Get Flag to enable/disable Iterable Datadog Logs',
                 },

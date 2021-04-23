@@ -6,8 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.noteImport = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_plugin_task_1 = require("en-conduit-plugin-task");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const graphql_1 = require("graphql");
 const Helpers_1 = require("./Helpers");
 async function noteImportResolver(parent, args, context, info) {
     var _a;
@@ -87,64 +87,44 @@ async function noteImportResolver(parent, args, context, info) {
         attachmentHashes: attachmentDatas.map(attachment => attachment.hash),
     };
 }
-const TaskCreateSchema = conduit_core_1.schemaToGraphQLType({
-    label: 'string',
-    taskGroupNoteLevelID: 'string',
-    dueDate: 'number?',
-    timeZone: 'string?',
-    dueDateUIOption: 'string?',
-    flag: 'boolean?',
-    sortWeight: 'string?',
-    noteLevelID: 'string?',
-    status: 'string?',
-    sourceOfChange: 'string',
-}, 'TaskCreateSchema', false, true);
-const TasksExportDataSchema = new graphql_1.GraphQLInputObjectType({
-    name: 'TasksExportData',
-    fields: {
-        tasks: { type: new graphql_1.GraphQLList(TaskCreateSchema) },
-        taskGroupNoteLevelIDs: { type: new graphql_1.GraphQLList(graphql_1.GraphQLString) },
-    },
-});
 exports.noteImport = {
-    type: conduit_core_1.schemaToGraphQLType({
+    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableStruct({
         noteID: 'ID',
-        attachmentHashes: 'string[]',
-    }, 'noteImportResult', true),
+        attachmentHashes: conduit_utils_1.ListOf('string'),
+    }, 'noteImportResult')),
     resolve: noteImportResolver,
-    args: Object.assign(Object.assign({}, conduit_core_1.schemaToGraphQLArgs({
+    args: conduit_core_1.schemaToGraphQLArgs({
         noteContent: 'string',
         untitledNoteLabel: 'string',
-        tags: 'ID[]?',
-        container: 'ID?',
-        label: 'string?',
-        created: 'number?',
-        updated: 'number?',
-        subjectDate: 'number?',
-        contentClass: 'string?',
-        latitude: 'number?',
-        longitude: 'number?',
-        altitude: 'number?',
-        placeName: 'string?',
-        reminderTime: 'number?',
-        reminderDoneTime: 'number?',
-        reminderOrder: 'number?',
-        author: 'string?',
-        source: 'string?',
-        sourceUrl: 'string?',
-        sourceApplication: 'string?',
-        applicationData: 'map<string>?',
-    })), { attachments: {
-            type: new graphql_1.GraphQLList(conduit_core_1.schemaToGraphQLType({
-                path: 'string',
-                takeFileOwnership: 'boolean?',
-                filename: 'string',
-                mime: 'string',
-                applicationData: 'map<string>',
-                placeholderHash: 'string?',
-            }, 'AttachmentImportInfo', false, true)),
-        }, tasksData: {
-            type: TasksExportDataSchema,
-        } }),
+        tags: conduit_utils_1.NullableListOf('ID'),
+        container: conduit_utils_1.NullableID,
+        label: conduit_utils_1.NullableString,
+        created: conduit_utils_1.NullableTimestamp,
+        updated: conduit_utils_1.NullableTimestamp,
+        subjectDate: conduit_utils_1.NullableTimestamp,
+        contentClass: conduit_utils_1.NullableString,
+        latitude: conduit_utils_1.NullableNumber,
+        longitude: conduit_utils_1.NullableNumber,
+        altitude: conduit_utils_1.NullableNumber,
+        placeName: conduit_utils_1.NullableString,
+        reminderTime: conduit_utils_1.NullableTimestamp,
+        reminderDoneTime: conduit_utils_1.NullableTimestamp,
+        reminderOrder: conduit_utils_1.NullableTimestamp,
+        author: conduit_utils_1.NullableString,
+        source: conduit_utils_1.NullableString,
+        sourceUrl: conduit_utils_1.NullableString,
+        sourceApplication: conduit_utils_1.NullableString,
+        applicationData: conduit_utils_1.NullableMapOf('string'),
+        attachments: conduit_utils_1.NullableListOf(conduit_utils_1.Struct({
+            path: 'string',
+            takeFileOwnership: conduit_utils_1.NullableBoolean,
+            filename: 'string',
+            mime: 'string',
+            applicationData: conduit_utils_1.MapOf('string'),
+            placeholderHash: conduit_utils_1.NullableString,
+            sourceURL: conduit_utils_1.NullableString,
+        }, 'AttachmentImportInfo')),
+        tasksData: conduit_utils_1.Nullable(en_conduit_plugin_task_1.TasksExportDataSchema),
+    }),
 };
 //# sourceMappingURL=NoteImport.js.map

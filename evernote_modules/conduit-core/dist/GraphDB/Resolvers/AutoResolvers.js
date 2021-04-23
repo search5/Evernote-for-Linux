@@ -12,6 +12,7 @@ const QueryGraphQLBuilder_1 = require("../QueryGraphQLBuilder");
 const EdgeTraversal_1 = require("./EdgeTraversal");
 const ListResolvers_1 = require("./ListResolvers");
 const ResolverHelpers_1 = require("./ResolverHelpers");
+const MAX_TYPE_NAMES_FOR_UNION = 4;
 function flattenEdges(edges, fieldSelection, out) {
     if (!edges) {
         return;
@@ -169,7 +170,10 @@ function getEntityUnionType(autoResolverData, entityTypesForRef) {
         return autoResolverData.NodeGraphQLTypes[entityTypesForRef[0]];
     }
     entityTypesForRef = [...entityTypesForRef].sort();
-    const name = entityTypesForRef.join('Or');
+    let name = entityTypesForRef.join('Or');
+    if (entityTypesForRef.length > MAX_TYPE_NAMES_FOR_UNION) {
+        name = `EntUnion${conduit_utils_1.md5(name)}`;
+    }
     if (!autoResolverData.CachedNodeGraphQLUnionTypes.has(name)) {
         autoResolverData.CachedNodeGraphQLUnionTypes.set(name, new graphql_1.GraphQLUnionType({
             name,
@@ -183,13 +187,11 @@ function getEntityUnionType(autoResolverData, entityTypesForRef) {
 }
 exports.getEntityUnionType = getEntityUnionType;
 function schemaFieldToGraphQL(autoResolverData, fields, field, schemaType, parentName, entityTypesForRef, resolveIntercept) {
-    const isNullableRef = typeof schemaType === 'string' && schemaType[schemaType.length - 1] === '?';
-    switch (schemaType) {
-        case 'EntityRef':
-        case 'EntityRef?': {
+    switch (conduit_utils_1.fieldTypeToNonNull(schemaType)) {
+        case 'EntityRef': {
             const connectedType = getEntityUnionType(autoResolverData, entityTypesForRef);
             fields[field] = {
-                type: isNullableRef ? connectedType : new graphql_1.GraphQLNonNull(connectedType),
+                type: conduit_utils_1.fieldTypeIsNullable(schemaType) ? connectedType : new graphql_1.GraphQLNonNull(connectedType),
                 resolve: async (parent, args, context, info) => {
                     const nodeRef = resolveIntercept ? await resolveIntercept(parent, args, context, info) : parent[field];
                     if (!nodeRef) {
@@ -200,14 +202,13 @@ function schemaFieldToGraphQL(autoResolverData, fields, field, schemaType, paren
             };
             return;
         }
-        case 'ID':
-        case 'ID?': {
+        case 'ID': {
             if (!entityTypesForRef || entityTypesForRef.length !== 1) {
                 break;
             }
             const connectedType = autoResolverData.NodeGraphQLTypes[entityTypesForRef[0]];
             fields[field] = {
-                type: isNullableRef ? connectedType : new graphql_1.GraphQLNonNull(connectedType),
+                type: conduit_utils_1.fieldTypeIsNullable(schemaType) ? connectedType : new graphql_1.GraphQLNonNull(connectedType),
                 resolve: async (parent, args, context, info) => {
                     const id = parent[field];
                     if (id === null) {
@@ -219,7 +220,7 @@ function schemaFieldToGraphQL(autoResolverData, fields, field, schemaType, paren
             return;
         }
     }
-    const gqlFieldType = schemaType ? DataSchemaGQL_1.schemaToGraphQLType(schemaType, conduit_utils_1.toPascalCase([parentName, field]), false) : undefined;
+    const gqlFieldType = schemaType ? DataSchemaGQL_1.schemaToGraphQLType(schemaType, { defaultName: conduit_utils_1.toPascalCase([parentName, field]) }) : undefined;
     if (gqlFieldType) {
         fields[field] = { type: gqlFieldType };
     }
@@ -242,6 +243,9 @@ function buildFields(autoResolverData, nodeTypes, type, indexer) {
             }
             if (!field.includes('.')) {
                 const schemaType = (node.schema && node.schema[field]) || (node.cache && node.cache[field] && node.cache[field].type);
+                if (!schemaType) {
+                    throw new Error(`Undefined schema found for NodeType ${type}.${field}`);
+                }
                 schemaFieldToGraphQL(autoResolverData, fields, field, schemaType, type, undefined);
             }
         }

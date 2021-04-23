@@ -26,19 +26,15 @@ exports.getENInAppPurchasingPlugin = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_thrift_connector_1 = require("en-thrift-connector");
-const graphql_1 = require("graphql");
 const queryString = __importStar(require("querystring"));
 const postUtils_1 = require("./postUtils");
 let skuMapString = null;
 let fetchTimestamp = null;
-const clientPlatform = new graphql_1.GraphQLNonNull(new graphql_1.GraphQLEnumType({
-    name: 'clientPlatform',
-    values: {
-        ANDROID: { value: 'android' },
-        IOS: { value: 'ios' },
-        MAC: { value: 'mac' },
-    },
-}));
+const ClientPlatformSchema = conduit_utils_1.EnumWithKeys({
+    ANDROID: 'android',
+    IOS: 'ios',
+    MAC: 'mac',
+}, 'ClientPlatform');
 function getENInAppPurchasingPlugin(httpClient) {
     async function productDataResolver(parent, args, context) {
         var _a;
@@ -155,132 +151,74 @@ function getENInAppPurchasingPlugin(httpClient) {
         name: 'ENInAppPurchasing',
         defineQueries: () => ({
             getBillableProducts: {
-                type: conduit_core_1.schemaToGraphQLType('string?', 'getBillableProducts', true),
-                args: {
-                    clientPlatform: {
-                        type: clientPlatform,
-                    },
-                    forceFetch: {
-                        type: graphql_1.GraphQLBoolean,
-                    },
-                },
+                type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableString),
+                args: conduit_core_1.schemaToGraphQLArgs({
+                    clientPlatform: ClientPlatformSchema,
+                    forceFetch: conduit_utils_1.NullableBoolean,
+                }),
                 resolve: productDataResolver,
             },
             getSubscriptionInfo: {
-                type: conduit_core_1.schemaToGraphQLType('string?', 'getSubscriptionInfo', true),
+                type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableString),
                 resolve: subscriptionInfoResolver,
             },
         }),
         defineMutators: () => ({
             createAndroidPrePurchaseTransactionID: {
-                type: conduit_core_1.schemaToGraphQLType('string?', 'createAndroidPrePurchaseTransactionID', true),
-                args: {
-                    sku: {
-                        type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString),
-                    },
-                    extend: {
-                        type: graphql_1.GraphQLBoolean,
-                    },
-                },
+                type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableString),
+                args: conduit_core_1.schemaToGraphQLArgs({
+                    sku: 'string',
+                    extend: conduit_utils_1.NullableBoolean,
+                }),
                 resolve: androidPrePurchaseResolver,
             },
             verifyAndroidPostPurchase: {
-                type: conduit_core_1.schemaToGraphQLType('string?', 'verifyAndroidPostPurchase', true),
-                args: {
-                    developerPayload: {
-                        type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString),
-                    },
-                    offer: {
-                        type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString),
-                    },
-                    sku: {
-                        type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString),
-                    },
-                    signedData: {
-                        type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString),
-                    },
-                    signature: {
-                        type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString),
-                    },
-                },
+                type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableString),
+                args: conduit_core_1.schemaToGraphQLArgs({
+                    developerPayload: 'string',
+                    offer: 'string',
+                    sku: 'string',
+                    signedData: 'string',
+                    signature: 'string',
+                }),
                 resolve: androidPostPurchaseResolver,
             },
             verifyApplePostPurchase: {
-                type: conduit_core_1.schemaToGraphQLType('string?', 'verifyApplePostPurchase', true),
-                args: {
-                    currency: {
-                        type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString),
-                    },
-                    offer: {
-                        type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString),
-                    },
-                    price: {
-                        type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString),
-                    },
-                    productId: {
-                        type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString),
-                    },
-                    receiptData: {
-                        type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString),
-                    },
-                    transactionId: {
-                        type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString),
-                    },
-                    layout: {
-                        type: graphql_1.GraphQLString,
-                    },
-                    extend: {
-                        type: graphql_1.GraphQLBoolean,
-                    },
-                    receiptOnly: {
-                        type: graphql_1.GraphQLString,
-                    },
-                    transactionState: {
-                        type: graphql_1.GraphQLString,
-                    },
-                    verifyReceiptOnly: {
-                        type: graphql_1.GraphQLString,
-                    },
-                    version: {
-                        type: graphql_1.GraphQLInt,
-                    },
-                },
+                type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableString),
+                args: conduit_core_1.schemaToGraphQLArgs({
+                    currency: 'string',
+                    offer: 'string',
+                    price: 'string',
+                    productId: 'string',
+                    receiptData: 'string',
+                    transactionId: 'string',
+                    layout: conduit_utils_1.NullableString,
+                    extend: conduit_utils_1.NullableBoolean,
+                    receiptOnly: conduit_utils_1.NullableString,
+                    transactionState: conduit_utils_1.NullableString,
+                    verifyReceiptOnly: conduit_utils_1.NullableString,
+                    version: conduit_utils_1.NullableInt,
+                }),
                 resolve: applePostPurchaseResolver,
             },
             notifyAppleTransactionFailure: {
-                type: conduit_core_1.schemaToGraphQLType('string?', 'notifyAppleTransactionFailure', true),
-                args: {
-                    layout: {
-                        type: graphql_1.GraphQLString,
-                    },
-                    currency: {
-                        type: graphql_1.GraphQLString,
-                    },
-                    price: {
-                        type: graphql_1.GraphQLString,
-                    },
-                    productId: {
-                        type: graphql_1.GraphQLString,
-                    },
-                    receiptData: {
-                        type: graphql_1.GraphQLString,
-                    },
-                    transactionId: {
-                        type: graphql_1.GraphQLString,
-                    },
-                },
+                type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableString),
+                args: conduit_core_1.schemaToGraphQLArgs({
+                    layout: conduit_utils_1.NullableString,
+                    currency: conduit_utils_1.NullableString,
+                    price: conduit_utils_1.NullableString,
+                    productId: conduit_utils_1.NullableString,
+                    receiptData: conduit_utils_1.NullableString,
+                    transactionId: conduit_utils_1.NullableString,
+                }),
                 resolve: appleFailureResolver,
             },
             sendAppleReceiptOnly: {
-                type: conduit_core_1.schemaToGraphQLType('string?', 'sendAppleReceiptOnly', true),
-                args: {
-                    layout: {
-                        type: graphql_1.GraphQLString,
-                    },
-                    receiptData: {
-                        type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString),
-                    },
-                },
+                type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableString),
+                args: conduit_core_1.schemaToGraphQLArgs({
+                    layout: conduit_utils_1.NullableString,
+                    receiptData: 'string',
+                }),
                 resolve: appleReceiptOnlyResolver,
             },
         }),

@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.toUserClientInfo = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
+const en_data_model_1 = require("en-data-model");
 var ConvertedBool;
 (function (ConvertedBool) {
     ConvertedBool["FALSE"] = "FALSE";
@@ -69,15 +70,15 @@ function getRequestingEnvironment(host) {
     return 'stage';
 }
 function toUserClientInfo({ clientType, host, platform, user, }) {
-    const { NodeFields: { Attributes: { preferredLanguage: languageCode }, businessUserRole, created, serviceLevel, Accounting: { premiumServiceStatus }, }, } = user;
+    const { NodeFields: { Attributes: { preferredLanguage: languageCode }, businessUserRole, created, serviceLevelV2, Accounting: { premiumServiceStatus }, }, } = user;
     const userInfo = {
         is_account_less_1_day: isAccountLessThan(created, conduit_utils_1.MILLIS_IN_ONE_DAY),
         is_account_less_7_days: isAccountLessThan(created, conduit_utils_1.MILLIS_IN_SEVEN_DAYS),
         is_account_less_14_days: isAccountLessThan(created, conduit_utils_1.MILLIS_IN_FOURTEEN_DAYS),
         is_account_less_30_days: isAccountLessThan(created, conduit_utils_1.MILLIS_IN_THIRTY_DAYS),
         is_account_created_before_2020_06_01: isAccountCreatedBefore(created, '2020-06-01'),
-        is_basic_account: serviceLevel === en_core_entity_types_1.ServiceLevel.BASIC,
-        is_business_only_account: serviceLevel === en_core_entity_types_1.ServiceLevel.BUSINESS,
+        is_basic_account: serviceLevelV2 === en_data_model_1.ServiceLevelV2.FREE,
+        is_business_only_account: serviceLevelV2 === en_data_model_1.ServiceLevelV2.TEAMS,
         is_business_admin: businessUserRole === en_core_entity_types_1.BusinessUserRole.ADMIN,
         language: getLanguage(languageCode),
         language_code: getLanguageCode(languageCode),
@@ -85,7 +86,7 @@ function toUserClientInfo({ clientType, host, platform, user, }) {
         is_conduit: true,
         requesting_environment: getRequestingEnvironment(host),
         requesting_page: CLIENT_VALUE_TO_REQUESTING_PAGE.get(clientType),
-        subscription_level: serviceLevel,
+        subscription_level: serviceLevelV2,
         has_been_premium: premiumServiceStatus !== en_core_entity_types_1.PremiumOrderStatus.NONE,
     };
     for (const key in userInfo) {

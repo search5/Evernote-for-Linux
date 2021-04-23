@@ -4,10 +4,10 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.calendarFeatureVersionOne = void 0;
-const BoardConstants_1 = require("../BoardConstants");
+const en_data_model_1 = require("en-data-model");
 exports.calendarFeatureVersionOne = {
     widgetTypeGenerator: () => {
-        return [{ widgetType: BoardConstants_1.WidgetType.Calendar, isPremiumWidget: true }];
+        return [en_data_model_1.WidgetType.Calendar];
     },
     schemeUpgradeConverter: async () => {
         return {};

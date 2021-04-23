@@ -5,6 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.taskIndexConfig = exports.taskTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
+const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const TaskConstants_1 = require("../TaskConstants");
 exports.taskTypeDef = {
@@ -15,17 +16,22 @@ exports.taskTypeDef = {
     schema: {
         created: 'timestamp',
         updated: 'timestamp',
-        dueDate: 'timestamp?',
-        dueDateUIOption: [...Object.values(TaskConstants_1.DueDateUIOption), '?'],
-        timeZone: 'string?',
-        status: Object.values(TaskConstants_1.TaskStatus),
+        dueDate: conduit_utils_1.NullableTimestamp,
+        dueDateUIOption: conduit_utils_1.Nullable(TaskConstants_1.DueDateUIOptionSchema),
+        timeZone: conduit_utils_1.NullableString,
+        status: TaskConstants_1.TaskStatusSchema,
         inNote: 'boolean',
         flag: 'boolean',
         sortWeight: 'string',
         noteLevelID: 'string',
-        statusUpdated: 'timestamp?',
+        statusUpdated: conduit_utils_1.NullableTimestamp,
         taskGroupNoteLevelID: 'string',
-        sourceOfChange: 'string?',
+        sourceOfChange: conduit_utils_1.NullableString,
+    },
+    hasMemberships: {
+        constraint: conduit_storage_1.EdgeConstraint.MANY,
+        type: conduit_storage_1.EdgeType.MEMBERSHIP,
+        to: en_core_entity_types_1.CoreEntityTypes.Membership,
     },
     edges: {
         parent: {
@@ -56,11 +62,6 @@ exports.taskTypeDef = {
             constraint: conduit_storage_1.EdgeConstraint.OPTIONAL,
             type: conduit_storage_1.EdgeType.LINK,
             to: en_core_entity_types_1.CoreEntityTypes.Profile,
-        },
-        memberships: {
-            constraint: conduit_storage_1.EdgeConstraint.MANY,
-            type: conduit_storage_1.EdgeType.LINK,
-            to: en_core_entity_types_1.CoreEntityTypes.Membership,
         },
     },
 };

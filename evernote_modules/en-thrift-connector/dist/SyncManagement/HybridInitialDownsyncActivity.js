@@ -177,6 +177,8 @@ class FetchPrebuiltDatabaseActivity extends SyncActivity_1.SyncActivity {
             SyncActivity_1.SyncActivityType.NoteMetadataFetchActivity,
             SyncActivity_1.SyncActivityType.SnippetsFetchActivity,
         ]);
+        // Read the reindexing activity to run immediately after
+        await this.context.syncManager.addReindexingActivity(trc, undefined, true);
         await this.setProgress(trc, 1);
     }
 }
@@ -602,28 +604,39 @@ class NSyncInitialDownsyncActivity extends SyncActivity_1.SyncActivity {
         }
         const syncParams = this.initParams('personal', 'initialDownsync', exports.INITIAL_DOWNSYNC_CHUNK_TIMEBOX);
         if (syncEventManager.isEnabled()) {
-            await new Promise((resolve, reject) => {
-                syncEventManager.setMessageConsumer(msg => {
-                    switch (msg.type) {
-                        case 'Error': {
-                            syncEventManager.clearMessageConsumer();
-                            reject(msg.error);
-                            break;
+            let complete = false;
+            while (complete === false) {
+                await syncEventManager.flush(trc, syncParams);
+                complete = await new Promise((resolve, reject) => {
+                    let handled = false;
+                    syncEventManager.setMessageConsumer(msg => {
+                        switch (msg.type) {
+                            case 'Error': {
+                                handled = true;
+                                syncEventManager.clearMessageConsumer();
+                                return reject(msg.error);
+                            }
+                            case 'Disconnect': {
+                                handled = true;
+                                syncEventManager.clearMessageConsumer();
+                                return reject('Disconnected from nSync');
+                            }
+                            case 'Complete': {
+                                handled = true;
+                                syncEventManager.clearMessageConsumer();
+                                return resolve(true);
+                            }
                         }
-                        case 'Disconnect': {
-                            syncEventManager.clearMessageConsumer();
-                            reject('Disconnected from nSync');
-                            break;
-                        }
-                        case 'Complete': {
-                            syncEventManager.clearMessageConsumer();
-                            resolve();
-                            break;
-                        }
+                    });
+                    if (!handled) {
+                        syncEventManager.clearMessageConsumer();
+                        return resolve(false);
                     }
                 });
-            });
-            await syncEventManager.flush(trc, syncParams);
+                if (!complete) {
+                    await conduit_utils_1.sleep(250);
+                }
+            }
         }
         syncParams.setProgress && await syncParams.setProgress(trc, 1); // TODO: move syncParams into downsync and make progress granular
     }

@@ -9,20 +9,16 @@ const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_thrift_connector_1 = require("en-thrift-connector");
 const NotelockArgument = conduit_core_1.schemaToGraphQLArgs({ noteID: 'ID' });
-/*
- * Left `unknownUsers` attribute out because it needs to be converted to
- * Conduit's unified Profile struct.
- */
-const NotelockSchema = {
-    lockHolderId: 'ID?',
-    lockRenewBy: 'timestamp?',
-    viewerIds: 'ID[]',
-    viewIdleExpiration: 'timestamp?',
-    currentTime: 'timestamp?',
+const NotelockSchema = conduit_utils_1.Struct({
+    lockHolderId: conduit_utils_1.NullableID,
+    lockRenewBy: conduit_utils_1.NullableTimestamp,
+    viewerIds: conduit_utils_1.ListOf('ID'),
+    viewIdleExpiration: conduit_utils_1.NullableTimestamp,
+    currentTime: conduit_utils_1.NullableTimestamp,
     isNoteStale: 'boolean',
-};
-const Notelock = conduit_core_1.schemaToGraphQLType(NotelockSchema, 'Notelock', false);
-const NullableNotelock = conduit_core_1.schemaToGraphQLType(NotelockSchema, 'NotelockOrNull', true);
+}, 'Notelock');
+const Notelock = conduit_core_1.schemaToGraphQLType(NotelockSchema);
+const NullableNotelock = conduit_core_1.schemaToGraphQLType(conduit_utils_1.Nullable(NotelockSchema));
 async function checkNoteUpsyncStatus(context, noteID) {
     conduit_core_1.validateDB(context);
     await conduit_utils_1.withError(context.db.flushRemoteMutations());

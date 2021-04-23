@@ -3,7 +3,7 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isLookup = exports.isIndex = exports.indexesWithAnyParams = exports.indexesWithAllParams = exports.indexHasConditionFilterParam = exports.indexWithTheMostParams = exports.IndexPriority = exports.INDEX_CONFIG_VERSION = void 0;
+exports.toStoredIndexItem = exports.fromStoredIndexItem = exports.toStoredIndexSchema = exports.fromStoredIndexSchema = exports.isLookup = exports.isIndex = exports.indexesWithAnyParams = exports.indexesWithAllParams = exports.indexHasConditionFilterParam = exports.indexWithTheMostParams = exports.IndexPriority = exports.INDEX_CONFIG_VERSION = void 0;
 const conduit_utils_1 = require("conduit-utils");
 // increment this number if you make a breaking change to the IndexesItem interface or the stored index tree structure
 exports.INDEX_CONFIG_VERSION = 9; // Conor: PropagatedFields
@@ -96,4 +96,73 @@ function isLookup(indexOrLookup) {
     return typeof indexOrLookup === 'string';
 }
 exports.isLookup = isLookup;
+function fromStoredIndexSchema(storedType) {
+    if (typeof storedType === 'string') {
+        if (storedType.slice(-1) === '?') {
+            return conduit_utils_1.Nullable(storedType.slice(0, -1));
+        }
+        return storedType;
+    }
+    else if (Array.isArray(storedType)) {
+        if (storedType.slice(-1)[0] === '?') {
+            return conduit_utils_1.NullableEnum(storedType.slice(0, -1), 'temp');
+        }
+        else {
+            return conduit_utils_1.Enum(storedType, 'temp');
+        }
+    }
+    else {
+        return storedType;
+    }
+}
+exports.fromStoredIndexSchema = fromStoredIndexSchema;
+function toStoredIndexSchema(runtimeType) {
+    if (conduit_utils_1.fieldTypeIsNullable(runtimeType)) {
+        const innerType = runtimeType.nullableType;
+        if (conduit_utils_1.fieldTypeIsEnum(innerType)) {
+            return Object.keys(innerType.enumMap).concat('?');
+        }
+        return (innerType + '?');
+    }
+    if (conduit_utils_1.fieldTypeIsEnum(runtimeType)) {
+        return Object.keys(runtimeType.enumMap);
+    }
+    return runtimeType;
+}
+exports.toStoredIndexSchema = toStoredIndexSchema;
+function fromStoredIndexItem(indexItem) {
+    if (!indexItem) {
+        return undefined;
+    }
+    return {
+        key: indexItem.key,
+        index: indexItem.index.map(ind => {
+            return {
+                field: ind.field,
+                order: ind.order,
+                type: fromStoredIndexSchema(ind.type),
+                isMatchField: ind.isMatchField,
+            };
+        }),
+        indexCondition: indexItem.indexCondition,
+        inMemoryIndex: indexItem.inMemoryIndex,
+    };
+}
+exports.fromStoredIndexItem = fromStoredIndexItem;
+function toStoredIndexItem(indexItem) {
+    return {
+        key: indexItem.key,
+        index: indexItem.index.map(ind => {
+            return {
+                field: ind.field,
+                order: ind.order,
+                type: toStoredIndexSchema(ind.type),
+                isMatchField: ind.isMatchField,
+            };
+        }),
+        indexCondition: indexItem.indexCondition,
+        inMemoryIndex: indexItem.inMemoryIndex,
+    };
+}
+exports.toStoredIndexItem = toStoredIndexItem;
 //# sourceMappingURL=GraphIndexTypes.js.map

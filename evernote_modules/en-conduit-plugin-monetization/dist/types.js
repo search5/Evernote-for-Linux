@@ -3,22 +3,16 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ClientType = exports.PaywallState = void 0;
-const graphql_1 = require("graphql");
-exports.PaywallState = new graphql_1.GraphQLObjectType({
-    name: 'PaywallState',
-    fields: () => ({
-        state: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-    }),
-});
-exports.ClientType = new graphql_1.GraphQLNonNull(new graphql_1.GraphQLEnumType({
-    name: 'MonetizationClientType',
-    values: {
-        ION: { value: 1 },
-        NEUTRON_IOS: { value: 2 },
-        NEUTRON_ANDROID: { value: 3 },
-        BORON_MAC: { value: 4 },
-        BORON_WIN: { value: 5 },
-    },
-}));
+exports.ClientTypeSchema = exports.PaywallStateSchema = void 0;
+const conduit_utils_1 = require("conduit-utils");
+exports.PaywallStateSchema = conduit_utils_1.Struct({
+    state: 'string',
+}, 'PaywallState');
+exports.ClientTypeSchema = conduit_utils_1.EnumWithKeys({
+    ION: 1,
+    NEUTRON_IOS: 2,
+    NEUTRON_ANDROID: 3,
+    BORON_MAC: 4,
+    BORON_WIN: 5,
+}, 'MonetizationClientType');
 //# sourceMappingURL=types.js.map

@@ -21,9 +21,9 @@ async function hasPendingMutationsResolver(parent, args, context) {
 }
 exports.hasPendingMutationsPlugin = {
     args: {},
-    type: conduit_core_1.schemaToGraphQLType({
+    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({
         result: 'boolean',
-    }, 'HasPendingMutationsResult', false),
+    }, 'HasPendingMutationsResult')),
     resolve: hasPendingMutationsResolver,
 };
 //# sourceMappingURL=PendingMutations.js.map

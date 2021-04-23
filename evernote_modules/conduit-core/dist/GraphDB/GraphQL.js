@@ -19,7 +19,8 @@ const TelemetryMutations_1 = require("./Mutations/TelemetryMutations");
 const AutoResolvers_1 = require("./Resolvers/AutoResolvers");
 const CustomResolvers_1 = require("./Resolvers/CustomResolvers");
 const ResolverHelpers_1 = require("./Resolvers/ResolverHelpers");
-const MAX_RETRIES = 10;
+const MAX_RETRYERROR_COUNT = 10;
+const MAX_DATA_CHANGE_COUNT = 50;
 const RETRY_DELAY = 50;
 let gRecentQueryCount = {};
 let gQueryLogTimer = null;
@@ -168,9 +169,9 @@ class GraphQLResolver {
     async getData(doc, vars, context, cacheID) {
         const sels = doc.parsedFieldSelection.selections[0];
         conduit_utils_1.traceEventStart(context.trc, doc.queryName, { vars, sels });
-        return conduit_utils_1.traceEventEndWhenSettled(context.trc, doc.queryName, this.getDataInternal(doc, vars, cacheID, context, 0));
+        return conduit_utils_1.traceEventEndWhenSettled(context.trc, doc.queryName, this.getDataInternal(doc, vars, cacheID, context, 0, 0));
     }
-    async getDataInternal(doc, vars, cacheID, context, retryCount) {
+    async getDataInternal(doc, vars, cacheID, context, retryErrorCount, dataChangeRetryCount) {
         const isSlowQuery = doc.queryName.startsWith('Every') || doc.queryName.endsWith('List') || doc.queryName.startsWith('All');
         // HACK: these are frequently erroneously retriggered, don't suppress for them
         const noSuppression = isSlowQuery || doc.queryName === 'Workspace';
@@ -194,9 +195,14 @@ class GraphQLResolver {
             result = {};
         }
         if (context.watcher && context.watcher.endDataFetch()) {
-            // watches triggered while fetching data, need to refetch
-            context.dataLoaders = {}; // reset loaders so the retry doesn't use cached values
-            return this.getDataInternal(doc, vars, cacheID, context, 0);
+            if (dataChangeRetryCount < MAX_DATA_CHANGE_COUNT) {
+                // watches triggered while fetching data, need to refetch
+                context.dataLoaders = {}; // reset loaders so the retry doesn't use cached values
+                return this.getDataInternal(doc, vars, cacheID, context, 0, dataChangeRetryCount + 1);
+            }
+            else {
+                conduit_utils_1.logger.warn(`Conduit query ${doc.queryName} reached to max retry cap for data change.`);
+            }
         }
         if (result.errors) {
             const errors = result.errors.map(e => e.originalError || e);
@@ -208,11 +214,11 @@ class GraphQLResolver {
                 }
             }
             const err = new conduit_utils_1.MultiError(errors);
-            const maxRetries = doc.isMutation ? 1 : MAX_RETRIES;
-            if (err.isRetryable() && retryCount < maxRetries) {
+            const maxRetries = doc.isMutation ? 1 : MAX_RETRYERROR_COUNT;
+            if (err.isRetryable() && retryErrorCount < maxRetries) {
                 await conduit_utils_1.sleep(err.getRetryDelay(RETRY_DELAY));
                 context.dataLoaders = {}; // reset loaders so the retry doesn't use cached values
-                return this.getDataInternal(doc, vars, cacheID, context, retryCount + 1);
+                return this.getDataInternal(doc, vars, cacheID, context, retryErrorCount + 1, dataChangeRetryCount);
             }
             conduit_utils_1.logger.warn(`Conduit query ${doc.queryName} failed with error `, err);
             throw err;

@@ -203,7 +203,7 @@ class SearchProcessor {
      */
     async processEvents(trc, events) {
         // main process function has not yet been called case, userID must be directly obtained from the graphDB
-        if (this.userID === undefined || this.userID === null) {
+        if (conduit_utils_1.isNullish(this.userID)) {
             const userID = await this.searchExtractor.extractUserId(trc);
             if (!userID) {
                 return;

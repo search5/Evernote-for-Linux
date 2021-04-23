@@ -32,7 +32,7 @@ async function auxResolver(parent, args, context) {
 function addQueries(out) {
     out.AuxData = {
         args: DataSchemaGQL_1.schemaToGraphQLArgs({ id: 'string' }),
-        type: DataSchemaGQL_1.schemaToGraphQLType({ id: 'string', jsonStr: 'string?' }, 'AuxSchema', true),
+        type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.NullableStruct({ id: 'string', jsonStr: conduit_utils_1.NullableString }, 'AuxSchema')),
         resolve: auxResolver,
     };
 }

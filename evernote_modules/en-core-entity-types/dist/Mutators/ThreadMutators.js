@@ -9,12 +9,10 @@ const conduit_utils_1 = require("conduit-utils");
 const EntityConstants_1 = require("../EntityConstants");
 exports.threadCreate = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         message: 'string',
-    },
-    optionalParams: {
-        participants: 'ID[]',
-        emails: 'string[]',
+        participants: conduit_utils_1.NullableListOf('ID'),
+        emails: conduit_utils_1.NullableListOf('string'),
     },
     execute: null,
     executeOnService: async (trc, ctx, params) => {
@@ -28,13 +26,12 @@ exports.threadCreate = {
 };
 exports.threadUpdateReadStatus = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         thread: 'ID',
     },
-    optionalParams: {},
     derivedParams: {
-        maxInternalMessage: 'ID?',
-        maxMessage: 'ID?',
+        maxInternalMessage: conduit_utils_1.NullableID,
+        maxMessage: conduit_utils_1.NullableID,
     },
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
         const threadEntity = await ctx.fetchEntity(trc, { id: paramsIn.thread, type: EntityConstants_1.CoreEntityTypes.Thread });
@@ -65,10 +62,9 @@ exports.threadUpdateReadStatus = {
 };
 exports.threadDelete = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         thread: 'ID',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const threadEntity = await ctx.fetchEntity(trc, { id: params.thread, type: EntityConstants_1.CoreEntityTypes.Thread });
         if (!threadEntity) {
@@ -86,10 +82,9 @@ exports.threadDelete = {
 };
 exports.threadValidateRecipients = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {},
-    optionalParams: {
-        participants: 'ID[]',
-        emails: 'string[]',
+    params: {
+        participants: conduit_utils_1.NullableListOf('ID'),
+        emails: conduit_utils_1.NullableListOf('string'),
     },
     execute: null,
     executeOnService: async (trc, ctx, params) => {

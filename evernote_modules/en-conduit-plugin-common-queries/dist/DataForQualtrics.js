@@ -21,9 +21,9 @@ async function dataForQualtrics(parent, args, context) {
 }
 exports.dataForQualtricsPlugin = {
     args: {},
-    type: conduit_core_1.schemaToGraphQLType({
+    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({
         userId: 'number',
-    }, 'DataForQualtrics', false),
+    }, 'DataForQualtrics')),
     resolve: dataForQualtrics,
 };
 //# sourceMappingURL=DataForQualtrics.js.map

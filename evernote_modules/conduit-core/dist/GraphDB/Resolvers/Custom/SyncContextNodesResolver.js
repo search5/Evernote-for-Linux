@@ -59,12 +59,12 @@ async function debugNodeResolver(parent, args, context) {
 function addQueries(out) {
     out.debugSyncContext = {
         args: DataSchemaGQL_1.schemaToGraphQLArgs({ syncContext: 'string' }),
-        type: DataSchemaGQL_1.schemaToGraphQLType({ id: 'string', userID: 'int?' }, 'DebugSyncContextSchema', true),
+        type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.NullableStruct({ id: 'string', userID: conduit_utils_1.NullableInt }, 'DebugSyncContextSchema')),
         resolve: debugSyncContextResolver,
     };
     out.debugNode = {
         args: DataSchemaGQL_1.schemaToGraphQLArgs({ id: 'ID', type: 'string' }),
-        type: DataSchemaGQL_1.schemaToGraphQLType({ jsonStr: 'string?' }, 'DebugNodeSchema', true),
+        type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.NullableStruct({ jsonStr: conduit_utils_1.NullableString }, 'DebugNodeSchema')),
         resolve: debugNodeResolver,
     };
 }

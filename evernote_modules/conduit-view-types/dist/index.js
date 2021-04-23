@@ -31,11 +31,11 @@ var ConduitEvent;
     ConduitEvent["FIRE_NOTIFICATION"] = "FireNotification";
 })(ConduitEvent = exports.ConduitEvent || (exports.ConduitEvent = {}));
 function isExternalUpload(params) {
-    return 'url' in params;
+    return 'url' in params && params.url !== undefined && params.url !== '';
 }
 exports.isExternalUpload = isExternalUpload;
 function isLocalUpload(params) {
-    return 'path' in params;
+    return 'path' in params && params.path !== undefined && params.path !== '';
 }
 exports.isLocalUpload = isLocalUpload;
 var LocalSettingsType;

@@ -30,9 +30,9 @@ const Auth = __importStar(require("../Auth"));
 const NoteConverter_1 = require("../Converters/NoteConverter");
 const ResourceConverter_1 = require("../Converters/ResourceConverter");
 const Helpers_1 = require("../Helpers");
-const BlobWithContent = conduit_core_1.schemaToGraphQLType(Object.assign(Object.assign({}, en_core_entity_types_1.BlobBaseSchema), { content: 'string?' }), 'BlobWithContent', false);
-const NoteContentBlob = conduit_core_1.schemaToGraphQLType(Object.assign(Object.assign({}, en_core_entity_types_1.BlobBaseSchema), { content: 'string?', editSequenceNumber: 'int' }), 'NoteContentBlob', false);
-const BlobWithoutContent = conduit_core_1.schemaToGraphQLType(Object.assign({}, en_core_entity_types_1.BlobSchema), 'Blob', false);
+const BlobWithContent = conduit_core_1.schemaToGraphQLType(en_core_entity_types_1.BlobWithContentSchema);
+const NoteContentBlob = conduit_core_1.schemaToGraphQLType(en_core_entity_types_1.NoteContentBlobSchema);
+const BlobWithoutContent = conduit_core_1.schemaToGraphQLType(en_core_entity_types_1.BlobSchema);
 async function fetchAndCacheBlobContent(context, node, syncContext, blobName) {
     var _a;
     conduit_core_1.validateDB(context);
@@ -95,8 +95,8 @@ async function resolveUrl(urlEncoder, context, node, blobName) {
         return node.NodeFields[blobName].url;
     }
     const note = notes[0];
-    const userID = await context.multiUserProvider.getCurrentUserID(context.trc, context.watcher);
-    if (userID === null) {
+    const userID = await context.db.getCurrentUserID(context);
+    if (conduit_utils_1.isNullish(userID)) {
         throw new conduit_utils_1.NoUserError('Missing current userID');
     }
     return await urlEncoder(note.id, node.NodeFields[blobName].hash, node.NodeFields[blobName].url, conduit_utils_1.keyStringForUserID(userID));

@@ -8,8 +8,8 @@ const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const Auth_1 = require("../Auth");
-const BlobWithContent = conduit_core_1.schemaToGraphQLType(Object.assign(Object.assign({}, en_core_entity_types_1.BlobV2Schema), { content: 'string?' }), 'File', false);
-const BlobWithoutContent = conduit_core_1.schemaToGraphQLType(Object.assign({}, en_core_entity_types_1.BlobV2Schema), 'FileWithoutContent', false);
+const BlobWithContent = conduit_core_1.schemaToGraphQLType(en_core_entity_types_1.BlobV2WithContentSchema);
+const BlobWithoutContent = conduit_core_1.schemaToGraphQLType(en_core_entity_types_1.BlobV2Schema);
 async function resolveUrl(hostResolver, urlEncoder, context, node, blobName, overrideUrlHost) {
     if (!node.NodeFields[blobName].path) {
         return null;
@@ -21,8 +21,8 @@ async function resolveUrl(hostResolver, urlEncoder, context, node, blobName, ove
     if (!urlEncoder) {
         return urlWithHost;
     }
-    const userID = await context.multiUserProvider.getCurrentUserID(context.trc, context.watcher);
-    if (userID === null) {
+    const userID = await context.db.getCurrentUserID(context);
+    if (conduit_utils_1.isNullish(userID)) {
         throw new conduit_utils_1.NoUserError('Missing current userID');
     }
     return await urlEncoder(node.id, node.NodeFields[blobName].hash, urlWithHost, conduit_utils_1.keyStringForUserID(userID), fileHost);

@@ -295,7 +295,8 @@ async function syncReverse(trc, params, filter, maxNotes, maxNotesPerFetch, maxT
     const noteStore = params.thriftComm.getNoteStore(params.auth.urls.noteStoreUrl);
     let lastUpdateCount = (await SyncHelpers_1.getLocalSyncState(trc, params, exports.EmptyNoteStoreSyncState)).lastUpdateCount;
     const start = Date.now();
-    let noteGuids = [];
+    const noteGuids = [];
+    const noteInTrashGuids = [];
     while (true) {
         await params.yieldCheck;
         const maxNotesReached = noteGuids.length >= maxNotes;
@@ -311,7 +312,14 @@ async function syncReverse(trc, params, filter, maxNotes, maxNotesPerFetch, maxT
         }
         lastUpdateCount = chunk.prevChunkHighUSN;
         if (chunk.notes && chunk.notes.length) {
-            noteGuids = noteGuids.concat(chunk.notes.map(note => note.guid));
+            for (const note of chunk.notes) {
+                if (conduit_utils_1.isNullish(note.deleted)) {
+                    noteGuids.push(note.guid);
+                }
+                else {
+                    noteInTrashGuids.push(note.guid);
+                }
+            }
         }
         await ChunkConversion_1.convertSyncChunk(trc, params, chunk, lastUpdateCount);
         let percentage = 0;
@@ -332,6 +340,7 @@ async function syncReverse(trc, params, filter, maxNotes, maxNotesPerFetch, maxT
     }
     return {
         noteGuids,
+        noteInTrashGuids,
         hasMore: lastUpdateCount > 0,
     };
 }

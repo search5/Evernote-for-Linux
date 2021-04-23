@@ -4,11 +4,11 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.processNSyncDoc = void 0;
+const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
-const index_1 = require("./index");
 const NSyncEntityConverter_1 = require("./NSyncEntityConverter");
 async function processEntityAndEdges(trc, entityAndEdges, tx) {
     const { nodes, edges } = entityAndEdges;
@@ -16,12 +16,12 @@ async function processEntityAndEdges(trc, entityAndEdges, tx) {
         for (const node of nodes.nodesToUpsert) {
             const syncContext = (node.syncContexts.length > 1) ?
                 node.syncContexts[0] : // TODO remove once syncContexts are removed
-                index_1.NSYNC_CONTEXT;
+                conduit_storage_1.NSYNC_CONTEXT;
             // add updated/new node
             await tx.replaceNode(trc, syncContext, node);
         }
         for (const node of nodes.nodesToDelete) {
-            const syncContext = index_1.NSYNC_CONTEXT; // Remove when we remove sync context
+            const syncContext = conduit_storage_1.NSYNC_CONTEXT; // Remove when we remove sync context
             await tx.deleteNode(trc, syncContext, node);
         }
     }
@@ -96,7 +96,7 @@ async function removeMembership(trc, eventManager, tx, membership) {
         return;
     }
     eventManager.addToExpunged(membershipRef.id);
-    const didDeleteMembership = await tx.deleteNode(trc, index_1.NSYNC_CONTEXT, membershipRef); // All contexts are nysnc for now till we delete syncContexts
+    const didDeleteMembership = await tx.deleteNode(trc, conduit_storage_1.NSYNC_CONTEXT, membershipRef); // All contexts are nysnc for now till we delete syncContexts
     if (!didDeleteMembership) {
         conduit_utils_1.logger.warn(`Node (id: ${membershipRef.id}, type: ${membershipRef.type}) could not be expunged. Possibly missing.`);
     }
@@ -145,7 +145,7 @@ async function deleteSyncInstance(trc, instance, currentUserID, eventManager, tx
                 conduit_utils_1.logger.warn('Did not receive single node for delete');
                 break;
             }
-            const syncContext = index_1.NSYNC_CONTEXT;
+            const syncContext = conduit_storage_1.NSYNC_CONTEXT;
             // add updated/new node
             await tx.replaceNode(trc, syncContext, nodes[0]);
             break;
@@ -194,7 +194,7 @@ async function expungeSyncInstance(trc, instance, eventManager, tx) {
                 break;
             }
             eventManager.addToExpunged(nodeRef.id);
-            const didDelete = await tx.deleteNode(trc, index_1.NSYNC_CONTEXT, nodeRef); // All contexts are nsync for now till we delete syncContexts
+            const didDelete = await tx.deleteNode(trc, conduit_storage_1.NSYNC_CONTEXT, nodeRef); // All contexts are nsync for now till we delete syncContexts
             if (!didDelete) {
                 conduit_utils_1.logger.warn(`Node (id: ${nodeRef.id}, type: ${nodeRef.type}) could not be expunged. Possibly missing.`);
             }

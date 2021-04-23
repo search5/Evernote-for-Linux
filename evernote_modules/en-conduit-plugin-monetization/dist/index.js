@@ -34,18 +34,16 @@ function getENMonetizationPlugin() {
         name: 'ENMonetization',
         defineQueries: () => ({
             getPaywallState: {
-                type: types_1.PaywallState,
-                args: {
-                    clientType: {
-                        type: types_1.ClientType,
-                    },
-                },
+                type: conduit_core_1.schemaToGraphQLType(types_1.PaywallStateSchema),
+                args: conduit_core_1.schemaToGraphQLArgs({
+                    clientType: types_1.ClientTypeSchema,
+                }),
                 resolve: getPaywallStateResolver,
             },
         }),
         defineMutators: () => ({
             createDeviceSync: {
-                type: types_1.PaywallState,
+                type: conduit_core_1.schemaToGraphQLType(types_1.PaywallStateSchema),
                 resolve: createDeviceSyncResolver,
             },
         }),

@@ -9,10 +9,9 @@ const conduit_utils_1 = require("conduit-utils");
 const EntityConstants_1 = require("../EntityConstants");
 exports.invitationAccept = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         invitation: 'ID',
     },
-    optionalParams: {},
     execute: null,
     executeOnService: async (trc, ctx, params) => {
         const invitationRef = { id: params.invitation, type: EntityConstants_1.CoreEntityTypes.Invitation };

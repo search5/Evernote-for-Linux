@@ -7,7 +7,6 @@ exports.sendMarketingEmailPlugin = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_thrift_connector_1 = require("en-thrift-connector");
-const graphql_1 = require("graphql");
 async function sendMarketingEmailResolver(parent, args, context) {
     conduit_core_1.validateDB(context);
     const metadata = await context.db.getSyncContextMetadata(context, conduit_core_1.PERSONAL_USER_CONTEXT);
@@ -21,18 +20,13 @@ async function sendMarketingEmailResolver(parent, args, context) {
 }
 exports.sendMarketingEmailPlugin = {
     type: conduit_core_1.GenericMutationResult,
-    args: {
-        marketingEmailType: {
-            type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLEnumType({
-                name: 'MarketingEmailType',
-                values: {
-                    DESKTOP_UPSELL: { value: 1 },
-                    CLIPPER_UPSELL: { value: 2 },
-                    MOBILE_UPSELL: { value: 3 },
-                },
-            })),
-        },
-    },
+    args: conduit_core_1.schemaToGraphQLArgs({
+        marketingEmailType: conduit_utils_1.EnumWithKeys({
+            DESKTOP_UPSELL: 1,
+            CLIPPER_UPSELL: 2,
+            MOBILE_UPSELL: 3,
+        }, 'MarketingEmailType'),
+    }),
     resolve: sendMarketingEmailResolver,
 };
 //# sourceMappingURL=SendMarketingEmail.js.map

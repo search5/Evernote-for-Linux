@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.inNoteTaskApplyChanges = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const graphql_1 = require("graphql");
 const SyncInNoteTasks_1 = require("./SyncInNoteTasks");
 async function resolver(parent, args, context) {
     if (!args) {
@@ -32,46 +31,38 @@ async function resolver(parent, args, context) {
         success: true,
     };
 }
-const ReminderInput = new graphql_1.GraphQLInputObjectType({
-    name: 'ReminderInput',
-    fields: {
-        noteLevelID: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-        reminderDate: { type: graphql_1.GraphQLFloat },
-        reminderDateUIOption: { type: graphql_1.GraphQLString },
-        timeZone: { type: graphql_1.GraphQLString },
-        dueDateOffset: { type: graphql_1.GraphQLFloat },
-    },
-});
-const TaskInput = new graphql_1.GraphQLInputObjectType({
-    name: 'TaskInput',
-    fields: {
-        noteLevelID: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-        status: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-        label: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-        localChangeTimestamp: { type: graphql_1.GraphQLFloat },
-        dueDate: { type: graphql_1.GraphQLFloat },
-        dueDateUIOption: { type: graphql_1.GraphQLString },
-        timeZone: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-        flag: { type: graphql_1.GraphQLBoolean },
-        sortWeight: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-        reminders: { type: new graphql_1.GraphQLList(ReminderInput) },
-    },
-});
-const TaskGroupInput = new graphql_1.GraphQLInputObjectType({
-    name: 'TaskGroupInput',
-    fields: {
-        noteLevelID: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-        sortWeight: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-        children: { type: new graphql_1.GraphQLList(TaskInput) },
-    },
-});
+const ReminderInputSchema = conduit_utils_1.Struct({
+    noteLevelID: 'string',
+    reminderDate: conduit_utils_1.NullableTimestamp,
+    reminderDateUIOption: conduit_utils_1.NullableString,
+    timeZone: conduit_utils_1.NullableString,
+    dueDateOffset: conduit_utils_1.NullableTimestamp,
+}, 'ReminderInput');
+const TaskInputSchema = conduit_utils_1.Struct({
+    noteLevelID: 'string',
+    status: 'string',
+    label: 'string',
+    localChangeTimestamp: conduit_utils_1.NullableTimestamp,
+    dueDate: conduit_utils_1.NullableTimestamp,
+    dueDateUIOption: conduit_utils_1.NullableString,
+    timeZone: conduit_utils_1.NullableString,
+    flag: 'boolean',
+    sortWeight: 'string',
+    inNote: conduit_utils_1.NullableBoolean,
+    reminders: conduit_utils_1.ListOf(ReminderInputSchema),
+}, 'TaskInput');
+const TaskGroupInputSchema = conduit_utils_1.Struct({
+    noteLevelID: 'string',
+    sortWeight: 'string',
+    children: conduit_utils_1.ListOf(TaskInputSchema),
+}, 'TaskGroupInput');
 exports.inNoteTaskApplyChanges = {
-    args: {
-        noteID: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-        taskGroupList: { type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(TaskGroupInput)) },
-        loadedTaskGroupList: { type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(TaskGroupInput)) },
-        sourceOfChange: { type: graphql_1.GraphQLString },
-    },
+    args: conduit_core_1.schemaToGraphQLArgs({
+        noteID: 'ID',
+        taskGroupList: conduit_utils_1.ListOf(TaskGroupInputSchema),
+        loadedTaskGroupList: conduit_utils_1.ListOf(TaskGroupInputSchema),
+        sourceOfChange: conduit_utils_1.NullableString,
+    }),
     type: conduit_core_1.GenericMutationResult,
     resolve: resolver,
 };

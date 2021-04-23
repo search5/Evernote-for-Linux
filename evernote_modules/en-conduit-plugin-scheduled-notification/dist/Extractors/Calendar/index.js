@@ -4,38 +4,22 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.extractCalendarNotification = void 0;
+const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const ScheduledNotificationConstants_1 = require("../../ScheduledNotificationConstants");
-const extractCalendarNotification = (notificationEntity) => {
-    if (!notificationEntity) {
-        conduit_utils_1.logger.warn(`notificationEntity is not defined. Aborting`);
-        return null;
-    }
-    if (!notificationEntity.NodeFields || !notificationEntity.NodeFields.data) {
-        conduit_utils_1.logger.warn(`Cannot get notification data for notification ID ${notificationEntity.id}. Data field is missing. Aborting`);
-        return null;
-    }
-    let target;
-    let actionName;
-    if (notificationEntity.NodeFields.data.noteId) {
-        target = notificationEntity.NodeFields.data.noteId;
-        actionName = ScheduledNotificationConstants_1.NotificationActionNames.CalendarNavigateToNote;
-    }
-    else {
-        target = notificationEntity.NodeFields.data.calendarEventId;
-        actionName = ScheduledNotificationConstants_1.NotificationActionNames.CalendarCreateNote;
-    }
-    return {
-        notification: {
-            id: notificationEntity.id,
-            body: notificationEntity.NodeFields.data.title,
-            clickNotificationActionTarget: target,
-            clickNotificationActionName: actionName,
-        },
-        sendAt: Number(notificationEntity.NodeFields.data.notificationTime),
-        updated: notificationEntity.NodeFields.updated,
-        targetClientType: notificationEntity.NodeFields.data.clientType,
+const en_core_entity_types_1 = require("en-core-entity-types");
+const utils_1 = require("./utils");
+async function extractCalendarNotification(trc, graphDB, notificationEntity) {
+    // Fetch user info
+    const userRef = {
+        id: conduit_core_1.PERSONAL_USER_ID,
+        type: en_core_entity_types_1.CoreEntityTypes.User,
     };
-};
+    const user = await graphDB.getNodeWithoutGraphQLContext(trc, userRef);
+    if (!user) {
+        conduit_utils_1.logger.warn(`Unable to fetch user info. Aborting`);
+        return null;
+    }
+    return utils_1.extractCalendarNotificationData(notificationEntity, utils_1.getUserLocale(user));
+}
 exports.extractCalendarNotification = extractCalendarNotification;
 //# sourceMappingURL=index.js.map

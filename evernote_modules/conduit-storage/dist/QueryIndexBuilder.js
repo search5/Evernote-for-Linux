@@ -168,7 +168,7 @@ function validateFieldType(field, type) {
     if (!type) {
         throw new Error(`Missing schemaType for field ${field}`);
     }
-    if (conduit_utils_1.fieldTypeIsObject(type) || conduit_utils_1.fieldIsMapType(type)) {
+    if (conduit_utils_1.fieldTypeIsStruct(type) || conduit_utils_1.fieldTypeIsMap(type)) {
         throw new Error(`Currently unable to index on field type ${type} for field ${field}`);
     }
     return true;
@@ -335,44 +335,47 @@ function buildNodeIndexConfiguration(nodeTypeDef, params) {
             srcField: propagatedFrom.srcField,
         };
     }
-    const denormalizedQueries = {};
-    for (const queryName in queries) {
-        const query = queries[queryName];
-        for (const paramName in query.params) {
-            const param = query.params[paramName];
-            if (!QueryDefs_1.isQueryMatchParamConfig(param)) {
-                continue;
-            }
-            const field = param.match.field;
-            const resolver = indexResolvers[field];
-            const resolverSchemaType = resolver.schemaType;
-            let schemaType = 'ID';
-            if (resolverSchemaType === 'ID' || resolverSchemaType === 'ID?') {
-                schemaType = 'ID';
-            }
-            else if (resolverSchemaType === 'EntityRef' || resolverSchemaType === 'EntityRef?') {
-                schemaType = 'EntityRef';
-            }
-            else {
-                continue;
-            }
-            const entityTypes = resolver.entityRefTypes || [];
-            for (const srcType of entityTypes) {
-                denormalizedQueries[srcType] = denormalizedQueries[srcType] || {};
-                denormalizedQueries[srcType][queryName] = {
-                    paramName,
-                    schemaType,
-                    traversalName: params.queries[queryName].traversalName || null,
-                    traversalConstraint: params.queries[queryName].traversalConstraint || GraphTypes_1.EdgeConstraint.MANY,
-                };
+    const denormalizeQueries = (def) => {
+        const denormalizedQueries = {};
+        for (const queryName in queries) {
+            const query = queries[queryName];
+            for (const paramName in query.params) {
+                const param = query.params[paramName];
+                if (!QueryDefs_1.isQueryMatchParamConfig(param)) {
+                    continue;
+                }
+                const field = param.match.field;
+                const resolver = indexResolvers[field];
+                const resolverSchemaType = conduit_utils_1.fieldTypeToNonNull(resolver.schemaType);
+                let schemaType = 'ID';
+                if (resolverSchemaType === 'ID') {
+                    schemaType = 'ID';
+                }
+                else if (resolverSchemaType === 'EntityRef') {
+                    schemaType = 'EntityRef';
+                }
+                else {
+                    continue;
+                }
+                const entityTypes = resolver.entityRefTypes ? (Array.isArray(resolver.entityRefTypes) ? resolver.entityRefTypes : resolver.entityRefTypes(def)) : [];
+                for (const srcType of entityTypes) {
+                    denormalizedQueries[srcType] = denormalizedQueries[srcType] || {};
+                    denormalizedQueries[srcType][queryName] = {
+                        paramName,
+                        schemaType,
+                        traversalName: params.queries[queryName].traversalName || null,
+                        traversalConstraint: params.queries[queryName].traversalConstraint || GraphTypes_1.EdgeConstraint.MANY,
+                    };
+                }
             }
         }
-    }
+        return denormalizedQueries;
+    };
     const config = simply_immutable_1.deepFreeze({
         priority: params.priority,
         indexResolvers: indexResolvers,
         denormalizedIndexPropagations,
-        denormalizedQueries,
+        denormalizeQueries,
         queries,
         indexes,
         lookups: (params.lookups || []),

@@ -5,6 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addUserMutators = exports.addUserRequestQueries = void 0;
 const conduit_core_1 = require("conduit-core");
+const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const Auth_1 = require("../Auth");
@@ -30,9 +31,16 @@ const TSD_VARIATION_ENUM = [
     'FULLSCREEN_NEWYEAR',
     'TEST_UNSUPPORTED',
 ];
+const TsdVariationSchema = conduit_utils_1.Enum(TSD_VARIATION_ENUM, 'TsdVariation');
+var TsdType;
+(function (TsdType) {
+    TsdType["REGULAR_TSD"] = "REGULAR_TSD";
+    TsdType["TARGETED_UPSELL"] = "TARGETED_UPSELL";
+})(TsdType || (TsdType = {}));
+const TsdTypeSchema = conduit_utils_1.Enum(TsdType, 'TsdType');
 const TSD_TYPE_THRIFT_TO_ENUM = {
-    [en_conduit_sync_types_1.TTsdType.REGULAR_TSD]: 'REGULAR_TSD',
-    [en_conduit_sync_types_1.TTsdType.TARGETED_UPSELL]: 'TARGETED_UPSELL',
+    [en_conduit_sync_types_1.TTsdType.REGULAR_TSD]: TsdType.REGULAR_TSD,
+    [en_conduit_sync_types_1.TTsdType.TARGETED_UPSELL]: TsdType.TARGETED_UPSELL,
 };
 const TSD_VARIATION_THRIFT_TO_ENUM = {
     [en_conduit_sync_types_1.TTsdVariation.DIALOG_VAR1]: 'DIALOG_VAR1',
@@ -82,16 +90,16 @@ function addUserRequestQueries(out) {
         };
     }
     out.userGetTsdEligibility = {
-        type: conduit_core_1.schemaToGraphQLType({
+        type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({
             shouldShowTsd: 'boolean',
-            tsdType: ['REGULAR_TSD', 'TARGETED_UPSELL', '?'],
-            tsdVariation: [...TSD_VARIATION_ENUM, '?'],
-        }, 'TierSelectionDisplayResult', false),
+            tsdType: conduit_utils_1.Nullable(TsdTypeSchema),
+            tsdVariation: conduit_utils_1.Nullable(TsdVariationSchema),
+        }, 'TierSelectionDisplayResult')),
         args: conduit_core_1.schemaToGraphQLArgs({
-            numSessionsLast7Days: 'int?',
-            numSessionsLast30Days: 'int?',
-            numDaysActiveLast7Days: 'int?',
-            numDaysActiveLast30Days: 'int?',
+            numSessionsLast7Days: conduit_utils_1.NullableInt,
+            numSessionsLast30Days: conduit_utils_1.NullableInt,
+            numDaysActiveLast7Days: conduit_utils_1.NullableInt,
+            numDaysActiveLast30Days: conduit_utils_1.NullableInt,
         }),
         resolve: userGetTsdEligibilityResolver,
     };
@@ -128,7 +136,7 @@ function addUserMutators(out) {
     }
     out.userAssociateWithOpenID = {
         args: conduit_core_1.schemaToGraphQLArgs({
-            provider: Auth_1.SERVICE_PROVIDER_OPTIONAL_ENUM,
+            provider: Auth_1.ServiceProviderSchema,
             tokenPayload: 'string',
         }),
         type: conduit_core_1.GenericMutationResult,

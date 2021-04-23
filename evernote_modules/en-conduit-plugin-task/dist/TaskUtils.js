@@ -3,22 +3,37 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseAndValidateTasksExportData = exports.getTasksExportData = exports.getTaskUserSettingsIdByUserId = exports.getTaskUserSettingsByMutationContext = void 0;
+exports.parseAndValidateTasksExportData = exports.getTasksExportData = exports.getTaskUserSettingsIdByUserId = exports.getTaskUserSettingsByMutationContext = exports.TasksExportDataSchema = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const NoteContentInfo_1 = require("./Mutators/Helpers/NoteContentInfo");
 const TaskConstants_1 = require("./TaskConstants");
 const TaskCreateDataSchema = {
     label: 'string',
-    dueDate: 'number?',
-    timeZone: 'string?',
-    dueDateUIOption: ['date_time', 'date_only', '?'],
-    flag: 'boolean?',
-    sortWeight: 'string?',
-    noteLevelID: 'string?',
-    status: 'string?',
+    dueDate: conduit_utils_1.NullableNumber,
+    timeZone: conduit_utils_1.NullableString,
+    dueDateUIOption: conduit_utils_1.Nullable(TaskConstants_1.DueDateUIOptionSchema),
+    flag: conduit_utils_1.NullableBoolean,
+    sortWeight: conduit_utils_1.NullableString,
+    noteLevelID: conduit_utils_1.NullableString,
+    status: conduit_utils_1.NullableString,
     sourceOfChange: 'string',
 };
+exports.TasksExportDataSchema = conduit_utils_1.Struct({
+    tasks: conduit_utils_1.ListOfStructs({
+        label: 'string',
+        taskGroupNoteLevelID: 'string',
+        dueDate: conduit_utils_1.NullableNumber,
+        timeZone: conduit_utils_1.NullableString,
+        dueDateUIOption: conduit_utils_1.NullableString,
+        flag: conduit_utils_1.NullableBoolean,
+        sortWeight: conduit_utils_1.NullableString,
+        noteLevelID: conduit_utils_1.NullableString,
+        status: conduit_utils_1.NullableString,
+        sourceOfChange: 'string',
+    }),
+    taskGroupNoteLevelIDs: conduit_utils_1.ListOf('string'),
+}, 'TasksExportData');
 function getTaskUserSettingsByMutationContext(ctx) {
     return getTaskUserSettingsIdByUserId(ctx.userID);
 }

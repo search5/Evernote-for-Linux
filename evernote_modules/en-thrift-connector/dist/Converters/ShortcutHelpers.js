@@ -5,19 +5,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateShortCutEntry = exports.reconcileIncomingShortcuts = void 0;
 const conduit_utils_1 = require("conduit-utils");
-/**
- *  map Type to [min, max] entries in shortcut
- *  https://source.build.etonreve.com/projects/WEB/repos/web/browse/webclient/webclient-client/src/main/java/com/evernote/web/client/edam/type/ShortcutType.java
- */
-const ShortCutTypeLimits = {
-    Note: [1, 2],
-    Notebook: [1, 1],
-    SavedSearch: [1, 1],
-    Stack: [1, 1],
-    Tag: [1, 2],
-    Trash: [0, 0],
-    Workspace: [1, 1],
-};
+const en_core_entity_types_1 = require("en-core-entity-types");
+const shortcutSourceTypesSet = new Set(en_core_entity_types_1.shortcutSourceTypes);
 // The currentShortcuts object will be modified in this function
 async function reconcileIncomingShortcuts(incomingShortcuts, currentShortcuts, process) {
     let inserts = [];
@@ -144,30 +133,12 @@ async function reconcileIncomingShortcuts(incomingShortcuts, currentShortcuts, p
     }
 }
 exports.reconcileIncomingShortcuts = reconcileIncomingShortcuts;
-// here corresponding monolith logic
-// https://source.build.etonreve.com/projects/WEB/repos/web/browse/webclient/webclient-client/src/main/java/com/evernote/web/client/edam/type/ShortcutType.java
 function validateShortCutEntry(shortCutEntry) {
-    function logInvalid() {
-        conduit_utils_1.logger.warn('Unknown or invalid data type for shortcut entry', shortCutEntry);
-    }
-    if (!shortCutEntry.length) {
-        logInvalid();
+    if (shortCutEntry.length < 2) {
         return false;
     }
     const type = shortCutEntry[0];
-    if (!ShortCutTypeLimits[type]) {
-        logInvalid();
-        return false;
-    }
-    const [min, max] = ShortCutTypeLimits[type];
-    const valueLength = shortCutEntry.length - 1; // first is key entry;
-    if (valueLength < min || valueLength > max) {
-        logInvalid();
-        return false;
-    }
-    else {
-        return true;
-    }
+    return shortcutSourceTypesSet.has(type);
 }
 exports.validateShortCutEntry = validateShortCutEntry;
 //# sourceMappingURL=ShortcutHelpers.js.map

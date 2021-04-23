@@ -9,10 +9,9 @@ const EntityConstants_1 = require("../EntityConstants");
 const User_1 = require("../NodeTypes/User");
 exports.userSetReminderSetting = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
-        setting: Object.values(User_1.UserReminderEmailConfig),
+    params: {
+        setting: User_1.UserReminderEmailConfigSchema,
     },
-    optionalParams: {},
     execute: null,
     executeOnService: async (trc, ctx, params) => {
         return {

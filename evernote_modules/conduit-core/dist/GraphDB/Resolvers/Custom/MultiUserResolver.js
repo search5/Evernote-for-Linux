@@ -5,17 +5,18 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addQueries = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const graphql_1 = require("graphql");
 const DataSchemaGQL_1 = require("../../../Types/DataSchemaGQL");
+const UserInfoSchema = conduit_utils_1.Struct({
+    userID: 'string',
+    username: 'string',
+    email: 'string',
+    fullName: 'string',
+    businessName: 'string',
+    photoUrl: 'url',
+}, 'UserInfo');
 async function getCurrentUserIDResolver(parent, args, context) {
-    if (!context) {
-        throw new Error('Missing graphql context');
-    }
-    const userID = await context.multiUserProvider.getCurrentUserID(context.trc, context.watcher);
-    if (!userID) {
-        return null;
-    }
-    return conduit_utils_1.keyStringForUserID(userID);
+    const userID = await (context === null || context === void 0 ? void 0 : context.multiUserProvider.getCurrentUserID(context.trc, context.watcher));
+    return conduit_utils_1.isNullish(userID) ? null : conduit_utils_1.keyStringForUserID(userID);
 }
 async function userInfoListResolver(parent, args, context) {
     if (!context) {
@@ -40,22 +41,14 @@ async function userInfoListResolver(parent, args, context) {
     return userInfoList;
 }
 function addQueries(out) {
-    const userInfoType = DataSchemaGQL_1.schemaToGraphQLType({
-        userID: 'ID',
-        username: 'string',
-        email: 'string',
-        fullName: 'string',
-        businessName: 'string',
-        photoUrl: 'string',
-    }, 'UserInfo', false);
     out.currentUserID = {
         args: DataSchemaGQL_1.schemaToGraphQLArgs({}),
-        type: DataSchemaGQL_1.schemaToGraphQLType('string?', 'CurrentUserIDSchema', true),
+        type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.NullableString),
         resolve: getCurrentUserIDResolver,
     };
     out.userInfoList = {
         args: DataSchemaGQL_1.schemaToGraphQLArgs({}),
-        type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(userInfoType)),
+        type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.ListOf(UserInfoSchema)),
         resolve: userInfoListResolver,
     };
 }

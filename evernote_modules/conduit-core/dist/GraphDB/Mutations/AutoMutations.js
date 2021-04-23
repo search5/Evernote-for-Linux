@@ -13,21 +13,10 @@ const AutoResolvers_1 = require("../Resolvers/AutoResolvers");
 const ResolverHelpers_1 = require("../Resolvers/ResolverHelpers");
 function buildArgs(mutatorName, def) {
     const out = {};
-    const reqParams = def.requiredParams;
-    const optParams = def.optionalParams;
-    for (const paramName in reqParams) {
-        const typedef = reqParams[paramName];
-        const gqlType = DataSchemaGQL_1.schemaToGraphQLType(typedef, `${mutatorName}_${paramName}`, false);
-        if (!gqlType) {
-            throw new Error(`Unsupported type "${typedef}" for arg "${paramName}"`);
-        }
-        out[paramName] = {
-            type: gqlType,
-        };
-    }
-    for (const paramName in optParams) {
-        const typedef = optParams[paramName];
-        const gqlType = DataSchemaGQL_1.schemaToGraphQLType(typedef, `${mutatorName}_${paramName}`, true);
+    const params = def.params;
+    for (const paramName in params) {
+        const typedef = params[paramName];
+        const gqlType = DataSchemaGQL_1.schemaToGraphQLInputType(typedef, { defaultName: `${mutatorName}_${paramName}` });
         if (!gqlType) {
             throw new Error(`Unsupported type "${typedef}" for arg "${paramName}"`);
         }

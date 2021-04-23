@@ -24,6 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPreferencePlugin = void 0;
 const conduit_core_1 = require("conduit-core");
+const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const Auth = __importStar(require("../Auth"));
 function getPreferencePlugin() {
@@ -82,7 +83,7 @@ function getPreferencePlugin() {
         defineQueries: () => ({
             preferenceGetWorkChatActive: {
                 args: conduit_core_1.schemaToGraphQLArgs({}),
-                type: conduit_core_1.schemaToGraphQLType({ isActive: 'boolean' }, 'preferenceGetWorkChatActiveResult', false),
+                type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({ isActive: 'boolean' }, 'preferenceGetWorkChatActiveResult')),
                 resolve: workChatPreferenceResolver,
             },
         }),

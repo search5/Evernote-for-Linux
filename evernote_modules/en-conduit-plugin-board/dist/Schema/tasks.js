@@ -4,10 +4,10 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.tasksFeatureVersionOne = void 0;
-const BoardConstants_1 = require("../BoardConstants");
+const en_data_model_1 = require("en-data-model");
 exports.tasksFeatureVersionOne = {
     widgetTypeGenerator: () => {
-        return [{ widgetType: BoardConstants_1.WidgetType.Tasks, isPremiumWidget: true }];
+        return [en_data_model_1.WidgetType.Tasks];
     },
     schemeUpgradeConverter: async () => {
         return {};

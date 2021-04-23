@@ -27,7 +27,6 @@ const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
-const en_nsync_connector_1 = require("en-nsync-connector");
 const Auth = __importStar(require("./Auth"));
 const BlobConverter = __importStar(require("./Converters/BlobConverter"));
 const Converters_1 = require("./Converters/Converters");
@@ -58,6 +57,9 @@ function isBlobUploadOperation(change) {
 }
 function isFileUploadOperation(change) {
     return !isCommandRun(change) && change.changeType === 'File:UPLOAD';
+}
+function isDBOnlyOperation(change) {
+    return !isCommandRun(change) && change.hasOwnProperty('upsyncToDBOnly') && change.upsyncToDBOnly;
 }
 function convertBlobData(blob) {
     var _a, _b;
@@ -118,7 +120,7 @@ class ThriftGraphInterface {
         };
         this.resolveOwnerRef = async (trc, owner) => {
             const syncContext = await this.getNodeBestSyncContext(trc, this.config.graphStorage, owner);
-            if (syncContext === en_nsync_connector_1.NSYNC_CONTEXT) {
+            if (syncContext === conduit_storage_1.NSYNC_CONTEXT) {
                 const node = await this.fetchEntity(trc, owner);
                 return node && node.owner || conduit_utils_1.NullUserID;
             }
@@ -165,8 +167,12 @@ class ThriftGraphInterface {
                 const mod = nodesModified[nodeID];
                 edgeConverter = Converters_1.getNodeConverter(mod.type);
                 const syncContext = await this.getNodeBestSyncContext(trc, mutatorParams.graphTransaction, { id: nodeID, type: mod.type });
-                const appliedToGraph = edgeConverter && await edgeConverter.applyEdgeChangesToService(trc, mutatorParams, syncContext, nodeID, mod.changes);
-                if (edgeConverter && !appliedToGraph) {
+                const dbOnlyOp = isDBOnlyOperation(modifyChange);
+                let appliedToGraph = false;
+                if (!dbOnlyOp && edgeConverter) {
+                    appliedToGraph = await edgeConverter.applyEdgeChangesToService(trc, mutatorParams, syncContext, nodeID, mod.changes);
+                }
+                if (dbOnlyOp || (edgeConverter && !appliedToGraph)) {
                     await mutatorParams.graphTransaction.replaceEdges(trc, mod.edgesToDelete, mod.edgesToCreate);
                 }
             }
@@ -184,6 +190,7 @@ class ThriftGraphInterface {
         let currentChange = change;
         let attempt = 0;
         let result = null;
+        const dbOnlyOp = isDBOnlyOperation(change);
         while (attempt < MAX_ATTEMPTS) {
             try {
                 if (isCommandRun(currentChange)) {
@@ -204,8 +211,11 @@ class ThriftGraphInterface {
                     case 'Node:CREATE': {
                         converter = Converters_1.getNodeConverter(currentChange.node.type);
                         const syncContext = await this.getNodeBestSyncContext(trc, mutatorParams.graphTransaction, currentChange.id[3]);
-                        const appliedToGraph = converter && await converter.createOnService(trc, mutatorParams, syncContext, currentChange.node, currentChange.id[0], currentChange.remoteFields || {}, currentChange.blobs);
-                        if (converter && !appliedToGraph) {
+                        let appliedToGraph = false;
+                        if (!dbOnlyOp && converter) {
+                            appliedToGraph = await converter.createOnService(trc, mutatorParams, syncContext, currentChange.node, currentChange.id[0], currentChange.remoteFields || {}, currentChange.blobs);
+                        }
+                        if (dbOnlyOp || (converter && !appliedToGraph)) {
                             await mutatorParams.graphTransaction.createNode(trc, syncContext, currentChange.node);
                             if (currentChange.blobs) {
                                 for (const blobName in currentChange.blobs) {
@@ -222,8 +232,11 @@ class ThriftGraphInterface {
                             // node doesn't exist
                             break;
                         }
-                        const appliedToGraph = converter && await converter.deleteFromService(trc, mutatorParams, syncContext, [currentChange.nodeRef.id]);
-                        if (converter && !appliedToGraph) {
+                        let appliedToGraph = false;
+                        if (!dbOnlyOp && converter) {
+                            appliedToGraph = await converter.deleteFromService(trc, mutatorParams, syncContext, [currentChange.nodeRef.id]);
+                        }
+                        if (dbOnlyOp || (converter && !appliedToGraph)) {
                             await mutatorParams.graphTransaction.deleteNode(trc, syncContext, currentChange.nodeRef);
                         }
                         break;
@@ -242,8 +255,11 @@ class ThriftGraphInterface {
                             const nodesByContext = nodesByTypeAndContext[nodeType];
                             converter = Converters_1.getNodeConverter(nodeType);
                             for (const syncContext in nodesByContext) {
-                                const appliedToGraph = converter && await converter.deleteFromService(trc, mutatorParams, syncContext, nodesByContext[syncContext]);
-                                if (converter && !appliedToGraph) {
+                                let appliedToGraph = false;
+                                if (!dbOnlyOp && converter) {
+                                    appliedToGraph = await converter.deleteFromService(trc, mutatorParams, syncContext, nodesByContext[syncContext]);
+                                }
+                                if (dbOnlyOp || (converter && !appliedToGraph)) {
                                     for (const nodeID of nodesByContext[syncContext]) {
                                         await mutatorParams.graphTransaction.deleteNode(trc, syncContext, { id: nodeID, type: nodeType });
                                     }
@@ -255,8 +271,11 @@ class ThriftGraphInterface {
                     case 'Node:UPDATE': {
                         converter = Converters_1.getNodeConverter(currentChange.nodeRef.type);
                         const syncContext = await this.getNodeBestSyncContext(trc, mutatorParams.graphTransaction, currentChange.nodeRef);
-                        const appliedToGraph = converter && await converter.updateToService(trc, mutatorParams, syncContext, currentChange.nodeRef.id, currentChange.node);
-                        if (converter && !appliedToGraph) {
+                        let appliedToGraph = false;
+                        if (!dbOnlyOp && converter) {
+                            appliedToGraph = await converter.updateToService(trc, mutatorParams, syncContext, currentChange.nodeRef.id, currentChange.node);
+                        }
+                        if (dbOnlyOp || (converter && !appliedToGraph)) {
                             await mutatorParams.graphTransaction.updateNode(trc, syncContext, currentChange.nodeRef, currentChange.node);
                         }
                         break;
@@ -274,8 +293,11 @@ class ThriftGraphInterface {
                         converter = Converters_1.getNodeConverter(currentChange.nodeRef.type);
                         const syncContext = await this.getNodeBestSyncContext(trc, mutatorParams.graphTransaction, currentChange.nodeRef);
                         const blobData = convertBlobData(currentChange.blob);
-                        const appliedToGraph = await BlobConverter.updateBlobToService(trc, mutatorParams, currentChange.nodeRef, syncContext, currentChange.blob.name, currentChange.remoteFields || {}, blobData);
-                        if (converter && !appliedToGraph) {
+                        let appliedToGraph = false;
+                        if (!dbOnlyOp) {
+                            appliedToGraph = await BlobConverter.updateBlobToService(trc, mutatorParams, currentChange.nodeRef, syncContext, currentChange.blob.name, currentChange.remoteFields || {}, blobData);
+                        }
+                        if (dbOnlyOp || (converter && !appliedToGraph)) {
                             await this.updateBlobToGraph(trc, mutatorParams, currentChange.nodeRef, syncContext, currentChange.blob.name, blobData);
                         }
                         break;
@@ -318,7 +340,7 @@ class ThriftGraphInterface {
                     conduit_utils_1.logger.info('Mutation received a guid-in-use error during a retry. Assuming previous run was successful.', e.errorKey);
                     break;
                 }
-                if (converter && converter.handleErrorToService && !isCommandRun(currentChange) && attempt < MAX_ATTEMPTS) {
+                if (converter && converter.handleErrorToService && !isCommandRun(currentChange) && !dbOnlyOp && attempt < MAX_ATTEMPTS) {
                     currentChange = await converter.handleErrorToService(trc, e, mutatorParams, currentChange);
                     if (!currentChange) {
                         throw e;

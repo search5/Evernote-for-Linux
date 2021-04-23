@@ -110,9 +110,10 @@ class EvernoteIndexer {
                 }
             }
             // denormalize traversal queries
-            for (const srcTypeStr in typeConfig.denormalizedQueries) {
+            const denormalizedQueries = typeConfig.denormalizeQueries(nodeTypes[dstType]);
+            for (const srcTypeStr in denormalizedQueries) {
                 const srcType = srcTypeStr;
-                const queries = typeConfig.denormalizedQueries[srcType];
+                const queries = denormalizedQueries[srcType];
                 for (const queryName in queries) {
                     const queryConfig = queries[queryName];
                     const traversalName = queryConfig.traversalName || queryName;
@@ -130,12 +131,12 @@ class EvernoteIndexer {
             throw new Error(`No type definition for node type: ${type}`);
         }
         if (typeDef.schema && typeDef.schema.hasOwnProperty(param)) {
-            const fieldType = typeDef.schema[param];
-            return fieldType === 'boolean' || fieldType === 'boolean?';
+            const fieldType = conduit_utils_1.fieldTypeToNonNull(typeDef.schema[param]);
+            return fieldType === 'boolean';
         }
         else if ((_d = (_c = (_b = (_a = this.config) === null || _a === void 0 ? void 0 : _a[type]) === null || _b === void 0 ? void 0 : _b.indexResolvers) === null || _c === void 0 ? void 0 : _c[param]) === null || _d === void 0 ? void 0 : _d.schemaType) {
-            const fieldType = this.config[type].indexResolvers[param].schemaType;
-            return fieldType === 'boolean' || fieldType === 'boolean?';
+            const fieldType = conduit_utils_1.fieldTypeToNonNull(this.config[type].indexResolvers[param].schemaType);
+            return fieldType === 'boolean';
         }
         return false;
     }

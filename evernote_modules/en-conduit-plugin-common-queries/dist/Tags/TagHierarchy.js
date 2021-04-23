@@ -14,40 +14,8 @@ exports.tagHierarchyPlugin = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const graphql_1 = require("graphql");
-function buildArgs() {
-    const filterType = conduit_core_1.schemaToGraphQLType(['label', 'isBusiness', 'isPersonal', 'isShared', 'rootID', '?'], `TagHierarchyFilterField`);
-    const sortType = conduit_core_1.schemaToGraphQLType(['label', 'refsCount', '?'], `TagHierarchySortField`);
-    const filters = {
-        type: new graphql_1.GraphQLList(new graphql_1.GraphQLInputObjectType({
-            name: `TagHierarchyFilter`,
-            fields: {
-                field: { type: new graphql_1.GraphQLNonNull(filterType) },
-                isSet: { type: conduit_core_1.schemaToGraphQLType('boolean?') },
-                min: { type: conduit_core_1.IndexRange },
-                max: { type: conduit_core_1.IndexRange },
-                match: { type: conduit_core_1.IndexMatch },
-                prefix: { type: conduit_core_1.schemaToGraphQLType('string?') },
-            },
-        })),
-    };
-    const sorts = {
-        type: new graphql_1.GraphQLList(new graphql_1.GraphQLInputObjectType({
-            name: `TagHierarchySort`,
-            fields: {
-                field: { type: new graphql_1.GraphQLNonNull(sortType) },
-                order: { type: conduit_core_1.IndexOrderType },
-            },
-        })),
-    };
-    return {
-        filters,
-        sorts,
-        includeEmptyBusinessTags: {
-            type: conduit_core_1.schemaToGraphQLType('boolean?'),
-        },
-    };
-}
+const FilterTypeSchema = conduit_utils_1.Enum(['label', 'isBusiness', 'isPersonal', 'isShared', 'rootID'], 'TagHierarchyFilterField');
+const SortTypeSchema = conduit_utils_1.Enum(['label', 'refsCount'], 'TagHierarchySortField');
 function addOriginToTagFromContext(tag, syncContext) {
     if (syncContext.includes(conduit_core_1.VAULT_USER_CONTEXT)) {
         tag.isBusiness = true;
@@ -257,17 +225,31 @@ async function tagHierarchyResolver(parent, args, context, info) {
     return list;
 }
 exports.tagHierarchyPlugin = {
-    type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(conduit_core_1.schemaToGraphQLType({
+    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.ListOfStructs({
         id: 'ID',
-        parents: 'ID[]',
+        parents: conduit_utils_1.ListOf('ID'),
         indentationLevel: 'number',
         label: 'string',
         refsCount: 'number',
         isBusiness: 'boolean',
         isPersonal: 'boolean',
         isShared: 'boolean',
-    }, 'AllTagsHierarchy', false))),
+    }, 'AllTagsHierarchy')),
     resolve: tagHierarchyResolver,
-    args: buildArgs(),
+    args: conduit_core_1.schemaToGraphQLArgs({
+        filters: conduit_utils_1.NullableListOf(conduit_utils_1.Struct({
+            field: FilterTypeSchema,
+            isSet: conduit_utils_1.NullableBoolean,
+            min: conduit_core_1.IndexRangeSchema,
+            max: conduit_core_1.IndexRangeSchema,
+            match: conduit_core_1.IndexMatchSchema,
+            prefix: conduit_utils_1.NullableString,
+        }, 'TagHierarchyFilter')),
+        sorts: conduit_utils_1.NullableListOf(conduit_utils_1.Struct({
+            field: SortTypeSchema,
+            order: conduit_core_1.IndexOrderTypeSchema,
+        }, 'TagHierarchySort')),
+        includeEmptyBusinessTags: conduit_utils_1.NullableBoolean,
+    }),
 };
 //# sourceMappingURL=TagHierarchy.js.map

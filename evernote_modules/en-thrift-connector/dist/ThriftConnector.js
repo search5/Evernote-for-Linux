@@ -222,6 +222,7 @@ function init(di, configs) {
                     makeQueryRequest: quasarConnector.makeQueryRequestFromGraphQL,
                 };
             },
+            getHttpTransport: di.getHttpTransport,
         },
         plugins: [
             ApplicationDataPlugin_1.getApplicationDataPlugin(),

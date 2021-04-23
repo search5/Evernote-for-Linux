@@ -11,12 +11,12 @@ const DataSchemaGQL_1 = require("../Types/DataSchemaGQL");
 const GraphQLFields_1 = require("./GraphQLFields");
 const AutoResolvers_1 = require("./Resolvers/AutoResolvers");
 const ListResolvers_1 = require("./Resolvers/ListResolvers");
-function buildQueryResultFields(autoResolverData, queryName, query, indexResolvers, nodeType, traversal) {
+function buildQueryResultFields(autoResolverData, queryName, query, indexResolvers, definition, traversal) {
     const fieldsConfig = {
         id: { type: DataSchemaGQL_1.schemaToGraphQLType('ID') },
         type: { type: DataSchemaGQL_1.schemaToGraphQLType('string') },
     };
-    AutoResolvers_1.schemaFieldToGraphQL(autoResolverData, fieldsConfig, 'unindexed', 'EntityRef', '', [nodeType]);
+    AutoResolvers_1.schemaFieldToGraphQL(autoResolverData, fieldsConfig, 'unindexed', 'EntityRef', '', [definition.name]);
     return new graphql_1.GraphQLObjectType({
         name: conduit_utils_1.toPascalCase([traversal === null || traversal === void 0 ? void 0 : traversal.srcType, queryName, 'ResultFields']),
         fields: query.sharedFields.reduce((fields, f) => {
@@ -24,13 +24,13 @@ function buildQueryResultFields(autoResolverData, queryName, query, indexResolve
             if (!resolver) {
                 throw new Error(`Missing index resolver for query "${queryName}" field "${f}"`);
             }
-            AutoResolvers_1.schemaFieldToGraphQL(autoResolverData, fields, f, resolver.schemaType, queryName, resolver.entityRefTypes);
+            const entityRefTypes = resolver.entityRefTypes && (Array.isArray(resolver.entityRefTypes) ? resolver.entityRefTypes : resolver.entityRefTypes(definition));
+            AutoResolvers_1.schemaFieldToGraphQL(autoResolverData, fields, f, resolver.schemaType, queryName, entityRefTypes);
             return fields;
         }, fieldsConfig),
     });
 }
 function buildQueryArgs(queryName, query, indexResolvers, traversal) {
-    var _a;
     const args = {};
     for (const key in query.params) {
         if (traversal && traversal.paramName === key) {
@@ -39,38 +39,23 @@ function buildQueryArgs(queryName, query, indexResolvers, traversal) {
         const paramConfig = query.params[key];
         if (conduit_storage_1.isQueryMatchParamConfig(paramConfig)) {
             const field = paramConfig.match.field;
-            const isRequired = !paramConfig.optional && paramConfig.defaultValue !== undefined;
-            const schemaType = conduit_utils_1.fieldForceRequired(indexResolvers[field].schemaType, isRequired);
-            args[key] = { type: DataSchemaGQL_1.schemaToGraphQLType(schemaType, key, true) };
+            const isRequired = !paramConfig.optional && paramConfig.defaultValue === undefined;
+            const schemaType = conduit_utils_1.fieldTypeOverrideNullability(indexResolvers[field].schemaType, !isRequired);
+            args[key] = schemaType;
         }
         else if (conduit_storage_1.isQueryRangeParamConfig(paramConfig)) {
             const field = paramConfig.range.field;
-            args[key] = { type: new graphql_1.GraphQLInputObjectType({
-                    name: conduit_utils_1.toPascalCase([traversal === null || traversal === void 0 ? void 0 : traversal.srcType, queryName, key]),
-                    fields: {
-                        min: { type: DataSchemaGQL_1.schemaToGraphQLType(indexResolvers[field].schemaType, key, false) },
-                        max: { type: DataSchemaGQL_1.schemaToGraphQLType(indexResolvers[field].schemaType, key, false) },
-                    },
-                }) };
-            if (!paramConfig.optional && ((_a = args[key].type) === null || _a === void 0 ? void 0 : _a.toString().slice(-1)) !== '!') {
-                args[key].type = new graphql_1.GraphQLNonNull(args[key].type);
-            }
+            args[key] = conduit_utils_1.fieldTypeOverrideNullability(conduit_utils_1.Struct({
+                min: indexResolvers[field].schemaType,
+                max: indexResolvers[field].schemaType,
+            }, conduit_utils_1.toPascalCase([traversal === null || traversal === void 0 ? void 0 : traversal.srcType, queryName, key])), Boolean(paramConfig.optional));
         }
         else {
-            args[key] = { type: new graphql_1.GraphQLEnumType({
-                    name: conduit_utils_1.toPascalCase([traversal === null || traversal === void 0 ? void 0 : traversal.srcType, queryName, key]),
-                    values: Object.keys(paramConfig.sort).reduce((obj, value) => {
-                        obj[value] = { value };
-                        return obj;
-                    }, {}),
-                }) };
-            if (!paramConfig.defaultValue) {
-                args[key].type = new graphql_1.GraphQLNonNull(args[key].type);
-            }
+            args[key] = conduit_utils_1.fieldTypeOverrideNullability(conduit_utils_1.Enum(Object.keys(paramConfig.sort), conduit_utils_1.toPascalCase([traversal === null || traversal === void 0 ? void 0 : traversal.srcType, queryName, key])), paramConfig.defaultValue !== undefined);
         }
     }
-    args.reverseOrder = { type: graphql_1.GraphQLBoolean };
-    args.pageInfo = { type: ListResolvers_1.PageInfoSchema };
+    args.reverseOrder = conduit_utils_1.NullableBoolean;
+    args.pageInfo = conduit_utils_1.Nullable(ListResolvers_1.PageInfoSchema);
     return args;
 }
 function graphQLQueryResolver(query, nodeDef, traversal) {
@@ -120,26 +105,26 @@ function buildGraphQLQuery(autoResolverData, queryName, query, indexResolvers, d
             name: conduit_utils_1.toPascalCase([queryName, 'Results']),
             fields: {
                 count: { type: DataSchemaGQL_1.schemaToGraphQLType('int') },
-                prevPageKey: { type: DataSchemaGQL_1.schemaToGraphQLType('string?') },
-                nextPageKey: { type: DataSchemaGQL_1.schemaToGraphQLType('string?') },
-                numPriorItems: { type: DataSchemaGQL_1.schemaToGraphQLType('number?') },
-                numRemainingItems: { type: DataSchemaGQL_1.schemaToGraphQLType('number?') },
+                prevPageKey: { type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.NullableString) },
+                nextPageKey: { type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.NullableString) },
+                numPriorItems: { type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.NullableNumber) },
+                numRemainingItems: { type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.NullableNumber) },
                 list: {
-                    type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(new graphql_1.GraphQLNonNull(buildQueryResultFields(autoResolverData, queryName, query, indexResolvers, definition.name, null)))),
+                    type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(new graphql_1.GraphQLNonNull(buildQueryResultFields(autoResolverData, queryName, query, indexResolvers, definition, null)))),
                 },
             },
         })),
-        args: buildQueryArgs(queryName, query, indexResolvers, null),
+        args: DataSchemaGQL_1.schemaToGraphQLArgs(buildQueryArgs(queryName, query, indexResolvers, null)),
         resolve: graphQLQueryResolver(query, definition, null),
     };
 }
 exports.buildGraphQLQuery = buildGraphQLQuery;
 function buildTraversalGraphQLQuery(autoResolverData, fields, fieldName, traversal, query, indexResolvers, definition) {
     if (traversal.dstConstraint && traversal.dstConstraint !== conduit_storage_1.EdgeConstraint.MANY) {
-        AutoResolvers_1.schemaFieldToGraphQL(autoResolverData, fields, fieldName, traversal.dstConstraint === conduit_storage_1.EdgeConstraint.OPTIONAL ? 'EntityRef?' : 'EntityRef', '', [definition.name], graphQLQueryResolver(query, definition, traversal));
+        AutoResolvers_1.schemaFieldToGraphQL(autoResolverData, fields, fieldName, conduit_utils_1.fieldTypeOverrideNullability('EntityRef', traversal.dstConstraint === conduit_storage_1.EdgeConstraint.OPTIONAL), '', [definition.name], graphQLQueryResolver(query, definition, traversal));
     }
     else {
-        const resType = buildQueryResultFields(autoResolverData, fieldName, query, indexResolvers, definition.name, traversal);
+        const resType = buildQueryResultFields(autoResolverData, fieldName, query, indexResolvers, definition, traversal);
         fields[fieldName] = {
             type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLObjectType({
                 name: conduit_utils_1.toPascalCase([traversal.srcType, fieldName, 'Results']),
@@ -150,7 +135,7 @@ function buildTraversalGraphQLQuery(autoResolverData, fields, fieldName, travers
                     },
                 },
             })),
-            args: buildQueryArgs(fieldName, query, indexResolvers, traversal),
+            args: DataSchemaGQL_1.schemaToGraphQLArgs(buildQueryArgs(fieldName, query, indexResolvers, traversal)),
             resolve: graphQLQueryResolver(query, definition, traversal),
         };
     }

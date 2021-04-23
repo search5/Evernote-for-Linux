@@ -4,6 +4,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getErrorMutators = void 0;
+const conduit_utils_1 = require("conduit-utils");
 const DataSchemaGQL_1 = require("../../Types/DataSchemaGQL");
 const ResolverHelpers_1 = require("../Resolvers/ResolverHelpers");
 async function errorRemoveResolver(_, args, context) {
@@ -85,7 +86,7 @@ function getErrorMutators() {
         resolve: errorUnmarkListResolver,
     };
     out.errorClearList = {
-        args: DataSchemaGQL_1.schemaToGraphQLArgs({ markedValue: 'boolean?' }),
+        args: DataSchemaGQL_1.schemaToGraphQLArgs({ markedValue: conduit_utils_1.NullableBoolean }),
         type: ResolverHelpers_1.GenericMutationResult,
         resolve: errorClearListResolver,
     };

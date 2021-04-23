@@ -17,45 +17,27 @@ const en_core_entity_types_1 = require("en-core-entity-types");
 const en_thrift_connector_1 = require("en-thrift-connector");
 const graphql_1 = require("graphql");
 /** GraphQL object types from the result list. */
-const GraphQLStackType = new graphql_1.GraphQLObjectType({
-    name: 'StackedNotebookListStack',
-    fields: {
-        id: { type: conduit_core_1.schemaToGraphQLType('ID') },
-        type: { type: conduit_core_1.schemaToGraphQLType('string') },
-        notebooksCount: { type: conduit_core_1.schemaToGraphQLType('number') },
-        label: { type: conduit_core_1.schemaToGraphQLType('string') },
-        created: { type: conduit_core_1.schemaToGraphQLType('number?') },
-        updated: { type: conduit_core_1.schemaToGraphQLType('number?') },
-        lastUpdated: { type: conduit_core_1.schemaToGraphQLType('number?') },
-    },
-});
-const GraphQLNotebookType = new graphql_1.GraphQLObjectType({
-    name: 'StackedNotebookListNotebook',
-    fields: {
-        id: { type: conduit_core_1.schemaToGraphQLType('ID') },
-        type: { type: conduit_core_1.schemaToGraphQLType('string') },
-        label: { type: conduit_core_1.schemaToGraphQLType('string') },
-        created: { type: conduit_core_1.schemaToGraphQLType('number?') },
-        updated: { type: conduit_core_1.schemaToGraphQLType('number?') },
-        lastUpdated: { type: conduit_core_1.schemaToGraphQLType('number?') },
-        stackID: { type: conduit_core_1.schemaToGraphQLType('ID?') },
-    },
-});
+const GraphQLStackType = conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableStruct({
+    id: 'ID',
+    type: 'string',
+    notebooksCount: 'int',
+    label: 'string',
+    created: conduit_utils_1.NullableTimestamp,
+    updated: conduit_utils_1.NullableTimestamp,
+    lastUpdated: conduit_utils_1.NullableTimestamp,
+}, 'StackedNotebookListStack'));
+const GraphQLNotebookType = conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableStruct({
+    id: 'ID',
+    type: 'string',
+    stackID: conduit_utils_1.NullableID,
+    label: 'string',
+    created: conduit_utils_1.NullableTimestamp,
+    updated: conduit_utils_1.NullableTimestamp,
+    lastUpdated: conduit_utils_1.NullableTimestamp,
+    childrenCount: 'int',
+}, 'StackedNotebookListNotebook'));
 function itemIsStack(item) {
     return item.type === en_core_entity_types_1.CoreEntityTypes.Stack;
-}
-function buildArgs() {
-    return {
-        sort: {
-            type: new graphql_1.GraphQLInputObjectType({
-                name: `StackedNotebookSort`,
-                fields: {
-                    field: { type: conduit_core_1.schemaToGraphQLType(['label', 'created', 'updated'], 'StackedNotebookSortField', false) },
-                    order: { type: conduit_core_1.IndexOrderType },
-                },
-            }),
-        },
-    };
 }
 async function resolveNotebook(context, indexItem, nbFields, noteIndexTree, noteIndex) {
     var _a;
@@ -301,7 +283,12 @@ exports.stackedNotebookList = stackedNotebookList;
  * It makes flattened list with the notebooks in order with their stacks.
  */
 exports.stackedNotebookListPlugin = {
-    args: buildArgs(),
+    args: conduit_core_1.schemaToGraphQLArgs({
+        sort: conduit_utils_1.NullableStruct({
+            field: conduit_utils_1.Enum(['label', 'created', 'updated'], 'StackedNotebookSortField'),
+            order: conduit_utils_1.Nullable(conduit_core_1.IndexOrderTypeSchema),
+        }, 'StackedNotebookSort'),
+    }),
     resolve: stackedNotebookList,
     type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLObjectType({
         name: 'StackedNotebookList',

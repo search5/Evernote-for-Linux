@@ -150,7 +150,7 @@ function validateRollupStrategy(name, mutatorDef) {
     if (!mutatorDef.rollupStrategy) {
         return;
     }
-    const paramsAvailable = Object.assign(Object.assign(Object.assign({}, mutatorDef.requiredParams), mutatorDef.optionalParams), mutatorDef.derivedParams);
+    const paramsAvailable = Object.assign(Object.assign({}, mutatorDef.params), mutatorDef.derivedParams);
     const paramsUsed = {};
     for (const paramMatch of mutatorDef.rollupStrategy.ifParamsMatch) {
         paramsUsed[paramMatch.prev] = true;

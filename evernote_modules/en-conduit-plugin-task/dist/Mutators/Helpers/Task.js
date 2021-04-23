@@ -3,11 +3,12 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createMembership = exports.getParentNoteId = exports.checkNoteEditPermissionByNoteId = exports.checkNoteEditPermissionByTask = exports.taskCreatePlan = void 0;
+exports.getParentNoteId = exports.taskCreatePlan = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const TaskConstants_1 = require("../../TaskConstants");
 const NoteContentInfo_1 = require("./NoteContentInfo");
+const Permission_1 = require("./Permission");
 async function taskCreatePlan(trc, ctx, params) {
     const containerRef = { id: params.container, type: en_core_entity_types_1.CoreEntityTypes.Note };
     const noteContainerRef = containerRef; // assuming var exists because tasks may go elsewhere in the future
@@ -20,7 +21,7 @@ async function taskCreatePlan(trc, ctx, params) {
         if (!noteContainer) {
             throw new conduit_utils_1.NotFoundError(containerRef.id, `Not found Note ${containerRef.id}`);
         }
-        await checkNoteEditPermissionByNoteId(trc, ctx, containerRef.id);
+        await Permission_1.checkNoteEditPermissionByNoteId(trc, ctx, containerRef.id);
     }
     // if the Note container is available, it will be used to resolve the actual ownerID
     const owner = params.copyOwnerRef || containerRef || ctx.vaultUserID || ctx.userID;
@@ -82,22 +83,6 @@ async function taskCreatePlan(trc, ctx, params) {
     return plan;
 }
 exports.taskCreatePlan = taskCreatePlan;
-async function checkNoteEditPermissionByTask(trc, ctx, task) {
-    const edge = conduit_utils_1.firstStashEntry(task.inputs.parent);
-    if (!edge) {
-        throw new conduit_utils_1.InvalidParameterError(`Task ${task.id} does not have parent note`);
-    }
-    await checkNoteEditPermissionByNoteId(trc, ctx, edge.srcID);
-}
-exports.checkNoteEditPermissionByTask = checkNoteEditPermissionByTask;
-async function checkNoteEditPermissionByNoteId(trc, ctx, noteId) {
-    const permContext = new en_core_entity_types_1.MutationPermissionContext(trc, ctx);
-    const policy = await en_core_entity_types_1.commandPolicyOfNote(noteId, permContext);
-    if (!policy.canEditContent) {
-        throw new conduit_utils_1.PermissionError('Permission Denied');
-    }
-}
-exports.checkNoteEditPermissionByNoteId = checkNoteEditPermissionByNoteId;
 async function getParentNoteId(trc, ctx, taskID) {
     const taskRef = { id: taskID, type: TaskConstants_1.TaskEntityTypes.Task };
     const noteEdge = await ctx.traverseGraph(trc, taskRef, [{ edge: ['inputs', 'parent'], type: en_core_entity_types_1.CoreEntityTypes.Note }]);
@@ -107,34 +92,4 @@ async function getParentNoteId(trc, ctx, taskID) {
     return noteEdge[0].edge.srcID;
 }
 exports.getParentNoteId = getParentNoteId;
-async function createMembership(trc, ctx, plan, owner, srcRef, srcPort, recipientId, currentProfile) {
-    const membershipGenID = await ctx.generateID(trc, owner, en_core_entity_types_1.CoreEntityTypes.Membership);
-    const membershipID = membershipGenID[1];
-    const membership = ctx.createEntity({ id: membershipID, type: en_core_entity_types_1.CoreEntityTypes.Membership }, {
-        privilege: en_core_entity_types_1.MembershipPrivilege.COMPLETE,
-        recipientType: en_core_entity_types_1.MembershipRecipientType.USER,
-        recipientIsMe: currentProfile.id === recipientId,
-    });
-    plan.ops.push({
-        changeType: 'Node:CREATE',
-        node: membership,
-        id: membershipGenID,
-    }, {
-        changeType: 'Edge:MODIFY',
-        edgesToCreate: [{
-                srcID: srcRef.id, srcType: srcRef.type, srcPort,
-                dstID: membership.id, dstType: en_core_entity_types_1.CoreEntityTypes.Membership, dstPort: 'parent',
-            }, {
-                srcID: membership.id, srcType: en_core_entity_types_1.CoreEntityTypes.Membership, srcPort: 'recipient',
-                dstID: recipientId, dstType: en_core_entity_types_1.CoreEntityTypes.Profile, dstPort: null,
-            }, {
-                srcID: membership.id, srcType: en_core_entity_types_1.CoreEntityTypes.Membership, srcPort: 'sharer',
-                dstID: currentProfile.id, dstType: en_core_entity_types_1.CoreEntityTypes.Profile, dstPort: null,
-            }, {
-                srcID: membership.id, srcType: en_core_entity_types_1.CoreEntityTypes.Membership, srcPort: 'owner',
-                dstID: currentProfile.id, dstType: en_core_entity_types_1.CoreEntityTypes.Profile, dstPort: null,
-            }],
-    });
-}
-exports.createMembership = createMembership;
 //# sourceMappingURL=Task.js.map

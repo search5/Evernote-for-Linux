@@ -1,6 +1,6 @@
 {
   "name": "en-conduit-plugin-support-ticket",
-  "version": "1.32.4",
+  "version": "1.33.4",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -10,10 +10,10 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-core": "1.32.4",
-    "conduit-utils": "1.32.4",
-    "en-conduit-sync-types": "1.32.4",
-    "en-thrift-connector": "1.32.4"
+    "conduit-core": "1.33.4",
+    "conduit-utils": "1.33.4",
+    "en-conduit-sync-types": "1.33.4",
+    "en-thrift-connector": "1.33.4"
   },
   "peerDependencies": {
     "graphql": "^14.0.2"

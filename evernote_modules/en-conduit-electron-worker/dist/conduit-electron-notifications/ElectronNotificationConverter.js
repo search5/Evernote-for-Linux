@@ -16,7 +16,7 @@ function getElectronNotificationConverter(di) {
                 : undefined;
             return {
                 id: data.id,
-                title: en_conduit_plugin_scheduled_notification_shared_1.NOTIFICATION_DEFAULT_TITLE,
+                title: data.title || en_conduit_plugin_scheduled_notification_shared_1.NOTIFICATION_DEFAULT_TITLE,
                 body: data.body,
                 onClick,
                 iconPath: di.getIconPath(),

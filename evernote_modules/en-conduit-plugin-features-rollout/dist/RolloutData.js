@@ -10,7 +10,7 @@ var ClientTypeEnum;
     ClientTypeEnum["mobile"] = "mobile";
     ClientTypeEnum["desktop"] = "desktop";
 })(ClientTypeEnum = exports.ClientTypeEnum || (exports.ClientTypeEnum = {}));
-exports.ClientTypeSchema = ['mobile', 'desktop'];
+exports.ClientTypeSchema = conduit_utils_1.Enum(ClientTypeEnum, 'FeatureRolloutClientType');
 function isFeatureRolloutData(obj) {
     return obj.hasOwnProperty('host_name') && obj.hasOwnProperty('siwg_percentage') && obj.hasOwnProperty('siwa_enabled');
 }

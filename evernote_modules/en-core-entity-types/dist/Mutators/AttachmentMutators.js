@@ -13,19 +13,17 @@ const MutatorHelpers_1 = require("./MutatorHelpers");
 exports.attachmentCreateInternal = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
     isInternal: true,
-    requiredParams: {
+    params: {
         noteID: 'ID',
         filename: 'string',
         mime: 'string',
         hash: 'string',
         size: 'number',
         stagedBlobID: 'string',
-    },
-    optionalParams: {
-        applicationData: 'string',
-        url: 'string',
-        attachmentGenID: 'string[]',
-        sourceURL: 'string',
+        applicationData: conduit_utils_1.NullableString,
+        url: conduit_utils_1.NullableString,
+        attachmentGenID: conduit_utils_1.NullableListOf('string'),
+        sourceURL: conduit_utils_1.NullableString,
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     execute: async (trc, ctx, params) => {
@@ -35,11 +33,8 @@ exports.attachmentCreateInternal = {
             throw new conduit_utils_1.NotFoundError(params.noteID, 'note id listed is not valid');
         }
         const accountLimits = await ctx.fetchEntity(trc, index_1.ACCOUNT_LIMITS_REF);
-        if (!accountLimits) {
-            throw new conduit_utils_1.NotFoundError(index_1.ACCOUNT_LIMITS_ID, 'Missing account limits');
-        }
         const { contentSize, resourceSize } = await MutatorHelpers_1.getNoteSize(trc, ctx, note);
-        const updatedLimits = MutatorHelpers_1.validateAccountLimits(accountLimits, {
+        const updatedLimits = MutatorHelpers_1.validateAndCalculateSizeLimits(accountLimits, {
             prevNoteContentSize: contentSize,
             prevNoteResourceSize: resourceSize,
             uploadResourceSize: params.size,
@@ -62,11 +57,10 @@ exports.attachmentCreateInternal = {
 };
 exports.attachmentSetFileName = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         attachmentID: 'ID',
         fileName: 'string',
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const plan = {
             results: {},
@@ -87,12 +81,10 @@ exports.attachmentSetFileName = {
 };
 exports.attachmentSetApplicationDataEntry = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         id: 'ID',
         key: 'string',
-    },
-    optionalParams: {
-        value: 'string',
+        value: conduit_utils_1.NullableString,
     },
     executeOnService: async (trc, ctx, params) => {
         const nodeRef = { id: params.id, type: EntityConstants_1.CoreEntityTypes.Attachment };

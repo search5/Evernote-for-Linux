@@ -22,7 +22,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.indexerForType = exports.getListResolverParams = exports.resolveUnindexedPaths = exports.graphqlPathForIndexComponents = exports.resolveNodesFromList = exports.indexedSortsCongruencyCheck = exports.IndexOrderType = exports.IndexRange = exports.IndexMatch = exports.PageInfoSchema = void 0;
+exports.indexerForType = exports.getListResolverParams = exports.resolveUnindexedPaths = exports.graphqlPathForIndexComponents = exports.resolveNodesFromList = exports.indexedSortsCongruencyCheck = exports.IndexOrderTypeSchema = exports.IndexRangeSchema = exports.IndexMatchSchema = exports.PageInfoSchema = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const graphql_1 = require("graphql");
@@ -31,60 +31,55 @@ const index_1 = require("../../index");
 const DataSchemaGQL_1 = require("../../Types/DataSchemaGQL");
 const GraphQLFields_1 = require("../GraphQLFields");
 const AutoResolvers_1 = require("./AutoResolvers");
-exports.PageInfoSchema = DataSchemaGQL_1.schemaToGraphQLType({
-    startKey: 'string?',
-    startIndex: 'int?',
+exports.PageInfoSchema = conduit_utils_1.Struct({
+    startKey: conduit_utils_1.NullableString,
+    startIndex: conduit_utils_1.NullableInt,
     pageSize: 'int',
-}, 'PageInfo', true, true);
-exports.IndexMatch = DataSchemaGQL_1.schemaToGraphQLType({
-    string: 'string?',
-    int: 'number?',
-    boolean: 'boolean?',
-    node: 'EntityRef?',
-}, 'IndexMatch', true, true);
-exports.IndexRange = DataSchemaGQL_1.schemaToGraphQLType({
-    string: 'string?',
-    int: 'number?',
-}, 'IndexRange', true, true);
-exports.IndexOrderType = DataSchemaGQL_1.schemaToGraphQLType(['ASC', 'DESC', '?'], 'IndexOrderType');
+}, 'PageInfo');
+exports.IndexMatchSchema = conduit_utils_1.NullableStruct({
+    string: conduit_utils_1.NullableString,
+    int: conduit_utils_1.NullableNumber,
+    boolean: conduit_utils_1.NullableBoolean,
+    node: conduit_utils_1.NullableEntityRef,
+}, 'IndexMatch');
+exports.IndexRangeSchema = conduit_utils_1.NullableStruct({
+    string: conduit_utils_1.NullableString,
+    int: conduit_utils_1.NullableNumber,
+}, 'IndexRange');
+exports.IndexOrderTypeSchema = conduit_utils_1.Enum(['ASC', 'DESC'], 'IndexOrderType');
 function walkSchema(schema, basePath = '', enumValues = []) {
     for (const key in schema) {
         if (key.startsWith('internal_')) {
             continue;
         }
-        if (typeof schema[key] === 'string' || Array.isArray(schema[key])) {
-            enumValues.push(`${basePath}${key}`);
+        const subschema = conduit_utils_1.fieldTypeToNonNull(schema[key]);
+        if (conduit_utils_1.fieldTypeIsStruct(subschema)) {
+            walkSchema(subschema.fields, `${basePath}${key}_`, enumValues);
         }
         else {
-            walkSchema(schema[key], `${basePath}${key}_`, enumValues);
+            enumValues.push(`${basePath}${key}`);
         }
     }
     return enumValues;
 }
 function buildIndexArgs(type, definition, indexer) {
-    const args = Object.keys(indexer.config[type].indexResolvers).concat([...walkSchema(definition.schema), 'label', '?']);
-    const filterType = DataSchemaGQL_1.schemaToGraphQLType(args, `${type}FilterField`);
-    const sortType = DataSchemaGQL_1.schemaToGraphQLType(args, `${type}SortField`);
-    const filters = { type: new graphql_1.GraphQLList(new graphql_1.GraphQLInputObjectType({
-            name: `${type}Filter`,
-            fields: {
-                field: { type: new graphql_1.GraphQLNonNull(filterType) },
-                isSet: { type: DataSchemaGQL_1.schemaToGraphQLType('boolean?') },
-                min: { type: exports.IndexRange },
-                max: { type: exports.IndexRange },
-                match: { type: exports.IndexMatch },
-                prefix: { type: DataSchemaGQL_1.schemaToGraphQLType('string?') },
-            },
-        })) };
-    const sorts = { type: new graphql_1.GraphQLList(new graphql_1.GraphQLInputObjectType({
-            name: `${type}Sort`,
-            fields: {
-                field: { type: new graphql_1.GraphQLNonNull(sortType) },
-                order: { type: exports.IndexOrderType },
-            },
-        })) };
+    const args = Object.keys(indexer.config[type].indexResolvers).concat([...walkSchema(definition.schema), 'label']);
+    const filterType = conduit_utils_1.Enum(args, `${type}FilterField`);
+    const sortType = conduit_utils_1.Enum(args, `${type}SortField`);
+    const filters = conduit_utils_1.NullableListOf(conduit_utils_1.Struct({
+        field: filterType,
+        isSet: conduit_utils_1.NullableBoolean,
+        min: exports.IndexRangeSchema,
+        max: exports.IndexRangeSchema,
+        match: exports.IndexMatchSchema,
+        prefix: conduit_utils_1.NullableString,
+    }, `${type}Filter`));
+    const sorts = conduit_utils_1.NullableListOf(conduit_utils_1.Struct({
+        field: sortType,
+        order: exports.IndexOrderTypeSchema,
+    }, `${type}Sort`));
     return {
-        pageInfo: { type: exports.PageInfoSchema },
+        pageInfo: conduit_utils_1.Nullable(exports.PageInfoSchema),
         filters,
         sorts,
     };
@@ -465,17 +460,17 @@ function indexerForType(autoResolverData, type, indexer, definition) {
             name: `${type}ListResults`,
             fields: {
                 count: { type: DataSchemaGQL_1.schemaToGraphQLType('int') },
-                indexUsed: { type: DataSchemaGQL_1.schemaToGraphQLType('string[]') },
-                prevPageKey: { type: DataSchemaGQL_1.schemaToGraphQLType('string?') },
-                nextPageKey: { type: DataSchemaGQL_1.schemaToGraphQLType('string?') },
-                numPriorItems: { type: DataSchemaGQL_1.schemaToGraphQLType('number?') },
-                numRemainingItems: { type: DataSchemaGQL_1.schemaToGraphQLType('number?') },
+                indexUsed: { type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.ListOf('string')) },
+                prevPageKey: { type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.NullableString) },
+                nextPageKey: { type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.NullableString) },
+                numPriorItems: { type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.NullableNumber) },
+                numRemainingItems: { type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.NullableNumber) },
                 list: {
                     type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(new graphql_1.GraphQLNonNull(autoResolverData.NodeGraphQLTypes[type]))),
                 },
             },
         })),
-        args: buildIndexArgs(type, definition, indexer),
+        args: DataSchemaGQL_1.schemaToGraphQLArgs(buildIndexArgs(type, definition, indexer)),
         resolve: indexResolverForType(type, definition),
         deprecationReason: 'Use custom query APIs now',
     };

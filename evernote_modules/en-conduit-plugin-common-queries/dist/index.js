@@ -27,8 +27,6 @@ function getCommonQueryPlugin() {
             notelockRelease: notelockPlugin.mutators.notelockRelease,
             sendMarketingEmail: SendMarketingEmail_1.sendMarketingEmailPlugin,
             sendVerificationEmail: SendVerificationEmail_1.sendVerificationEmailPlugin,
-            notebookPublish: publishedNotebooksPlugin.mutations.notebookPublish,
-            notebookJoin: publishedNotebooksPlugin.mutations.notebookJoin,
         }),
         defineQueries: () => {
             const out = {

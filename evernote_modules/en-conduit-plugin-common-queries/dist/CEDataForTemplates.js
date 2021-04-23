@@ -40,13 +40,13 @@ async function ceDataForTemplates(parent, args, context) {
     };
 }
 exports.ceDataForTemplatesPlugin = {
-    args: conduit_core_1.schemaToGraphQLArgs({ noteID: 'ID?' }),
-    type: conduit_core_1.schemaToGraphQLType({
-        noteGuid: 'string?',
+    args: conduit_core_1.schemaToGraphQLArgs({ noteID: conduit_utils_1.NullableID }),
+    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({
+        noteGuid: conduit_utils_1.NullableString,
         shard: 'string',
         authToken: 'string',
         userId: 'number',
-    }, 'CEDataForTemplates', false),
+    }, 'CEDataForTemplates')),
     resolve: ceDataForTemplates,
 };
 //# sourceMappingURL=CEDataForTemplates.js.map

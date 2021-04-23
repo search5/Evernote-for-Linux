@@ -92,14 +92,29 @@ class FileUploader {
             await this.resourceManager.getFileInfo(trc, params.path, params.data) :
             getDataInfo(params.data);
     }
+    async stringToArrayBuffer(str) {
+        const buf = new ArrayBuffer(str.length * 2); // 2 bytes for each char
+        const bufView = new Uint8Array(buf);
+        for (let i = 0, strLen = str.length; i < strLen; i++) {
+            bufView[i] = str.charCodeAt(i);
+        }
+        return buf;
+    }
     // handle externalUrl and fill in default filename if not present
     async handleExternalUrl(trc, params) {
         if (params.url) {
-            if (!this.resourceManager) {
-                throw new conduit_utils_1.InvalidOperationError('resource manager required for external resource upload');
+            if (!this.resourceManager && !this.di.getHttpTransport) {
+                throw new conduit_utils_1.InvalidOperationError('Resource Manager or Http Transport required for external resource upload');
             }
-            const externalResource = await this.resourceManager.downloadUrl(trc, params.url);
-            params = Object.assign(Object.assign({}, params), { path: externalResource.filePath, mime: params.mime || externalResource.mimeType || defaultMime, filename: params.filename || lastUrlSegment(params.url) });
+            if (this.resourceManager) {
+                const externalResource = await this.resourceManager.downloadUrl(trc, params.url);
+                params = Object.assign(Object.assign({}, params), { path: externalResource.filePath, mime: params.mime || externalResource.mimeType || defaultMime, filename: params.filename || lastUrlSegment(params.url) });
+            }
+            else if (this.di.getHttpTransport) {
+                const response = await this.di.getHttpTransport().request(trc, { method: 'GET', url: params.url });
+                const resultAsArray = await this.stringToArrayBuffer(response.result ? response.result : '');
+                params = Object.assign(Object.assign({}, params), { data: new Uint8Array(resultAsArray), mime: params.mime || response.contentType || defaultMime, filename: params.filename || lastUrlSegment(params.url) });
+            }
         }
         return params;
     }

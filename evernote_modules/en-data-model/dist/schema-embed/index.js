@@ -189,6 +189,23 @@ exports.SchemaMap = {
             "path": ""
         }
     },
+    "BoardBackgroundMode.schema.json": {
+        "$id": "BoardBackgroundMode.schema.json",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "BoardBackgroundMode",
+        "type": "string",
+        "enum": [
+            "None",
+            "Image",
+            "Color"
+        ],
+        "tsEnumNames": [
+            "None",
+            "Image",
+            "Color"
+        ],
+        "default": ""
+    },
     "BoardDesktopLayout.schema.json": {
         "$id": "BoardDesktopLayout.schema.json",
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -588,6 +605,23 @@ exports.SchemaMap = {
             "FilteredNotes"
         ],
         "default": ""
+    },
+    "SearchQuery.schema.json": {
+        "$id": "SearchQuery.schema.json",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "SearchQuery",
+        "properties": {
+            "query": {
+                "type": "string",
+                "default": ""
+            }
+        },
+        "required": [
+            "query"
+        ],
+        "default": {
+            "query": ""
+        }
     },
     "ServiceLevelV2.schema.json": {
         "$id": "ServiceLevelV2.schema.json",
@@ -1071,6 +1105,15 @@ exports.SchemaMap = {
                         "$ref": "BoardMimeType.schema.json"
                     },
                     "headerBGPreviousUploadFileName": {
+                        "type": "string"
+                    },
+                    "headerBGMode": {
+                        "$ref": "BoardBackgroundMode.schema.json"
+                    },
+                    "headerBGColor": {
+                        "$ref": "ColorScheme.schema.json"
+                    },
+                    "greetingText": {
                         "type": "string"
                     },
                     "mobile": {
@@ -2150,6 +2193,9 @@ exports.SchemaMap = {
                     },
                     "backgroundColor": {
                         "$ref": "ColorScheme.schema.json"
+                    },
+                    "filteredNotesQuery": {
+                        "$ref": "SearchQuery.schema.json"
                     }
                 },
                 "required": [

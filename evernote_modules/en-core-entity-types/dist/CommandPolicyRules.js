@@ -3,7 +3,7 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.commandPolicyOfSpace = exports.commandPolicyOfNotebook = exports.commandPolicyOfNote = void 0;
+exports.commandPolicyOfSpace = exports.commandPolicyOfNotebook = exports.commandPolicyOfNote = exports.computePermission = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const EntityConstants_1 = require("./EntityConstants");
@@ -41,6 +41,9 @@ async function getParent(node, context) {
     return await context.getNode({ type: parentEdge.srcType, id: parentEdge.srcID });
 }
 async function computePermission(node, context) {
+    if (!node.outputs.memberships) {
+        throw new conduit_utils_1.InvalidParameterError(`computePermission only works with entities that have memberships`);
+    }
     const memberships = await ShareUtils_1.getOwnMemberships(node, context);
     let highestPermission = MembershipPrivilege_1.MembershipPrivilege.READ;
     for (const membership of memberships) {
@@ -53,6 +56,7 @@ async function computePermission(node, context) {
     }
     return highestPermission;
 }
+exports.computePermission = computePermission;
 async function permissionOf(node, permissionContext, ancestors) {
     let nodePermission = await computePermission(node, permissionContext);
     let parentPermission = MembershipPrivilege_1.MembershipPrivilege.READ;

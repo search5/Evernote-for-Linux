@@ -5,6 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.denormalizeEdgeDefinitions = exports.getEdgeDefinitionEndpoint = exports.isEdgeEndpointConstraint = exports.isNodeOutputEdgeDefinition = exports.isNodeInputEdgeDefinition = exports.addOutputEdgeToNode = exports.addInputEdgeToNode = exports.getEdgeConnection = exports.getEdgeTerminusName = exports.EdgeType = exports.EdgeConstraint = exports.SyncSource = exports.isGraphEdge = exports.isGraphNode = void 0;
 const conduit_utils_1 = require("conduit-utils");
+const simply_immutable_1 = require("simply-immutable");
 function isGraphNode(obj) {
     if (obj && obj.hasOwnProperty('inputs') && obj.hasOwnProperty('version')) {
         return true;
@@ -95,6 +96,7 @@ function getEdgeDefinitionEndpoint(edgeDef) {
 }
 exports.getEdgeDefinitionEndpoint = getEdgeDefinitionEndpoint;
 function denormalizeEdgeDefinitions(nodeTypesIn) {
+    var _a;
     const out = {};
     function addConnections(type1, port1, constraint, edgeType, type2, port2, isInput, isOwned) {
         var _a;
@@ -123,16 +125,36 @@ function denormalizeEdgeDefinitions(nodeTypesIn) {
             }
         }
     }
+    const membershipTargetTypes = {};
     for (const nodeType in nodeTypesIn) {
-        out[nodeType] = Object.assign(Object.assign({}, nodeTypesIn[nodeType]), { inputs: {}, outputs: {} });
+        const typedef = nodeTypesIn[nodeType];
+        out[nodeType] = Object.assign(Object.assign({}, typedef), { inputs: {}, outputs: {}, ancestorPort: null });
+        if (typedef.hasMemberships) {
+            membershipTargetTypes[typedef.hasMemberships.to] = membershipTargetTypes[typedef.hasMemberships.to] || [];
+            membershipTargetTypes[typedef.hasMemberships.to].push(nodeType);
+        }
+        const edges = out[nodeType].edges;
+        if (edges) {
+            out[nodeType].edges = simply_immutable_1.cloneMutable(edges);
+        }
     }
     for (const nodeTypeStr in nodeTypesIn) {
         const nodeType = nodeTypeStr;
-        const edges = nodeTypesIn[nodeType].edges || {};
+        const edges = out[nodeType].edges || {};
         for (const port in edges) {
             const edgeDef = edges[port];
             const { isInput, endpoint } = getEdgeDefinitionEndpoint(edgeDef);
+            if (isInput && (edgeDef.type === EdgeType.ANCESTRY || edgeDef.type === EdgeType.ANCESTRY_LINK)) {
+                if (out[nodeType].ancestorPort) {
+                    throw new Error(`Multiple ANCESTRY edges defined on type ${nodeType}; only one is allowed.`);
+                }
+                out[nodeType].ancestorPort = port;
+            }
             if (isEdgeEndpointConstraint(endpoint)) {
+                if (edgeDef.type === EdgeType.MEMBERSHIP) {
+                    endpoint.type = (_a = membershipTargetTypes[nodeType]) !== null && _a !== void 0 ? _a : [];
+                    edgeDef.from.type = endpoint.type;
+                }
                 const denormalize = conduit_utils_1.toArray(endpoint.denormalize);
                 addConnections(nodeType, port, edgeDef.constraint, edgeDef.type, endpoint.type, denormalize, isInput, true);
                 for (const denormalPort of denormalize) {

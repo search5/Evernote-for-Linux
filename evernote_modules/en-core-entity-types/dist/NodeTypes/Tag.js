@@ -11,7 +11,6 @@ const Note_1 = require("./Note");
  * and use the regexs defined in the thrift calls to transpile to a ES2015 format */
 // tslint:disable: max-line-length
 const TAG_LABEL_REGEX = /^[!-\+\x2D-~\xA1-\u167F\u1681-\u1FFF\u200B-\u2027\u202A-\u202E\u2030-\u205E\u2060-\u2FFF\u3001-\u{10FFFF}]([ -\+\x2D-~\xA0-\u2027\u202A-\u{10FFFF}]{0,98}[!-\+\x2D-~\xA1-\u167F\u1681-\u1FFF\u200B-\u2027\u202A-\u202E\u2030-\u205E\u2060-\u2FFF\u3001-\u{10FFFF}])?$/u;
-// tslint:enable: max-line-length
 exports.tagTypeDef = {
     name: EntityConstants_1.CoreEntityTypes.Tag,
     syncSource: conduit_storage_1.SyncSource.THRIFT,

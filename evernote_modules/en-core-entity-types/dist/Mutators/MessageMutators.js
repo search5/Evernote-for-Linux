@@ -10,13 +10,12 @@ const EntityConstants_1 = require("../EntityConstants");
 const Profile_1 = require("./Helpers/Profile");
 exports.messageSendToThread = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         thread: 'ID',
         content: 'string',
     },
-    optionalParams: {},
     derivedParams: {
-        creator: 'ID?',
+        creator: conduit_utils_1.NullableID,
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     initParams: async (trc, ctx, paramsIn, paramsOut) => {

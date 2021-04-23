@@ -1,14 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MaestroRequestingEnvironment = exports.MaestroPlatform = exports.MaestroClientType = exports.LoginInfoNapMigrationState = exports.LoginInfoLoginStatus = exports.LoginInfoBusinessUserType = exports.LayoutStyle = exports.Layout = exports.InvitationSortField = exports.InvitationsForMeOrderBy = exports.InvitationInvitationType = exports.InvitationFilterField = exports.IndexOrderType = exports.GoogleScopesEnum = exports.FeatureRolloutDataResultSiwg = exports.FeatureRolloutDataResultSiwa = exports.FeatureRolloutClientType = exports.DescendentTasksStatus = exports.CommEngineEventType = exports.ClientType = exports.ClientPlatform = exports.CalendarSettingsResultMobileRemindersOpenNoteMinutes = exports.CalendarSettingsResultMobileRemindersCreateNoteMinutes = exports.CalendarSettingsResultDesktopRemindersOpenNoteMinutes = exports.CalendarSettingsResultDesktopRemindersCreateNoteMinutes = exports.CalendarSettingsMobileRemindersOpenNoteMinutes = exports.CalendarSettingsMobileRemindersCreateNoteMinutes = exports.CalendarSettingsDesktopRemindersOpenNoteMinutes = exports.CalendarSettingsDesktopRemindersCreateNoteMinutes = exports.CalendarProviderField = exports.CalendarEventStatus = exports.CalendarEventResultStatus = exports.CalendarEventLinkCreate_Status = exports.CalendarEventByIdResultStatus = exports.BoardSortField = exports.BoardPlatformWidgetsPlatform = exports.BoardMobileLayout = exports.BoardFilterField = exports.BoardDesktopLayout = exports.BoardCreateHome_ServiceLevel = exports.BoardCreateHome_Platform = exports.BoardBootstrapPlatform = exports.BoardBoardType = exports.BetaFeatureSortField = exports.BetaFeatureFilterField = exports.AuthStateEnum = exports.AttachmentSortField = exports.AttachmentFilterField = exports.AdaptiveDownsyncTypeEnum = exports.AccessStatus = void 0;
-exports.ReminderUpdate_ReminderDateUiOption = exports.ReminderStatus = exports.ReminderSortField = exports.ReminderReminderDateUiOption = exports.ReminderFilterField = exports.ReminderCreate_ReminderDateUiOption = exports.PublishedNotebooksSortField = exports.PublishedNotebooksFilterField = exports.Provider = exports.PromotionSortField = exports.PromotionFilterField = exports.ProfileStatus = exports.ProfileSortField = exports.ProfileFilterField = exports.PrivilegeLevel = exports.PlatformWidgetsWidgetType = exports.PlatformWidgetsSelectedTab = exports.OAuthProvider = exports.NotesWithRemindersOrderBy = exports.NoteSortField = exports.NotesNotInTrashOrderBy = exports.NotesInWorkspaceOrderBy = exports.NotesInTrashOrderBy = exports.NotesInParentOrderBy = exports.NoteOwnMembershipsOrderBy = exports.NoteInvite_Privilege = exports.NoteFilterField = exports.NoteContentInfoSortField = exports.NoteContentInfoFilterField = exports.NotebookSortField = exports.NotebooksOrderBy = exports.NotebookReminderNotesOrderBy = exports.NotebookOwnMembershipsOrderBy = exports.NotebookInvite_Privilege = exports.NotebookFilterField = exports.NotebookChildNotesOrderBy = exports.NotebookAllMembershipsOrderBy = exports.NoteAllMembershipsOrderBy = exports.MonetizationClientType = exports.MessageSortField = exports.MessageFilterField = exports.MembershipUpdatePrivilege_Privilege = exports.MembershipSortField = exports.MembershipsInParentOrderBy = exports.MembershipsForMeOrderBy = exports.MembershipsForMeInParentOrderBy = exports.MembershipRecipientType = exports.MembershipPrivilege = exports.MembershipFilterField = exports.MarketingEmailType = void 0;
-exports.UserSetReminderSetting_Setting = exports.UserServiceLevelV2 = exports.UserServiceLevel = exports.UserPrivilege = exports.UserBusinessUserRole = exports.UserAttributesReminderEmail = exports.UserAccountingPremiumServiceStatus = exports.UserAccountingBusinessRole = exports.TierSelectionDisplayResultTsdVariation = exports.TierSelectionDisplayResultTsdType = exports.ThreadSortField = exports.ThreadFilterField = exports.TaskUserSettingsSortField = exports.TaskUserSettingsFilterField = exports.TaskUpdate_Status = exports.TaskUpdate_DueDateUiOption = exports.TaskStatus = exports.TaskSortField = exports.TasksInNoteStatus = exports.TaskNotesNotInTrashOrderBy = exports.TaskFilterField = exports.TaskDueDateUiOption = exports.TaskCreate_DueDateUiOption = exports.TagSortField = exports.TagsOrderBy = exports.TagsAllowedField = exports.TagHierarchySortField = exports.TagHierarchyFilterField = exports.TagFilterField = exports.TagChildTagsOrderBy = exports.SyncProgressTypeEnum = exports.SupportedPlacement = exports.Status = exports.StackSortField = exports.StackFilterField = exports.StackedNotebookSortField = exports.ShortcutSortField = exports.ShortcutFilterField = exports.SharedWithMeField = exports.ServiceProvider = exports.SearchLogEventTypeProperty = exports.SearchExTextField = exports.SearchExSortOrder = exports.SearchExResultType = exports.SearchExLocalSearchMode = exports.ScheduledNotificationSortField = exports.ScheduledNotificationScheduledNotificationType = exports.ScheduledNotificationFilterField = exports.SavedSearchSortField = exports.SavedSearchFilterField = void 0;
-exports.WorkspaceWorkspaceType = exports.WorkspaceUpdate_Type = exports.WorkspaceUpdate_DefaultRole = exports.WorkspaceSortField = exports.WorkspaceSetLayoutStyle_LayoutStyle = exports.WorkspaceReminderNotesOrderBy = exports.WorkspaceOwnMembershipsOrderBy = exports.WorkspaceInvite_Privilege = exports.WorkspaceFilterField = exports.WorkspaceDirectorySortField = exports.WorkspaceDirectoryFilterField = exports.WorkspaceDescendentNotesOrderBy = exports.WorkspaceDefaultRole = exports.WorkspaceCreate_Type = exports.WorkspaceCreate_DefaultRole = exports.WorkspaceChildNotesOrderBy = exports.WorkspaceAllMembershipsOrderBy = exports.WorkspaceAccessStatus = exports.WidgetWidgetType = exports.WidgetSortField = exports.WidgetsInBoardWidgetType = exports.WidgetsInBoardSelectedTab = exports.WidgetsInBoardPlatform = exports.WidgetSetSelectedTab_TabToSelect = exports.WidgetSelectedTab = exports.WidgetFilterField = exports.WidgetContentConflictSortField = exports.WidgetContentConflictFilterField = exports.WidgetBoardType = void 0;
-var AccessStatus;
-(function (AccessStatus) {
-    AccessStatus["Open"] = "OPEN";
-    AccessStatus["Member"] = "MEMBER";
-})(AccessStatus = exports.AccessStatus || (exports.AccessStatus = {}));
+exports.NotebookChildNotesOrderBy = exports.NotebookAllMembershipsOrderBy = exports.NoteAllMembershipsOrderBy = exports.NapMigrationStateType = exports.MonetizationClientType = exports.MessageSortField = exports.MessageFilterField = exports.MembershipSortField = exports.MembershipsInParentOrderBy = exports.MembershipsForMeOrderBy = exports.MembershipsForMeInParentOrderBy = exports.MembershipRecipientType = exports.MembershipPrivilege = exports.MembershipFilterField = exports.MarketingEmailType = exports.MaestroRequestingEnvironment = exports.MaestroPlatform = exports.MaestroClientType = exports.LoginStatus = exports.InvitationType = exports.InvitationSortField = exports.InvitationsForMeOrderBy = exports.InvitationFilterField = exports.IndexOrderType = exports.GoogleScopesEnum = exports.FeatureRolloutClientType = exports.CommEngineEventType = exports.CommEngineClientType = exports.ClientPlatform = exports.CalendarProvider = exports.CalendarNotificationOptions = exports.CalendarEventStatus = exports.BusinessUserType = exports.BusinessUserRole = exports.BoardType = exports.BoardSortField = exports.BoardServiceLevels = exports.BoardPlatformWidgetsPlatform = exports.BoardMutableWidgetTypes = exports.BoardMobileLayout = exports.BoardFormFactor = exports.BoardFilterField = exports.BoardDesktopLayout = exports.BoardBackgroundMode = exports.BetaFeatureSortField = exports.BetaFeatureFilterField = exports.AuthStateEnum = exports.AttachmentSortField = exports.AttachmentFilterField = exports.AdaptiveDownsyncTypeEnum = void 0;
+exports.SyncProgressTypeEnum = exports.SupportedPlacement = exports.StackSortField = exports.StackFilterField = exports.StackedNotebookSortField = exports.SignInMethod = exports.ShortcutSortField = exports.ShortcutFilterField = exports.SharedWithMeField = exports.ServiceProvider = exports.SearchLogEventTypeProperty = exports.SearchExTextField = exports.SearchExSortOrder = exports.SearchExResultType = exports.SearchExLocalSearchMode = exports.ScheduledNotificationType = exports.ScheduledNotificationSortField = exports.ScheduledNotificationFilterField = exports.SavedSearchSortField = exports.SavedSearchFilterField = exports.ReminderStatus = exports.ReminderSortField = exports.ReminderFilterField = exports.ReminderDateUiOption = exports.PublishedNotebooksSortField = exports.PublishedNotebooksFilterField = exports.PublishedNotebookAccessStatus = exports.PromotionSortField = exports.PromotionFilterField = exports.ProfileStatus = exports.ProfileSortField = exports.ProfileFilterField = exports.PremiumOrderStatus = exports.NotesWithRemindersOrderBy = exports.NoteSortField = exports.NotesNotInTrashOrderBy = exports.NotesInWorkspaceOrderBy = exports.NotesInTrashOrderBy = exports.NotesInParentOrderBy = exports.NoteOwnMembershipsOrderBy = exports.NoteHistoryLayout = exports.NoteFilterField = exports.NoteContentInfoSortField = exports.NoteContentInfoFilterField = exports.NotebookSortField = exports.NotebooksOrderBy = exports.NotebooksInWorkspaceOrderBy = exports.NotebookReminderNotesOrderBy = exports.NotebookOwnMembershipsOrderBy = exports.NotebookFilterField = void 0;
+exports.WorkspaceType = exports.WorkspaceSortField = exports.WorkspaceReminderNotesOrderBy = exports.WorkspaceOwnMembershipsOrderBy = exports.WorkspaceLayoutStyle = exports.WorkspaceFilterField = exports.WorkspaceDirectorySortField = exports.WorkspaceDirectoryFilterField = exports.WorkspaceDescendentNotesOrderBy = exports.WorkspaceChildNotesOrderBy = exports.WorkspaceChildNotebooksOrderBy = exports.WorkspaceAllMembershipsOrderBy = exports.WorkspaceAccessStatus = exports.WidgetType = exports.WidgetTabs = exports.WidgetSortField = exports.WidgetsInBoardPlatform = exports.WidgetFilterField = exports.WidgetContentConflictSortField = exports.WidgetContentConflictFilterField = exports.UserServiceLevelV2 = exports.UserServiceLevel = exports.UserReminderEmailConfig = exports.UserPrivilegeLevel = exports.TsdVariation = exports.TsdType = exports.ThreadSortField = exports.ThreadFilterField = exports.TaskUserSettingsSortField = exports.TaskUserSettingsFilterField = exports.TaskStatus = exports.TaskSortField = exports.TaskOwnMembershipsOrderBy = exports.TaskNotesNotInTrashOrderBy = exports.TaskFilterField = exports.TaskDueDateUiOption = exports.TaskAllMembershipsOrderBy = exports.TagSortField = exports.TagsOrderBy = exports.TagsAllowedField = exports.TagHierarchySortField = exports.TagHierarchyFilterField = exports.TagFilterField = exports.TagChildTagsOrderBy = void 0;
 var AdaptiveDownsyncTypeEnum;
 (function (AdaptiveDownsyncTypeEnum) {
     AdaptiveDownsyncTypeEnum["None"] = "NONE";
@@ -103,27 +97,12 @@ var BetaFeatureSortField;
     BetaFeatureSortField["Id"] = "id";
     BetaFeatureSortField["Label"] = "label";
 })(BetaFeatureSortField = exports.BetaFeatureSortField || (exports.BetaFeatureSortField = {}));
-var BoardBoardType;
-(function (BoardBoardType) {
-    BoardBoardType["Home"] = "Home";
-})(BoardBoardType = exports.BoardBoardType || (exports.BoardBoardType = {}));
-var BoardBootstrapPlatform;
-(function (BoardBootstrapPlatform) {
-    BoardBootstrapPlatform["Mobile"] = "Mobile";
-    BoardBootstrapPlatform["Desktop"] = "Desktop";
-})(BoardBootstrapPlatform = exports.BoardBootstrapPlatform || (exports.BoardBootstrapPlatform = {}));
-var BoardCreateHome_Platform;
-(function (BoardCreateHome_Platform) {
-    BoardCreateHome_Platform["Mobile"] = "Mobile";
-    BoardCreateHome_Platform["Desktop"] = "Desktop";
-})(BoardCreateHome_Platform = exports.BoardCreateHome_Platform || (exports.BoardCreateHome_Platform = {}));
-var BoardCreateHome_ServiceLevel;
-(function (BoardCreateHome_ServiceLevel) {
-    BoardCreateHome_ServiceLevel["Basic"] = "BASIC";
-    BoardCreateHome_ServiceLevel["Plus"] = "PLUS";
-    BoardCreateHome_ServiceLevel["Premium"] = "PREMIUM";
-    BoardCreateHome_ServiceLevel["Business"] = "BUSINESS";
-})(BoardCreateHome_ServiceLevel = exports.BoardCreateHome_ServiceLevel || (exports.BoardCreateHome_ServiceLevel = {}));
+var BoardBackgroundMode;
+(function (BoardBackgroundMode) {
+    BoardBackgroundMode["None"] = "None";
+    BoardBackgroundMode["Image"] = "Image";
+    BoardBackgroundMode["Color"] = "Color";
+})(BoardBackgroundMode = exports.BoardBackgroundMode || (exports.BoardBackgroundMode = {}));
 var BoardDesktopLayout;
 (function (BoardDesktopLayout) {
     BoardDesktopLayout["ThreeColumnFlex"] = "ThreeColumnFlex";
@@ -134,6 +113,9 @@ var BoardFilterField;
     BoardFilterField["IsSupported"] = "isSupported";
     BoardFilterField["Id"] = "id";
     BoardFilterField["BoardType"] = "boardType";
+    BoardFilterField["InternalId"] = "internalID";
+    BoardFilterField["IsCustomized"] = "isCustomized";
+    BoardFilterField["ServiceLevel"] = "serviceLevel";
     BoardFilterField["HeaderBgLocalChangeTimestamp"] = "headerBG_localChangeTimestamp";
     BoardFilterField["HeaderBgHash"] = "headerBG_hash";
     BoardFilterField["HeaderBgSize"] = "headerBG_size";
@@ -154,29 +136,61 @@ var BoardFilterField;
     BoardFilterField["HeaderBgPreviousUploadPath"] = "headerBGPreviousUpload_path";
     BoardFilterField["HeaderBgPreviousUploadMime"] = "headerBGPreviousUploadMime";
     BoardFilterField["HeaderBgPreviousUploadFileName"] = "headerBGPreviousUploadFileName";
+    BoardFilterField["HeaderBgMode"] = "headerBGMode";
+    BoardFilterField["HeaderBgColorLight"] = "headerBGColor_light";
+    BoardFilterField["HeaderBgColorDark"] = "headerBGColor_dark";
+    BoardFilterField["GreetingText"] = "greetingText";
     BoardFilterField["DesktopLayout"] = "desktop_layout";
     BoardFilterField["MobileLayout"] = "mobile_layout";
     BoardFilterField["FreeTrialExpiration"] = "freeTrialExpiration";
     BoardFilterField["Updated"] = "updated";
     BoardFilterField["TasksVersion"] = "tasksVersion";
     BoardFilterField["CalendarVersion"] = "calendarVersion";
+    BoardFilterField["FilteredNotesVersion"] = "filteredNotesVersion";
+    BoardFilterField["ExtraVersion"] = "extraVersion";
+    BoardFilterField["CoreVersion"] = "coreVersion";
     BoardFilterField["Label"] = "label";
 })(BoardFilterField = exports.BoardFilterField || (exports.BoardFilterField = {}));
+var BoardFormFactor;
+(function (BoardFormFactor) {
+    BoardFormFactor["Desktop"] = "Desktop";
+    BoardFormFactor["Mobile"] = "Mobile";
+})(BoardFormFactor = exports.BoardFormFactor || (exports.BoardFormFactor = {}));
 var BoardMobileLayout;
 (function (BoardMobileLayout) {
     BoardMobileLayout["SingleColumnStack"] = "SingleColumnStack";
 })(BoardMobileLayout = exports.BoardMobileLayout || (exports.BoardMobileLayout = {}));
+var BoardMutableWidgetTypes;
+(function (BoardMutableWidgetTypes) {
+    BoardMutableWidgetTypes["Pinned"] = "Pinned";
+    BoardMutableWidgetTypes["ScratchPad"] = "ScratchPad";
+    BoardMutableWidgetTypes["FilteredNotes"] = "FilteredNotes";
+})(BoardMutableWidgetTypes = exports.BoardMutableWidgetTypes || (exports.BoardMutableWidgetTypes = {}));
 var BoardPlatformWidgetsPlatform;
 (function (BoardPlatformWidgetsPlatform) {
     BoardPlatformWidgetsPlatform["Mobile"] = "mobile";
     BoardPlatformWidgetsPlatform["Desktop"] = "desktop";
 })(BoardPlatformWidgetsPlatform = exports.BoardPlatformWidgetsPlatform || (exports.BoardPlatformWidgetsPlatform = {}));
+var BoardServiceLevels;
+(function (BoardServiceLevels) {
+    BoardServiceLevels["Free"] = "FREE";
+    BoardServiceLevels["Plus"] = "PLUS";
+    BoardServiceLevels["Premium"] = "PREMIUM";
+    BoardServiceLevels["Personal"] = "PERSONAL";
+    BoardServiceLevels["Professional"] = "PROFESSIONAL";
+    BoardServiceLevels["Teams"] = "TEAMS";
+    BoardServiceLevels["Basic"] = "BASIC";
+    BoardServiceLevels["Business"] = "BUSINESS";
+})(BoardServiceLevels = exports.BoardServiceLevels || (exports.BoardServiceLevels = {}));
 var BoardSortField;
 (function (BoardSortField) {
     BoardSortField["Created"] = "created";
     BoardSortField["IsSupported"] = "isSupported";
     BoardSortField["Id"] = "id";
     BoardSortField["BoardType"] = "boardType";
+    BoardSortField["InternalId"] = "internalID";
+    BoardSortField["IsCustomized"] = "isCustomized";
+    BoardSortField["ServiceLevel"] = "serviceLevel";
     BoardSortField["HeaderBgLocalChangeTimestamp"] = "headerBG_localChangeTimestamp";
     BoardSortField["HeaderBgHash"] = "headerBG_hash";
     BoardSortField["HeaderBgSize"] = "headerBG_size";
@@ -197,141 +211,76 @@ var BoardSortField;
     BoardSortField["HeaderBgPreviousUploadPath"] = "headerBGPreviousUpload_path";
     BoardSortField["HeaderBgPreviousUploadMime"] = "headerBGPreviousUploadMime";
     BoardSortField["HeaderBgPreviousUploadFileName"] = "headerBGPreviousUploadFileName";
+    BoardSortField["HeaderBgMode"] = "headerBGMode";
+    BoardSortField["HeaderBgColorLight"] = "headerBGColor_light";
+    BoardSortField["HeaderBgColorDark"] = "headerBGColor_dark";
+    BoardSortField["GreetingText"] = "greetingText";
     BoardSortField["DesktopLayout"] = "desktop_layout";
     BoardSortField["MobileLayout"] = "mobile_layout";
     BoardSortField["FreeTrialExpiration"] = "freeTrialExpiration";
     BoardSortField["Updated"] = "updated";
     BoardSortField["TasksVersion"] = "tasksVersion";
     BoardSortField["CalendarVersion"] = "calendarVersion";
+    BoardSortField["FilteredNotesVersion"] = "filteredNotesVersion";
+    BoardSortField["ExtraVersion"] = "extraVersion";
+    BoardSortField["CoreVersion"] = "coreVersion";
     BoardSortField["Label"] = "label";
 })(BoardSortField = exports.BoardSortField || (exports.BoardSortField = {}));
-var CalendarEventByIdResultStatus;
-(function (CalendarEventByIdResultStatus) {
-    CalendarEventByIdResultStatus["Confirmed"] = "CONFIRMED";
-    CalendarEventByIdResultStatus["Canceled"] = "CANCELED";
-    CalendarEventByIdResultStatus["Tentative"] = "TENTATIVE";
-})(CalendarEventByIdResultStatus = exports.CalendarEventByIdResultStatus || (exports.CalendarEventByIdResultStatus = {}));
-var CalendarEventLinkCreate_Status;
-(function (CalendarEventLinkCreate_Status) {
-    CalendarEventLinkCreate_Status["Confirmed"] = "CONFIRMED";
-    CalendarEventLinkCreate_Status["Canceled"] = "CANCELED";
-    CalendarEventLinkCreate_Status["Tentative"] = "TENTATIVE";
-})(CalendarEventLinkCreate_Status = exports.CalendarEventLinkCreate_Status || (exports.CalendarEventLinkCreate_Status = {}));
-var CalendarEventResultStatus;
-(function (CalendarEventResultStatus) {
-    CalendarEventResultStatus["Confirmed"] = "CONFIRMED";
-    CalendarEventResultStatus["Canceled"] = "CANCELED";
-    CalendarEventResultStatus["Tentative"] = "TENTATIVE";
-})(CalendarEventResultStatus = exports.CalendarEventResultStatus || (exports.CalendarEventResultStatus = {}));
+var BoardType;
+(function (BoardType) {
+    BoardType["Home"] = "Home";
+})(BoardType = exports.BoardType || (exports.BoardType = {}));
+var BusinessUserRole;
+(function (BusinessUserRole) {
+    BusinessUserRole["Admin"] = "ADMIN";
+    BusinessUserRole["Normal"] = "NORMAL";
+})(BusinessUserRole = exports.BusinessUserRole || (exports.BusinessUserRole = {}));
+var BusinessUserType;
+(function (BusinessUserType) {
+    BusinessUserType["Unknown"] = "UNKNOWN";
+    BusinessUserType["PersonalOnly"] = "PERSONAL_ONLY";
+    BusinessUserType["Legacy"] = "LEGACY";
+    BusinessUserType["BusinessOnly"] = "BUSINESS_ONLY";
+})(BusinessUserType = exports.BusinessUserType || (exports.BusinessUserType = {}));
 var CalendarEventStatus;
 (function (CalendarEventStatus) {
     CalendarEventStatus["Confirmed"] = "CONFIRMED";
     CalendarEventStatus["Canceled"] = "CANCELED";
     CalendarEventStatus["Tentative"] = "TENTATIVE";
 })(CalendarEventStatus = exports.CalendarEventStatus || (exports.CalendarEventStatus = {}));
-var CalendarProviderField;
-(function (CalendarProviderField) {
-    CalendarProviderField["Google"] = "GOOGLE";
-    CalendarProviderField["Outlook"] = "OUTLOOK";
-    CalendarProviderField["Other"] = "OTHER";
-})(CalendarProviderField = exports.CalendarProviderField || (exports.CalendarProviderField = {}));
-var CalendarSettingsDesktopRemindersCreateNoteMinutes;
-(function (CalendarSettingsDesktopRemindersCreateNoteMinutes) {
-    CalendarSettingsDesktopRemindersCreateNoteMinutes["ThirtyBefore"] = "THIRTY_BEFORE";
-    CalendarSettingsDesktopRemindersCreateNoteMinutes["TenBefore"] = "TEN_BEFORE";
-    CalendarSettingsDesktopRemindersCreateNoteMinutes["FiveBefore"] = "FIVE_BEFORE";
-    CalendarSettingsDesktopRemindersCreateNoteMinutes["AtStart"] = "AT_START";
-    CalendarSettingsDesktopRemindersCreateNoteMinutes["AtEnd"] = "AT_END";
-    CalendarSettingsDesktopRemindersCreateNoteMinutes["FiveAfter"] = "FIVE_AFTER";
-    CalendarSettingsDesktopRemindersCreateNoteMinutes["Off"] = "OFF";
-})(CalendarSettingsDesktopRemindersCreateNoteMinutes = exports.CalendarSettingsDesktopRemindersCreateNoteMinutes || (exports.CalendarSettingsDesktopRemindersCreateNoteMinutes = {}));
-var CalendarSettingsDesktopRemindersOpenNoteMinutes;
-(function (CalendarSettingsDesktopRemindersOpenNoteMinutes) {
-    CalendarSettingsDesktopRemindersOpenNoteMinutes["ThirtyBefore"] = "THIRTY_BEFORE";
-    CalendarSettingsDesktopRemindersOpenNoteMinutes["TenBefore"] = "TEN_BEFORE";
-    CalendarSettingsDesktopRemindersOpenNoteMinutes["FiveBefore"] = "FIVE_BEFORE";
-    CalendarSettingsDesktopRemindersOpenNoteMinutes["AtStart"] = "AT_START";
-    CalendarSettingsDesktopRemindersOpenNoteMinutes["AtEnd"] = "AT_END";
-    CalendarSettingsDesktopRemindersOpenNoteMinutes["FiveAfter"] = "FIVE_AFTER";
-    CalendarSettingsDesktopRemindersOpenNoteMinutes["Off"] = "OFF";
-})(CalendarSettingsDesktopRemindersOpenNoteMinutes = exports.CalendarSettingsDesktopRemindersOpenNoteMinutes || (exports.CalendarSettingsDesktopRemindersOpenNoteMinutes = {}));
-var CalendarSettingsMobileRemindersCreateNoteMinutes;
-(function (CalendarSettingsMobileRemindersCreateNoteMinutes) {
-    CalendarSettingsMobileRemindersCreateNoteMinutes["ThirtyBefore"] = "THIRTY_BEFORE";
-    CalendarSettingsMobileRemindersCreateNoteMinutes["TenBefore"] = "TEN_BEFORE";
-    CalendarSettingsMobileRemindersCreateNoteMinutes["FiveBefore"] = "FIVE_BEFORE";
-    CalendarSettingsMobileRemindersCreateNoteMinutes["AtStart"] = "AT_START";
-    CalendarSettingsMobileRemindersCreateNoteMinutes["AtEnd"] = "AT_END";
-    CalendarSettingsMobileRemindersCreateNoteMinutes["FiveAfter"] = "FIVE_AFTER";
-    CalendarSettingsMobileRemindersCreateNoteMinutes["Off"] = "OFF";
-})(CalendarSettingsMobileRemindersCreateNoteMinutes = exports.CalendarSettingsMobileRemindersCreateNoteMinutes || (exports.CalendarSettingsMobileRemindersCreateNoteMinutes = {}));
-var CalendarSettingsMobileRemindersOpenNoteMinutes;
-(function (CalendarSettingsMobileRemindersOpenNoteMinutes) {
-    CalendarSettingsMobileRemindersOpenNoteMinutes["ThirtyBefore"] = "THIRTY_BEFORE";
-    CalendarSettingsMobileRemindersOpenNoteMinutes["TenBefore"] = "TEN_BEFORE";
-    CalendarSettingsMobileRemindersOpenNoteMinutes["FiveBefore"] = "FIVE_BEFORE";
-    CalendarSettingsMobileRemindersOpenNoteMinutes["AtStart"] = "AT_START";
-    CalendarSettingsMobileRemindersOpenNoteMinutes["AtEnd"] = "AT_END";
-    CalendarSettingsMobileRemindersOpenNoteMinutes["FiveAfter"] = "FIVE_AFTER";
-    CalendarSettingsMobileRemindersOpenNoteMinutes["Off"] = "OFF";
-})(CalendarSettingsMobileRemindersOpenNoteMinutes = exports.CalendarSettingsMobileRemindersOpenNoteMinutes || (exports.CalendarSettingsMobileRemindersOpenNoteMinutes = {}));
-var CalendarSettingsResultDesktopRemindersCreateNoteMinutes;
-(function (CalendarSettingsResultDesktopRemindersCreateNoteMinutes) {
-    CalendarSettingsResultDesktopRemindersCreateNoteMinutes["ThirtyBefore"] = "THIRTY_BEFORE";
-    CalendarSettingsResultDesktopRemindersCreateNoteMinutes["TenBefore"] = "TEN_BEFORE";
-    CalendarSettingsResultDesktopRemindersCreateNoteMinutes["FiveBefore"] = "FIVE_BEFORE";
-    CalendarSettingsResultDesktopRemindersCreateNoteMinutes["AtStart"] = "AT_START";
-    CalendarSettingsResultDesktopRemindersCreateNoteMinutes["AtEnd"] = "AT_END";
-    CalendarSettingsResultDesktopRemindersCreateNoteMinutes["FiveAfter"] = "FIVE_AFTER";
-    CalendarSettingsResultDesktopRemindersCreateNoteMinutes["Off"] = "OFF";
-})(CalendarSettingsResultDesktopRemindersCreateNoteMinutes = exports.CalendarSettingsResultDesktopRemindersCreateNoteMinutes || (exports.CalendarSettingsResultDesktopRemindersCreateNoteMinutes = {}));
-var CalendarSettingsResultDesktopRemindersOpenNoteMinutes;
-(function (CalendarSettingsResultDesktopRemindersOpenNoteMinutes) {
-    CalendarSettingsResultDesktopRemindersOpenNoteMinutes["ThirtyBefore"] = "THIRTY_BEFORE";
-    CalendarSettingsResultDesktopRemindersOpenNoteMinutes["TenBefore"] = "TEN_BEFORE";
-    CalendarSettingsResultDesktopRemindersOpenNoteMinutes["FiveBefore"] = "FIVE_BEFORE";
-    CalendarSettingsResultDesktopRemindersOpenNoteMinutes["AtStart"] = "AT_START";
-    CalendarSettingsResultDesktopRemindersOpenNoteMinutes["AtEnd"] = "AT_END";
-    CalendarSettingsResultDesktopRemindersOpenNoteMinutes["FiveAfter"] = "FIVE_AFTER";
-    CalendarSettingsResultDesktopRemindersOpenNoteMinutes["Off"] = "OFF";
-})(CalendarSettingsResultDesktopRemindersOpenNoteMinutes = exports.CalendarSettingsResultDesktopRemindersOpenNoteMinutes || (exports.CalendarSettingsResultDesktopRemindersOpenNoteMinutes = {}));
-var CalendarSettingsResultMobileRemindersCreateNoteMinutes;
-(function (CalendarSettingsResultMobileRemindersCreateNoteMinutes) {
-    CalendarSettingsResultMobileRemindersCreateNoteMinutes["ThirtyBefore"] = "THIRTY_BEFORE";
-    CalendarSettingsResultMobileRemindersCreateNoteMinutes["TenBefore"] = "TEN_BEFORE";
-    CalendarSettingsResultMobileRemindersCreateNoteMinutes["FiveBefore"] = "FIVE_BEFORE";
-    CalendarSettingsResultMobileRemindersCreateNoteMinutes["AtStart"] = "AT_START";
-    CalendarSettingsResultMobileRemindersCreateNoteMinutes["AtEnd"] = "AT_END";
-    CalendarSettingsResultMobileRemindersCreateNoteMinutes["FiveAfter"] = "FIVE_AFTER";
-    CalendarSettingsResultMobileRemindersCreateNoteMinutes["Off"] = "OFF";
-})(CalendarSettingsResultMobileRemindersCreateNoteMinutes = exports.CalendarSettingsResultMobileRemindersCreateNoteMinutes || (exports.CalendarSettingsResultMobileRemindersCreateNoteMinutes = {}));
-var CalendarSettingsResultMobileRemindersOpenNoteMinutes;
-(function (CalendarSettingsResultMobileRemindersOpenNoteMinutes) {
-    CalendarSettingsResultMobileRemindersOpenNoteMinutes["ThirtyBefore"] = "THIRTY_BEFORE";
-    CalendarSettingsResultMobileRemindersOpenNoteMinutes["TenBefore"] = "TEN_BEFORE";
-    CalendarSettingsResultMobileRemindersOpenNoteMinutes["FiveBefore"] = "FIVE_BEFORE";
-    CalendarSettingsResultMobileRemindersOpenNoteMinutes["AtStart"] = "AT_START";
-    CalendarSettingsResultMobileRemindersOpenNoteMinutes["AtEnd"] = "AT_END";
-    CalendarSettingsResultMobileRemindersOpenNoteMinutes["FiveAfter"] = "FIVE_AFTER";
-    CalendarSettingsResultMobileRemindersOpenNoteMinutes["Off"] = "OFF";
-})(CalendarSettingsResultMobileRemindersOpenNoteMinutes = exports.CalendarSettingsResultMobileRemindersOpenNoteMinutes || (exports.CalendarSettingsResultMobileRemindersOpenNoteMinutes = {}));
+var CalendarNotificationOptions;
+(function (CalendarNotificationOptions) {
+    CalendarNotificationOptions["ThirtyBefore"] = "THIRTY_BEFORE";
+    CalendarNotificationOptions["TenBefore"] = "TEN_BEFORE";
+    CalendarNotificationOptions["FiveBefore"] = "FIVE_BEFORE";
+    CalendarNotificationOptions["AtStart"] = "AT_START";
+    CalendarNotificationOptions["AtEnd"] = "AT_END";
+    CalendarNotificationOptions["FiveAfter"] = "FIVE_AFTER";
+    CalendarNotificationOptions["Off"] = "OFF";
+})(CalendarNotificationOptions = exports.CalendarNotificationOptions || (exports.CalendarNotificationOptions = {}));
+var CalendarProvider;
+(function (CalendarProvider) {
+    CalendarProvider["Google"] = "GOOGLE";
+    CalendarProvider["Outlook"] = "OUTLOOK";
+    CalendarProvider["Other"] = "OTHER";
+})(CalendarProvider = exports.CalendarProvider || (exports.CalendarProvider = {}));
 var ClientPlatform;
 (function (ClientPlatform) {
     ClientPlatform["Android"] = "ANDROID";
     ClientPlatform["Ios"] = "IOS";
     ClientPlatform["Mac"] = "MAC";
 })(ClientPlatform = exports.ClientPlatform || (exports.ClientPlatform = {}));
-var ClientType;
-(function (ClientType) {
-    ClientType["Mac"] = "MAC";
-    ClientType["Windows"] = "WINDOWS";
-    ClientType["Ios"] = "IOS";
-    ClientType["Android"] = "ANDROID";
-    ClientType["Web"] = "WEB";
-    ClientType["Clipper"] = "CLIPPER";
-    ClientType["Ion"] = "ION";
-    ClientType["Boron"] = "BORON";
-})(ClientType = exports.ClientType || (exports.ClientType = {}));
+var CommEngineClientType;
+(function (CommEngineClientType) {
+    CommEngineClientType["Mac"] = "MAC";
+    CommEngineClientType["Windows"] = "WINDOWS";
+    CommEngineClientType["Ios"] = "IOS";
+    CommEngineClientType["Android"] = "ANDROID";
+    CommEngineClientType["Web"] = "WEB";
+    CommEngineClientType["Clipper"] = "CLIPPER";
+    CommEngineClientType["Ion"] = "ION";
+    CommEngineClientType["Boron"] = "BORON";
+})(CommEngineClientType = exports.CommEngineClientType || (exports.CommEngineClientType = {}));
 var CommEngineEventType;
 (function (CommEngineEventType) {
     CommEngineEventType["Show"] = "SHOW";
@@ -339,34 +288,15 @@ var CommEngineEventType;
     CommEngineEventType["Track"] = "TRACK";
     CommEngineEventType["Errorevent"] = "ERROREVENT";
 })(CommEngineEventType = exports.CommEngineEventType || (exports.CommEngineEventType = {}));
-var DescendentTasksStatus;
-(function (DescendentTasksStatus) {
-    DescendentTasksStatus["Open"] = "open";
-    DescendentTasksStatus["Completed"] = "completed";
-})(DescendentTasksStatus = exports.DescendentTasksStatus || (exports.DescendentTasksStatus = {}));
 var FeatureRolloutClientType;
 (function (FeatureRolloutClientType) {
     FeatureRolloutClientType["Mobile"] = "mobile";
     FeatureRolloutClientType["Desktop"] = "desktop";
 })(FeatureRolloutClientType = exports.FeatureRolloutClientType || (exports.FeatureRolloutClientType = {}));
-var FeatureRolloutDataResultSiwa;
-(function (FeatureRolloutDataResultSiwa) {
-    FeatureRolloutDataResultSiwa["Nap"] = "NAP";
-    FeatureRolloutDataResultSiwa["Legacy"] = "Legacy";
-})(FeatureRolloutDataResultSiwa = exports.FeatureRolloutDataResultSiwa || (exports.FeatureRolloutDataResultSiwa = {}));
-var FeatureRolloutDataResultSiwg;
-(function (FeatureRolloutDataResultSiwg) {
-    FeatureRolloutDataResultSiwg["Nap"] = "NAP";
-    FeatureRolloutDataResultSiwg["Legacy"] = "Legacy";
-})(FeatureRolloutDataResultSiwg = exports.FeatureRolloutDataResultSiwg || (exports.FeatureRolloutDataResultSiwg = {}));
-/** Recognized Google authorization scopes for use in Google Services API. */
 var GoogleScopesEnum;
 (function (GoogleScopesEnum) {
-    /** Scope for Google Drive API access. */
     GoogleScopesEnum["Drive"] = "DRIVE";
-    /** Scope for Google Calendar API access. */
     GoogleScopesEnum["Calendar"] = "CALENDAR";
-    /** Scope for Google Contacts API access. */
     GoogleScopesEnum["Contacts"] = "CONTACTS";
 })(GoogleScopesEnum = exports.GoogleScopesEnum || (exports.GoogleScopesEnum = {}));
 var IndexOrderType;
@@ -382,12 +312,6 @@ var InvitationFilterField;
     InvitationFilterField["Snippet"] = "snippet";
     InvitationFilterField["InvitationType"] = "invitationType";
 })(InvitationFilterField = exports.InvitationFilterField || (exports.InvitationFilterField = {}));
-var InvitationInvitationType;
-(function (InvitationInvitationType) {
-    InvitationInvitationType["Unknown"] = "UNKNOWN";
-    InvitationInvitationType["Note"] = "NOTE";
-    InvitationInvitationType["Notebook"] = "NOTEBOOK";
-})(InvitationInvitationType = exports.InvitationInvitationType || (exports.InvitationInvitationType = {}));
 var InvitationsForMeOrderBy;
 (function (InvitationsForMeOrderBy) {
     InvitationsForMeOrderBy["Created"] = "created";
@@ -401,55 +325,22 @@ var InvitationSortField;
     InvitationSortField["Snippet"] = "snippet";
     InvitationSortField["InvitationType"] = "invitationType";
 })(InvitationSortField = exports.InvitationSortField || (exports.InvitationSortField = {}));
-var Layout;
-(function (Layout) {
-    Layout["Embed"] = "EMBED";
-    Layout["Nativeembed"] = "NATIVEEMBED";
-    Layout["Web"] = "WEB";
-    Layout["Iphone"] = "IPHONE";
-    Layout["Android"] = "ANDROID";
-    Layout["Ipad"] = "IPAD";
-    Layout["Wp7"] = "WP7";
-    Layout["App"] = "APP";
-    Layout["Micro"] = "MICRO";
-    Layout["Oauthmicro"] = "OAUTHMICRO";
-    Layout["Small"] = "SMALL";
-    Layout["Mobile"] = "MOBILE";
-    Layout["Webembed"] = "WEBEMBED";
-    Layout["Mac"] = "MAC";
-})(Layout = exports.Layout || (exports.Layout = {}));
-var LayoutStyle;
-(function (LayoutStyle) {
-    LayoutStyle["List"] = "LIST";
-    LayoutStyle["Board"] = "BOARD";
-})(LayoutStyle = exports.LayoutStyle || (exports.LayoutStyle = {}));
-var LoginInfoBusinessUserType;
-(function (LoginInfoBusinessUserType) {
-    LoginInfoBusinessUserType["Unknown"] = "UNKNOWN";
-    LoginInfoBusinessUserType["PersonalOnly"] = "PERSONAL_ONLY";
-    LoginInfoBusinessUserType["Legacy"] = "LEGACY";
-    LoginInfoBusinessUserType["BusinessOnly"] = "BUSINESS_ONLY";
-})(LoginInfoBusinessUserType = exports.LoginInfoBusinessUserType || (exports.LoginInfoBusinessUserType = {}));
-var LoginInfoLoginStatus;
-(function (LoginInfoLoginStatus) {
-    LoginInfoLoginStatus["Unknown"] = "UNKNOWN";
-    LoginInfoLoginStatus["InvalidFormat"] = "INVALID_FORMAT";
-    LoginInfoLoginStatus["NotFound"] = "NOT_FOUND";
-    LoginInfoLoginStatus["InvitePending"] = "INVITE_PENDING";
-    LoginInfoLoginStatus["PasswordReset"] = "PASSWORD_RESET";
-    LoginInfoLoginStatus["Password"] = "PASSWORD";
-    LoginInfoLoginStatus["Sso"] = "SSO";
-})(LoginInfoLoginStatus = exports.LoginInfoLoginStatus || (exports.LoginInfoLoginStatus = {}));
-var LoginInfoNapMigrationState;
-(function (LoginInfoNapMigrationState) {
-    LoginInfoNapMigrationState["Unknown"] = "UNKNOWN";
-    LoginInfoNapMigrationState["Legacy"] = "LEGACY";
-    LoginInfoNapMigrationState["MigrateOnLogin"] = "MIGRATE_ON_LOGIN";
-    LoginInfoNapMigrationState["Migrated"] = "MIGRATED";
-    LoginInfoNapMigrationState["MigrationFailed"] = "MIGRATION_FAILED";
-    LoginInfoNapMigrationState["MigratedNapOnly"] = "MIGRATED_NAP_ONLY";
-    LoginInfoNapMigrationState["NotFound"] = "NOT_FOUND";
-})(LoginInfoNapMigrationState = exports.LoginInfoNapMigrationState || (exports.LoginInfoNapMigrationState = {}));
+var InvitationType;
+(function (InvitationType) {
+    InvitationType["Unknown"] = "UNKNOWN";
+    InvitationType["Note"] = "NOTE";
+    InvitationType["Notebook"] = "NOTEBOOK";
+})(InvitationType = exports.InvitationType || (exports.InvitationType = {}));
+var LoginStatus;
+(function (LoginStatus) {
+    LoginStatus["Unknown"] = "UNKNOWN";
+    LoginStatus["InvalidFormat"] = "INVALID_FORMAT";
+    LoginStatus["NotFound"] = "NOT_FOUND";
+    LoginStatus["InvitePending"] = "INVITE_PENDING";
+    LoginStatus["PasswordReset"] = "PASSWORD_RESET";
+    LoginStatus["Password"] = "PASSWORD";
+    LoginStatus["Sso"] = "SSO";
+})(LoginStatus = exports.LoginStatus || (exports.LoginStatus = {}));
 var MaestroClientType;
 (function (MaestroClientType) {
     MaestroClientType["Ion"] = "ION";
@@ -532,13 +423,6 @@ var MembershipSortField;
     MembershipSortField["Updated"] = "updated";
     MembershipSortField["InvitedTime"] = "invitedTime";
 })(MembershipSortField = exports.MembershipSortField || (exports.MembershipSortField = {}));
-var MembershipUpdatePrivilege_Privilege;
-(function (MembershipUpdatePrivilege_Privilege) {
-    MembershipUpdatePrivilege_Privilege["Read"] = "READ";
-    MembershipUpdatePrivilege_Privilege["Complete"] = "COMPLETE";
-    MembershipUpdatePrivilege_Privilege["Edit"] = "EDIT";
-    MembershipUpdatePrivilege_Privilege["Manage"] = "MANAGE";
-})(MembershipUpdatePrivilege_Privilege = exports.MembershipUpdatePrivilege_Privilege || (exports.MembershipUpdatePrivilege_Privilege = {}));
 var MessageFilterField;
 (function (MessageFilterField) {
     MessageFilterField["Thread"] = "thread";
@@ -569,6 +453,16 @@ var MonetizationClientType;
     MonetizationClientType["BoronMac"] = "BORON_MAC";
     MonetizationClientType["BoronWin"] = "BORON_WIN";
 })(MonetizationClientType = exports.MonetizationClientType || (exports.MonetizationClientType = {}));
+var NapMigrationStateType;
+(function (NapMigrationStateType) {
+    NapMigrationStateType["Unknown"] = "UNKNOWN";
+    NapMigrationStateType["Legacy"] = "LEGACY";
+    NapMigrationStateType["MigrateOnLogin"] = "MIGRATE_ON_LOGIN";
+    NapMigrationStateType["Migrated"] = "MIGRATED";
+    NapMigrationStateType["MigrationFailed"] = "MIGRATION_FAILED";
+    NapMigrationStateType["MigratedNapOnly"] = "MIGRATED_NAP_ONLY";
+    NapMigrationStateType["NotFound"] = "NOT_FOUND";
+})(NapMigrationStateType = exports.NapMigrationStateType || (exports.NapMigrationStateType = {}));
 var NoteAllMembershipsOrderBy;
 (function (NoteAllMembershipsOrderBy) {
     NoteAllMembershipsOrderBy["Created"] = "created";
@@ -605,13 +499,6 @@ var NotebookFilterField;
     NotebookFilterField["ReminderNotifyInApp"] = "reminderNotifyInApp";
     NotebookFilterField["IsPartialNotebook"] = "isPartialNotebook";
 })(NotebookFilterField = exports.NotebookFilterField || (exports.NotebookFilterField = {}));
-var NotebookInvite_Privilege;
-(function (NotebookInvite_Privilege) {
-    NotebookInvite_Privilege["Read"] = "READ";
-    NotebookInvite_Privilege["Complete"] = "COMPLETE";
-    NotebookInvite_Privilege["Edit"] = "EDIT";
-    NotebookInvite_Privilege["Manage"] = "MANAGE";
-})(NotebookInvite_Privilege = exports.NotebookInvite_Privilege || (exports.NotebookInvite_Privilege = {}));
 var NotebookOwnMembershipsOrderBy;
 (function (NotebookOwnMembershipsOrderBy) {
     NotebookOwnMembershipsOrderBy["Created"] = "created";
@@ -624,6 +511,12 @@ var NotebookReminderNotesOrderBy;
     NotebookReminderNotesOrderBy["Created"] = "created";
     NotebookReminderNotesOrderBy["Updated"] = "updated";
 })(NotebookReminderNotesOrderBy = exports.NotebookReminderNotesOrderBy || (exports.NotebookReminderNotesOrderBy = {}));
+var NotebooksInWorkspaceOrderBy;
+(function (NotebooksInWorkspaceOrderBy) {
+    NotebooksInWorkspaceOrderBy["Label"] = "label";
+    NotebooksInWorkspaceOrderBy["Updated"] = "updated";
+    NotebooksInWorkspaceOrderBy["Created"] = "created";
+})(NotebooksInWorkspaceOrderBy = exports.NotebooksInWorkspaceOrderBy || (exports.NotebooksInWorkspaceOrderBy = {}));
 var NotebooksOrderBy;
 (function (NotebooksOrderBy) {
     NotebooksOrderBy["Label"] = "label";
@@ -721,13 +614,23 @@ var NoteFilterField;
     NoteFilterField["NoteSizeMax"] = "noteSizeMax";
     NoteFilterField["Uploaded"] = "uploaded";
 })(NoteFilterField = exports.NoteFilterField || (exports.NoteFilterField = {}));
-var NoteInvite_Privilege;
-(function (NoteInvite_Privilege) {
-    NoteInvite_Privilege["Read"] = "READ";
-    NoteInvite_Privilege["Complete"] = "COMPLETE";
-    NoteInvite_Privilege["Edit"] = "EDIT";
-    NoteInvite_Privilege["Manage"] = "MANAGE";
-})(NoteInvite_Privilege = exports.NoteInvite_Privilege || (exports.NoteInvite_Privilege = {}));
+var NoteHistoryLayout;
+(function (NoteHistoryLayout) {
+    NoteHistoryLayout["Embed"] = "EMBED";
+    NoteHistoryLayout["Nativeembed"] = "NATIVEEMBED";
+    NoteHistoryLayout["Web"] = "WEB";
+    NoteHistoryLayout["Iphone"] = "IPHONE";
+    NoteHistoryLayout["Android"] = "ANDROID";
+    NoteHistoryLayout["Ipad"] = "IPAD";
+    NoteHistoryLayout["Wp7"] = "WP7";
+    NoteHistoryLayout["App"] = "APP";
+    NoteHistoryLayout["Micro"] = "MICRO";
+    NoteHistoryLayout["Oauthmicro"] = "OAUTHMICRO";
+    NoteHistoryLayout["Small"] = "SMALL";
+    NoteHistoryLayout["Mobile"] = "MOBILE";
+    NoteHistoryLayout["Webembed"] = "WEBEMBED";
+    NoteHistoryLayout["Mac"] = "MAC";
+})(NoteHistoryLayout = exports.NoteHistoryLayout || (exports.NoteHistoryLayout = {}));
 var NoteOwnMembershipsOrderBy;
 (function (NoteOwnMembershipsOrderBy) {
     NoteOwnMembershipsOrderBy["Created"] = "created";
@@ -816,42 +719,15 @@ var NotesWithRemindersOrderBy;
     NotesWithRemindersOrderBy["Created"] = "created";
     NotesWithRemindersOrderBy["Updated"] = "updated";
 })(NotesWithRemindersOrderBy = exports.NotesWithRemindersOrderBy || (exports.NotesWithRemindersOrderBy = {}));
-var OAuthProvider;
-(function (OAuthProvider) {
-    OAuthProvider["Google"] = "GOOGLE";
-    OAuthProvider["Facebook"] = "FACEBOOK";
-})(OAuthProvider = exports.OAuthProvider || (exports.OAuthProvider = {}));
-var PlatformWidgetsSelectedTab;
-(function (PlatformWidgetsSelectedTab) {
-    PlatformWidgetsSelectedTab["Recent"] = "Recent";
-    PlatformWidgetsSelectedTab["Suggested"] = "Suggested";
-    PlatformWidgetsSelectedTab["WebClips"] = "WebClips";
-    PlatformWidgetsSelectedTab["Emails"] = "Emails";
-    PlatformWidgetsSelectedTab["Images"] = "Images";
-    PlatformWidgetsSelectedTab["Audio"] = "Audio";
-    PlatformWidgetsSelectedTab["Documents"] = "Documents";
-})(PlatformWidgetsSelectedTab = exports.PlatformWidgetsSelectedTab || (exports.PlatformWidgetsSelectedTab = {}));
-var PlatformWidgetsWidgetType;
-(function (PlatformWidgetsWidgetType) {
-    PlatformWidgetsWidgetType["Clipped"] = "Clipped";
-    PlatformWidgetsWidgetType["Notebooks"] = "Notebooks";
-    PlatformWidgetsWidgetType["Notes"] = "Notes";
-    PlatformWidgetsWidgetType["OnboardingChecklist"] = "OnboardingChecklist";
-    PlatformWidgetsWidgetType["Pinned"] = "Pinned";
-    PlatformWidgetsWidgetType["ScratchPad"] = "ScratchPad";
-    PlatformWidgetsWidgetType["Shortcuts"] = "Shortcuts";
-    PlatformWidgetsWidgetType["Tags"] = "Tags";
-    PlatformWidgetsWidgetType["Calendar"] = "Calendar";
-    PlatformWidgetsWidgetType["Tasks"] = "Tasks";
-})(PlatformWidgetsWidgetType = exports.PlatformWidgetsWidgetType || (exports.PlatformWidgetsWidgetType = {}));
-var PrivilegeLevel;
-(function (PrivilegeLevel) {
-    PrivilegeLevel["ReadNotebook"] = "READ_NOTEBOOK";
-    PrivilegeLevel["ModifyNotebookPlusActivity"] = "MODIFY_NOTEBOOK_PLUS_ACTIVITY";
-    PrivilegeLevel["ReadNotebookPlusActivity"] = "READ_NOTEBOOK_PLUS_ACTIVITY";
-    PrivilegeLevel["Group"] = "GROUP";
-    PrivilegeLevel["FullAccess"] = "FULL_ACCESS";
-})(PrivilegeLevel = exports.PrivilegeLevel || (exports.PrivilegeLevel = {}));
+var PremiumOrderStatus;
+(function (PremiumOrderStatus) {
+    PremiumOrderStatus["None"] = "NONE";
+    PremiumOrderStatus["Pending"] = "PENDING";
+    PremiumOrderStatus["Active"] = "ACTIVE";
+    PremiumOrderStatus["Failed"] = "FAILED";
+    PremiumOrderStatus["CancellationPending"] = "CANCELLATION_PENDING";
+    PremiumOrderStatus["Canceled"] = "CANCELED";
+})(PremiumOrderStatus = exports.PremiumOrderStatus || (exports.PremiumOrderStatus = {}));
 var ProfileFilterField;
 (function (ProfileFilterField) {
     ProfileFilterField["Label"] = "label";
@@ -905,12 +781,11 @@ var PromotionSortField;
     PromotionSortField["TimeLastShown"] = "timeLastShown";
     PromotionSortField["Label"] = "label";
 })(PromotionSortField = exports.PromotionSortField || (exports.PromotionSortField = {}));
-var Provider;
-(function (Provider) {
-    Provider["Google"] = "GOOGLE";
-    Provider["Outlook"] = "OUTLOOK";
-    Provider["Other"] = "OTHER";
-})(Provider = exports.Provider || (exports.Provider = {}));
+var PublishedNotebookAccessStatus;
+(function (PublishedNotebookAccessStatus) {
+    PublishedNotebookAccessStatus["Open"] = "OPEN";
+    PublishedNotebookAccessStatus["Member"] = "MEMBER";
+})(PublishedNotebookAccessStatus = exports.PublishedNotebookAccessStatus || (exports.PublishedNotebookAccessStatus = {}));
 var PublishedNotebooksFilterField;
 (function (PublishedNotebooksFilterField) {
     PublishedNotebooksFilterField["Label"] = "label";
@@ -923,12 +798,12 @@ var PublishedNotebooksSortField;
     PublishedNotebooksSortField["Updated"] = "updated";
     PublishedNotebooksSortField["AccessStatus"] = "accessStatus";
 })(PublishedNotebooksSortField = exports.PublishedNotebooksSortField || (exports.PublishedNotebooksSortField = {}));
-var ReminderCreate_ReminderDateUiOption;
-(function (ReminderCreate_ReminderDateUiOption) {
-    ReminderCreate_ReminderDateUiOption["DateTime"] = "date_time";
-    ReminderCreate_ReminderDateUiOption["DateOnly"] = "date_only";
-    ReminderCreate_ReminderDateUiOption["RelativeToDue"] = "relative_to_due";
-})(ReminderCreate_ReminderDateUiOption = exports.ReminderCreate_ReminderDateUiOption || (exports.ReminderCreate_ReminderDateUiOption = {}));
+var ReminderDateUiOption;
+(function (ReminderDateUiOption) {
+    ReminderDateUiOption["DateTime"] = "date_time";
+    ReminderDateUiOption["DateOnly"] = "date_only";
+    ReminderDateUiOption["RelativeToDue"] = "relative_to_due";
+})(ReminderDateUiOption = exports.ReminderDateUiOption || (exports.ReminderDateUiOption = {}));
 var ReminderFilterField;
 (function (ReminderFilterField) {
     ReminderFilterField["Source"] = "source";
@@ -944,12 +819,6 @@ var ReminderFilterField;
     ReminderFilterField["Status"] = "status";
     ReminderFilterField["Label"] = "label";
 })(ReminderFilterField = exports.ReminderFilterField || (exports.ReminderFilterField = {}));
-var ReminderReminderDateUiOption;
-(function (ReminderReminderDateUiOption) {
-    ReminderReminderDateUiOption["DateTime"] = "date_time";
-    ReminderReminderDateUiOption["DateOnly"] = "date_only";
-    ReminderReminderDateUiOption["RelativeToDue"] = "relative_to_due";
-})(ReminderReminderDateUiOption = exports.ReminderReminderDateUiOption || (exports.ReminderReminderDateUiOption = {}));
 var ReminderSortField;
 (function (ReminderSortField) {
     ReminderSortField["Source"] = "source";
@@ -970,12 +839,6 @@ var ReminderStatus;
     ReminderStatus["Active"] = "active";
     ReminderStatus["Muted"] = "muted";
 })(ReminderStatus = exports.ReminderStatus || (exports.ReminderStatus = {}));
-var ReminderUpdate_ReminderDateUiOption;
-(function (ReminderUpdate_ReminderDateUiOption) {
-    ReminderUpdate_ReminderDateUiOption["DateTime"] = "date_time";
-    ReminderUpdate_ReminderDateUiOption["DateOnly"] = "date_only";
-    ReminderUpdate_ReminderDateUiOption["RelativeToDue"] = "relative_to_due";
-})(ReminderUpdate_ReminderDateUiOption = exports.ReminderUpdate_ReminderDateUiOption || (exports.ReminderUpdate_ReminderDateUiOption = {}));
 var SavedSearchFilterField;
 (function (SavedSearchFilterField) {
     SavedSearchFilterField["Label"] = "label";
@@ -995,13 +858,16 @@ var ScheduledNotificationFilterField;
     ScheduledNotificationFilterField["Created"] = "created";
     ScheduledNotificationFilterField["Updated"] = "updated";
     ScheduledNotificationFilterField["Mute"] = "mute";
+    ScheduledNotificationFilterField["DataCalendarEventId"] = "data_calendarEventId";
+    ScheduledNotificationFilterField["DataNotificationTime"] = "data_notificationTime";
+    ScheduledNotificationFilterField["DataClientType"] = "data_clientType";
+    ScheduledNotificationFilterField["DataTitle"] = "data_title";
+    ScheduledNotificationFilterField["DataStartTime"] = "data_startTime";
+    ScheduledNotificationFilterField["DataEndTime"] = "data_endTime";
+    ScheduledNotificationFilterField["DataLocation"] = "data_location";
+    ScheduledNotificationFilterField["DataNoteId"] = "data_noteID";
     ScheduledNotificationFilterField["Label"] = "label";
 })(ScheduledNotificationFilterField = exports.ScheduledNotificationFilterField || (exports.ScheduledNotificationFilterField = {}));
-var ScheduledNotificationScheduledNotificationType;
-(function (ScheduledNotificationScheduledNotificationType) {
-    ScheduledNotificationScheduledNotificationType["TaskReminder"] = "TaskReminder";
-    ScheduledNotificationScheduledNotificationType["Calendar"] = "Calendar";
-})(ScheduledNotificationScheduledNotificationType = exports.ScheduledNotificationScheduledNotificationType || (exports.ScheduledNotificationScheduledNotificationType = {}));
 var ScheduledNotificationSortField;
 (function (ScheduledNotificationSortField) {
     ScheduledNotificationSortField["Id"] = "id";
@@ -1009,8 +875,21 @@ var ScheduledNotificationSortField;
     ScheduledNotificationSortField["Created"] = "created";
     ScheduledNotificationSortField["Updated"] = "updated";
     ScheduledNotificationSortField["Mute"] = "mute";
+    ScheduledNotificationSortField["DataCalendarEventId"] = "data_calendarEventId";
+    ScheduledNotificationSortField["DataNotificationTime"] = "data_notificationTime";
+    ScheduledNotificationSortField["DataClientType"] = "data_clientType";
+    ScheduledNotificationSortField["DataTitle"] = "data_title";
+    ScheduledNotificationSortField["DataStartTime"] = "data_startTime";
+    ScheduledNotificationSortField["DataEndTime"] = "data_endTime";
+    ScheduledNotificationSortField["DataLocation"] = "data_location";
+    ScheduledNotificationSortField["DataNoteId"] = "data_noteID";
     ScheduledNotificationSortField["Label"] = "label";
 })(ScheduledNotificationSortField = exports.ScheduledNotificationSortField || (exports.ScheduledNotificationSortField = {}));
+var ScheduledNotificationType;
+(function (ScheduledNotificationType) {
+    ScheduledNotificationType["TaskReminder"] = "TaskReminder";
+    ScheduledNotificationType["Calendar"] = "Calendar";
+})(ScheduledNotificationType = exports.ScheduledNotificationType || (exports.ScheduledNotificationType = {}));
 var SearchExLocalSearchMode;
 (function (SearchExLocalSearchMode) {
     SearchExLocalSearchMode["Auto"] = "AUTO";
@@ -1075,6 +954,11 @@ var ShortcutSortField;
     ShortcutSortField["Source"] = "source";
     ShortcutSortField["Id"] = "id";
 })(ShortcutSortField = exports.ShortcutSortField || (exports.ShortcutSortField = {}));
+var SignInMethod;
+(function (SignInMethod) {
+    SignInMethod["Nap"] = "NAP";
+    SignInMethod["Legacy"] = "Legacy";
+})(SignInMethod = exports.SignInMethod || (exports.SignInMethod = {}));
 var StackedNotebookSortField;
 (function (StackedNotebookSortField) {
     StackedNotebookSortField["Label"] = "label";
@@ -1091,11 +975,6 @@ var StackSortField;
     StackSortField["Label"] = "label";
     StackSortField["Id"] = "id";
 })(StackSortField = exports.StackSortField || (exports.StackSortField = {}));
-var Status;
-(function (Status) {
-    Status["Open"] = "open";
-    Status["Completed"] = "completed";
-})(Status = exports.Status || (exports.Status = {}));
 var SupportedPlacement;
 (function (SupportedPlacement) {
     SupportedPlacement["Fullscreen"] = "FULLSCREEN";
@@ -1155,11 +1034,11 @@ var TagSortField;
     TagSortField["SyncContext"] = "syncContext";
     TagSortField["Id"] = "id";
 })(TagSortField = exports.TagSortField || (exports.TagSortField = {}));
-var TaskCreate_DueDateUiOption;
-(function (TaskCreate_DueDateUiOption) {
-    TaskCreate_DueDateUiOption["DateTime"] = "date_time";
-    TaskCreate_DueDateUiOption["DateOnly"] = "date_only";
-})(TaskCreate_DueDateUiOption = exports.TaskCreate_DueDateUiOption || (exports.TaskCreate_DueDateUiOption = {}));
+var TaskAllMembershipsOrderBy;
+(function (TaskAllMembershipsOrderBy) {
+    TaskAllMembershipsOrderBy["Created"] = "created";
+    TaskAllMembershipsOrderBy["Label"] = "label";
+})(TaskAllMembershipsOrderBy = exports.TaskAllMembershipsOrderBy || (exports.TaskAllMembershipsOrderBy = {}));
 var TaskDueDateUiOption;
 (function (TaskDueDateUiOption) {
     TaskDueDateUiOption["DateTime"] = "date_time";
@@ -1191,11 +1070,11 @@ var TaskNotesNotInTrashOrderBy;
     TaskNotesNotInTrashOrderBy["Created"] = "created";
     TaskNotesNotInTrashOrderBy["Updated"] = "updated";
 })(TaskNotesNotInTrashOrderBy = exports.TaskNotesNotInTrashOrderBy || (exports.TaskNotesNotInTrashOrderBy = {}));
-var TasksInNoteStatus;
-(function (TasksInNoteStatus) {
-    TasksInNoteStatus["Open"] = "open";
-    TasksInNoteStatus["Completed"] = "completed";
-})(TasksInNoteStatus = exports.TasksInNoteStatus || (exports.TasksInNoteStatus = {}));
+var TaskOwnMembershipsOrderBy;
+(function (TaskOwnMembershipsOrderBy) {
+    TaskOwnMembershipsOrderBy["Created"] = "created";
+    TaskOwnMembershipsOrderBy["Label"] = "label";
+})(TaskOwnMembershipsOrderBy = exports.TaskOwnMembershipsOrderBy || (exports.TaskOwnMembershipsOrderBy = {}));
 var TaskSortField;
 (function (TaskSortField) {
     TaskSortField["Parent"] = "parent";
@@ -1221,16 +1100,6 @@ var TaskStatus;
     TaskStatus["Open"] = "open";
     TaskStatus["Completed"] = "completed";
 })(TaskStatus = exports.TaskStatus || (exports.TaskStatus = {}));
-var TaskUpdate_DueDateUiOption;
-(function (TaskUpdate_DueDateUiOption) {
-    TaskUpdate_DueDateUiOption["DateTime"] = "date_time";
-    TaskUpdate_DueDateUiOption["DateOnly"] = "date_only";
-})(TaskUpdate_DueDateUiOption = exports.TaskUpdate_DueDateUiOption || (exports.TaskUpdate_DueDateUiOption = {}));
-var TaskUpdate_Status;
-(function (TaskUpdate_Status) {
-    TaskUpdate_Status["Open"] = "open";
-    TaskUpdate_Status["Completed"] = "completed";
-})(TaskUpdate_Status = exports.TaskUpdate_Status || (exports.TaskUpdate_Status = {}));
 var TaskUserSettingsFilterField;
 (function (TaskUserSettingsFilterField) {
     TaskUserSettingsFilterField["Label"] = "label";
@@ -1273,67 +1142,48 @@ var ThreadSortField;
     ThreadSortField["MaxDeletedMessageId"] = "maxDeletedMessageID";
     ThreadSortField["Label"] = "label";
 })(ThreadSortField = exports.ThreadSortField || (exports.ThreadSortField = {}));
-var TierSelectionDisplayResultTsdType;
-(function (TierSelectionDisplayResultTsdType) {
-    TierSelectionDisplayResultTsdType["RegularTsd"] = "REGULAR_TSD";
-    TierSelectionDisplayResultTsdType["TargetedUpsell"] = "TARGETED_UPSELL";
-})(TierSelectionDisplayResultTsdType = exports.TierSelectionDisplayResultTsdType || (exports.TierSelectionDisplayResultTsdType = {}));
-var TierSelectionDisplayResultTsdVariation;
-(function (TierSelectionDisplayResultTsdVariation) {
-    TierSelectionDisplayResultTsdVariation["DialogVar1"] = "DIALOG_VAR1";
-    TierSelectionDisplayResultTsdVariation["Fullscreen1ButtonDismiss"] = "FULLSCREEN1BUTTON_DISMISS";
-    TierSelectionDisplayResultTsdVariation["Fullscreen1ButtonNodismiss"] = "FULLSCREEN1BUTTON_NODISMISS";
-    TierSelectionDisplayResultTsdVariation["Fullscreen1ButtonTierpath"] = "FULLSCREEN1BUTTON_TIERPATH";
-    TierSelectionDisplayResultTsdVariation["Fullscreen1ButtonVar2"] = "FULLSCREEN1BUTTON_VAR2";
-    TierSelectionDisplayResultTsdVariation["Fullscreen3ButtonsDefault"] = "FULLSCREEN3BUTTONS_DEFAULT";
-    TierSelectionDisplayResultTsdVariation["Fullscreen3ButtonsDismiss"] = "FULLSCREEN3BUTTONS_DISMISS";
-    TierSelectionDisplayResultTsdVariation["Fullscreen3ButtonsNodismiss"] = "FULLSCREEN3BUTTONS_NODISMISS";
-    TierSelectionDisplayResultTsdVariation["Fullscreen3ButtonsBeforefle"] = "FULLSCREEN3BUTTONS_BEFOREFLE";
-    TierSelectionDisplayResultTsdVariation["ModalDefault"] = "MODAL_DEFAULT";
-    TierSelectionDisplayResultTsdVariation["NotificationAspirational"] = "NOTIFICATION_ASPIRATIONAL";
-    TierSelectionDisplayResultTsdVariation["NotificationStorage"] = "NOTIFICATION_STORAGE";
-    TierSelectionDisplayResultTsdVariation["SheetAspirational"] = "SHEET_ASPIRATIONAL";
-    TierSelectionDisplayResultTsdVariation["SheetStorage"] = "SHEET_STORAGE";
-    TierSelectionDisplayResultTsdVariation["BannerLearnmore"] = "BANNER_LEARNMORE";
-    TierSelectionDisplayResultTsdVariation["BannerUpgrade"] = "BANNER_UPGRADE";
-    TierSelectionDisplayResultTsdVariation["FullscreenSinglesday"] = "FULLSCREEN_SINGLESDAY";
-    TierSelectionDisplayResultTsdVariation["FullscreenDiscount"] = "FULLSCREEN_DISCOUNT";
-    TierSelectionDisplayResultTsdVariation["FullscreenNewyear"] = "FULLSCREEN_NEWYEAR";
-    TierSelectionDisplayResultTsdVariation["TestUnsupported"] = "TEST_UNSUPPORTED";
-})(TierSelectionDisplayResultTsdVariation = exports.TierSelectionDisplayResultTsdVariation || (exports.TierSelectionDisplayResultTsdVariation = {}));
-var UserAccountingBusinessRole;
-(function (UserAccountingBusinessRole) {
-    UserAccountingBusinessRole["Admin"] = "ADMIN";
-    UserAccountingBusinessRole["Normal"] = "NORMAL";
-})(UserAccountingBusinessRole = exports.UserAccountingBusinessRole || (exports.UserAccountingBusinessRole = {}));
-var UserAccountingPremiumServiceStatus;
-(function (UserAccountingPremiumServiceStatus) {
-    UserAccountingPremiumServiceStatus["None"] = "NONE";
-    UserAccountingPremiumServiceStatus["Pending"] = "PENDING";
-    UserAccountingPremiumServiceStatus["Active"] = "ACTIVE";
-    UserAccountingPremiumServiceStatus["Failed"] = "FAILED";
-    UserAccountingPremiumServiceStatus["CancellationPending"] = "CANCELLATION_PENDING";
-    UserAccountingPremiumServiceStatus["Canceled"] = "CANCELED";
-})(UserAccountingPremiumServiceStatus = exports.UserAccountingPremiumServiceStatus || (exports.UserAccountingPremiumServiceStatus = {}));
-var UserAttributesReminderEmail;
-(function (UserAttributesReminderEmail) {
-    UserAttributesReminderEmail["DoNotSend"] = "DO_NOT_SEND";
-    UserAttributesReminderEmail["SendDailyEmail"] = "SEND_DAILY_EMAIL";
-})(UserAttributesReminderEmail = exports.UserAttributesReminderEmail || (exports.UserAttributesReminderEmail = {}));
-var UserBusinessUserRole;
-(function (UserBusinessUserRole) {
-    UserBusinessUserRole["Admin"] = "ADMIN";
-    UserBusinessUserRole["Normal"] = "NORMAL";
-})(UserBusinessUserRole = exports.UserBusinessUserRole || (exports.UserBusinessUserRole = {}));
-var UserPrivilege;
-(function (UserPrivilege) {
-    UserPrivilege["Normal"] = "NORMAL";
-    UserPrivilege["Premium"] = "PREMIUM";
-    UserPrivilege["Vip"] = "VIP";
-    UserPrivilege["Manager"] = "MANAGER";
-    UserPrivilege["Support"] = "SUPPORT";
-    UserPrivilege["Admin"] = "ADMIN";
-})(UserPrivilege = exports.UserPrivilege || (exports.UserPrivilege = {}));
+var TsdType;
+(function (TsdType) {
+    TsdType["RegularTsd"] = "REGULAR_TSD";
+    TsdType["TargetedUpsell"] = "TARGETED_UPSELL";
+})(TsdType = exports.TsdType || (exports.TsdType = {}));
+var TsdVariation;
+(function (TsdVariation) {
+    TsdVariation["DialogVar1"] = "DIALOG_VAR1";
+    TsdVariation["Fullscreen1ButtonDismiss"] = "FULLSCREEN1BUTTON_DISMISS";
+    TsdVariation["Fullscreen1ButtonNodismiss"] = "FULLSCREEN1BUTTON_NODISMISS";
+    TsdVariation["Fullscreen1ButtonTierpath"] = "FULLSCREEN1BUTTON_TIERPATH";
+    TsdVariation["Fullscreen1ButtonVar2"] = "FULLSCREEN1BUTTON_VAR2";
+    TsdVariation["Fullscreen3ButtonsDefault"] = "FULLSCREEN3BUTTONS_DEFAULT";
+    TsdVariation["Fullscreen3ButtonsDismiss"] = "FULLSCREEN3BUTTONS_DISMISS";
+    TsdVariation["Fullscreen3ButtonsNodismiss"] = "FULLSCREEN3BUTTONS_NODISMISS";
+    TsdVariation["Fullscreen3ButtonsBeforefle"] = "FULLSCREEN3BUTTONS_BEFOREFLE";
+    TsdVariation["ModalDefault"] = "MODAL_DEFAULT";
+    TsdVariation["NotificationAspirational"] = "NOTIFICATION_ASPIRATIONAL";
+    TsdVariation["NotificationStorage"] = "NOTIFICATION_STORAGE";
+    TsdVariation["SheetAspirational"] = "SHEET_ASPIRATIONAL";
+    TsdVariation["SheetStorage"] = "SHEET_STORAGE";
+    TsdVariation["BannerLearnmore"] = "BANNER_LEARNMORE";
+    TsdVariation["BannerUpgrade"] = "BANNER_UPGRADE";
+    TsdVariation["FullscreenSinglesday"] = "FULLSCREEN_SINGLESDAY";
+    TsdVariation["FullscreenDiscount"] = "FULLSCREEN_DISCOUNT";
+    TsdVariation["FullscreenNewyear"] = "FULLSCREEN_NEWYEAR";
+    TsdVariation["TestUnsupported"] = "TEST_UNSUPPORTED";
+})(TsdVariation = exports.TsdVariation || (exports.TsdVariation = {}));
+var UserPrivilegeLevel;
+(function (UserPrivilegeLevel) {
+    UserPrivilegeLevel["Normal"] = "NORMAL";
+    UserPrivilegeLevel["Premium"] = "PREMIUM";
+    UserPrivilegeLevel["Vip"] = "VIP";
+    UserPrivilegeLevel["Manager"] = "MANAGER";
+    UserPrivilegeLevel["Support"] = "SUPPORT";
+    UserPrivilegeLevel["Admin"] = "ADMIN";
+})(UserPrivilegeLevel = exports.UserPrivilegeLevel || (exports.UserPrivilegeLevel = {}));
+var UserReminderEmailConfig;
+(function (UserReminderEmailConfig) {
+    UserReminderEmailConfig["DoNotSend"] = "DO_NOT_SEND";
+    UserReminderEmailConfig["SendDailyEmail"] = "SEND_DAILY_EMAIL";
+})(UserReminderEmailConfig = exports.UserReminderEmailConfig || (exports.UserReminderEmailConfig = {}));
 var UserServiceLevel;
 (function (UserServiceLevel) {
     UserServiceLevel["Basic"] = "BASIC";
@@ -1350,15 +1200,6 @@ var UserServiceLevelV2;
     UserServiceLevelV2["Professional"] = "PROFESSIONAL";
     UserServiceLevelV2["Teams"] = "TEAMS";
 })(UserServiceLevelV2 = exports.UserServiceLevelV2 || (exports.UserServiceLevelV2 = {}));
-var UserSetReminderSetting_Setting;
-(function (UserSetReminderSetting_Setting) {
-    UserSetReminderSetting_Setting["DoNotSend"] = "DO_NOT_SEND";
-    UserSetReminderSetting_Setting["SendDailyEmail"] = "SEND_DAILY_EMAIL";
-})(UserSetReminderSetting_Setting = exports.UserSetReminderSetting_Setting || (exports.UserSetReminderSetting_Setting = {}));
-var WidgetBoardType;
-(function (WidgetBoardType) {
-    WidgetBoardType["Home"] = "Home";
-})(WidgetBoardType = exports.WidgetBoardType || (exports.WidgetBoardType = {}));
 var WidgetContentConflictFilterField;
 (function (WidgetContentConflictFilterField) {
     WidgetContentConflictFilterField["Parent"] = "parent";
@@ -1398,19 +1239,21 @@ var WidgetFilterField;
     WidgetFilterField["Parent"] = "parent";
     WidgetFilterField["ContentProvider"] = "contentProvider";
     WidgetFilterField["MobileSortWeight"] = "mobile_sortWeight";
-    WidgetFilterField["DesktopSortWeight"] = "desktop_sortWeight";
     WidgetFilterField["Created"] = "created";
     WidgetFilterField["WidgetType"] = "widgetType";
     WidgetFilterField["IsEnabled"] = "isEnabled";
     WidgetFilterField["SelectedTab"] = "selectedTab";
-    WidgetFilterField["IsSupportedV2"] = "isSupportedV2";
+    WidgetFilterField["MutableWidgetType"] = "mutableWidgetType";
+    WidgetFilterField["IsSupportedV3"] = "isSupportedV3";
     WidgetFilterField["Id"] = "id";
     WidgetFilterField["BoardType"] = "boardType";
     WidgetFilterField["SoftDelete"] = "softDelete";
+    WidgetFilterField["InternalId"] = "internalID";
     WidgetFilterField["MobilePanelKey"] = "mobile_panelKey";
     WidgetFilterField["MobileWidth"] = "mobile_width";
     WidgetFilterField["MobileHeight"] = "mobile_height";
     WidgetFilterField["DesktopPanelKey"] = "desktop_panelKey";
+    WidgetFilterField["DesktopSortWeight"] = "desktop_sortWeight";
     WidgetFilterField["DesktopWidth"] = "desktop_width";
     WidgetFilterField["DesktopHeight"] = "desktop_height";
     WidgetFilterField["ContentLocalChangeTimestamp"] = "content_localChangeTimestamp";
@@ -1423,74 +1266,36 @@ var WidgetFilterField;
     WidgetFilterField["ContentPath"] = "content_path";
     WidgetFilterField["ContentContent"] = "content_content";
     WidgetFilterField["Updated"] = "updated";
+    WidgetFilterField["FilteredNotesQueryQuery"] = "filteredNotesQuery_query";
+    WidgetFilterField["BackgroundColorLight"] = "backgroundColor_light";
+    WidgetFilterField["BackgroundColorDark"] = "backgroundColor_dark";
     WidgetFilterField["Label"] = "label";
 })(WidgetFilterField = exports.WidgetFilterField || (exports.WidgetFilterField = {}));
-var WidgetSelectedTab;
-(function (WidgetSelectedTab) {
-    WidgetSelectedTab["Recent"] = "Recent";
-    WidgetSelectedTab["Suggested"] = "Suggested";
-    WidgetSelectedTab["WebClips"] = "WebClips";
-    WidgetSelectedTab["Emails"] = "Emails";
-    WidgetSelectedTab["Images"] = "Images";
-    WidgetSelectedTab["Audio"] = "Audio";
-    WidgetSelectedTab["Documents"] = "Documents";
-})(WidgetSelectedTab = exports.WidgetSelectedTab || (exports.WidgetSelectedTab = {}));
-var WidgetSetSelectedTab_TabToSelect;
-(function (WidgetSetSelectedTab_TabToSelect) {
-    WidgetSetSelectedTab_TabToSelect["Recent"] = "Recent";
-    WidgetSetSelectedTab_TabToSelect["Suggested"] = "Suggested";
-    WidgetSetSelectedTab_TabToSelect["WebClips"] = "WebClips";
-    WidgetSetSelectedTab_TabToSelect["Emails"] = "Emails";
-    WidgetSetSelectedTab_TabToSelect["Images"] = "Images";
-    WidgetSetSelectedTab_TabToSelect["Audio"] = "Audio";
-    WidgetSetSelectedTab_TabToSelect["Documents"] = "Documents";
-})(WidgetSetSelectedTab_TabToSelect = exports.WidgetSetSelectedTab_TabToSelect || (exports.WidgetSetSelectedTab_TabToSelect = {}));
 var WidgetsInBoardPlatform;
 (function (WidgetsInBoardPlatform) {
     WidgetsInBoardPlatform["Mobile"] = "mobile";
     WidgetsInBoardPlatform["Desktop"] = "desktop";
 })(WidgetsInBoardPlatform = exports.WidgetsInBoardPlatform || (exports.WidgetsInBoardPlatform = {}));
-var WidgetsInBoardSelectedTab;
-(function (WidgetsInBoardSelectedTab) {
-    WidgetsInBoardSelectedTab["Recent"] = "Recent";
-    WidgetsInBoardSelectedTab["Suggested"] = "Suggested";
-    WidgetsInBoardSelectedTab["WebClips"] = "WebClips";
-    WidgetsInBoardSelectedTab["Emails"] = "Emails";
-    WidgetsInBoardSelectedTab["Images"] = "Images";
-    WidgetsInBoardSelectedTab["Audio"] = "Audio";
-    WidgetsInBoardSelectedTab["Documents"] = "Documents";
-})(WidgetsInBoardSelectedTab = exports.WidgetsInBoardSelectedTab || (exports.WidgetsInBoardSelectedTab = {}));
-var WidgetsInBoardWidgetType;
-(function (WidgetsInBoardWidgetType) {
-    WidgetsInBoardWidgetType["Clipped"] = "Clipped";
-    WidgetsInBoardWidgetType["Notebooks"] = "Notebooks";
-    WidgetsInBoardWidgetType["Notes"] = "Notes";
-    WidgetsInBoardWidgetType["OnboardingChecklist"] = "OnboardingChecklist";
-    WidgetsInBoardWidgetType["Pinned"] = "Pinned";
-    WidgetsInBoardWidgetType["ScratchPad"] = "ScratchPad";
-    WidgetsInBoardWidgetType["Shortcuts"] = "Shortcuts";
-    WidgetsInBoardWidgetType["Tags"] = "Tags";
-    WidgetsInBoardWidgetType["Calendar"] = "Calendar";
-    WidgetsInBoardWidgetType["Tasks"] = "Tasks";
-})(WidgetsInBoardWidgetType = exports.WidgetsInBoardWidgetType || (exports.WidgetsInBoardWidgetType = {}));
 var WidgetSortField;
 (function (WidgetSortField) {
     WidgetSortField["Parent"] = "parent";
     WidgetSortField["ContentProvider"] = "contentProvider";
     WidgetSortField["MobileSortWeight"] = "mobile_sortWeight";
-    WidgetSortField["DesktopSortWeight"] = "desktop_sortWeight";
     WidgetSortField["Created"] = "created";
     WidgetSortField["WidgetType"] = "widgetType";
     WidgetSortField["IsEnabled"] = "isEnabled";
     WidgetSortField["SelectedTab"] = "selectedTab";
-    WidgetSortField["IsSupportedV2"] = "isSupportedV2";
+    WidgetSortField["MutableWidgetType"] = "mutableWidgetType";
+    WidgetSortField["IsSupportedV3"] = "isSupportedV3";
     WidgetSortField["Id"] = "id";
     WidgetSortField["BoardType"] = "boardType";
     WidgetSortField["SoftDelete"] = "softDelete";
+    WidgetSortField["InternalId"] = "internalID";
     WidgetSortField["MobilePanelKey"] = "mobile_panelKey";
     WidgetSortField["MobileWidth"] = "mobile_width";
     WidgetSortField["MobileHeight"] = "mobile_height";
     WidgetSortField["DesktopPanelKey"] = "desktop_panelKey";
+    WidgetSortField["DesktopSortWeight"] = "desktop_sortWeight";
     WidgetSortField["DesktopWidth"] = "desktop_width";
     WidgetSortField["DesktopHeight"] = "desktop_height";
     WidgetSortField["ContentLocalChangeTimestamp"] = "content_localChangeTimestamp";
@@ -1503,21 +1308,36 @@ var WidgetSortField;
     WidgetSortField["ContentPath"] = "content_path";
     WidgetSortField["ContentContent"] = "content_content";
     WidgetSortField["Updated"] = "updated";
+    WidgetSortField["FilteredNotesQueryQuery"] = "filteredNotesQuery_query";
+    WidgetSortField["BackgroundColorLight"] = "backgroundColor_light";
+    WidgetSortField["BackgroundColorDark"] = "backgroundColor_dark";
     WidgetSortField["Label"] = "label";
 })(WidgetSortField = exports.WidgetSortField || (exports.WidgetSortField = {}));
-var WidgetWidgetType;
-(function (WidgetWidgetType) {
-    WidgetWidgetType["Clipped"] = "Clipped";
-    WidgetWidgetType["Notebooks"] = "Notebooks";
-    WidgetWidgetType["Notes"] = "Notes";
-    WidgetWidgetType["OnboardingChecklist"] = "OnboardingChecklist";
-    WidgetWidgetType["Pinned"] = "Pinned";
-    WidgetWidgetType["ScratchPad"] = "ScratchPad";
-    WidgetWidgetType["Shortcuts"] = "Shortcuts";
-    WidgetWidgetType["Tags"] = "Tags";
-    WidgetWidgetType["Calendar"] = "Calendar";
-    WidgetWidgetType["Tasks"] = "Tasks";
-})(WidgetWidgetType = exports.WidgetWidgetType || (exports.WidgetWidgetType = {}));
+var WidgetTabs;
+(function (WidgetTabs) {
+    WidgetTabs["WebClips"] = "WebClips";
+    WidgetTabs["Audio"] = "Audio";
+    WidgetTabs["Emails"] = "Emails";
+    WidgetTabs["Images"] = "Images";
+    WidgetTabs["Documents"] = "Documents";
+    WidgetTabs["Recent"] = "Recent";
+    WidgetTabs["Suggested"] = "Suggested";
+})(WidgetTabs = exports.WidgetTabs || (exports.WidgetTabs = {}));
+var WidgetType;
+(function (WidgetType) {
+    WidgetType["Tags"] = "Tags";
+    WidgetType["Shortcuts"] = "Shortcuts";
+    WidgetType["Pinned"] = "Pinned";
+    WidgetType["OnboardingChecklist"] = "OnboardingChecklist";
+    WidgetType["ScratchPad"] = "ScratchPad";
+    WidgetType["Notes"] = "Notes";
+    WidgetType["Notebooks"] = "Notebooks";
+    WidgetType["Clipped"] = "Clipped";
+    WidgetType["Calendar"] = "Calendar";
+    WidgetType["Tasks"] = "Tasks";
+    WidgetType["FilteredNotes"] = "FilteredNotes";
+    WidgetType["Extra"] = "Extra";
+})(WidgetType = exports.WidgetType || (exports.WidgetType = {}));
 var WorkspaceAccessStatus;
 (function (WorkspaceAccessStatus) {
     WorkspaceAccessStatus["Open"] = "OPEN";
@@ -1530,32 +1350,18 @@ var WorkspaceAllMembershipsOrderBy;
     WorkspaceAllMembershipsOrderBy["Created"] = "created";
     WorkspaceAllMembershipsOrderBy["Label"] = "label";
 })(WorkspaceAllMembershipsOrderBy = exports.WorkspaceAllMembershipsOrderBy || (exports.WorkspaceAllMembershipsOrderBy = {}));
+var WorkspaceChildNotebooksOrderBy;
+(function (WorkspaceChildNotebooksOrderBy) {
+    WorkspaceChildNotebooksOrderBy["Label"] = "label";
+    WorkspaceChildNotebooksOrderBy["Updated"] = "updated";
+    WorkspaceChildNotebooksOrderBy["Created"] = "created";
+})(WorkspaceChildNotebooksOrderBy = exports.WorkspaceChildNotebooksOrderBy || (exports.WorkspaceChildNotebooksOrderBy = {}));
 var WorkspaceChildNotesOrderBy;
 (function (WorkspaceChildNotesOrderBy) {
     WorkspaceChildNotesOrderBy["Label"] = "label";
     WorkspaceChildNotesOrderBy["Created"] = "created";
     WorkspaceChildNotesOrderBy["Updated"] = "updated";
 })(WorkspaceChildNotesOrderBy = exports.WorkspaceChildNotesOrderBy || (exports.WorkspaceChildNotesOrderBy = {}));
-var WorkspaceCreate_DefaultRole;
-(function (WorkspaceCreate_DefaultRole) {
-    WorkspaceCreate_DefaultRole["Read"] = "READ";
-    WorkspaceCreate_DefaultRole["Complete"] = "COMPLETE";
-    WorkspaceCreate_DefaultRole["Edit"] = "EDIT";
-    WorkspaceCreate_DefaultRole["Manage"] = "MANAGE";
-})(WorkspaceCreate_DefaultRole = exports.WorkspaceCreate_DefaultRole || (exports.WorkspaceCreate_DefaultRole = {}));
-var WorkspaceCreate_Type;
-(function (WorkspaceCreate_Type) {
-    WorkspaceCreate_Type["InviteOnly"] = "INVITE_ONLY";
-    WorkspaceCreate_Type["Discoverable"] = "DISCOVERABLE";
-    WorkspaceCreate_Type["Open"] = "OPEN";
-})(WorkspaceCreate_Type = exports.WorkspaceCreate_Type || (exports.WorkspaceCreate_Type = {}));
-var WorkspaceDefaultRole;
-(function (WorkspaceDefaultRole) {
-    WorkspaceDefaultRole["Read"] = "READ";
-    WorkspaceDefaultRole["Complete"] = "COMPLETE";
-    WorkspaceDefaultRole["Edit"] = "EDIT";
-    WorkspaceDefaultRole["Manage"] = "MANAGE";
-})(WorkspaceDefaultRole = exports.WorkspaceDefaultRole || (exports.WorkspaceDefaultRole = {}));
 var WorkspaceDescendentNotesOrderBy;
 (function (WorkspaceDescendentNotesOrderBy) {
     WorkspaceDescendentNotesOrderBy["Updated"] = "updated";
@@ -1579,6 +1385,7 @@ var WorkspaceFilterField;
 (function (WorkspaceFilterField) {
     WorkspaceFilterField["Label"] = "label";
     WorkspaceFilterField["Id"] = "id";
+    WorkspaceFilterField["AccessStatus"] = "accessStatus";
     WorkspaceFilterField["Description"] = "description";
     WorkspaceFilterField["WorkspaceType"] = "workspaceType";
     WorkspaceFilterField["Created"] = "created";
@@ -1588,15 +1395,12 @@ var WorkspaceFilterField;
     WorkspaceFilterField["IsSample"] = "isSample";
     WorkspaceFilterField["NotesCount"] = "notesCount";
     WorkspaceFilterField["NotebooksCount"] = "notebooksCount";
-    WorkspaceFilterField["AccessStatus"] = "accessStatus";
 })(WorkspaceFilterField = exports.WorkspaceFilterField || (exports.WorkspaceFilterField = {}));
-var WorkspaceInvite_Privilege;
-(function (WorkspaceInvite_Privilege) {
-    WorkspaceInvite_Privilege["Read"] = "READ";
-    WorkspaceInvite_Privilege["Complete"] = "COMPLETE";
-    WorkspaceInvite_Privilege["Edit"] = "EDIT";
-    WorkspaceInvite_Privilege["Manage"] = "MANAGE";
-})(WorkspaceInvite_Privilege = exports.WorkspaceInvite_Privilege || (exports.WorkspaceInvite_Privilege = {}));
+var WorkspaceLayoutStyle;
+(function (WorkspaceLayoutStyle) {
+    WorkspaceLayoutStyle["List"] = "LIST";
+    WorkspaceLayoutStyle["Board"] = "BOARD";
+})(WorkspaceLayoutStyle = exports.WorkspaceLayoutStyle || (exports.WorkspaceLayoutStyle = {}));
 var WorkspaceOwnMembershipsOrderBy;
 (function (WorkspaceOwnMembershipsOrderBy) {
     WorkspaceOwnMembershipsOrderBy["Created"] = "created";
@@ -1609,15 +1413,11 @@ var WorkspaceReminderNotesOrderBy;
     WorkspaceReminderNotesOrderBy["Created"] = "created";
     WorkspaceReminderNotesOrderBy["Updated"] = "updated";
 })(WorkspaceReminderNotesOrderBy = exports.WorkspaceReminderNotesOrderBy || (exports.WorkspaceReminderNotesOrderBy = {}));
-var WorkspaceSetLayoutStyle_LayoutStyle;
-(function (WorkspaceSetLayoutStyle_LayoutStyle) {
-    WorkspaceSetLayoutStyle_LayoutStyle["List"] = "LIST";
-    WorkspaceSetLayoutStyle_LayoutStyle["Board"] = "BOARD";
-})(WorkspaceSetLayoutStyle_LayoutStyle = exports.WorkspaceSetLayoutStyle_LayoutStyle || (exports.WorkspaceSetLayoutStyle_LayoutStyle = {}));
 var WorkspaceSortField;
 (function (WorkspaceSortField) {
     WorkspaceSortField["Label"] = "label";
     WorkspaceSortField["Id"] = "id";
+    WorkspaceSortField["AccessStatus"] = "accessStatus";
     WorkspaceSortField["Description"] = "description";
     WorkspaceSortField["WorkspaceType"] = "workspaceType";
     WorkspaceSortField["Created"] = "created";
@@ -1627,25 +1427,11 @@ var WorkspaceSortField;
     WorkspaceSortField["IsSample"] = "isSample";
     WorkspaceSortField["NotesCount"] = "notesCount";
     WorkspaceSortField["NotebooksCount"] = "notebooksCount";
-    WorkspaceSortField["AccessStatus"] = "accessStatus";
 })(WorkspaceSortField = exports.WorkspaceSortField || (exports.WorkspaceSortField = {}));
-var WorkspaceUpdate_DefaultRole;
-(function (WorkspaceUpdate_DefaultRole) {
-    WorkspaceUpdate_DefaultRole["Read"] = "READ";
-    WorkspaceUpdate_DefaultRole["Complete"] = "COMPLETE";
-    WorkspaceUpdate_DefaultRole["Edit"] = "EDIT";
-    WorkspaceUpdate_DefaultRole["Manage"] = "MANAGE";
-})(WorkspaceUpdate_DefaultRole = exports.WorkspaceUpdate_DefaultRole || (exports.WorkspaceUpdate_DefaultRole = {}));
-var WorkspaceUpdate_Type;
-(function (WorkspaceUpdate_Type) {
-    WorkspaceUpdate_Type["InviteOnly"] = "INVITE_ONLY";
-    WorkspaceUpdate_Type["Discoverable"] = "DISCOVERABLE";
-    WorkspaceUpdate_Type["Open"] = "OPEN";
-})(WorkspaceUpdate_Type = exports.WorkspaceUpdate_Type || (exports.WorkspaceUpdate_Type = {}));
-var WorkspaceWorkspaceType;
-(function (WorkspaceWorkspaceType) {
-    WorkspaceWorkspaceType["InviteOnly"] = "INVITE_ONLY";
-    WorkspaceWorkspaceType["Discoverable"] = "DISCOVERABLE";
-    WorkspaceWorkspaceType["Open"] = "OPEN";
-})(WorkspaceWorkspaceType = exports.WorkspaceWorkspaceType || (exports.WorkspaceWorkspaceType = {}));
+var WorkspaceType;
+(function (WorkspaceType) {
+    WorkspaceType["InviteOnly"] = "INVITE_ONLY";
+    WorkspaceType["Discoverable"] = "DISCOVERABLE";
+    WorkspaceType["Open"] = "OPEN";
+})(WorkspaceType = exports.WorkspaceType || (exports.WorkspaceType = {}));
 //# sourceMappingURL=strict-index.js.map

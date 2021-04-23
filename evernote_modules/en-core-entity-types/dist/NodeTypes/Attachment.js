@@ -5,6 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.attachmentIndexConfig = exports.attachmentTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
+const conduit_utils_1 = require("conduit-utils");
 const EntityConstants_1 = require("../EntityConstants");
 const Blob_1 = require("./Blob");
 exports.attachmentTypeDef = {
@@ -19,19 +20,19 @@ exports.attachmentTypeDef = {
         data: Blob_1.BlobSchema,
         recognition: Blob_1.BlobBaseSchema,
         alternateData: Blob_1.BlobBaseSchema,
-        applicationDataKeys: 'string[]',
-        Attributes: {
-            sourceURL: 'string?',
-            timestamp: 'timestamp?',
-            Location: {
-                latitude: 'number?',
-                longitude: 'number?',
-                altitude: 'number?',
-            },
-            cameraMake: 'string?',
-            cameraModel: 'string?',
+        applicationDataKeys: conduit_utils_1.ListOf('string'),
+        Attributes: conduit_utils_1.Struct({
+            sourceURL: conduit_utils_1.NullableUrl,
+            timestamp: conduit_utils_1.NullableTimestamp,
+            Location: conduit_utils_1.Struct({
+                latitude: conduit_utils_1.NullableNumber,
+                longitude: conduit_utils_1.NullableNumber,
+                altitude: conduit_utils_1.NullableNumber,
+            }),
+            cameraMake: conduit_utils_1.NullableString,
+            cameraModel: conduit_utils_1.NullableString,
             clientWillIndex: 'boolean',
-        },
+        }),
     },
     cache: Object.assign(Object.assign({}, Blob_1.BlobCache('recognition', 256)), Blob_1.BlobCache('alternateData', 256)),
     edges: {

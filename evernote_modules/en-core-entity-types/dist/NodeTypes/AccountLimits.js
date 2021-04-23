@@ -11,7 +11,7 @@ exports.accountLimitsTypeDef = {
     name: EntityConstants_1.CoreEntityTypes.AccountLimits,
     syncSource: conduit_storage_1.SyncSource.THRIFT,
     schema: {
-        Limits: {
+        Limits: conduit_utils_1.Struct({
             userMailLimitDaily: 'int',
             noteSizeMax: 'number',
             resourceSizeMax: 'number',
@@ -26,8 +26,8 @@ exports.accountLimitsTypeDef = {
             userDeviceLimit: 'int',
             userAdvertisedDeviceLimit: 'int',
             userWorkspaceCountMax: 'int',
-        },
-        Counts: {
+        }),
+        Counts: conduit_utils_1.Struct({
             userNoteCount: 'int',
             userNotebookCount: 'int',
             userLinkedNotebookCount: 'int',
@@ -37,7 +37,7 @@ exports.accountLimitsTypeDef = {
             userWorkspaceCount: 'int',
             userUploadedAmount: 'number',
             userNoteAndNotebookSharesSentCount: 'int',
-        },
+        }),
     },
     cache: {
         noteAndNotebookSharesAllowance: {

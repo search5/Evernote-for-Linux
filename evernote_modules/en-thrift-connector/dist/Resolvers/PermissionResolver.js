@@ -5,8 +5,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PermissionResolver = void 0;
 const conduit_core_1 = require("conduit-core");
+const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const NoteCommandPolicyGraphQLType = conduit_core_1.schemaToGraphQLType({
+const NoteCommandPolicyGraphQLType = conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({
     canDuplicate: 'boolean',
     canEditContent: 'boolean',
     canEditLabel: 'boolean',
@@ -21,8 +22,8 @@ const NoteCommandPolicyGraphQLType = conduit_core_1.schemaToGraphQLType({
     canTag: 'boolean',
     canCreateTag: 'boolean',
     canUpdateMetadata: 'boolean',
-}, 'NoteCommandPolicy', false);
-const FolderCommandPolicyGraphQLType = conduit_core_1.schemaToGraphQLType({
+}, 'NoteCommandPolicy'));
+const FolderCommandPolicyGraphQLType = conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({
     canCreateFolder: 'boolean',
     canCreateNote: 'boolean',
     canEditLabel: 'boolean',
@@ -37,7 +38,7 @@ const FolderCommandPolicyGraphQLType = conduit_core_1.schemaToGraphQLType({
     canStore: 'boolean',
     canUpdateDescription: 'boolean',
     canUpdateType: 'boolean',
-}, 'FolderCommandPolicy', false);
+}, 'FolderCommandPolicy'));
 function PermissionResolver() {
     return {
         'Note.CommandPolicy': {

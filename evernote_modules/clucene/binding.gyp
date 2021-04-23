@@ -14,7 +14,7 @@
             "dist/cpp/lib/clucene/src/ext",
             "dist/cpp/lib/clucene/src/ext/zlib",
             "dist/lib/clucene/config/linux",
-            "/home/jiho/evernote_linux/evernote_modules/node-addon-api",
+            "/home/jiho/.virtualenvs/evernote/lib/node_modules/node-addon-api",
         ],
         "cflags!": ["-fno-exceptions", "-L/usr/lib/x86_64-linux-gnu/", "-I/usr/include/c++/8"],
         "cflags_cc!": ["-fno-exceptions", "-L/usr/lib/x86_64-linux-gnu/", "-I/usr/include/c++/8"],
@@ -188,8 +188,8 @@
                     "dist/cpp/lib/clucene/src/ext/zlib/inflate.c",
                     "dist/cpp/lib/clucene/src/ext/zlib/inftrees.c",
                     "dist/cpp/lib/clucene/src/ext/zlib/trees.c",
-                    "dist/cpp/lib/clucene/src/ext/zlib/zutil.c"
-                    "../node-gyp/src/win_delay_load_hook.cc"
+                    "dist/cpp/lib/clucene/src/ext/zlib/zutil.c",
+                    "../../../../../.virtualenvs/evernote/lib/node_modules/node-gyp/src/win_delay_load_hook.cc"
         ],
         "link_settings": {
             "libraries": [

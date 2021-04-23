@@ -25,7 +25,6 @@ const CacheManager_1 = require("./CacheManager");
 __exportStar(require("en-ts-utils"), exports);
 __exportStar(require("./CacheManager"), exports);
 __exportStar(require("./ConduitEventEmitter"), exports);
-__exportStar(require("./DataSchema"), exports);
 __exportStar(require("./error"), exports);
 __exportStar(require("./Telemetry"), exports);
 __exportStar(require("./UserID"), exports);

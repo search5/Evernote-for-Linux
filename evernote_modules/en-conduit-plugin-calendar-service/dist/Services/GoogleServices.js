@@ -14,10 +14,10 @@ class GoogleServices {
     }
     /**
      * @param  {string} accessToken
-     * @param  {ENThriftGraphQLContext} context
+     * @param  {TracingContext} context
      * @returns Promise
      */
-    async listCalendars(accessToken, context) {
+    async listCalendars(trc, accessToken) {
         const requestParams = {
             method: 'GET',
             url: `https://www.googleapis.com`,
@@ -26,7 +26,7 @@ class GoogleServices {
                 Authorization: `Bearer ${accessToken}`,
             },
         };
-        const httpresponse = await this.httpClient.request(context.trc, requestParams);
+        const httpresponse = await this.httpClient.request(trc, requestParams);
         if (httpresponse.status >= 400) {
             throw new Error(`listCalendars: could not fetch events, HTTP status code ${httpresponse.status}`);
         }
@@ -34,7 +34,7 @@ class GoogleServices {
     }
     /**
      * @param  {string} accessToken
-     * @param  {ENThriftGraphQLContext} context
+     * @param  {TracingContext} context
      * @param  {string} start - Must be an RFC3339 timestamp with mandatory time zone offset, for example, 2011-06-03T10:00:00-07:00, 2011-06-03T10:00:00Z.
      *  Milliseconds may be provided but are ignored.
      * @param  {string} end - Must be an RFC3339 timestamp with mandatory time zone offset, for example, 2011-06-03T10:00:00-07:00, 2011-06-03T10:00:00Z.
@@ -42,7 +42,7 @@ class GoogleServices {
      * @param  {string} userCalendarId?
      * @returns Promise
      */
-    async listEvents(accessToken, context, start, end, userCalendarExternalId) {
+    async listEvents(trc, accessToken, start, end, userCalendarExternalId) {
         try {
             let requestOptions;
             const baseOptions = {
@@ -81,7 +81,7 @@ class GoogleServices {
                     Authorization: `Bearer ${accessToken}`,
                 },
             };
-            const httpresponse = await this.httpClient.request(context.trc, requestParams);
+            const httpresponse = await this.httpClient.request(trc, requestParams);
             if (httpresponse.status >= 400) {
                 throw new Error(`listEvents: could not fetch events, HTTP status code ${httpresponse.status}`);
             }
@@ -96,12 +96,12 @@ class GoogleServices {
     }
     /**
      * @param  {string} accessToken
-     * @param  {ENThriftGraphQLContext} context
+     * @param  {TracingContext} context
      * @param  {string} userCalendarId
      * @param  {string} eventId
      * @returns Promise
      */
-    async getEventById(accessToken, context, userCalendarId, eventId) {
+    async getEventById(trc, accessToken, userCalendarId, eventId) {
         const path = '/calendar/v3/calendars/' + conduit_utils_1.strictEncodeURI(userCalendarId) + '/events/' + conduit_utils_1.strictEncodeURI(eventId);
         const requestParams = {
             method: 'GET',
@@ -111,13 +111,19 @@ class GoogleServices {
                 Authorization: `Bearer ${accessToken}`,
             },
         };
-        const httpresponse = await this.httpClient.request(context.trc, requestParams);
+        const httpresponse = await this.httpClient.request(trc, requestParams);
         if (httpresponse.status >= 400) {
             throw new Error(`getEventById: could not fetch events, HTTP status code ${httpresponse.status}`);
         }
         return conduit_utils_1.safeParse(httpresponse.result);
     }
-    async getCalendarById(accessToken, context, userCalendarId) {
+    /**
+     * @param  {string} accessToken
+     * @param  {TracingContext} trc
+     * @param  {string} userCalendarId
+     * @returns Promise
+     */
+    async getCalendarById(trc, accessToken, userCalendarId) {
         const path = '/calendar/v3/users/me/calendarList/' + conduit_utils_1.strictEncodeURI(userCalendarId);
         const requestParams = {
             method: 'GET',
@@ -127,7 +133,7 @@ class GoogleServices {
                 Authorization: `Bearer ${accessToken}`,
             },
         };
-        const httpresponse = await this.httpClient.request(context.trc, requestParams);
+        const httpresponse = await this.httpClient.request(trc, requestParams);
         if (httpresponse.status >= 400) {
             throw new Error(`getCalendarById: could not fetch events, HTTP status code ${httpresponse.status}`);
         }

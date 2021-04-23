@@ -28,20 +28,12 @@ const conduit_utils_1 = require("conduit-utils");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const GraphMutationTypes_1 = require("./Types/GraphMutationTypes");
 function validateAgainstSchema(nodeDef, path, value) {
+    var _a, _b, _c;
     if (path === 'label') {
         conduit_utils_1.validateSchemaType('string', path, value);
     }
     else {
-        let s = nodeDef.schema;
-        for (const p of path.split('.')) {
-            s = s[p];
-            if (!s) {
-                break;
-            }
-        }
-        if (!s && nodeDef.cache && nodeDef.cache[path]) {
-            s = nodeDef.cache[path].type;
-        }
+        const s = (_a = conduit_utils_1.traverseSchema(nodeDef.schema, path.split('.'))) !== null && _a !== void 0 ? _a : (_c = (_b = nodeDef.cache) === null || _b === void 0 ? void 0 : _b[path]) === null || _c === void 0 ? void 0 : _c.type;
         conduit_utils_1.validateSchemaType(s, path, value);
     }
     if (nodeDef.fieldValidation) {

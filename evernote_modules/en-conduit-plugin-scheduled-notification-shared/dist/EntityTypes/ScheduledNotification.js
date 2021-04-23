@@ -5,6 +5,7 @@ exports.scheduledNotificationIndexConfig = exports.scheduledNotificationTypeDef 
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 const conduit_storage_1 = require("conduit-storage");
+const conduit_utils_1 = require("conduit-utils");
 const ScheduledNotificationConstants_1 = require("../ScheduledNotificationConstants");
 exports.scheduledNotificationTypeDef = {
     name: ScheduledNotificationConstants_1.ScheduledNotificationEntityTypes.ScheduledNotification,
@@ -12,10 +13,20 @@ exports.scheduledNotificationTypeDef = {
     nsyncFeatureGroup: 'Tasks',
     fieldValidation: {},
     schema: {
-        scheduledNotificationType: Object.values(ScheduledNotificationConstants_1.ScheduledNotificationType),
+        scheduledNotificationType: ScheduledNotificationConstants_1.ScheduledNotificationTypeSchema,
         created: 'timestamp',
         updated: 'timestamp',
         mute: 'boolean',
+        data: conduit_utils_1.NullableStruct({
+            calendarEventId: 'string',
+            notificationTime: 'number',
+            clientType: 'string',
+            title: 'string',
+            startTime: 'number',
+            endTime: 'number',
+            location: 'string',
+            noteID: conduit_utils_1.NullableString,
+        }),
     },
     cache: {
         dataSourceUpdatedAt: {

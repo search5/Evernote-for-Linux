@@ -34,7 +34,7 @@ const getWorkspaceNodesAndEdges = async (trc, instance, context) => {
         }
     }
     const node = Object.assign(Object.assign({}, initial), { type: en_core_entity_types_1.CoreEntityTypes.Workspace, NodeFields: {
-            accessStatus: en_core_entity_types_1.WorkspaceAccessStatusEnum.OPEN,
+            accessStatus: en_core_entity_types_1.WorkspaceAccessStatus.OPEN,
             created: instance.created,
             updated: instance.updated,
             description: instance.description || '',

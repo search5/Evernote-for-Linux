@@ -22,32 +22,45 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createWidgetIndexConfig = exports.widgetTypeDef = exports.WidgetFormFactorSchema = void 0;
+exports.createWidgetIndexConfig = exports.widgetTypeDef = exports.ColorSchemeSchema = exports.SearchQuerySchema = exports.WidgetFormFactorSchema = void 0;
 const conduit_storage_1 = require("conduit-storage");
+const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
+const en_data_model_1 = require("en-data-model");
 const BoardConstants_1 = require("../BoardConstants");
 const Utilities = __importStar(require("../Utilities"));
-exports.WidgetFormFactorSchema = {
-    panelKey: 'string?',
+exports.WidgetFormFactorSchema = conduit_utils_1.Struct({
+    panelKey: conduit_utils_1.NullableString,
     sortWeight: 'string',
     width: 'number',
     height: 'number',
-};
+});
+exports.SearchQuerySchema = conduit_utils_1.Struct({
+    query: 'string',
+});
+exports.ColorSchemeSchema = conduit_utils_1.Struct({
+    light: 'string',
+    dark: 'string',
+});
 exports.widgetTypeDef = {
     name: BoardConstants_1.BoardEntityTypes.Widget,
     syncSource: conduit_storage_1.SyncSource.NSYNC,
     nsyncFeatureGroup: 'Home',
     schema: {
-        boardType: BoardConstants_1.boardTypes,
+        boardType: BoardConstants_1.BoardTypeSchema,
         isEnabled: 'boolean',
-        softDelete: 'boolean?',
-        widgetType: BoardConstants_1.widgetTypes,
+        softDelete: conduit_utils_1.NullableBoolean,
+        widgetType: conduit_utils_1.Enum(en_data_model_1.WidgetType, 'WidgetType'),
+        mutableWidgetType: conduit_utils_1.Nullable(BoardConstants_1.MutableWidgetTypeSchema),
+        internalID: conduit_utils_1.NullableNumber,
         mobile: exports.WidgetFormFactorSchema,
         desktop: exports.WidgetFormFactorSchema,
-        selectedTab: [...BoardConstants_1.AllTabsValues, '?'],
-        content: en_core_entity_types_1.BlobV2SchemaWithContent,
+        selectedTab: conduit_utils_1.Nullable(BoardConstants_1.WidgetSelectedTabsSchema),
+        content: en_core_entity_types_1.BlobV2WithContentSchema,
         created: 'timestamp',
         updated: 'timestamp',
+        filteredNotesQuery: conduit_utils_1.Nullable(exports.SearchQuerySchema),
+        backgroundColor: conduit_utils_1.Nullable(exports.ColorSchemeSchema),
     },
     edges: {
         parent: {
@@ -78,22 +91,24 @@ const createWidgetIndexConfig = (di) => {
             parent: conduit_storage_1.getIndexByResolverForEdge(exports.widgetTypeDef, ['edges', 'parent']),
             contentProvider: conduit_storage_1.getIndexByResolverForEdge(exports.widgetTypeDef, ['edges', 'contentProvider']),
             mobile_sortWeight: conduit_storage_1.getIndexByResolverForPrimitives(exports.widgetTypeDef, ['NodeFields', 'mobile', 'sortWeight']),
-            desktop_sortWeight: conduit_storage_1.getIndexByResolverForPrimitives(exports.widgetTypeDef, ['NodeFields', 'desktop', 'sortWeight']),
             created: conduit_storage_1.getIndexByResolverForPrimitives(exports.widgetTypeDef, ['NodeFields', 'created']),
             widgetType: conduit_storage_1.getIndexByResolverForPrimitives(exports.widgetTypeDef, ['NodeFields', 'widgetType']),
             isEnabled: conduit_storage_1.getIndexByResolverForPrimitives(exports.widgetTypeDef, ['NodeFields', 'isEnabled']),
             selectedTab: conduit_storage_1.getIndexByResolverForPrimitives(exports.widgetTypeDef, ['NodeFields', 'selectedTab']),
-            isSupportedV2: {
+            mutableWidgetType: {
+                schemaType: conduit_utils_1.Nullable(BoardConstants_1.MutableWidgetTypeSchema),
+                resolver: async (trc, node, _) => {
+                    const { boardType, mutableWidgetType, } = node.NodeFields;
+                    return [Utilities.safeMutableWidgetType(schemaFeatures, boardType, mutableWidgetType)];
+                },
+                graphqlPath: ['mutableWidgetType'],
+                isUnSyncedField: true,
+            },
+            isSupportedV3: {
                 schemaType: 'boolean',
                 resolver: async (trc, node, _) => {
-                    const widgetType = node.NodeFields.widgetType;
-                    let visibleToClients = Boolean(BoardConstants_1.WidgetType[widgetType]) && Boolean(BoardConstants_1.BoardType[node.NodeFields.boardType]);
-                    if (widgetType === BoardConstants_1.WidgetType.Calendar && !schemaFeatures.calendar) {
-                        visibleToClients = false;
-                    }
-                    else if (widgetType === BoardConstants_1.WidgetType.Tasks && !schemaFeatures.tasks) {
-                        visibleToClients = false;
-                    }
+                    const { boardType, widgetType, } = node.NodeFields;
+                    let visibleToClients = Utilities.isWidgetSupported(schemaFeatures, boardType, widgetType);
                     /*
                      * We could add a second index for this; however, the overall ideay is the same.
                      *  Show this widget to the clients?
@@ -113,7 +128,7 @@ const createWidgetIndexConfig = (di) => {
             WidgetsInBoard: {
                 traversalName: 'platformWidgets',
                 filter: [{
-                        field: 'isSupportedV2',
+                        field: 'isSupportedV3',
                         value: true,
                     }],
                 params: {
@@ -123,11 +138,11 @@ const createWidgetIndexConfig = (di) => {
                     platform: {
                         sort: {
                             mobile: [{ field: 'mobile_sortWeight', order: 'ASC' }, { field: 'created', order: 'DESC' }],
-                            desktop: [{ field: 'desktop_sortWeight', order: 'ASC' }, { field: 'created', order: 'DESC' }],
+                            desktop: [{ field: 'created', order: 'DESC' }],
                         },
                     },
                 },
-                includeFields: ['widgetType', 'isEnabled', 'selectedTab', 'contentProvider', 'mobile_sortWeight', 'desktop_sortWeight'],
+                includeFields: ['widgetType', 'mutableWidgetType', 'isEnabled', 'selectedTab', 'contentProvider', 'mobile_sortWeight'],
             },
         },
     });

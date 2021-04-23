@@ -20,7 +20,7 @@ exports.notificationManagerSNUtilityDI = {
             case en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationType.TaskReminder:
                 return Extractors_1.extractTaskReminder(trc, graphDB, notificationEntity);
             case en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationType.Calendar:
-                return Extractors_1.extractCalendarNotification(notificationEntity);
+                return Extractors_1.extractCalendarNotification(trc, graphDB, notificationEntity);
             default:
                 conduit_utils_1.logger.warn(`Unsupported notification type ${notificationEntity.NodeFields.scheduledNotificationType}. for notification ID ${notificationEntity.id}. Aborting`);
                 return null;

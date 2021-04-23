@@ -38,39 +38,39 @@ function AccountLimitsResolver() {
     };
     return {
         ['AccountLimits.userNoteRatio']: {
-            type: conduit_core_1.schemaToGraphQLType('number?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableNumber),
             resolve: genericRatioResolverFactory('userNoteCount', 'userNoteCountMax'),
         },
         ['AccountLimits.userNotebookRatio']: {
-            type: conduit_core_1.schemaToGraphQLType('number?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableNumber),
             resolve: genericRatioResolverFactory('userNotebookCount', 'userNotebookCountMax'),
         },
         ['AccountLimits.userLinkedNotebookRatio']: {
-            type: conduit_core_1.schemaToGraphQLType('number?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableNumber),
             resolve: genericRatioResolverFactory('userLinkedNotebookCount', 'userLinkedNotebookMax'),
         },
         ['AccountLimits.userTagRatio']: {
-            type: conduit_core_1.schemaToGraphQLType('number?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableNumber),
             resolve: genericRatioResolverFactory('userTagCount', 'userTagCountMax'),
         },
         ['AccountLimits.userSavedSearchesRatio']: {
-            type: conduit_core_1.schemaToGraphQLType('number?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableNumber),
             resolve: genericRatioResolverFactory('userSavedSearchesCount', 'userSavedSearchesMax'),
         },
         ['AccountLimits.userDeviceRatio']: {
-            type: conduit_core_1.schemaToGraphQLType('number?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableNumber),
             resolve: genericRatioResolverFactory('userDeviceCount', 'userDeviceLimit'),
         },
         ['AccountLimits.userWorkspaceRatio']: {
-            type: conduit_core_1.schemaToGraphQLType('number?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableNumber),
             resolve: genericRatioResolverFactory('userWorkspaceCount', 'userWorkspaceCountMax'),
         },
         ['AccountLimits.userUploadedRatio']: {
-            type: conduit_core_1.schemaToGraphQLType('number?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableNumber),
             resolve: genericRatioResolverFactory('userUploadedAmount', 'uploadLimit'),
         },
         ['AccountLimits.userNoteAndNotebookSharesSentRatio']: {
-            type: conduit_core_1.schemaToGraphQLType('number?'),
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableNumber),
             resolve: userNotesAndNotebookSharesSentResolver,
         },
     };

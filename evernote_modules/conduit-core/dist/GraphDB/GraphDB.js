@@ -27,6 +27,9 @@ const REMOTE_MUTATION_BUFFER = 500;
 const DOWNSYNC_BUFFER = 200;
 const SYNC_PAUSED_RETRY_TIME = 1000 * 60;
 const gTrcPool = new conduit_utils_1.AsyncTracePool('GraphDB');
+function genFailSafeKey(name, key) {
+    return name + ';:;' + key;
+}
 function getDataLoader(context, type, loader) {
     if (!context.dataLoaders[type]) {
         context.dataLoaders[type] = new dataloader_1.default(loader.bind(undefined, context, type), {
@@ -75,6 +78,12 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
         };
         this.getSyncContextMetadataWithoutGraphQLContext = async (trc, syncContext) => {
             return await this.remoteStorageOverlay.getSyncContextMetadata(trc, null, syncContext);
+        };
+        this.batchGetCurrentUserIDInternal = async (context, type, ids) => {
+            return [await this.di.getCurrentUserID(context.trc, context.watcher)];
+        };
+        this.getCurrentUserIDWithoutGraphQLContext = async (trc, watcher) => {
+            return await this.di.getCurrentUserID(trc, watcher);
         };
         // NOTE: this is a dangerous function to call, it is intended for use by custom resolvers that need access to the synced data directly
         this.getSyncedNode = async (trc, watcher, nodeRef) => {
@@ -142,12 +151,12 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
             this.maxBackoffTimeout = maxBackoffTimeout;
         }
     }
-    async init(startSync = true, update) {
+    async init(startSync = true, update, recoverFailedMutationsOnStart = true) {
         await gTrcPool.runTraced(this.di.getTestEventTracker(), async (trc) => {
-            await this.initInternal(trc, startSync, update);
+            await this.initInternal(trc, startSync, recoverFailedMutationsOnStart, update);
         });
     }
-    async initInternal(trc, startSync, update) {
+    async initInternal(trc, startSync, recoverFailedMutationsOnStart, update) {
         conduit_utils_1.logger.info('Initializing GraphDB');
         this.remoteSyncedGraphStorage = await this.di.GraphStorageDB(trc, GraphDB.DB_NAMES.RemoteGraph, exports.SYNC_DB_VERSION),
             this.remoteSyncedGraphStorage.addChangeHandler(this.onSyncStorageChange);
@@ -171,6 +180,9 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
             backoffMax: 30 * 1000,
         });
         this.isInitialized = true;
+        if (recoverFailedMutationsOnStart) {
+            await this.runFailedMutations(trc);
+        }
         await this.startSyncing(trc, startSync, update);
         await this.loadPersistedMutations();
         if (this.notificationManager) {
@@ -450,7 +462,7 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
         if (this.destructorPromise) {
             throw new conduit_utils_1.InternalError('Already GraphDB is destructed');
         }
-        const userID = await this.di.getCurrentUserID(trc, null);
+        const userID = await this.getCurrentUserIDWithoutGraphQLContext(trc, null);
         if (!userID) {
             throw new conduit_utils_1.InternalError('Unable to clear graph associated to no user');
         }
@@ -546,6 +558,9 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
     async queryGraphWithoutGraphQLContext(trc, nodeType, queryName, queryParams) {
         return await this.remoteStorageOverlay.queryGraph(trc, null, nodeType, queryName, queryParams);
     }
+    async getNodeAncestors(context, node) {
+        return await this.remoteStorageOverlay.getNodeAncestors(context.trc, context.watcher, node);
+    }
     async getGraphNodesByType(trc, watcher, type) {
         return await this.remoteStorageOverlay.getGraphNodesByType(trc, watcher, type);
     }
@@ -587,6 +602,10 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
         const loader = getDataLoader(context, 'SyncContextMetadata', this.batchGetSyncContextMetadatasInternal);
         return loader.load(syncContext);
     }
+    async getCurrentUserID(context) {
+        const loader = getDataLoader(context, 'CurrentUserID', this.batchGetCurrentUserIDInternal);
+        return loader.load('');
+    }
     // NOTE: this is a dangerous function to call, it is intended for use by custom resolvers that need write access to the synced data directly
     async transactSyncedStorage(trc, transactionName, func) {
         return await this.remoteSyncedGraphStorage.transact(trc, transactionName, func);
@@ -624,11 +643,61 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
         const syncContextMetadata = await this.remoteStorageOverlay.getSyncContextMetadata(trc, null, isBusinessAccount ? index_1.VAULT_USER_CONTEXT : index_1.PERSONAL_USER_CONTEXT);
         return syncContextMetadata || {};
     }
+    async runFailedMutations(trc) {
+        const failed = await this.mutationManager.loadFailedMutations(trc);
+        if (!failed.length) {
+            return;
+        }
+        const clientValues = await this.getMutatorClientValues(trc);
+        const mutations = await this.orchestratorMutex.runInMutex(trc, 'runFailedMutations', async () => {
+            const res = [];
+            for (const failure of failed) {
+                let mutation;
+                try {
+                    mutation = await this.localMutationExecutor.runMutator(trc, this.remoteStorageOverlay, clientValues, this.userID, this.syncEngine.getVaultUserID(), failure.name, failure.params);
+                }
+                catch (error) {
+                    conduit_utils_1.logger.warn(`Caught error rerunning failed "${failure.name}" mutation.`, error);
+                    await this.mutationManager.backupFailSafeMutation(trc, failure);
+                }
+                if (mutation) {
+                    res.push(mutation);
+                }
+            }
+            await this.mutationManager.clearFailSafeTable(trc);
+            return res;
+        }, undefined, conduit_utils_1.MutexPriority.HIGH);
+        await this.mutationManager.addMutations(trc, mutations);
+        this.remoteMutationConsumer.push(...mutations);
+    }
     async runMutatorOptimistic(trc, name, params) {
+        let failSafeMutation;
+        const definition = await this.localMutationExecutor.getMutators()[name];
+        if (!definition) {
+            throw new conduit_utils_1.NotFoundError(name, `No mutator named "${name}"`);
+        }
+        if (definition.failSafeKey) {
+            if (!params.hasOwnProperty(definition.failSafeKey)) {
+                throw new Error(`Failed to read failSafeKey "${definition.failSafeKey}" in "${name}" mutation params.`);
+            }
+            failSafeMutation = {
+                key: genFailSafeKey(name, params[definition.failSafeKey]),
+                name,
+                params,
+                timestamp: Date.now(),
+            };
+            await this.mutationManager.storeFailSafeMutation(trc, failSafeMutation);
+        }
         const mutation = await this.orchestratorMutex.runInMutex(trc, 'runMutatorOptimistic', async () => {
             const clientValues = await this.getMutatorClientValues(trc);
             return await this.localMutationExecutor.runMutator(trc, this.remoteStorageOverlay, clientValues, this.userID, this.syncEngine.getVaultUserID(), name, params);
         }, undefined, conduit_utils_1.MutexPriority.HIGH);
+        if (definition.failSafeKey) {
+            if (!failSafeMutation) {
+                throw new Error(`Unreachable: failSafeMutation must exist`);
+            }
+            await this.mutationManager.clearFailSafeMutation(trc, failSafeMutation);
+        }
         await this.mutationManager.addMutation(trc, mutation);
         this.remoteMutationConsumer.push(mutation);
         return mutation;

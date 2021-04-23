@@ -3,11 +3,6 @@ schema {
   mutation: RootMutationType
 }
 
-enum AccessStatus {
-  OPEN
-  MEMBER
-}
-
 type AccountLimits {
   type: String!
   id: String!
@@ -84,7 +79,7 @@ type Attachment {
   height: Float!
   filename: String!
   isActive: Boolean!
-  data: Blob!
+  data: BlobWithUrl!
   recognition: BlobWithContent!
   alternateData: BlobWithContent!
   applicationDataKeys: [String!]!
@@ -157,6 +152,7 @@ input AttachmentImportInfo {
   mime: String!
   applicationData: Map_string!
   placeholderHash: String
+  sourceURL: String
 }
 
 type AttachmentListResults {
@@ -189,7 +185,7 @@ type AttachmentsInNoteResults {
 
 input AttachmentSort {
   field: AttachmentSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum AttachmentSortField {
@@ -290,7 +286,7 @@ type BetaFeatureListResults {
 
 input BetaFeatureSort {
   field: BetaFeatureSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum BetaFeatureSortField {
@@ -317,11 +313,27 @@ type BetaFeaturesResults {
   list: [BetaFeaturesResultFields!]!
 }
 
-type Blob {
+type BlobV2 {
   localChangeTimestamp: Float!
   hash: String!
   size: Float!
   url: String
+  id: String
+  format: String
+  version: Int
+  path: String
+}
+
+type BlobV2WithContent {
+  localChangeTimestamp: Float!
+  hash: String!
+  size: Float!
+  url: String
+  id: String
+  format: String
+  version: Int
+  path: String
+  content: String!
 }
 
 type BlobWithContent {
@@ -331,18 +343,31 @@ type BlobWithContent {
   content: String
 }
 
+type BlobWithUrl {
+  localChangeTimestamp: Float!
+  hash: String!
+  size: Float!
+  url: String
+}
+
 type Board {
   type: String!
   id: String!
   label: String!
   localChangeTimestamp: Float!
-  boardType: BoardBoardType!
-  headerBG: FileWithoutContent!
+  boardType: BoardType!
+  internalID: Float
+  isCustomized: Boolean
+  serviceLevel: BoardServiceLevels
+  headerBG: BlobV2!
   headerBGMime: String
   headerBGFileName: String
-  headerBGPreviousUpload: FileWithoutContent!
+  headerBGPreviousUpload: BlobV2!
   headerBGPreviousUploadMime: String
   headerBGPreviousUploadFileName: String
+  headerBGMode: BoardBackgroundMode
+  headerBGColor: BoardColorScheme
+  greetingText: String
   desktop: BoardDesktop!
   mobile: BoardMobile!
   freeTrialExpiration: Float
@@ -350,24 +375,27 @@ type Board {
   updated: Float!
   tasksVersion: Float
   calendarVersion: Float
+  filteredNotesVersion: Float
+  extraVersion: Float
+  coreVersion: Float
   children: [Widget!]!
   childrenCount: Int!
   isSupported: Boolean!
   platformWidgets(platform: BoardPlatformWidgetsPlatform!, reverseOrder: Boolean, pageInfo: PageInfo): BoardPlatformWidgetsResults!
 }
 
-enum BoardBoardType {
-  Home
+enum BoardBackgroundMode {
+  None
+  Image
+  Color
 }
 
 input BoardBootstrapFeatureArgs {
   calendar: Int
   tasks: Int
-}
-
-enum BoardBootstrapPlatform {
-  Mobile
-  Desktop
+  core: Int
+  extra: Int
+  filteredNotes: Int
 }
 
 type BoardBootstrapResult {
@@ -376,16 +404,20 @@ type BoardBootstrapResult {
   board: Board!
 }
 
-enum BoardCreateHome_platform {
-  Mobile
-  Desktop
+type BoardColorScheme {
+  light: String!
+  dark: String!
 }
 
-enum BoardCreateHome_serviceLevel {
-  BASIC
-  PLUS
-  PREMIUM
-  BUSINESS
+input BoardColorSchemeInput {
+  light: String!
+  dark: String!
+}
+
+input BoardCustomizeParams {
+  board: String!
+  isCustomized: Boolean
+  headerFields: BoardHeaderFields
 }
 
 type BoardDesktop {
@@ -410,6 +442,9 @@ enum BoardFilterField {
   isSupported
   id
   boardType
+  internalID
+  isCustomized
+  serviceLevel
   headerBG_localChangeTimestamp
   headerBG_hash
   headerBG_size
@@ -430,13 +465,31 @@ enum BoardFilterField {
   headerBGPreviousUpload_path
   headerBGPreviousUploadMime
   headerBGPreviousUploadFileName
+  headerBGMode
+  headerBGColor_light
+  headerBGColor_dark
+  greetingText
   desktop_layout
   mobile_layout
   freeTrialExpiration
   updated
   tasksVersion
   calendarVersion
+  filteredNotesVersion
+  extraVersion
+  coreVersion
   label
+}
+
+enum BoardFormFactor {
+  Desktop
+  Mobile
+}
+
+input BoardHeaderFields {
+  headerBGMode: BoardBackgroundMode
+  headerBGColor: BoardColorSchemeInput
+  greetingText: String
 }
 
 type BoardListResults {
@@ -457,6 +510,12 @@ enum BoardMobileLayout {
   SingleColumnStack
 }
 
+enum BoardMutableWidgetTypes {
+  Pinned
+  ScratchPad
+  FilteredNotes
+}
+
 enum BoardPlatformWidgetsPlatform {
   mobile
   desktop
@@ -468,12 +527,12 @@ type BoardPlatformWidgetsResultFields {
   unindexed: Widget!
   parent: Board!
   created: Float!
-  widgetType: PlatformWidgetsWidgetType!
+  widgetType: WidgetType!
+  mutableWidgetType: BoardMutableWidgetTypes
   isEnabled: Boolean!
-  selectedTab: PlatformWidgetsSelectedTab
+  selectedTab: WidgetTabs
   contentProvider: Note
   mobile_sortWeight: String!
-  desktop_sortWeight: String!
 }
 
 type BoardPlatformWidgetsResults {
@@ -481,9 +540,20 @@ type BoardPlatformWidgetsResults {
   list: [BoardPlatformWidgetsResultFields!]!
 }
 
+enum BoardServiceLevels {
+  FREE
+  PLUS
+  PREMIUM
+  PERSONAL
+  PROFESSIONAL
+  TEAMS
+  BASIC
+  BUSINESS
+}
+
 input BoardSort {
   field: BoardSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum BoardSortField {
@@ -491,6 +561,9 @@ enum BoardSortField {
   isSupported
   id
   boardType
+  internalID
+  isCustomized
+  serviceLevel
   headerBG_localChangeTimestamp
   headerBG_hash
   headerBG_size
@@ -511,55 +584,56 @@ enum BoardSortField {
   headerBGPreviousUpload_path
   headerBGPreviousUploadMime
   headerBGPreviousUploadFileName
+  headerBGMode
+  headerBGColor_light
+  headerBGColor_dark
+  greetingText
   desktop_layout
   mobile_layout
   freeTrialExpiration
   updated
   tasksVersion
   calendarVersion
+  filteredNotesVersion
+  extraVersion
+  coreVersion
   label
 }
 
-"""Scan Business Card Info"""
+enum BoardType {
+  Home
+}
+
 type BusinessCardInfo {
-  """Business card emails"""
-  emails: [String]
-
-  """Business card name."""
-  name: [String]
-
-  """Business card title."""
-  title: [String]
-
-  """Business card company."""
-  company: [String]
-
-  """Business card adress."""
-  addresses: [String]
-
-  """Business card phone."""
-  phones: [String]
-
-  """Business card web url."""
-  urls: [String]
-
-  """Business card twitter."""
-  twitter: [String]
-
-  """Business card skype."""
-  skype: [String]
-
-  """Business card mobiles."""
-  mobile: [String]
-
-  """Business card the rest of urls."""
-  otherUrls: [String]
+  emails: [String!]!
+  name: [String!]!
+  title: [String!]!
+  company: [String!]!
+  addresses: [String!]!
+  phones: [String!]!
+  urls: [String!]!
+  twitter: [String!]!
+  skype: [String!]!
+  mobile: [String!]!
+  otherUrls: [String!]!
 }
 
 type BusinessNotebook {
   notebookDescription: String!
   privilege: Float!
   recommended: Boolean!
+}
+
+enum BusinessUserRole {
+  ADMIN
+  NORMAL
+}
+
+enum BusinessUserType {
+  UNKNOWN
+  PERSONAL_ONLY
+  LEGACY
+  BUSINESS_ONLY
 }
 
 type CalendarAccount {
@@ -574,10 +648,16 @@ type CalendarAccount {
 
 type CalendarAccountResult {
   id: String!
-  provider: CalendarProviderField
+  provider: CalendarProvider!
   calendarUserId: String!
   isConnected: Boolean!
-  calendars: [UserCalendarSettingsResult!]
+  calendars: [UserCalendarSettingsResult!]!
+}
+
+type CalendarContact {
+  email: String!
+  displayName: String
+  avatar: String
 }
 
 type CalendarEvent {
@@ -585,15 +665,15 @@ type CalendarEvent {
   id: String!
   label: String!
   localChangeTimestamp: Float!
-  provider: String!
+  provider: CalendarProvider!
   calendarUserId: String!
   userCalendarExternalId: String!
   calendarEventExternalId: String!
   created: Float!
   lastModified: Float!
-  deleted: Float
+  deletionTime: Float
   isAccountConnected: Boolean!
-  summary: String!
+  summary: String
   displayColor: String
   description: String
   location: String
@@ -606,24 +686,24 @@ type CalendarEvent {
   isBusy: Boolean!
   status: CalendarEventStatus!
   links: String!
-  creator: CalendarEventCreator!
-  organizer: CalendarEventOrganizer!
+  eventCreator: CalendarContact!
+  eventOrganizer: CalendarContact!
   attendees: String!
   calendarEventLinks: [CalendarEventLink!]!
   calendarEventLinksCount: Int!
 }
 
-type CalendarEventByIdResult {
+type CalendarEventExternal {
   id: String!
-  provider: CalendarProviderField
+  provider: CalendarProvider!
   calendarUserId: String!
   userCalendarExternalId: String!
   calendarEventExternalId: String!
   created: Float!
   lastModified: Float!
-  deleted: Float
+  deletionTime: Float
   isAccountConnected: Boolean!
-  summary: String!
+  summary: String
   description: String
   displayColor: String
   location: String
@@ -634,35 +714,11 @@ type CalendarEventByIdResult {
   recurrence: String
   iCalendarUid: String!
   isBusy: Boolean!
-  status: CalendarEventByIdResultStatus!
+  status: CalendarEventStatus!
   links: String!
-  creator: CalendarEventByIdResultCreator!
-  organizer: CalendarEventByIdResultOrganizer!
+  eventCreator: CalendarContact!
+  eventOrganizer: CalendarContact!
   attendees: String!
-}
-
-type CalendarEventByIdResultCreator {
-  email: String!
-  displayName: String
-  avatar: String
-}
-
-type CalendarEventByIdResultOrganizer {
-  email: String!
-  displayName: String
-  avatar: String
-}
-
-enum CalendarEventByIdResultStatus {
-  CONFIRMED
-  CANCELED
-  TENTATIVE
-}
-
-type CalendarEventCreator {
-  email: String
-  displayName: String
-  avatar: String
 }
 
 type CalendarEventLink {
@@ -676,71 +732,23 @@ type CalendarEventLink {
   note: Note
 }
 
-enum CalendarEventLinkCreate_status {
-  CONFIRMED
-  CANCELED
-  TENTATIVE
-}
-
-type CalendarEventOrganizer {
-  email: String
-  displayName: String
-  avatar: String
-}
-
-type CalendarEventResultCreator {
-  email: String!
-  displayName: String
-  avatar: String
-}
-
-type CalendarEventResultOrganizer {
-  email: String!
-  displayName: String
-  avatar: String
-}
-
-enum CalendarEventResultStatus {
-  CONFIRMED
-  CANCELED
-  TENTATIVE
-}
-
-type CalendarEvents {
-  id: String!
-  provider: CalendarProviderField
-  calendarUserId: String!
-  userCalendarExternalId: String!
-  calendarEventExternalId: String!
-  created: Float!
-  lastModified: Float!
-  deleted: Float
-  isAccountConnected: Boolean!
-  summary: String!
-  description: String
-  displayColor: String
-  location: String
-  isAllDay: Boolean!
-  start: Float!
-  end: Float!
-  recurrentEventId: String
-  recurrence: String
-  iCalendarUid: String!
-  isBusy: Boolean!
-  status: CalendarEventResultStatus!
-  links: String!
-  creator: CalendarEventResultCreator!
-  organizer: CalendarEventResultOrganizer!
-  attendees: String!
-}
-
 enum CalendarEventStatus {
   CONFIRMED
   CANCELED
   TENTATIVE
 }
 
-enum CalendarProviderField {
+enum CalendarNotificationOptions {
+  THIRTY_BEFORE
+  TEN_BEFORE
+  FIVE_BEFORE
+  AT_START
+  AT_END
+  FIVE_AFTER
+  OFF
+}
+
+enum CalendarProvider {
   GOOGLE
   OUTLOOK
   OTHER
@@ -751,59 +759,19 @@ type CalendarSettings {
   id: String!
   label: String!
   localChangeTimestamp: Float!
-  useTemplateForNewNote: Boolean!
+  useTemplateForNewNotes: Boolean!
   desktopReminders: CalendarSettingsDesktopReminders!
   mobileReminders: CalendarSettingsMobileReminders!
 }
 
 type CalendarSettingsDesktopReminders {
-  createNoteMinutes: CalendarSettingsDesktopRemindersCreateNoteMinutes!
-  openNoteMinutes: CalendarSettingsDesktopRemindersOpenNoteMinutes!
-}
-
-enum CalendarSettingsDesktopRemindersCreateNoteMinutes {
-  THIRTY_BEFORE
-  TEN_BEFORE
-  FIVE_BEFORE
-  AT_START
-  AT_END
-  FIVE_AFTER
-  OFF
-}
-
-enum CalendarSettingsDesktopRemindersOpenNoteMinutes {
-  THIRTY_BEFORE
-  TEN_BEFORE
-  FIVE_BEFORE
-  AT_START
-  AT_END
-  FIVE_AFTER
-  OFF
+  createNoteMinutes: CalendarNotificationOptions!
+  openNoteMinutes: CalendarNotificationOptions!
 }
 
 type CalendarSettingsMobileReminders {
-  createNoteMinutes: CalendarSettingsMobileRemindersCreateNoteMinutes!
-  openNoteMinutes: CalendarSettingsMobileRemindersOpenNoteMinutes!
-}
-
-enum CalendarSettingsMobileRemindersCreateNoteMinutes {
-  THIRTY_BEFORE
-  TEN_BEFORE
-  FIVE_BEFORE
-  AT_START
-  AT_END
-  FIVE_AFTER
-  OFF
-}
-
-enum CalendarSettingsMobileRemindersOpenNoteMinutes {
-  THIRTY_BEFORE
-  TEN_BEFORE
-  FIVE_BEFORE
-  AT_START
-  AT_END
-  FIVE_AFTER
-  OFF
+  createNoteMinutes: CalendarNotificationOptions!
+  openNoteMinutes: CalendarNotificationOptions!
 }
 
 type CalendarSettingsResult {
@@ -813,53 +781,13 @@ type CalendarSettingsResult {
 }
 
 type CalendarSettingsResultDesktopReminders {
-  createNoteMinutes: CalendarSettingsResultDesktopRemindersCreateNoteMinutes!
-  openNoteMinutes: CalendarSettingsResultDesktopRemindersOpenNoteMinutes!
-}
-
-enum CalendarSettingsResultDesktopRemindersCreateNoteMinutes {
-  THIRTY_BEFORE
-  TEN_BEFORE
-  FIVE_BEFORE
-  AT_START
-  AT_END
-  FIVE_AFTER
-  OFF
-}
-
-enum CalendarSettingsResultDesktopRemindersOpenNoteMinutes {
-  THIRTY_BEFORE
-  TEN_BEFORE
-  FIVE_BEFORE
-  AT_START
-  AT_END
-  FIVE_AFTER
-  OFF
+  createNoteMinutes: CalendarNotificationOptions!
+  openNoteMinutes: CalendarNotificationOptions!
 }
 
 type CalendarSettingsResultMobileReminders {
-  createNoteMinutes: CalendarSettingsResultMobileRemindersCreateNoteMinutes!
-  openNoteMinutes: CalendarSettingsResultMobileRemindersOpenNoteMinutes!
-}
-
-enum CalendarSettingsResultMobileRemindersCreateNoteMinutes {
-  THIRTY_BEFORE
-  TEN_BEFORE
-  FIVE_BEFORE
-  AT_START
-  AT_END
-  FIVE_AFTER
-  OFF
-}
-
-enum CalendarSettingsResultMobileRemindersOpenNoteMinutes {
-  THIRTY_BEFORE
-  TEN_BEFORE
-  FIVE_BEFORE
-  AT_START
-  AT_END
-  FIVE_AFTER
-  OFF
+  createNoteMinutes: CalendarNotificationOptions!
+  openNoteMinutes: CalendarNotificationOptions!
 }
 
 type CEDataForTemplates {
@@ -869,13 +797,13 @@ type CEDataForTemplates {
   userId: Float!
 }
 
-enum clientPlatform {
+enum ClientPlatform {
   ANDROID
   IOS
   MAC
 }
 
-enum ClientType {
+enum CommEngineClientType {
   MAC
   WINDOWS
   IOS
@@ -886,6 +814,10 @@ enum ClientType {
   BORON
 }
 
+type CommEngineConfig {
+  cooldownPeriodMillis: Int!
+}
+
 enum CommEngineEventType {
   SHOW
   DISMISS
@@ -893,10 +825,25 @@ enum CommEngineEventType {
   ERROREVENT
 }
 
+type CommEngineMessage {
+  key: String!
+  priority: Int!
+  content: CommEngineMessageContent!
+  messageContent: CommEngineMessageContent!
+  placement: Int!
+  offline: Boolean!
+  expires: Float!
+}
+
+type CommEngineMessageContent {
+  templateUri: String!
+  contentVariablesJson: String!
+}
+
 type CommEngineResponseSchema {
-  messages: [InAppMessage]
-  messageRequestGuid: String
-  config: Config
+  messages: [CommEngineMessage!]!
+  messageRequestGuid: String!
+  config: CommEngineConfig!
 }
 
 input CommEvent {
@@ -904,10 +851,6 @@ input CommEvent {
   messageKey: String!
   label: String
   type: CommEngineEventType
-}
-
-type Config {
-  cooldownPeriodMillis: Int
 }
 
 type ContentConflictsInWidgetResultFields {
@@ -962,15 +905,12 @@ type DebugSyncContextSchema {
   userID: Int
 }
 
-enum DescendentTasksStatus {
-  open
-  completed
-}
-
 input EntityRef {
   id: String!
   type: String!
 }
+
+union EntUnion2f9faee8fcc870f8061572bf53124cea = Note | Notebook | SavedSearch | Stack | Tag | Workspace
 
 type Error {
   errorKey: String
@@ -986,32 +926,6 @@ type Error {
 enum FeatureRolloutClientType {
   mobile
   desktop
-}
-
-type FeatureRolloutDataResult {
-  siwg: FeatureRolloutDataResultSiwg!
-  siwa: FeatureRolloutDataResultSiwa!
-}
-
-enum FeatureRolloutDataResultSiwa {
-  NAP
-  Legacy
-}
-
-enum FeatureRolloutDataResultSiwg {
-  NAP
-  Legacy
-}
-
-type FileWithoutContent {
-  localChangeTimestamp: Float!
-  hash: String!
-  size: Float!
-  url: String
-  id: String
-  format: String
-  version: Float
-  path: String
 }
 
 type FolderCommandPolicy {
@@ -1058,110 +972,38 @@ type GetTaskUserSettingsResult {
   pinDefaultTaskNote: Boolean
 }
 
-"""Credential information needed to make GAPI requests."""
 type GoogleAuthCredential {
-  """OAuth 2.0 access token generated by Google Services."""
   accessToken: String!
-
-  """The version of OAuth by which this credential abides."""
   oAuthVersion: Float!
-
-  """Google Services for which these credentials are authorized to access."""
-  services: [GoogleScopesEnum]
-
-  """
-  Google Services scopes indicating specific permissions that these credentials may access.
-  """
-  scopeUris: [String]
-
-  """
-  The time, in milliseconds since epoch, after which a new Google API Credential should be retrieved.
-  """
-  refreshAfter: Float
-
-  """
-  The time, in milliseconds since epoch, after which this Google API Credential will expire.
-  """
+  services: [GoogleScopesEnum!]!
+  scopeUris: [String!]!
+  refreshesAfter: Float!
   expiresAfter: Float!
 }
 
-"""
-Metadata identifying a file resource managed and hosted by Google Drive.
-"""
 type GoogleDriveFile {
-  """The unique identifier for this file. Corresponds to Google File.id"""
-  id: String
-
-  """The name of the file. Corresponds to Google File.name"""
+  id: String!
   label: String
-
-  """
-  A short description of the file. Corresponds to Google File.description
-  """
   description: String
-
-  """
-  The last time the file was modified by anyone (RFC 3339 date-time). Corresponds to File.modifiedTime
-  """
   modifiedTime: String
-
-  """The MIME type of the file. Corresponds to File.mimeType"""
   mimeType: String
-
-  """
-  A link for downloading the content of the file in a browser. Corresponds to File.webContentLink
-  """
   binaryUri: String
-
-  """
-  A link for opening the file in a relevant Google editor or viewer in a browser. Corresponds to File.webViewLink
-  """
   viewerUri: String
-
-  """The size of the file's content in bytes. Corresponds to File.size"""
   fileSize: Float
-
-  """
-  A short-lived link to the file's thumbnail, if available. Typically lasts on
-  the order of hours. Corresponds to File.thumbnailLink
-  """
   thumbnailLink: String
-
-  """
-  The full file extension extracted from the name field. May contain multiple
-  concatenated extensions. Corresponds to File.fullFileExtension
-  """
   fullFileExtension: String
 }
 
-"""Google Drive File metadata and information about the response."""
 type GoogleDriveResponse {
-  """Reason for the response provided by Google Drive API"""
-  reason: String
-
-  """A short message explaining the repsonse."""
-  message: String
-
-  """Resource ID for the Google Drive File."""
-  fileId: String
-
-  """
-  Metadata describing a singular Google Drive File. If the statusCode is not 200, then this entry may be undefined.
-  """
+  reason: String!
+  message: String!
+  fileId: String!
   data: GoogleDriveFile
 }
 
-"""
-Recognized Google authorization scopes for use in Google Services API.
-"""
 enum GoogleScopesEnum {
-  """Scope for Google Drive API access."""
   DRIVE
-
-  """Scope for Google Calendar API access."""
   CALENDAR
-
-  """Scope for Google Contacts API access."""
   CONTACTS
 }
 
@@ -1190,16 +1032,6 @@ type ImmediateNotesDownsyncResult {
   needsSync: Boolean!
 }
 
-type InAppMessage {
-  key: String
-  priority: Int
-  content: MessageContent
-  messageContent: MessageContent
-  placement: Int
-  offline: Boolean
-  expires: Float
-}
-
 input IndexMatch {
   string: String
   int: Float
@@ -1224,7 +1056,7 @@ type Invitation {
   localChangeTimestamp: Float!
   created: Float
   snippet: String!
-  invitationType: InvitationInvitationType!
+  invitationType: InvitationType!
   sharer: Profile
   owner: Profile
 }
@@ -1244,12 +1076,6 @@ enum InvitationFilterField {
   id
   snippet
   invitationType
-}
-
-enum InvitationInvitationType {
-  UNKNOWN
-  NOTE
-  NOTEBOOK
 }
 
 type InvitationListResults {
@@ -1284,7 +1110,7 @@ type InvitationsForMeResults {
 
 input InvitationSort {
   field: InvitationSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum InvitationSortField {
@@ -1295,66 +1121,23 @@ enum InvitationSortField {
   invitationType
 }
 
-type IterableLogsSwitchResult {
+enum InvitationType {
+  UNKNOWN
+  NOTE
+  NOTEBOOK
+}
+
+type IterableLogsSwitch {
   iterableLogsEnabled: Boolean!
 }
 
-enum Layout {
-  EMBED
-  NATIVEEMBED
-  WEB
-  IPHONE
-  ANDROID
-  IPAD
-  WP7
-  APP
-  MICRO
-  OAUTHMICRO
-  SMALL
-  MOBILE
-  WEBEMBED
-  MAC
-}
-
-enum LayoutStyle {
-  LIST
-  BOARD
-}
-
 type LoginInfo {
-  loginStatus: LoginInfoLoginStatus!
+  loginStatus: LoginStatus!
   pendingInvites: [Int!]!
-  businessUserType: LoginInfoBusinessUserType!
+  businessUserType: BusinessUserType!
   facadeEnabled: Boolean!
-  napMigrationState: LoginInfoNapMigrationState!
+  napMigrationState: NapMigrationStateType!
   signedUsernameOrEmail: String
-}
-
-enum LoginInfoBusinessUserType {
-  UNKNOWN
-  PERSONAL_ONLY
-  LEGACY
-  BUSINESS_ONLY
-}
-
-enum LoginInfoLoginStatus {
-  UNKNOWN
-  INVALID_FORMAT
-  NOT_FOUND
-  INVITE_PENDING
-  PASSWORD_RESET
-  PASSWORD
-  SSO
-}
-
-enum LoginInfoNapMigrationState {
-  UNKNOWN
-  LEGACY
-  MIGRATE_ON_LOGIN
-  MIGRATED
-  MIGRATION_FAILED
-  MIGRATED_NAP_ONLY
-  NOT_FOUND
 }
 
 type LoginResult {
@@ -1362,6 +1145,16 @@ type LoginResult {
   secondFactorDeliveryHint: String
   usernameOrEmail: String
   secondFactorTempToken: String
+}
+
+enum LoginStatus {
+  UNKNOWN
+  INVALID_FORMAT
+  NOT_FOUND
+  INVITE_PENDING
+  PASSWORD_RESET
+  PASSWORD
+  SSO
 }
 
 type LogoutResult {
@@ -1434,7 +1227,7 @@ type Membership {
   sharer: Profile
   owner: Profile
   recipient: Profile
-  parent: NoteOrNotebookOrWorkspace
+  parent: NoteOrNotebookOrTaskOrWorkspace
   hasAccepted: Boolean
 }
 
@@ -1492,7 +1285,7 @@ type MembershipsForMeInParentResultFields {
   id: String!
   type: String!
   unindexed: Membership!
-  parent: NoteOrNotebookOrWorkspace!
+  parent: NoteOrNotebookOrTaskOrWorkspace!
   label: String!
 }
 
@@ -1535,7 +1328,7 @@ type MembershipsInParentResultFields {
   id: String!
   type: String!
   unindexed: Membership!
-  parent: NoteOrNotebookOrWorkspace!
+  parent: NoteOrNotebookOrTaskOrWorkspace!
   label: String!
 }
 
@@ -1550,7 +1343,7 @@ type MembershipsInParentResults {
 
 input MembershipSort {
   field: MembershipSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum MembershipSortField {
@@ -1563,13 +1356,6 @@ enum MembershipSortField {
   recipientType
   updated
   invitedTime
-}
-
-enum MembershipUpdatePrivilege_privilege {
-  READ
-  COMPLETE
-  EDIT
-  MANAGE
 }
 
 type Message {
@@ -1587,11 +1373,6 @@ type Message {
   notebooks: [Notebook!]!
   notebooksCount: Int!
   thread: Thread
-}
-
-type MessageContent {
-  templateUri: String
-  contentVariablesJson: String
 }
 
 input MessageFilter {
@@ -1643,7 +1424,7 @@ type MessagesInThreadResults {
 
 input MessageSort {
   field: MessageSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum MessageSortField {
@@ -1667,6 +1448,16 @@ enum MonetizationClientType {
 
 type MultiplyByTwoResult {
   result: Int!
+}
+
+enum NapMigrationStateType {
+  UNKNOWN
+  LEGACY
+  MIGRATE_ON_LOGIN
+  MIGRATED
+  MIGRATION_FAILED
+  MIGRATED_NAP_ONLY
+  NOT_FOUND
 }
 
 type Note {
@@ -1729,7 +1520,7 @@ type Note {
   allMemberships(orderBy: NoteAllMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NoteAllMembershipsResults!
   ownMemberships(orderBy: NoteOwnMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NoteOwnMembershipsResults!
   conflictBackups(inTrash: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): NoteConflictBackupsResults!
-  descendentTasks(status: Status, reverseOrder: Boolean, pageInfo: PageInfo): NoteDescendentTasksResults!
+  descendentTasks(status: TaskStatus, reverseOrder: Boolean, pageInfo: PageInfo): NoteDescendentTasksResults!
   CommandPolicy: NoteCommandPolicy!
   shareCount: Float!
   taskGroups: [TaskGroupResult]
@@ -1744,7 +1535,7 @@ type NoteAllMembershipsResultFields {
   id: String!
   type: String!
   unindexed: Membership!
-  parent: NoteOrNotebookOrWorkspace!
+  parent: NoteOrNotebookOrTaskOrWorkspace!
   label: String!
 }
 
@@ -1848,7 +1639,7 @@ type NotebookAllMembershipsResultFields {
   id: String!
   type: String!
   unindexed: Membership!
-  parent: NoteOrNotebookOrWorkspace!
+  parent: NoteOrNotebookOrTaskOrWorkspace!
   label: String!
 }
 
@@ -1909,13 +1700,6 @@ enum NotebookFilterField {
   isPartialNotebook
 }
 
-enum NotebookInvite_privilege {
-  READ
-  COMPLETE
-  EDIT
-  MANAGE
-}
-
 type NotebookListResults {
   count: Int!
   indexUsed: [String!]!
@@ -1937,7 +1721,7 @@ type NotebookOwnMembershipsResultFields {
   id: String!
   type: String!
   unindexed: Membership!
-  parent: NoteOrNotebookOrWorkspace!
+  parent: NoteOrNotebookOrTaskOrWorkspace!
   label: String!
 }
 
@@ -1995,6 +1779,12 @@ type NotebooksInStackResults {
   list: [NotebooksInStackResultFields!]!
 }
 
+enum NotebooksInWorkspaceOrderBy {
+  label
+  updated
+  created
+}
+
 type NotebooksInWorkspaceResultFields {
   id: String!
   type: String!
@@ -2037,7 +1827,7 @@ enum NotebooksOrderBy {
 
 input NotebookSort {
   field: NotebookSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum NotebookSortField {
@@ -2300,7 +2090,7 @@ type NoteContentInfoListResults {
 
 input NoteContentInfoSort {
   field: NoteContentInfoSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum NoteContentInfoSortField {
@@ -2319,7 +2109,7 @@ type NoteDescendentTasksResultFields {
   unindexed: Task!
   parent: Note
   sortWeight: String!
-  status: DescendentTasksStatus!
+  status: TaskStatus!
   taskGroupNoteLevelID: String!
 }
 
@@ -2393,16 +2183,26 @@ type NoteGetApplicationDataEntryResult {
   value: String
 }
 
+enum NoteHistoryLayout {
+  EMBED
+  NATIVEEMBED
+  WEB
+  IPHONE
+  ANDROID
+  IPAD
+  WP7
+  APP
+  MICRO
+  OAUTHMICRO
+  SMALL
+  MOBILE
+  WEBEMBED
+  MAC
+}
+
 type NoteImportResult {
   noteID: String!
   attachmentHashes: [String!]!
-}
-
-enum NoteInvite_privilege {
-  READ
-  COMPLETE
-  EDIT
-  MANAGE
 }
 
 type NoteListResults {
@@ -2424,15 +2224,6 @@ type Notelock {
   isNoteStale: Boolean!
 }
 
-type NotelockOrNull {
-  lockHolderId: String
-  lockRenewBy: Float
-  viewerIds: [String!]!
-  viewIdleExpiration: Float
-  currentTime: Float
-  isNoteStale: Boolean!
-}
-
 type NoteMergeResult {
   mergedNoteID: String!
   failedNotes: [String!]!
@@ -2440,9 +2231,7 @@ type NoteMergeResult {
 
 union NoteOrNotebook = Note | Notebook
 
-union NoteOrNotebookOrSavedSearchOrStackOrTagOrWorkspace = Note | Notebook | SavedSearch | Stack | Tag | Workspace
-
-union NoteOrNotebookOrWorkspace = Note | Notebook | Workspace
+union NoteOrNotebookOrTaskOrWorkspace = Note | Notebook | Task | Workspace
 
 enum NoteOwnMembershipsOrderBy {
   created
@@ -2453,7 +2242,7 @@ type NoteOwnMembershipsResultFields {
   id: String!
   type: String!
   unindexed: Membership!
-  parent: NoteOrNotebookOrWorkspace!
+  parent: NoteOrNotebookOrTaskOrWorkspace!
   label: String!
 }
 
@@ -2600,7 +2389,7 @@ type NotesNotInTrashResults {
 
 input NoteSort {
   field: NoteSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum NoteSortField {
@@ -2736,11 +2525,6 @@ type NSyncStatusResult {
   lastConnection: Float!
 }
 
-enum OAuthProvider {
-  GOOGLE
-  FACEBOOK
-}
-
 input PageInfo {
   startKey: String
   startIndex: Int
@@ -2761,39 +2545,17 @@ type PinnedContent {
   sortIndex: Float!
 }
 
-enum PlatformWidgetsSelectedTab {
-  Recent
-  Suggested
-  WebClips
-  Emails
-  Images
-  Audio
-  Documents
-}
-
-enum PlatformWidgetsWidgetType {
-  Clipped
-  Notebooks
-  Notes
-  OnboardingChecklist
-  Pinned
-  ScratchPad
-  Shortcuts
-  Tags
-  Calendar
-  Tasks
-}
-
 type PreferenceGetWorkChatActiveResult {
   isActive: Boolean!
 }
 
-enum privilegeLevel {
-  READ_NOTEBOOK
-  MODIFY_NOTEBOOK_PLUS_ACTIVITY
-  READ_NOTEBOOK_PLUS_ACTIVITY
-  GROUP
-  FULL_ACCESS
+enum PremiumOrderStatus {
+  NONE
+  PENDING
+  ACTIVE
+  FAILED
+  CANCELLATION_PENDING
+  CANCELED
 }
 
 type Profile {
@@ -2855,7 +2617,7 @@ type ProfileListResults {
 
 input ProfileSort {
   field: ProfileSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum ProfileSortField {
@@ -2949,7 +2711,7 @@ type PromotionListResults {
 
 input PromotionSort {
   field: PromotionSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum PromotionSortField {
@@ -2976,10 +2738,9 @@ type PromotionsResults {
   list: [PromotionsResultFields!]!
 }
 
-enum Provider {
-  GOOGLE
-  OUTLOOK
-  OTHER
+enum PublishedNotebookAccessStatus {
+  OPEN
+  MEMBER
 }
 
 input PublishedNotebookFilter {
@@ -2994,7 +2755,7 @@ type PublishedNotebookList {
   workspaceID: String
   created: Float!
   updated: Float!
-  accessStatus: AccessStatus!
+  accessStatus: PublishedNotebookAccessStatus!
   membersCount: Float!
   ownerID: String
   notesCount: Float!
@@ -3024,7 +2785,7 @@ type Reminder {
   label: String!
   localChangeTimestamp: Float!
   reminderDate: Float
-  reminderDateUIOption: ReminderReminderDateUIOption!
+  reminderDateUIOption: ReminderDateUIOption!
   timeZone: String
   created: Float!
   updated: Float!
@@ -3036,7 +2797,7 @@ type Reminder {
   source: Task
 }
 
-enum ReminderCreate_reminderDateUIOption {
+enum ReminderDateUIOption {
   date_time
   date_only
   relative_to_due
@@ -3084,15 +2845,9 @@ type ReminderListResults {
   list: [Reminder!]!
 }
 
-enum ReminderReminderDateUIOption {
-  date_time
-  date_only
-  relative_to_due
-}
-
 input ReminderSort {
   field: ReminderSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum ReminderSortField {
@@ -3138,12 +2893,6 @@ enum ReminderStatus {
   muted
 }
 
-enum ReminderUpdate_reminderDateUIOption {
-  date_time
-  date_only
-  relative_to_due
-}
-
 type RootMutationType {
   CancelImmediateContentFetchSync: GenericMutationResult!
   CancelImmediateNotesDownsync: GenericMutationResult!
@@ -3152,8 +2901,8 @@ type RootMutationType {
   EventsFlush: GenericMutationResult!
   EventsRecord(propertiesJsonStr: String!, selectiveDestinations: String): GenericMutationResult!
   ExceptionRecord(message: String!, fatal: Boolean, callstack: String): GenericMutationResult!
-  ForceDownsync(wait: Boolean!, flushMutations: Boolean, waitForRoundtrip: Boolean, retry: Float): ForceDownsyncResult!
-  ForceUpsync(retry: Float): GenericMutationResult!
+  ForceDownsync(wait: Boolean!, flushMutations: Boolean, waitForRoundtrip: Boolean, retry: Int): ForceDownsyncResult!
+  ForceUpsync(retry: Int): GenericMutationResult!
   ImmediateContentFetchSync(wait: Boolean, maxTime: Int, maxResources: Int): StartContentFetchResult!
   ImmediateNotesDownsync(wait: Boolean, maxNotes: Int, notesPerFetch: Int, maxTime: Int): ImmediateNotesDownsyncResult!
   MetricsRecord(propertiesJsonStr: String!, selectiveDestinations: String): GenericMutationResult!
@@ -3163,28 +2912,32 @@ type RootMutationType {
   SendLogRequest(selectedObjectID: String, selectTime: Float, exitTime: Float, selectedObjectType: String, autoSelected: Boolean, userQuery: String, noteRank: Int, eventType: SearchLogEventTypeProperty, searchLogInfo: SearchLogInfoProperty, properties: [LogRequestProperty], sensitiveProperties: [LogRequestProperty]): GenericMutationResult!
   SetCurrentUser(userID: String!): GenericMutationResult!
   StartSync: GenericMutationResult!
-  SyncMessages(guid: String, knownMessages: [String!], locale: String, commEngineJsVersion: Int, nativeClientVersion: Int, uiLanguage: String, supportedPlacements: [SupportedPlacement], events: [CommEvent], clientType: ClientType): CommEngineResponseSchema
-  attachmentSetApplicationDataEntry(id: String!, key: String!, value: String): AutoMutatorRes
-  attachmentSetFileName(attachmentID: String!, fileName: String!): AutoMutatorRes
-  boardBootstrap(parent: EntityRef, resetLayout: Boolean, platform: BoardBootstrapPlatform, features: BoardBootstrapFeatureArgs): BoardBootstrapResult
-  boardCreateHome(serviceLevel: BoardCreateHome_serviceLevel!, resetLayout: Boolean, platform: BoardCreateHome_platform, features: [String!], featureVersions: [Float!]): AutoMutatorRes
-  boardCustomize(widgetMutations: [WidgetCustomizeInput]): GenericMutationResult!
-  boardDeleteHeaderBG(board: String!): AutoMutatorRes
-  boardDeletePreviousHeaderBG(board: String!): AutoMutatorRes
-  boardStartFreeTrial(board: String!, durationInDays: Float): AutoMutatorRes
-  calendarEventLinkCreate(eventID: String!, noteID: String!, isLinkedToAllInstances: Boolean!, provider: String!, calendarUserId: String!, userCalendarExternalId: String!, calendarEventExternalId: String!, isAccountConnected: Boolean!, summary: String!, isAllDay: Boolean!, start: Float!, end: Float!, iCalendarUid: String!, isBusy: Boolean!, status: CalendarEventLinkCreate_status!, links: String!, creatorEmail: String!, organizerEmail: String!, attendees: String!, deleted: Float, displayColor: String, description: String, location: String, recurrentEventId: String, recurrence: String, creatorDisplayName: String, creatorAvatar: String, organizerDisplayName: String, organizerAvatar: String): AutoMutatorRes
-  calendarEventLinkDelete(calendarEventLinkId: String!): AutoMutatorRes
+  SyncMessages(guid: String, knownMessages: [String!], locale: String, commEngineJsVersion: Int, nativeClientVersion: Int, uiLanguage: String, supportedPlacements: [SupportedPlacement!], events: [CommEvent!], clientType: CommEngineClientType): CommEngineResponseSchema!
+  attachmentSetApplicationDataEntry(id: String!, key: String!, value: String): AutoMutatorRes!
+  attachmentSetFileName(attachmentID: String!, fileName: String!): AutoMutatorRes!
+  boardBootstrap(parent: EntityRef, resetLayout: Boolean, platform: BoardFormFactor, features: BoardBootstrapFeatureArgs): BoardBootstrapResult
+  boardCreateHome(serviceLevel: BoardServiceLevels!, resetLayout: Boolean, platform: BoardFormFactor, features: [String!], featureVersions: [Float!]): AutoMutatorRes!
+  boardCustomize(boardMutations: BoardCustomizeParams, widgetMutations: [WidgetCustomizeParams!]): GenericMutationResult!
+  boardDeleteHeaderBG(board: String!): AutoMutatorRes!
+  boardDeletePreviousHeaderBG(board: String!): AutoMutatorRes!
+  boardHeaderCustomize(board: String!, fields: BoardHeaderFields): AutoMutatorRes!
+  boardSetIsCustomized(board: String!, isCustomized: Boolean!): AutoMutatorRes!
+  boardStartFreeTrial(board: String!, durationInDays: Float): AutoMutatorRes!
+  calendarAccountUpdate(calendarAccountId: String!, isConnected: Boolean!): AutoMutatorRes!
+  calendarEventLinkCreate(eventID: String!, noteID: String!, isLinkedToAllInstances: Boolean!, provider: String!, calendarUserId: String!, userCalendarExternalId: String!, calendarEventExternalId: String!, isAccountConnected: Boolean!, isAllDay: Boolean!, start: Float!, end: Float!, iCalendarUid: String!, isBusy: Boolean!, status: CalendarEventStatus!, links: String!, creatorEmail: String!, organizerEmail: String!, attendees: String!, summary: String, deletionTime: Float, displayColor: String, description: String, location: String, recurrentEventId: String, recurrence: String, creatorDisplayName: String, creatorAvatar: String, organizerDisplayName: String, organizerAvatar: String): AutoMutatorRes!
+  calendarEventLinkDelete(calendarEventLinkId: String!): AutoMutatorRes!
+  calendarSettingsUpsert(useTemplateForNewNotes: Boolean!, mobileOpenNoteMinutes: CalendarNotificationOptions!, mobileCreateNoteMinutes: CalendarNotificationOptions!, desktopOpenNoteMinutes: CalendarNotificationOptions!, desktopCreateNoteMinutes: CalendarNotificationOptions!): AutoMutatorRes!
   clearNSyncBackoff: Boolean!
-  clientLogin(serviceHost: String!, externalServiceHost: String, email: String!, password: String, allowFacadeAsPersonal: Boolean): LoginResult
-  clientLoginWithCookies(serviceHost: String!, userSlot: Int): LoginResult
-  clientLoginWithOAuth(serviceHost: String!, externalServiceHost: String, tokenPayload: String!, serviceProvider: ServiceProvider!): LoginResult
-  clientLoginWithSSO(serviceHost: String!, externalServiceHost: String, email: String!, ssoLoginToken: String!): LoginResult
-  clientLoginWithServiceToken(serviceHost: String!, externalServiceHost: String, token: String, userSlot: Float, allowFacadeAsPersonal: Boolean): LoginResult
-  clientLoginWithTwoFactor(serviceHost: String!, externalServiceHost: String, oneTimeCode: String!, secondFactorTempToken: String!): LoginResult
+  clientLogin(serviceHost: String!, externalServiceHost: String, email: String!, password: String, allowFacadeAsPersonal: Boolean): LoginResult!
+  clientLoginWithCookies(serviceHost: String!, userSlot: Int): LoginResult!
+  clientLoginWithOAuth(serviceHost: String!, externalServiceHost: String, tokenPayload: String!, serviceProvider: ServiceProvider!): LoginResult!
+  clientLoginWithSSO(serviceHost: String!, externalServiceHost: String, email: String!, ssoLoginToken: String!): LoginResult!
+  clientLoginWithServiceToken(serviceHost: String!, externalServiceHost: String, token: String, userSlot: Int, allowFacadeAsPersonal: Boolean): LoginResult!
+  clientLoginWithTwoFactor(serviceHost: String!, externalServiceHost: String, oneTimeCode: String!, secondFactorTempToken: String!): LoginResult!
   clientLogout(reason: String!, nextUserID: String, all: Boolean, keepData: Boolean): LogoutResult!
-  clientMultiLoginWithSplitTokens(serviceHost: String!, externalServiceHost: String, token1: String!, token2: String): LoginResult
+  clientMultiLoginWithSplitTokens(serviceHost: String!, externalServiceHost: String, token1: String!, token2: String): LoginResult!
   createAndroidPrePurchaseTransactionID(sku: String!, extend: Boolean): String
-  createDeviceSync: PaywallState
+  createDeviceSync: PaywallState!
   errorClearList(markedValue: Boolean): GenericMutationResult!
   errorMark(id: String!): GenericMutationResult!
   errorMarkList: GenericMutationResult!
@@ -3193,124 +2946,125 @@ type RootMutationType {
   errorUnmarkList: GenericMutationResult!
 
   """fill the support ticket"""
-  fileSupportTicket(subject: String!, body: String!, logUri: String, applicationVersion: String, carrierInfo: String, osInfo: String, connectionInfo: String, contactEmail: String, deviceInfo: String, tags: [String!]): SupportTicketResult
-  inNoteTaskApplyChanges(noteID: String!, taskGroupList: [TaskGroupInput]!, loadedTaskGroupList: [TaskGroupInput]!, sourceOfChange: String): GenericMutationResult!
-  invitationAccept(invitation: String!): AutoMutatorRes
-  membershipDelete(membership: String!): AutoMutatorRes
-  membershipUpdatePrivilege(membership: String!, privilege: MembershipUpdatePrivilege_privilege!): AutoMutatorRes
-  messageSendToThread(thread: String!, content: String!): AutoMutatorRes
-  newUserSignUp(serviceHost: String!, email: String!, password: String!): LoginResult
-  newUserSignUpWithOAuth(serviceHost: String!, tokenPayload: String!, oAuthProvider: OAuthProvider!): LoginResult
+  fileSupportTicket(subject: String!, body: String!, logUri: String, applicationVersion: String, carrierInfo: String, osInfo: String, connectionInfo: String, contactEmail: String, deviceInfo: String, tags: [String!]): GenericMutationResult!
+  inNoteTaskApplyChanges(noteID: String!, taskGroupList: [TaskGroupInput!]!, loadedTaskGroupList: [TaskGroupInput!]!, sourceOfChange: String): GenericMutationResult!
+  invitationAccept(invitation: String!): AutoMutatorRes!
+  membershipDelete(membership: String!): AutoMutatorRes!
+  membershipUpdatePrivilege(membership: String!, privilege: MembershipPrivilege!): AutoMutatorRes!
+  messageSendToThread(thread: String!, content: String!): AutoMutatorRes!
+  newUserSignUp(serviceHost: String!, email: String!, password: String!): LoginResult!
+  newUserSignUpWithOAuth(serviceHost: String!, tokenPayload: String!, oAuthProvider: ServiceProvider!): LoginResult!
   noteCheckForUpdates(id: String!, fetchContent: Boolean): NoteCheckForUpdatesResult!
-  noteClearReminder(note: String!): AutoMutatorRes
-  noteCopy(note: String!, container: String!, label: String): AutoMutatorRes
-  noteCreate(untitledNoteLabel: String!, noteContent: String, container: String, label: String, tags: [String!], created: Float, updated: Float, subjectDate: Float, contentClass: String, latitude: Float, longitude: Float, altitude: Float, placeName: String, reminderTime: Float, reminderDoneTime: Float, reminderOrder: Float, author: String, source: String, sourceUrl: String, sourceApplication: String, attachmentHashes: [String!], applicationData: Map_string): AutoMutatorRes
-  noteDelete(note: String!): AutoMutatorRes
-  noteExpunge(note: String!): AutoMutatorRes
+  noteClearReminder(note: String!): AutoMutatorRes!
+  noteCopy(note: String!, container: String!, label: String): AutoMutatorRes!
+  noteCreate(untitledNoteLabel: String!, noteContent: String, container: String, label: String, tags: [String!], created: Float, updated: Float, subjectDate: Float, contentClass: String, latitude: Float, longitude: Float, altitude: Float, placeName: String, reminderTime: Float, reminderDoneTime: Float, reminderOrder: Float, author: String, source: String, sourceUrl: String, sourceApplication: String, attachmentHashes: [String!], applicationData: Map_string): AutoMutatorRes!
+  noteDelete(note: String!): AutoMutatorRes!
+  noteExpunge(note: String!): AutoMutatorRes!
   noteImport(noteContent: String!, untitledNoteLabel: String!, tags: [String!], container: String, label: String, created: Float, updated: Float, subjectDate: Float, contentClass: String, latitude: Float, longitude: Float, altitude: Float, placeName: String, reminderTime: Float, reminderDoneTime: Float, reminderOrder: Float, author: String, source: String, sourceUrl: String, sourceApplication: String, applicationData: Map_string, attachments: [AttachmentImportInfo!], tasksData: TasksExportData): NoteImportResult
-  noteInvite(note: String!, privilege: NoteInvite_privilege!, emails: [String!], userIDs: [String!], profileIDs: [String!], message: String): AutoMutatorRes
+  noteInvite(note: String!, privilege: MembershipPrivilege!, emails: [String!], userIDs: [String!], profileIDs: [String!], message: String): AutoMutatorRes!
   noteMerge(noteIDs: [String!]!, container: String, label: String!, separateContent: Boolean!, keepLabels: Boolean!, keepOriginalNotes: Boolean!): NoteMergeResult
-  noteMove(note: String!, targetContainer: String!): AutoMutatorRes
-  notePin(note: String!, widget: String): NotePinResult
-  noteRestore(note: String!): AutoMutatorRes
-  noteSendByEmail(note: String!, toEmails: [String!], ccEmails: [String!], subject: String, message: String): AutoMutatorRes
-  noteSetApplicationDataEntry(id: String!, key: String!, value: String): AutoMutatorRes
-  noteSetAuthor(note: String!, author: String!): AutoMutatorRes
+  noteMove(note: String!, targetContainer: String!): AutoMutatorRes!
+  notePin(note: String!, widget: String): NotePinResult!
+  noteRestore(note: String!): AutoMutatorRes!
+  noteSendByEmail(note: String!, toEmails: [String!], ccEmails: [String!], subject: String, message: String): AutoMutatorRes!
+  noteSetApplicationDataEntry(id: String!, key: String!, value: String): AutoMutatorRes!
+  noteSetAuthor(note: String!, author: String!): AutoMutatorRes!
   noteSetContent(note: String!, noteContent: String!, nextActiveAttachments: [String!], nextTaskGroups: [String!], prevNoteHash: String, isInternalUpdate: Boolean): NoteSetContentMutatorRes
-  noteSetContentClass(note: String!, contentClass: String): AutoMutatorRes
-  noteSetCreated(note: String!, created: Float!): AutoMutatorRes
-  noteSetLabel(note: String!, untitledNoteLabel: String!, label: String): AutoMutatorRes
-  noteSetLocation(note: String!, latitude: Float!, longitude: Float!, altitude: Float!): AutoMutatorRes
-  noteSetPlaceName(note: String!, placeName: String!): AutoMutatorRes
-  noteSetReminder(note: String!, reminderTime: Float, eventLabel: String): AutoMutatorRes
-  noteSetReminderDone(note: String!, reminderDoneTime: Float!): AutoMutatorRes
-  noteSetReminderOrder(note: String!, reminderOrder: Float!): AutoMutatorRes
-  noteSetSharePublic(note: String!, enable: Boolean!): AutoMutatorRes
-  noteSetSource(note: String!, source: String!): AutoMutatorRes
-  noteSetSourceApplication(note: String!, application: String!): AutoMutatorRes
-  noteSetSourceUrl(note: String!, url: String!): AutoMutatorRes
-  noteSetSubjectDate(note: String!, date: Float!): AutoMutatorRes
-  noteUnlinkConflictBackup(note: String!, conflictNote: String!): AutoMutatorRes
-  noteUnpin(note: String, notes: [String!]): AutoMutatorRes
-  notebookAcceptInvite(notebook: String!): AutoMutatorRes
-  notebookChangeEmailReminderSetting(notebook: String!, emailReminder: Boolean!): AutoMutatorRes
-  notebookChangeInAppReminderSetting(notebook: String!, inAppReminder: Boolean!): AutoMutatorRes
-  notebookCreate(label: String!, container: String): AutoMutatorRes
-  notebookDelete(notebook: String!): AutoMutatorRes
-  notebookInvite(notebook: String!, privilege: NotebookInvite_privilege!, emails: [String!], userIDs: [String!], profileIDs: [String!], message: String): AutoMutatorRes
-  notebookJoin(notebook: String!): GenericMutationResult!
-  notebookLeave(notebook: String!): AutoMutatorRes
-  notebookMoveToWorkspace(notebook: String!, workspace: String!): AutoMutatorRes
-  notebookPublish(notebook: String!, description: String!, recommended: Boolean, privilegeLevel: privilegeLevel!): GenericMutationResult!
-  notebookRemoveFromWorkspace(notebook: String!, workspace: String): AutoMutatorRes
-  notebookRename(notebook: String!, label: String!): AutoMutatorRes
-  notebookSetAsDefault(notebook: String!): AutoMutatorRes
-  notebookSetDisplayColor(notebook: String!, displayColor: Int!): AutoMutatorRes
-  notebookSetNoteDisplayOrder(notebook: String!, noteDisplayOrder: [String!]!): AutoMutatorRes
+  noteSetContentClass(note: String!, contentClass: String): AutoMutatorRes!
+  noteSetCreated(note: String!, created: Float!): AutoMutatorRes!
+  noteSetLabel(note: String!, untitledNoteLabel: String!, label: String): AutoMutatorRes!
+  noteSetLocation(note: String!, latitude: Float!, longitude: Float!, altitude: Float!): AutoMutatorRes!
+  noteSetPlaceName(note: String!, placeName: String!): AutoMutatorRes!
+  noteSetReminder(note: String!, reminderTime: Float, eventLabel: String): AutoMutatorRes!
+  noteSetReminderDone(note: String!, reminderDoneTime: Float!): AutoMutatorRes!
+  noteSetReminderOrder(note: String!, reminderOrder: Float!): AutoMutatorRes!
+  noteSetSharePublic(note: String!, enable: Boolean!): AutoMutatorRes!
+  noteSetSource(note: String!, source: String!): AutoMutatorRes!
+  noteSetSourceApplication(note: String!, application: String!): AutoMutatorRes!
+  noteSetSourceUrl(note: String!, url: String!): AutoMutatorRes!
+  noteSetSubjectDate(note: String!, date: Float!): AutoMutatorRes!
+  noteUnlinkConflictBackup(note: String!, conflictNote: String!): AutoMutatorRes!
+  noteUnpin(note: String, notes: [String!]): AutoMutatorRes!
+  notebookAcceptInvite(notebook: String!): AutoMutatorRes!
+  notebookChangeEmailReminderSetting(notebook: String!, emailReminder: Boolean!): AutoMutatorRes!
+  notebookChangeInAppReminderSetting(notebook: String!, inAppReminder: Boolean!): AutoMutatorRes!
+  notebookCreate(label: String!, container: String): AutoMutatorRes!
+  notebookDelete(notebook: String!): AutoMutatorRes!
+  notebookInvite(notebook: String!, privilege: MembershipPrivilege!, emails: [String!], userIDs: [String!], profileIDs: [String!], message: String): AutoMutatorRes!
+  notebookJoin(notebook: String!): AutoMutatorRes!
+  notebookLeave(notebook: String!): AutoMutatorRes!
+  notebookMoveToWorkspace(notebook: String!, workspace: String!): AutoMutatorRes!
+  notebookPublish(notebook: String!, description: String!, privilege: MembershipPrivilege!, recommended: Boolean): AutoMutatorRes!
+  notebookRemoveFromWorkspace(notebook: String!, workspace: String): AutoMutatorRes!
+  notebookRename(notebook: String!, label: String!): AutoMutatorRes!
+  notebookSetAsDefault(notebook: String!): AutoMutatorRes!
+  notebookSetDisplayColor(notebook: String!, displayColor: Int!): AutoMutatorRes!
+  notebookSetNoteDisplayOrder(notebook: String!, noteDisplayOrder: [String!]!): AutoMutatorRes!
   notebookToggleAvailableOffline(id: String!, setOffline: Boolean!, clearData: Boolean): GenericMutationResult!
-  notebookUnpublish(notebook: String!): AutoMutatorRes
-  notelockAcquire(noteID: String!): NotelockOrNull
+  notebookUnpublish(notebook: String!): AutoMutatorRes!
+  notelockAcquire(noteID: String!): Notelock
   notelockRelease(noteID: String!): Notelock!
-  notesExpunge(notes: [String!]!): AutoMutatorRes
+  notesExpunge(notes: [String!]!): AutoMutatorRes!
   notifyAppleTransactionFailure(layout: String, currency: String, price: String, productId: String, receiptData: String, transactionId: String): String
   preferencesSetWorkChatActive(isActive: Boolean!): GenericMutationResult!
-  profileUpdateBlockStatus(profile: String!, blockStatus: Boolean!): AutoMutatorRes
-  promotionMarkShown(promotion: String!): AutoMutatorRes
-  promotionOptOut(promotion: String!): AutoMutatorRes
+  profileUpdateBlockStatus(profile: String!, blockStatus: Boolean!): AutoMutatorRes!
+  promotionMarkShown(promotion: String!): AutoMutatorRes!
+  promotionOptOut(promotion: String!): AutoMutatorRes!
   recordSession: SyncStateRecordSessionResult!
-  reminderCreate(source: String!, reminderDate: Float, timeZone: String, reminderDateUIOption: ReminderCreate_reminderDateUIOption, dueDateOffset: Float, noteLevelID: String, sourceOfChange: String): AutoMutatorRes
-  reminderDelete(reminder: String!): AutoMutatorRes
-  reminderUpdate(reminder: String!, reminderDateUIOption: ReminderUpdate_reminderDateUIOption!, reminderDate: Float, timeZone: String, dueDateOffset: Float, sourceOfChange: String): AutoMutatorRes
-  saveNAPAuthInfo(serviceHost: String!, serviceToken: String!, accessToken: String!, refreshToken: String!, napAuthUrl: String!, napClientId: String!, napRedirectUri: String!): LoginResult
-  savedSearchCreate(label: String!, query: String!, eventLabel: String): AutoMutatorRes
-  savedSearchDelete(search: String!, eventLabel: String): AutoMutatorRes
-  savedSearchSetLabel(search: String!, label: String!): AutoMutatorRes
-  savedSearchSetQuery(search: String!, query: String!): AutoMutatorRes
+  reminderCreate(source: String!, reminderDate: Float, timeZone: String, reminderDateUIOption: ReminderDateUIOption, dueDateOffset: Float, noteLevelID: String, sourceOfChange: String): AutoMutatorRes!
+  reminderDelete(reminder: String!): AutoMutatorRes!
+  reminderUpdate(reminder: String!, reminderDateUIOption: ReminderDateUIOption!, reminderDate: Float, timeZone: String, dueDateOffset: Float, sourceOfChange: String): AutoMutatorRes!
+  saveNAPAuthInfo(serviceHost: String!, serviceToken: String!, accessToken: String!, refreshToken: String!, napAuthUrl: String!, napClientId: String!, napRedirectUri: String!): LoginResult!
+  savedSearchCreate(label: String!, query: String!, eventLabel: String): AutoMutatorRes!
+  savedSearchDelete(search: String!, eventLabel: String): AutoMutatorRes!
+  savedSearchSetLabel(search: String!, label: String!): AutoMutatorRes!
+  savedSearchSetQuery(search: String!, query: String!): AutoMutatorRes!
   sendAppleReceiptOnly(layout: String, receiptData: String!): String
   sendMarketingEmail(marketingEmailType: MarketingEmailType!): GenericMutationResult!
   sendVerificationEmail: GenericMutationResult!
   sessionToken: String!
-  shortcutCreate(source: String!, sortOrder: String!, eventLabel: String): AutoMutatorRes
-  shortcutRemove(shortcut: String!, eventLabel: String): AutoMutatorRes
-  shortcutSetSortOrder(shortcut: String!, sortOrder: String!): AutoMutatorRes
-  stackAddNotebook(stack: String!, notebook: String!, eventLabel: String): AutoMutatorRes
-  stackCreate(name: String!, notebook: String!, eventLabel: String): AutoMutatorRes
-  stackDelete(stack: String!, eventLabel: String): AutoMutatorRes
-  stackRemoveNotebook(notebook: String!, stack: String, eventLabel: String): AutoMutatorRes
-  stackRename(stack: String!, name: String!): AutoMutatorRes
+  shortcutCreate(source: String!, sortOrder: String!, eventLabel: String): AutoMutatorRes!
+  shortcutRemove(shortcut: String!, eventLabel: String): AutoMutatorRes!
+  shortcutSetSortOrder(shortcut: String!, sortOrder: String!): AutoMutatorRes!
+  stackAddNotebook(stack: String!, notebook: String!, eventLabel: String): AutoMutatorRes!
+  stackCreate(name: String!, notebook: String!, eventLabel: String): AutoMutatorRes!
+  stackDelete(stack: String!, eventLabel: String): AutoMutatorRes!
+  stackRemoveNotebook(notebook: String!, stack: String, eventLabel: String): AutoMutatorRes!
+  stackRename(stack: String!, name: String!): AutoMutatorRes!
   systemSettingsClear: GenericMutationResult!
   systemSettingsRemove(key: String!): GenericMutationResult!
   systemSettingsSetBoolean(key: String!, value: Boolean!): GenericMutationResult!
   systemSettingsSetInt(key: String!, value: Int!): GenericMutationResult!
   systemSettingsSetNumber(key: String!, value: Float!): GenericMutationResult!
   systemSettingsSetString(key: String!, value: String!): GenericMutationResult!
-  tagAddChildTag(parent: String!, child: String!): AutoMutatorRes
-  tagAddNote(tag: String!, note: String!, eventLabel: String): AutoMutatorRes
-  tagCreate(name: String!, note: String, creationEventLabel: String, tagAddNoteEventLabel: String): AutoMutatorRes
-  tagDelete(tag: String!, removeChildren: Boolean, eventLabel: String): AutoMutatorRes
-  tagRemoveNote(tag: String!, note: String!, eventLabel: String): AutoMutatorRes
-  tagRemoveParent(tag: String!): AutoMutatorRes
-  tagSetName(tag: String!, name: String!, eventLabel: String): AutoMutatorRes
+  tagAddChildTag(parent: String!, child: String!): AutoMutatorRes!
+  tagAddNote(tag: String!, note: String!, eventLabel: String): AutoMutatorRes!
+  tagCreate(name: String!, note: String, creationEventLabel: String, tagAddNoteEventLabel: String): AutoMutatorRes!
+  tagDelete(tag: String!, removeChildren: Boolean, eventLabel: String): AutoMutatorRes!
+  tagRemoveNote(tag: String!, note: String!, eventLabel: String): AutoMutatorRes!
+  tagRemoveParent(tag: String!): AutoMutatorRes!
+  tagSetName(tag: String!, name: String!, eventLabel: String): AutoMutatorRes!
   targetUrlCreate(url: String!, utm_source: String!, utm_medium: String!, host: String, two_factor_token: String, url_params: String): String!
   targetUrlCreateWithOAuth(serviceHost: String!, tokenPayload: String!, serviceProvider: String!, url: String!, utm_source: String!, utm_medium: String!, urlParams: String): String!
-  taskAssign(task: String!, assigneeID: String, sourceOfChange: String): AutoMutatorRes
-  taskCreate(container: String!, label: String!, taskGroupNoteLevelID: String!, dueDate: Float, timeZone: String, dueDateUIOption: TaskCreate_dueDateUIOption, flag: Boolean, sortWeight: String, status: String, noteLevelID: String, sourceOfChange: String): AutoMutatorRes
-  taskDelete(task: String!, sourceOfChange: String): AutoMutatorRes
+  taskAssign(task: String!, assigneeID: String, sourceOfChange: String): AutoMutatorRes!
+  taskCreate(container: String!, label: String!, taskGroupNoteLevelID: String!, dueDate: Float, timeZone: String, dueDateUIOption: TaskDueDateUIOption, flag: Boolean, sortWeight: String, status: String, noteLevelID: String, sourceOfChange: String): AutoMutatorRes!
+  taskDelete(task: String!, sourceOfChange: String): AutoMutatorRes!
   taskGroupCreateDefaultTaskNoteUpsert(defaultTaskNoteLabel: String!, pinDefaultTaskNote: Boolean, noteContent: String): TaskGroupCreateDefaultTaskNoteUpsertResult!
-  taskGroupUpsertInNoteContentInfo(taskGroupNoteLevelIDs: [String!]!, noteID: String, sourceOfChange: String): AutoMutatorRes
-  taskMove(task: String!, destTaskGroupNoteLevelID: String!, destNoteID: String!, destNoteOwnerID: Float, sourceOfChange: String): AutoMutatorRes
-  taskUpdate(task: String!, label: String, dueDate: Float, timeZone: String, dueDateUIOption: TaskUpdate_dueDateUIOption, flag: Boolean, sortWeight: String, status: TaskUpdate_status, sourceOfChange: String, taskGroupNoteLevelID: String): AutoMutatorRes
-  taskUserSettingsSetDefaultTaskNote(noteID: String!, pinDefaultTaskNote: Boolean): AutoMutatorRes
-  taskUserSettingsUpsert(defaultReminder: Boolean, defaultRemindersOffsets: [Float!]): AutoMutatorRes
-  testError(grpcErrorCode: Float, httpErrorCode: Float): AutoMutatorRes
+  taskGroupUpsertInNoteContentInfo(taskGroupNoteLevelIDs: [String!]!, noteID: String, sourceOfChange: String): AutoMutatorRes!
+  taskMove(task: String!, destTaskGroupNoteLevelID: String!, destNoteID: String!, destNoteOwnerID: Float, sourceOfChange: String): AutoMutatorRes!
+  taskUpdate(task: String!, label: String, dueDate: Float, timeZone: String, dueDateUIOption: TaskDueDateUIOption, flag: Boolean, sortWeight: String, status: TaskStatus, sourceOfChange: String, taskGroupNoteLevelID: String): AutoMutatorRes!
+  taskUserSettingsSetDefaultTaskNote(noteID: String!, pinDefaultTaskNote: Boolean): AutoMutatorRes!
+  taskUserSettingsUpsert(defaultReminder: Boolean, defaultRemindersOffsets: [Float!]): AutoMutatorRes!
+  testError(grpcErrorCode: Int, httpErrorCode: Int): AutoMutatorRes!
   testOverrideNewEntityServiceKillSwitch(disable: Boolean!): Boolean!
-  threadCreate(message: String!, participants: [String!], emails: [String!]): AutoMutatorRes
-  threadDelete(thread: String!): AutoMutatorRes
-  threadUpdateReadStatus(thread: String!): AutoMutatorRes
-  threadValidateRecipients(participants: [String!], emails: [String!]): AutoMutatorRes
+  threadCreate(message: String!, participants: [String!], emails: [String!]): AutoMutatorRes!
+  threadDelete(thread: String!): AutoMutatorRes!
+  threadUpdateReadStatus(thread: String!): AutoMutatorRes!
+  threadValidateRecipients(participants: [String!], emails: [String!]): AutoMutatorRes!
   twoFactorAuthSendCode(serviceHost: String!, token: String!, sendToBackupPhone: Boolean!, textMsgTemplate: String!, useVoice: Boolean!): String!
-  userAssociateWithOpenID(provider: Provider, tokenPayload: String!): GenericMutationResult!
-  userSetReminderSetting(setting: UserSetReminderSetting_setting!): AutoMutatorRes
+  userAssociateWithOpenID(provider: ServiceProvider!, tokenPayload: String!): GenericMutationResult!
+  userCalendarSettingsUpdate(userCalendarSettingsId: String!, isActive: Boolean!): AutoMutatorRes!
+  userSetReminderSetting(setting: UserReminderEmailConfig!): AutoMutatorRes!
   userSettingsClear(userID: String): GenericMutationResult!
   userSettingsRemove(key: String!, userID: String): GenericMutationResult!
   userSettingsSetBoolean(key: String!, value: Boolean!, userID: String): GenericMutationResult!
@@ -3319,183 +3073,183 @@ type RootMutationType {
   userSettingsSetString(key: String!, value: String!, userID: String): GenericMutationResult!
   verifyAndroidPostPurchase(developerPayload: String!, offer: String!, sku: String!, signedData: String!, signature: String!): String
   verifyApplePostPurchase(currency: String!, offer: String!, price: String!, productId: String!, receiptData: String!, transactionId: String!, layout: String, extend: Boolean, receiptOnly: String, transactionState: String, verifyReceiptOnly: String, version: Int): String
-  widgetCustomize(widget: String!, isEnabled: Boolean, desktopSortWeight: String, desktopWidth: Float, mobileSortWeight: String, noteToUnpin: String, noteToPin: String): AutoMutatorRes
-  widgetDelete(widget: String!): AutoMutatorRes
-  widgetResolveConflict(conflict: String!, conflictHash: String!): AutoMutatorRes
-  widgetRestore(widget: String!): AutoMutatorRes
-  widgetScratchPadSetContent(widget: String!, scratchPadContent: String!, previousContentHash: String): AutoMutatorRes
-  widgetSetSelectedTab(widget: String!, tabToSelect: WidgetSetSelectedTab_tabToSelect!): AutoMutatorRes
-  workspaceChangePinnedContentPosition(workspace: String!, contentNodeID: String!, index: Int!): AutoMutatorRes
-  workspaceCreate(label: String!, type: WorkspaceCreate_type!, description: String, defaultRole: WorkspaceCreate_defaultRole): AutoMutatorRes
-  workspaceInvite(workspace: String!, users: [String!]!, privilege: WorkspaceInvite_privilege!): AutoMutatorRes
-  workspaceJoin(workspace: String!): AutoMutatorRes
-  workspaceLeave(workspace: String!): AutoMutatorRes
-  workspacePinnedContentsUpdate(workspace: String!, noteIDsToAdd: [String!], noteIDsToRemove: [String!], nbIDsToAdd: [String!], nbIDsToRemove: [String!]): AutoMutatorRes
-  workspaceRequestAccess(workspace: String!): AutoMutatorRes
-  workspaceSetLayoutStyle(workspace: String!, layoutStyle: WorkspaceSetLayoutStyle_layoutStyle!): AutoMutatorRes
-  workspaceSetNoteDisplayOrder(workspace: String!, noteDisplayOrder: [String!]!): AutoMutatorRes
-  workspaceSetNotebookDisplayOrder(workspace: String!, notebookDisplayOrder: [String!]!): AutoMutatorRes
-  workspaceSetViewed(workspace: String!): AutoMutatorRes
-  workspaceUpdate(workspace: String!, label: String, description: String, type: WorkspaceUpdate_type, defaultRole: WorkspaceUpdate_defaultRole): AutoMutatorRes
+  widgetCustomize(widget: String!, isEnabled: Boolean, desktopSortWeight: String, desktopWidth: Float, mobileSortWeight: String, noteToUnpin: String, noteToPin: String, mutableWidgetType: BoardMutableWidgetTypes, filteredNotesQueryString: String, label: String, lightBGColor: String, darkBGColor: String): AutoMutatorRes!
+  widgetDelete(widget: String!): AutoMutatorRes!
+  widgetResolveConflict(conflict: String!, conflictHash: String!): AutoMutatorRes!
+  widgetRestore(widget: String!): AutoMutatorRes!
+  widgetScratchPadSetContent(widget: String!, scratchPadContent: String!, previousContentHash: String): AutoMutatorRes!
+  widgetSetSelectedTab(widget: String!, tabToSelect: WidgetTabs!): AutoMutatorRes!
+  workspaceChangePinnedContentPosition(workspace: String!, contentNodeID: String!, index: Int!): AutoMutatorRes!
+  workspaceCreate(label: String!, type: WorkspaceType!, description: String, defaultRole: MembershipPrivilege): AutoMutatorRes!
+  workspaceInvite(workspace: String!, users: [String!]!, privilege: MembershipPrivilege!): AutoMutatorRes!
+  workspaceJoin(workspace: String!): AutoMutatorRes!
+  workspaceLeave(workspace: String!): AutoMutatorRes!
+  workspacePinnedContentsUpdate(workspace: String!, noteIDsToAdd: [String!], noteIDsToRemove: [String!], nbIDsToAdd: [String!], nbIDsToRemove: [String!]): AutoMutatorRes!
+  workspaceRequestAccess(workspace: String!): AutoMutatorRes!
+  workspaceSetLayoutStyle(workspace: String!, layoutStyle: WorkspaceLayoutStyle!): AutoMutatorRes!
+  workspaceSetNoteDisplayOrder(workspace: String!, noteDisplayOrder: [String!]!): AutoMutatorRes!
+  workspaceSetNotebookDisplayOrder(workspace: String!, notebookDisplayOrder: [String!]!): AutoMutatorRes!
+  workspaceSetViewed(workspace: String!): AutoMutatorRes!
+  workspaceUpdate(workspace: String!, label: String, description: String, type: WorkspaceType, defaultRole: MembershipPrivilege): AutoMutatorRes!
 }
 
 type RootQueryType {
   AccountLimits(id: String!): AccountLimits
-  AllTagsWithHierarchy(filters: [TagHierarchyFilter], sorts: [TagHierarchySort], includeEmptyBusinessTags: Boolean): [AllTagsHierarchy!]!
+  AllTagsWithHierarchy(filters: [TagHierarchyFilter!], sorts: [TagHierarchySort!], includeEmptyBusinessTags: Boolean): [AllTagsHierarchy!]!
   Attachment(id: String!): Attachment
-  AttachmentList(pageInfo: PageInfo, filters: [AttachmentFilter], sorts: [AttachmentSort]): AttachmentListResults! @deprecated(reason: "Use custom query APIs now")
-  AttachmentsInNote(note: String, isActive: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): AttachmentsInNoteResults!
+  AttachmentList(pageInfo: PageInfo, filters: [AttachmentFilter!], sorts: [AttachmentSort!]): AttachmentListResults! @deprecated(reason: "Use custom query APIs now")
+  AttachmentsInNote(note: String!, isActive: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): AttachmentsInNoteResults!
   AuxData(id: String!): AuxSchema
   BetaFeature(id: String!): BetaFeature
-  BetaFeatureList(pageInfo: PageInfo, filters: [BetaFeatureFilter], sorts: [BetaFeatureSort]): BetaFeatureListResults! @deprecated(reason: "Use custom query APIs now")
+  BetaFeatureList(pageInfo: PageInfo, filters: [BetaFeatureFilter!], sorts: [BetaFeatureSort!]): BetaFeatureListResults! @deprecated(reason: "Use custom query APIs now")
   BetaFeatures(reverseOrder: Boolean, pageInfo: PageInfo): BetaFeaturesResults!
   Board(id: String!): Board
-  BoardList(pageInfo: PageInfo, filters: [BoardFilter], sorts: [BoardSort]): BoardListResults! @deprecated(reason: "Use custom query APIs now")
+  BoardList(pageInfo: PageInfo, filters: [BoardFilter!], sorts: [BoardSort!]): BoardListResults! @deprecated(reason: "Use custom query APIs now")
   CEDataForTemplates(noteID: String): CEDataForTemplates!
   CalendarAccount(id: String!): CalendarAccount
   CalendarEvent(id: String!): CalendarEvent
   CalendarEventLink(id: String!): CalendarEventLink
   CalendarSettings(id: String!): CalendarSettings
-  ContentConflictsInWidget(widget: String, reverseOrder: Boolean, pageInfo: PageInfo): ContentConflictsInWidgetResults!
-  CrossPromotionsInfo: CrossPromotionInfo
+  ContentConflictsInWidget(widget: String!, reverseOrder: Boolean, pageInfo: PageInfo): ContentConflictsInWidgetResults!
+  CrossPromotionsInfo: CrossPromotionInfo!
   DashboardsData: DashboardsData!
   DataForQualtrics: DataForQualtrics!
   HasPendingMutations: HasPendingMutationsResult!
   HomeBoards(reverseOrder: Boolean, pageInfo: PageInfo): HomeBoardsResults!
   Invitation(id: String!): Invitation
-  InvitationList(pageInfo: PageInfo, filters: [InvitationFilter], sorts: [InvitationSort]): InvitationListResults! @deprecated(reason: "Use custom query APIs now")
+  InvitationList(pageInfo: PageInfo, filters: [InvitationFilter!], sorts: [InvitationSort!]): InvitationListResults! @deprecated(reason: "Use custom query APIs now")
   InvitationsForMe(orderBy: InvitationsForMeOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): InvitationsForMeResults!
 
   """Get Flag to enable/disable Iterable Datadog Logs"""
-  IterableLogsSwitch(serviceHost: String!, featureRolloutClientType: FeatureRolloutClientType!): IterableLogsSwitchResult!
+  IterableLogsSwitch(serviceHost: String!, featureRolloutClientType: FeatureRolloutClientType!): IterableLogsSwitch!
   MaestroProps(id: String!): MaestroProps
   Membership(id: String!): Membership
-  MembershipList(pageInfo: PageInfo, filters: [MembershipFilter], sorts: [MembershipSort]): MembershipListResults! @deprecated(reason: "Use custom query APIs now")
+  MembershipList(pageInfo: PageInfo, filters: [MembershipFilter!], sorts: [MembershipSort!]): MembershipListResults! @deprecated(reason: "Use custom query APIs now")
   MembershipsForMe(orderBy: MembershipsForMeOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): MembershipsForMeResults!
-  MembershipsForMeInParent(parent: EntityRef, orderBy: MembershipsForMeInParentOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): MembershipsForMeInParentResults!
-  MembershipsInParent(parent: EntityRef, orderBy: MembershipsInParentOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): MembershipsInParentResults!
+  MembershipsForMeInParent(parent: EntityRef!, orderBy: MembershipsForMeInParentOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): MembershipsForMeInParentResults!
+  MembershipsInParent(parent: EntityRef!, orderBy: MembershipsInParentOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): MembershipsInParentResults!
   Message(id: String!): Message
-  MessageList(pageInfo: PageInfo, filters: [MessageFilter], sorts: [MessageSort]): MessageListResults! @deprecated(reason: "Use custom query APIs now")
-  MessagesInThread(thread: String, reverseOrder: Boolean, pageInfo: PageInfo): MessagesInThreadResults!
+  MessageList(pageInfo: PageInfo, filters: [MessageFilter!], sorts: [MessageSort!]): MessageListResults! @deprecated(reason: "Use custom query APIs now")
+  MessagesInThread(thread: String!, reverseOrder: Boolean, pageInfo: PageInfo): MessagesInThreadResults!
   Note(id: String!): Note
-  NoteConflicts(note: String, inTrash: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): NoteConflictsResults!
+  NoteConflicts(note: String!, inTrash: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): NoteConflictsResults!
   NoteContentInfo(id: String!): NoteContentInfo
   NoteContentInfoAll(reverseOrder: Boolean, pageInfo: PageInfo): NoteContentInfoAllResults!
-  NoteContentInfoList(pageInfo: PageInfo, filters: [NoteContentInfoFilter], sorts: [NoteContentInfoSort]): NoteContentInfoListResults! @deprecated(reason: "Use custom query APIs now")
-  NoteList(pageInfo: PageInfo, filters: [NoteFilter], sorts: [NoteSort]): NoteListResults! @deprecated(reason: "Use custom query APIs now")
+  NoteContentInfoList(pageInfo: PageInfo, filters: [NoteContentInfoFilter!], sorts: [NoteContentInfoSort!]): NoteContentInfoListResults! @deprecated(reason: "Use custom query APIs now")
+  NoteList(pageInfo: PageInfo, filters: [NoteFilter!], sorts: [NoteSort!]): NoteListResults! @deprecated(reason: "Use custom query APIs now")
   Notebook(id: String!): Notebook
-  NotebookList(pageInfo: PageInfo, filters: [NotebookFilter], sorts: [NotebookSort]): NotebookListResults! @deprecated(reason: "Use custom query APIs now")
+  NotebookList(pageInfo: PageInfo, filters: [NotebookFilter!], sorts: [NotebookSort!]): NotebookListResults! @deprecated(reason: "Use custom query APIs now")
   Notebooks(orderBy: NotebooksOrderBy, reverseOrder: Boolean, pageInfo: PageInfo): NotebooksResults!
-  NotebooksInStack(stack: String, reverseOrder: Boolean, pageInfo: PageInfo): NotebooksInStackResults!
-  NotebooksInWorkspace(workspace: String, reverseOrder: Boolean, pageInfo: PageInfo): NotebooksInWorkspaceResults!
+  NotebooksInStack(stack: String!, reverseOrder: Boolean, pageInfo: PageInfo): NotebooksInStackResults!
+  NotebooksInWorkspace(workspace: String!, orderBy: NotebooksInWorkspaceOrderBy, reverseOrder: Boolean, pageInfo: PageInfo): NotebooksInWorkspaceResults!
   NotebooksMarkedForOffline(reverseOrder: Boolean, pageInfo: PageInfo): NotebooksMarkedForOfflineResults!
   NotebooksParents(reverseOrder: Boolean, pageInfo: PageInfo): NotebooksParentsResults!
   NotebooksStacks(reverseOrder: Boolean, pageInfo: PageInfo): NotebooksStacksResults!
-  NotebooksWithLabel(label: String, reverseOrder: Boolean, pageInfo: PageInfo): NotebooksWithLabelResults!
+  NotebooksWithLabel(label: String!, reverseOrder: Boolean, pageInfo: PageInfo): NotebooksWithLabelResults!
   NotebooksWithoutStack(reverseOrder: Boolean, pageInfo: PageInfo): NotebooksWithoutStackResults!
   NotebooksWithoutStackAndParent(reverseOrder: Boolean, pageInfo: PageInfo): NotebooksWithoutStackAndParentResults!
-  NotesInParent(parent: EntityRef, inTrash: Boolean, orderBy: NotesInParentOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NotesInParentResults!
-  NotesInStack(stack: String, reverseOrder: Boolean, pageInfo: PageInfo): NotesInStackResults!
+  NotesInParent(parent: EntityRef!, inTrash: Boolean, orderBy: NotesInParentOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NotesInParentResults!
+  NotesInStack(stack: String!, reverseOrder: Boolean, pageInfo: PageInfo): NotesInStackResults!
   NotesInTrash(orderBy: NotesInTrashOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NotesInTrashResults!
-  NotesInWorkspace(orderBy: NotesInWorkspaceOrderBy, workspace: String, reverseOrder: Boolean, pageInfo: PageInfo): NotesInWorkspaceResults!
+  NotesInWorkspace(orderBy: NotesInWorkspaceOrderBy, workspace: String!, reverseOrder: Boolean, pageInfo: PageInfo): NotesInWorkspaceResults!
   NotesNotInTrash(orderBy: NotesNotInTrashOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NotesNotInTrashResults!
   NotesParents(reverseOrder: Boolean, pageInfo: PageInfo): NotesParentsResults!
   NotesWithReminders(parent: EntityRef, doneReminders: Boolean, reminderTimeRange: NotesWithRemindersReminderTimeRange, orderBy: NotesWithRemindersOrderBy, reverseOrder: Boolean, pageInfo: PageInfo): NotesWithRemindersResults!
-  NotesWithSource(source: String, reverseOrder: Boolean, pageInfo: PageInfo): NotesWithSourceResults!
+  NotesWithSource(source: String!, reverseOrder: Boolean, pageInfo: PageInfo): NotesWithSourceResults!
   NsvcAuthzToken(tokenType: String): NsvcAuthzToken
   Profile(id: String!): Profile
-  ProfileList(pageInfo: PageInfo, filters: [ProfileFilter], sorts: [ProfileSort]): ProfileListResults! @deprecated(reason: "Use custom query APIs now")
+  ProfileList(pageInfo: PageInfo, filters: [ProfileFilter!], sorts: [ProfileSort!]): ProfileListResults! @deprecated(reason: "Use custom query APIs now")
   Profiles(reverseOrder: Boolean, pageInfo: PageInfo): ProfilesResults!
   Promotion(id: String!): Promotion
-  PromotionList(pageInfo: PageInfo, filters: [PromotionFilter], sorts: [PromotionSort]): PromotionListResults! @deprecated(reason: "Use custom query APIs now")
+  PromotionList(pageInfo: PageInfo, filters: [PromotionFilter!], sorts: [PromotionSort!]): PromotionListResults! @deprecated(reason: "Use custom query APIs now")
   Promotions(reverseOrder: Boolean, pageInfo: PageInfo): PromotionsResults!
-  PublishedNotebookList(limit: Float, filters: [PublishedNotebookFilter], sort: PublishedNotebookSort): [PublishedNotebookList]
+  PublishedNotebookList(limit: Float, filters: [PublishedNotebookFilter!], sort: PublishedNotebookSort): [PublishedNotebookList!]!
   Reminder(id: String!): Reminder
-  ReminderList(pageInfo: PageInfo, filters: [ReminderFilter], sorts: [ReminderSort]): ReminderListResults! @deprecated(reason: "Use custom query APIs now")
+  ReminderList(pageInfo: PageInfo, filters: [ReminderFilter!], sorts: [ReminderSort!]): ReminderListResults! @deprecated(reason: "Use custom query APIs now")
   Reminders(reminderTimeRange: RemindersReminderTimeRange, reverseOrder: Boolean, pageInfo: PageInfo): RemindersResults!
   SavedSearch(id: String!): SavedSearch
-  SavedSearchList(pageInfo: PageInfo, filters: [SavedSearchFilter], sorts: [SavedSearchSort]): SavedSearchListResults! @deprecated(reason: "Use custom query APIs now")
+  SavedSearchList(pageInfo: PageInfo, filters: [SavedSearchFilter!], sorts: [SavedSearchSort!]): SavedSearchListResults! @deprecated(reason: "Use custom query APIs now")
   SavedSearches(reverseOrder: Boolean, pageInfo: PageInfo): SavedSearchesResults!
   ScheduledNotification(id: String!): ScheduledNotification
-  ScheduledNotificationList(pageInfo: PageInfo, filters: [ScheduledNotificationFilter], sorts: [ScheduledNotificationSort]): ScheduledNotificationListResults! @deprecated(reason: "Use custom query APIs now")
+  ScheduledNotificationList(pageInfo: PageInfo, filters: [ScheduledNotificationFilter!], sorts: [ScheduledNotificationSort!]): ScheduledNotificationListResults! @deprecated(reason: "Use custom query APIs now")
   ScheduledNotifications(reverseOrder: Boolean, pageInfo: PageInfo): ScheduledNotificationsResults!
   Search(searchStr: String, offset: Int, maxNotes: Int, order: Int): SearchSchema
   SearchEx(query: SearchExQuery, queryContext: SearchExQueryContext, param: SearchExParam!, custom: SearchExCustom): SearchExSchema
   SharedWithMe(sort: SharedWithMeSort): SharedWithMeResult
   Shortcut(id: String!): Shortcut
-  ShortcutList(pageInfo: PageInfo, filters: [ShortcutFilter], sorts: [ShortcutSort]): ShortcutListResults! @deprecated(reason: "Use custom query APIs now")
+  ShortcutList(pageInfo: PageInfo, filters: [ShortcutFilter!], sorts: [ShortcutSort!]): ShortcutListResults! @deprecated(reason: "Use custom query APIs now")
   Shortcuts(reverseOrder: Boolean, pageInfo: PageInfo): ShortcutsResults!
 
   """Get Gradual Release Feature Flag"""
-  SignInMethod(serviceHost: String!, featureRolloutClientType: FeatureRolloutClientType!): FeatureRolloutDataResult
+  SignInMethod(serviceHost: String!, featureRolloutClientType: FeatureRolloutClientType!): SignInMethods!
   Stack(id: String!): Stack
-  StackList(pageInfo: PageInfo, filters: [StackFilter], sorts: [StackSort]): StackListResults! @deprecated(reason: "Use custom query APIs now")
+  StackList(pageInfo: PageInfo, filters: [StackFilter!], sorts: [StackSort!]): StackListResults! @deprecated(reason: "Use custom query APIs now")
   StackedNotebookList(sort: StackedNotebookSort): StackedNotebookList!
   Stacks(reverseOrder: Boolean, pageInfo: PageInfo): StacksResults!
   Suggest(searchStr: String, filters: [String!], maxResults: Int, searchExecuted: Boolean, locale: String): SuggestSchema
   SyncState(precision: Int): SyncState!
   Tag(id: String!): Tag
-  TagList(pageInfo: PageInfo, filters: [TagFilter], sorts: [TagSort]): TagListResults! @deprecated(reason: "Use custom query APIs now")
+  TagList(pageInfo: PageInfo, filters: [TagFilter!], sorts: [TagSort!]): TagListResults! @deprecated(reason: "Use custom query APIs now")
   Tags(parent: String, orderBy: TagsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TagsResults!
-  TagsAllowed(id: String!, filters: [TagInContextFilter], sorts: [TagsInContextSort]): TagsAllowed!
+  TagsAllowed(id: String!, filters: [TagInContextFilter!], sorts: [TagsInContextSort!]): TagsAllowed!
   Task(id: String!): Task
-  TaskList(pageInfo: PageInfo, filters: [TaskFilter], sorts: [TaskSort]): TaskListResults! @deprecated(reason: "Use custom query APIs now")
+  TaskList(pageInfo: PageInfo, filters: [TaskFilter!], sorts: [TaskSort!]): TaskListResults! @deprecated(reason: "Use custom query APIs now")
   TaskNotesNotInTrash(orderBy: TaskNotesNotInTrashOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TaskNotesNotInTrashResults!
   TaskUserSettings(id: String!): TaskUserSettings
-  TaskUserSettingsList(pageInfo: PageInfo, filters: [TaskUserSettingsFilter], sorts: [TaskUserSettingsSort]): TaskUserSettingsListResults! @deprecated(reason: "Use custom query APIs now")
-  TasksByAssignee(assignee: String, reverseOrder: Boolean, pageInfo: PageInfo): TasksByAssigneeResults!
-  TasksInNote(parent: String, status: Status, reverseOrder: Boolean, pageInfo: PageInfo): TasksInNoteResults!
+  TaskUserSettingsList(pageInfo: PageInfo, filters: [TaskUserSettingsFilter!], sorts: [TaskUserSettingsSort!]): TaskUserSettingsListResults! @deprecated(reason: "Use custom query APIs now")
+  TasksByAssignee(assignee: String!, reverseOrder: Boolean, pageInfo: PageInfo): TasksByAssigneeResults!
+  TasksInNote(parent: String!, status: TaskStatus, reverseOrder: Boolean, pageInfo: PageInfo): TasksInNoteResults!
   Thread(id: String!): Thread
-  ThreadList(pageInfo: PageInfo, filters: [ThreadFilter], sorts: [ThreadSort]): ThreadListResults! @deprecated(reason: "Use custom query APIs now")
+  ThreadList(pageInfo: PageInfo, filters: [ThreadFilter!], sorts: [ThreadSort!]): ThreadListResults! @deprecated(reason: "Use custom query APIs now")
   Threads(reverseOrder: Boolean, pageInfo: PageInfo): ThreadsResults!
   User(id: String!): User
   UserCalendarSettings(id: String!): UserCalendarSettings
   Widget(id: String!): Widget
   WidgetContentConflict(id: String!): WidgetContentConflict
-  WidgetContentConflictList(pageInfo: PageInfo, filters: [WidgetContentConflictFilter], sorts: [WidgetContentConflictSort]): WidgetContentConflictListResults! @deprecated(reason: "Use custom query APIs now")
-  WidgetList(pageInfo: PageInfo, filters: [WidgetFilter], sorts: [WidgetSort]): WidgetListResults! @deprecated(reason: "Use custom query APIs now")
-  WidgetsInBoard(board: String, platform: WidgetsInBoardPlatform!, reverseOrder: Boolean, pageInfo: PageInfo): WidgetsInBoardResults!
+  WidgetContentConflictList(pageInfo: PageInfo, filters: [WidgetContentConflictFilter!], sorts: [WidgetContentConflictSort!]): WidgetContentConflictListResults! @deprecated(reason: "Use custom query APIs now")
+  WidgetList(pageInfo: PageInfo, filters: [WidgetFilter!], sorts: [WidgetSort!]): WidgetListResults! @deprecated(reason: "Use custom query APIs now")
+  WidgetsInBoard(board: String!, platform: WidgetsInBoardPlatform!, reverseOrder: Boolean, pageInfo: PageInfo): WidgetsInBoardResults!
   Workspace(id: String!): Workspace
-  WorkspaceDirectory(includedWorkspaceGuids: [String!], limit: Float, filters: [WorkspaceDirectoryFilter], sorts: [WorkspaceDirectorySort]): [Workspace]
-  WorkspaceList(pageInfo: PageInfo, filters: [WorkspaceFilter], sorts: [WorkspaceSort]): WorkspaceListResults! @deprecated(reason: "Use custom query APIs now")
+  WorkspaceDirectory(includedWorkspaceGuids: [String!], limit: Int, filters: [WorkspaceDirectoryFilter!], sorts: [WorkspaceDirectorySort!]): [Workspace]!
+  WorkspaceList(pageInfo: PageInfo, filters: [WorkspaceFilter!], sorts: [WorkspaceSort!]): WorkspaceListResults! @deprecated(reason: "Use custom query APIs now")
   Workspaces(reverseOrder: Boolean, pageInfo: PageInfo): WorkspacesResults!
   attachmentGetApplicationDataEntry(id: String!, key: String!): AttachmentGetApplicationDataEntryResult!
   authRemoteHost: AuthRemoteHost
 
   """Get calendarAccounts by id"""
-  calendarAccountById(id: String!): CalendarAccountResult
+  calendarAccountById(id: String!): CalendarAccountResult!
 
   """List all calendar accounts with it's calendars"""
-  calendarAccounts(activeCalendarOnly: Boolean): [CalendarAccountResult]
+  calendarAccounts(activeCalendarOnly: Boolean): [CalendarAccountResult!]!
 
   """Get an event by id"""
-  calendarEventById(id: String!): [CalendarEventByIdResult]
+  calendarEventById(id: String!): CalendarEventExternal!
 
   """List all events from a specified time window"""
-  calendarEvents(from: Float!, to: Float!, provider: Provider): [CalendarEvents]
+  calendarEvents(from: Float!, to: Float!, provider: CalendarProvider): [CalendarEventExternal!]!
 
-  """Get the event reminder settings for the current user"""
+  """Get the user's calendar settings"""
   calendarSettings: CalendarSettingsResult!
   clientAuthState: AuthState
   currentUserID: String
   debugNode(id: String!, type: String!): DebugNodeSchema
   debugSyncContext(syncContext: String!): DebugSyncContextSchema
   errorGet(id: String!): Error
-  errorGetList(markedValue: Boolean): [Error]!
+  errorGetList(markedValue: Boolean): [Error!]!
   evernoteNoteLink(note: String!): String!
-  getBillableProducts(clientPlatform: clientPlatform!, forceFetch: Boolean): String
+  getBillableProducts(clientPlatform: ClientPlatform!, forceFetch: Boolean): String
 
   """Retrieves credentials that will include a GAPI access token."""
-  getGoogleAuthCredential(service: String!): GoogleAuthCredential
+  getGoogleAuthCredential(service: String!): GoogleAuthCredential!
 
   """
   Retrieves response metadata for file resources hosted and managed by Google Drive.
   """
-  getGoogleDriveFiles(resourceIds: [String!]!): [GoogleDriveResponse]!
+  getGoogleDriveFiles(resourceIds: [String!]!): [GoogleDriveResponse!]!
   getLoginInfo(serviceHost: String!, externalServiceHost: String, usernameOrEmail: String, tokenPayload: String, clientName: String!): LoginInfo
-  getMaestroProps(clientType: MaestroClientType!, overridingArmIds: [MaestroOverridingArmIds!], platform: MaestroPlatform, requestingEnvironment: MaestroRequestingEnvironment): GetMaestroProps @deprecated(reason: "MaestroProps moved to graph. Kept only for QA purposes\nThis plugin allows to query with overridingArmIds")
-  getMaestroServiceState(clientType: Float!): GetMaestroServiceState
-  getPaywallState(clientType: MonetizationClientType!): PaywallState
+  getMaestroProps(clientType: MaestroClientType!, overridingArmIds: [MaestroOverridingArmIds]!, platform: MaestroPlatform!, requestingEnvironment: MaestroRequestingEnvironment): GetMaestroProps! @deprecated(reason: "MaestroProps moved to graph. Kept only for QA purposes\nThis plugin allows to query with overridingArmIds")
+  getMaestroServiceState(clientType: Float!): GetMaestroServiceState!
+  getPaywallState(clientType: MonetizationClientType!): PaywallState!
   getSubscriptionInfo: String
 
   """Getting the TaskUserSetting for the current user."""
@@ -3503,13 +3257,13 @@ type RootQueryType {
   me: User
   multiplyByTwo(n: Int!): MultiplyByTwoResult!
   noteGetApplicationDataEntry(id: String!, key: String!): NoteGetApplicationDataEntryResult!
-  noteHistoryUrl(note: String!, layout: Layout!): String!
+  noteHistoryUrl(note: String!, layout: NoteHistoryLayout!): String!
   notelockStatus(noteID: String!): Notelock!
   nsyncStatus: NSyncStatusResult!
   preferenceGetWorkChatActive: PreferenceGetWorkChatActiveResult!
 
   """Scan data from business card's image"""
-  processCardImage(imageUri: String!, locale: String, imageType: String): BusinessCardInfo
+  processCardImage(imageUri: String!, locale: String, imageType: String): BusinessCardInfo!
   systemSettingsGetBoolean(key: String!): Boolean
   systemSettingsGetInt(key: String!): Int
   systemSettingsGetNumber(key: String!): Float
@@ -3522,7 +3276,7 @@ type RootQueryType {
   userSettingsGetNumber(key: String!, userID: String): Float
   userSettingsGetString(key: String!, userID: String): String
   webNoteLink(note: String!): String!
-  workspacePublicList(includeDiscoverableWorkspaces: Boolean, includeOpenWorkspaces: Boolean): workspacePublicList
+  workspacePublicList(includeDiscoverableWorkspaces: Boolean, includeOpenWorkspaces: Boolean): WorkspacePublicList!
 }
 
 type SavedSearch {
@@ -3577,7 +3331,7 @@ type SavedSearchListResults {
 
 input SavedSearchSort {
   field: SavedSearchSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum SavedSearchSortField {
@@ -3591,14 +3345,26 @@ type ScheduledNotification {
   id: String!
   label: String!
   localChangeTimestamp: Float!
-  scheduledNotificationType: ScheduledNotificationScheduledNotificationType!
+  scheduledNotificationType: ScheduledNotificationType!
   created: Float!
   updated: Float!
   mute: Boolean!
+  data: ScheduledNotificationData
   dataSourceUpdatedAt: Float!
   schedulingUpdatedAt: Float!
   dataSource: Task
   scheduling: Reminder
+}
+
+type ScheduledNotificationData {
+  calendarEventId: String!
+  notificationTime: Float!
+  clientType: String!
+  title: String!
+  startTime: Float!
+  endTime: Float!
+  location: String!
+  noteID: String
 }
 
 input ScheduledNotificationFilter {
@@ -3616,6 +3382,14 @@ enum ScheduledNotificationFilterField {
   created
   updated
   mute
+  data_calendarEventId
+  data_notificationTime
+  data_clientType
+  data_title
+  data_startTime
+  data_endTime
+  data_location
+  data_noteID
   label
 }
 
@@ -3629,14 +3403,9 @@ type ScheduledNotificationListResults {
   list: [ScheduledNotification!]!
 }
 
-enum ScheduledNotificationScheduledNotificationType {
-  TaskReminder
-  Calendar
-}
-
 input ScheduledNotificationSort {
   field: ScheduledNotificationSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum ScheduledNotificationSortField {
@@ -3645,6 +3414,14 @@ enum ScheduledNotificationSortField {
   created
   updated
   mute
+  data_calendarEventId
+  data_notificationTime
+  data_clientType
+  data_title
+  data_startTime
+  data_endTime
+  data_location
+  data_noteID
   label
 }
 
@@ -3661,6 +3438,11 @@ type ScheduledNotificationsResults {
   numPriorItems: Float
   numRemainingItems: Float
   list: [ScheduledNotificationsResultFields!]!
+}
+
+enum ScheduledNotificationType {
+  TaskReminder
+  Calendar
 }
 
 type SearchExBaseResult {
@@ -3847,7 +3629,7 @@ type Shortcut {
   label: String!
   localChangeTimestamp: Float!
   sortOrder: String!
-  source: NoteOrNotebookOrSavedSearchOrStackOrTagOrWorkspace
+  source: EntUnion2f9faee8fcc870f8061572bf53124cea
 }
 
 input ShortcutFilter {
@@ -3878,7 +3660,7 @@ type ShortcutListResults {
 
 input ShortcutSort {
   field: ShortcutSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum ShortcutSortField {
@@ -3894,7 +3676,7 @@ type ShortcutsResultFields {
   unindexed: Shortcut!
   sortOrder: String!
   label: String!
-  source: NoteOrNotebookOrSavedSearchOrStackOrTagOrWorkspace
+  source: EntUnion2f9faee8fcc870f8061572bf53124cea
 }
 
 type ShortcutsResults {
@@ -3904,6 +3686,16 @@ type ShortcutsResults {
   numPriorItems: Float
   numRemainingItems: Float
   list: [ShortcutsResultFields!]!
+}
+
+enum SignInMethod {
+  NAP
+  Legacy
+}
+
+type SignInMethods {
+  siwg: SignInMethod!
+  siwa: SignInMethod!
 }
 
 type Stack {
@@ -3962,11 +3754,12 @@ type StackedNotebookList {
 type StackedNotebookListNotebook {
   id: String!
   type: String!
+  stackID: String
   label: String!
   created: Float
   updated: Float
   lastUpdated: Float
-  stackID: String
+  childrenCount: Int!
 }
 
 union StackedNotebookListResult = StackedNotebookListStack | StackedNotebookListNotebook
@@ -3974,7 +3767,7 @@ union StackedNotebookListResult = StackedNotebookListStack | StackedNotebookList
 type StackedNotebookListStack {
   id: String!
   type: String!
-  notebooksCount: Float!
+  notebooksCount: Int!
   label: String!
   created: Float
   updated: Float
@@ -4018,7 +3811,7 @@ type StackListResults {
 
 input StackSort {
   field: StackSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum StackSortField {
@@ -4047,11 +3840,6 @@ type StartContentFetchResult {
   needsSync: Boolean!
 }
 
-enum Status {
-  open
-  completed
-}
-
 type SuggestResult {
   displayValue: String
   objectGuid: String
@@ -4071,10 +3859,6 @@ enum SupportedPlacement {
   CARD
 }
 
-type SupportTicketResult {
-  success: Boolean!
-}
-
 enum SyncProgressTypeEnum {
   NONE
   INITIAL_DOWNSYNC
@@ -4089,7 +3873,6 @@ type SyncState {
   backgroundProgressPercent: Float!
   contentFetchSyncProgressPercent: Float!
   paused: Boolean!
-  nsyncEnabled: Boolean!
   lastSyncTime: Float!
   adaptiveDownsyncType: AdaptiveDownsyncTypeEnum!
   syncProgressType: SyncProgressTypeEnum!
@@ -4170,7 +3953,7 @@ enum TagHierarchyFilterField {
 
 input TagHierarchySort {
   field: TagHierarchySortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum TagHierarchySortField {
@@ -4216,7 +3999,7 @@ type TagsAllowedListResults {
 
 input TagsInContextSort {
   field: TagsAllowedField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum TagsOrderBy {
@@ -4226,7 +4009,7 @@ enum TagsOrderBy {
 
 input TagSort {
   field: TagSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum TagSortField {
@@ -4273,33 +4056,35 @@ type Task {
   statusUpdated: Float
   taskGroupNoteLevelID: String!
   sourceOfChange: String
+  memberships: [Membership!]!
+  membershipsCount: Int!
   reminders: [Reminder!]!
   remindersCount: Int!
   creator: Profile
   lastEditor: Profile
   assignee: Profile
   assignedBy: Profile
-  memberships: [Membership!]!
-  membershipsCount: Int!
   parent: Note
+  allMemberships(orderBy: TaskAllMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TaskAllMembershipsResults!
+  ownMemberships(orderBy: TaskOwnMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TaskOwnMembershipsResults!
 }
 
-enum TaskCreate_dueDateUIOption {
-  date_time
-  date_only
+enum TaskAllMembershipsOrderBy {
+  created
+  label
 }
 
-input TaskCreateSchema {
+type TaskAllMembershipsResultFields {
+  id: String!
+  type: String!
+  unindexed: Membership!
+  parent: NoteOrNotebookOrTaskOrWorkspace!
   label: String!
-  taskGroupNoteLevelID: String!
-  dueDate: Float
-  timeZone: String
-  dueDateUIOption: String
-  flag: Boolean
-  sortWeight: String
-  noteLevelID: String
-  status: String
-  sourceOfChange: String!
+}
+
+type TaskAllMembershipsResults {
+  count: Int!
+  list: [TaskAllMembershipsResultFields!]!
 }
 
 enum TaskDueDateUIOption {
@@ -4349,7 +4134,7 @@ type TaskGroupCreateDefaultTaskNoteUpsertResultResult {
 input TaskGroupInput {
   noteLevelID: String!
   sortWeight: String!
-  children: [TaskInput]
+  children: [TaskInput!]!
 }
 
 type TaskGroupResult {
@@ -4366,10 +4151,11 @@ input TaskInput {
   localChangeTimestamp: Float
   dueDate: Float
   dueDateUIOption: String
-  timeZone: String!
-  flag: Boolean
+  timeZone: String
+  flag: Boolean!
   sortWeight: String!
-  reminders: [ReminderInput]
+  inNote: Boolean
+  reminders: [ReminderInput!]!
 }
 
 type TaskListResults {
@@ -4406,6 +4192,24 @@ type TaskNotesNotInTrashResults {
   list: [TaskNotesNotInTrashResultFields!]!
 }
 
+enum TaskOwnMembershipsOrderBy {
+  created
+  label
+}
+
+type TaskOwnMembershipsResultFields {
+  id: String!
+  type: String!
+  unindexed: Membership!
+  parent: NoteOrNotebookOrTaskOrWorkspace!
+  label: String!
+}
+
+type TaskOwnMembershipsResults {
+  count: Int!
+  list: [TaskOwnMembershipsResultFields!]!
+}
+
 type TasksByAssigneeResultFields {
   id: String!
   type: String!
@@ -4424,8 +4228,21 @@ type TasksByAssigneeResults {
 }
 
 input TasksExportData {
-  tasks: [TaskCreateSchema!]
-  taskGroupNoteLevelIDs: [String]
+  tasks: [TasksExportDataTasks!]!
+  taskGroupNoteLevelIDs: [String!]!
+}
+
+input TasksExportDataTasks {
+  label: String!
+  taskGroupNoteLevelID: String!
+  dueDate: Float
+  timeZone: String
+  dueDateUIOption: String
+  flag: Boolean
+  sortWeight: String
+  noteLevelID: String
+  status: String
+  sourceOfChange: String!
 }
 
 type TasksInNoteResultFields {
@@ -4434,7 +4251,7 @@ type TasksInNoteResultFields {
   unindexed: Task!
   parent: Note
   sortWeight: String!
-  status: TasksInNoteStatus!
+  status: TaskStatus!
   taskGroupNoteLevelID: String!
 }
 
@@ -4447,14 +4264,9 @@ type TasksInNoteResults {
   list: [TasksInNoteResultFields!]!
 }
 
-enum TasksInNoteStatus {
-  open
-  completed
-}
-
 input TaskSort {
   field: TaskSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum TaskSortField {
@@ -4478,16 +4290,6 @@ enum TaskSortField {
 }
 
 enum TaskStatus {
-  open
-  completed
-}
-
-enum TaskUpdate_dueDateUIOption {
-  date_time
-  date_only
-}
-
-enum TaskUpdate_status {
   open
   completed
 }
@@ -4536,7 +4338,7 @@ type TaskUserSettingsListResults {
 
 input TaskUserSettingsSort {
   field: TaskUserSettingsSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum TaskUserSettingsSortField {
@@ -4612,7 +4414,7 @@ type ThreadListResults {
 
 input ThreadSort {
   field: ThreadSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum ThreadSortField {
@@ -4644,16 +4446,16 @@ type ThreadsResults {
 
 type TierSelectionDisplayResult {
   shouldShowTsd: Boolean!
-  tsdType: TierSelectionDisplayResultTsdType
-  tsdVariation: TierSelectionDisplayResultTsdVariation
+  tsdType: TsdType
+  tsdVariation: TsdVariation
 }
 
-enum TierSelectionDisplayResultTsdType {
+enum TsdType {
   REGULAR_TSD
   TARGETED_UPSELL
 }
 
-enum TierSelectionDisplayResultTsdVariation {
+enum TsdVariation {
   DIALOG_VAR1
   FULLSCREEN1BUTTON_DISMISS
   FULLSCREEN1BUTTON_NODISMISS
@@ -4691,7 +4493,7 @@ type User {
   email: String!
   name: String
   timezone: String
-  privilege: UserPrivilege!
+  privilege: UserPrivilegeLevel!
   serviceLevel: UserServiceLevel!
   serviceLevelV2: UserServiceLevelV2!
   created: Float!
@@ -4700,7 +4502,7 @@ type User {
   active: Boolean!
   photoUrl: String!
   photoLastUpdated: Float
-  businessUserRole: UserBusinessUserRole!
+  businessUserRole: BusinessUserRole!
   businessName: String
   Accounting: UserAccounting!
   Attributes: UserAttributes!
@@ -4718,7 +4520,7 @@ type UserAccounting {
   uploadLimit: Float
   uploadLimitEnd: Float
   uploadLimitNextMonth: Float
-  premiumServiceStatus: UserAccountingPremiumServiceStatus!
+  premiumServiceStatus: PremiumOrderStatus
   premiumOrderNumber: String
   premiumCommerceService: String
   premiumServiceStart: Float
@@ -4735,7 +4537,7 @@ type UserAccounting {
   unitPrice: Float
   businessId: Float
   businessName: String
-  businessRole: UserAccountingBusinessRole!
+  businessRole: BusinessUserRole
   unitDiscount: Float
   nextChargeDate: Float
   availablePoints: Float
@@ -4751,36 +4553,12 @@ type UserAccountingBackupPaymentInfo {
   orderNumber: String
 }
 
-enum UserAccountingBusinessRole {
-  ADMIN
-  NORMAL
-}
-
-enum UserAccountingPremiumServiceStatus {
-  NONE
-  PENDING
-  ACTIVE
-  FAILED
-  CANCELLATION_PENDING
-  CANCELED
-}
-
 type UserAttributes {
   preferredLanguage: String
   emailAddressLastConfirmed: Float
   passwordUpdated: Float
   incomingEmailAddress: String
-  reminderEmail: UserAttributesReminderEmail!
-}
-
-enum UserAttributesReminderEmail {
-  DO_NOT_SEND
-  SEND_DAILY_EMAIL
-}
-
-enum UserBusinessUserRole {
-  ADMIN
-  NORMAL
+  reminderEmail: UserReminderEmailConfig!
 }
 
 type UserCalendarResult {
@@ -4803,7 +4581,7 @@ type UserCalendarSettings {
 
 type UserCalendarSettingsResult {
   id: String!
-  provider: CalendarProviderField
+  provider: CalendarProvider!
   calendarUserId: String!
   userCalendarExternalId: String!
   isActive: Boolean!
@@ -4819,13 +4597,18 @@ type UserInfo {
   photoUrl: String!
 }
 
-enum UserPrivilege {
+enum UserPrivilegeLevel {
   NORMAL
   PREMIUM
   VIP
   MANAGER
   SUPPORT
   ADMIN
+}
+
+enum UserReminderEmailConfig {
+  DO_NOT_SEND
+  SEND_DAILY_EMAIL
 }
 
 enum UserServiceLevel {
@@ -4842,11 +4625,6 @@ enum UserServiceLevelV2 {
   PERSONAL
   PROFESSIONAL
   TEAMS
-}
-
-enum UserSetReminderSetting_setting {
-  DO_NOT_SEND
-  SEND_DAILY_EMAIL
 }
 
 type UserSubscriptionInfo {
@@ -4867,16 +4645,20 @@ type Widget {
   id: String!
   label: String!
   localChangeTimestamp: Float!
-  boardType: WidgetBoardType!
+  boardType: BoardType!
   isEnabled: Boolean!
   softDelete: Boolean
-  widgetType: WidgetWidgetType!
+  widgetType: WidgetType!
+  mutableWidgetType: BoardMutableWidgetTypes
+  internalID: Float
   mobile: WidgetMobile!
   desktop: WidgetDesktop!
-  selectedTab: WidgetSelectedTab
-  content: WidgetContent!
+  selectedTab: WidgetTabs
+  content: BlobV2WithContent!
   created: Float!
   updated: Float!
+  filteredNotesQuery: WidgetFilteredNotesQuery
+  backgroundColor: WidgetBackgroundColor
   contentProvider: Note
   conflicts: [WidgetContentConflict!]!
   conflictsCount: Int!
@@ -4885,20 +4667,9 @@ type Widget {
   contentConflicts(reverseOrder: Boolean, pageInfo: PageInfo): WidgetContentConflictsResults!
 }
 
-enum WidgetBoardType {
-  Home
-}
-
-type WidgetContent {
-  localChangeTimestamp: Float!
-  hash: String!
-  size: Float!
-  url: String
-  id: String
-  format: String
-  version: Float
-  path: String
-  content: String!
+type WidgetBackgroundColor {
+  light: String!
+  dark: String!
 }
 
 type WidgetContentConflict {
@@ -4906,22 +4677,10 @@ type WidgetContentConflict {
   id: String!
   label: String!
   localChangeTimestamp: Float!
-  content: WidgetContentConflictContent!
+  content: BlobV2WithContent!
   created: Float!
   updated: Float!
   parent: Widget
-}
-
-type WidgetContentConflictContent {
-  localChangeTimestamp: Float!
-  hash: String!
-  size: Float!
-  url: String
-  id: String
-  format: String
-  version: Float
-  path: String
-  content: String!
 }
 
 input WidgetContentConflictFilter {
@@ -4962,7 +4721,7 @@ type WidgetContentConflictListResults {
 
 input WidgetContentConflictSort {
   field: WidgetContentConflictSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum WidgetContentConflictSortField {
@@ -4996,14 +4755,19 @@ type WidgetContentConflictsResults {
   list: [WidgetContentConflictsResultFields!]!
 }
 
-input WidgetCustomizeInput {
+input WidgetCustomizeParams {
   widget: String!
   desktopSortWeight: String
-  desktopWidth: Float
+  desktopWidth: Int
   mobileSortWeight: String
   isEnabled: Boolean
   noteToPin: String
   noteToUnpin: String
+  mutableWidgetType: BoardMutableWidgetTypes
+  filteredNotesQueryString: String
+  label: String
+  lightBGColor: String
+  darkBGColor: String
 }
 
 type WidgetDesktop {
@@ -5022,23 +4786,29 @@ input WidgetFilter {
   prefix: String
 }
 
+type WidgetFilteredNotesQuery {
+  query: String!
+}
+
 enum WidgetFilterField {
   parent
   contentProvider
   mobile_sortWeight
-  desktop_sortWeight
   created
   widgetType
   isEnabled
   selectedTab
-  isSupportedV2
+  mutableWidgetType
+  isSupportedV3
   id
   boardType
   softDelete
+  internalID
   mobile_panelKey
   mobile_width
   mobile_height
   desktop_panelKey
+  desktop_sortWeight
   desktop_width
   desktop_height
   content_localChangeTimestamp
@@ -5051,6 +4821,9 @@ enum WidgetFilterField {
   content_path
   content_content
   updated
+  filteredNotesQuery_query
+  backgroundColor_light
+  backgroundColor_dark
   label
 }
 
@@ -5071,26 +4844,6 @@ type WidgetMobile {
   height: Float!
 }
 
-enum WidgetSelectedTab {
-  Recent
-  Suggested
-  WebClips
-  Emails
-  Images
-  Audio
-  Documents
-}
-
-enum WidgetSetSelectedTab_tabToSelect {
-  Recent
-  Suggested
-  WebClips
-  Emails
-  Images
-  Audio
-  Documents
-}
-
 enum WidgetsInBoardPlatform {
   mobile
   desktop
@@ -5102,12 +4855,12 @@ type WidgetsInBoardResultFields {
   unindexed: Widget!
   parent: Board!
   created: Float!
-  widgetType: WidgetsInBoardWidgetType!
+  widgetType: WidgetType!
+  mutableWidgetType: BoardMutableWidgetTypes
   isEnabled: Boolean!
-  selectedTab: WidgetsInBoardSelectedTab
+  selectedTab: WidgetTabs
   contentProvider: Note
   mobile_sortWeight: String!
-  desktop_sortWeight: String!
 }
 
 type WidgetsInBoardResults {
@@ -5119,51 +4872,30 @@ type WidgetsInBoardResults {
   list: [WidgetsInBoardResultFields!]!
 }
 
-enum WidgetsInBoardSelectedTab {
-  Recent
-  Suggested
-  WebClips
-  Emails
-  Images
-  Audio
-  Documents
-}
-
-enum WidgetsInBoardWidgetType {
-  Clipped
-  Notebooks
-  Notes
-  OnboardingChecklist
-  Pinned
-  ScratchPad
-  Shortcuts
-  Tags
-  Calendar
-  Tasks
-}
-
 input WidgetSort {
   field: WidgetSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum WidgetSortField {
   parent
   contentProvider
   mobile_sortWeight
-  desktop_sortWeight
   created
   widgetType
   isEnabled
   selectedTab
-  isSupportedV2
+  mutableWidgetType
+  isSupportedV3
   id
   boardType
   softDelete
+  internalID
   mobile_panelKey
   mobile_width
   mobile_height
   desktop_panelKey
+  desktop_sortWeight
   desktop_width
   desktop_height
   content_localChangeTimestamp
@@ -5176,20 +4908,35 @@ enum WidgetSortField {
   content_path
   content_content
   updated
+  filteredNotesQuery_query
+  backgroundColor_light
+  backgroundColor_dark
   label
 }
 
-enum WidgetWidgetType {
-  Clipped
-  Notebooks
-  Notes
-  OnboardingChecklist
-  Pinned
-  ScratchPad
-  Shortcuts
+enum WidgetTabs {
+  WebClips
+  Audio
+  Emails
+  Images
+  Documents
+  Recent
+  Suggested
+}
+
+enum WidgetType {
   Tags
+  Shortcuts
+  Pinned
+  OnboardingChecklist
+  ScratchPad
+  Notes
+  Notebooks
+  Clipped
   Calendar
   Tasks
+  FilteredNotes
+  Extra
 }
 
 type Workspace {
@@ -5197,19 +4944,20 @@ type Workspace {
   id: String!
   label: String!
   localChangeTimestamp: Float!
+  accessStatus: WorkspaceAccessStatus!
   description: String!
-  workspaceType: WorkspaceWorkspaceType!
+  workspaceType: WorkspaceType!
   created: Float!
   updated: Float!
   viewed: Boolean!
-  defaultRole: WorkspaceDefaultRole
+  defaultRole: MembershipPrivilege
   isSample: Boolean!
   notesCount: Float!
   notebooksCount: Float!
-  accessStatus: WorkspaceAccessStatus!
-  layoutStyle: LayoutStyle
+  layoutStyle: WorkspaceLayoutStyle
   notebookDisplayOrder: [String!]
   noteDisplayOrder: [String!]
+  pinnedContents: [PinnedContent!]!
   memberships: [Membership!]!
   membershipsCount: Int!
   children: [NoteOrNotebook!]!
@@ -5223,7 +4971,7 @@ type Workspace {
   childNotes(inTrash: Boolean, orderBy: WorkspaceChildNotesOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceChildNotesResults!
   reminderNotes(doneReminders: Boolean, reminderTimeRange: WorkspaceReminderNotesReminderTimeRange, orderBy: WorkspaceReminderNotesOrderBy, reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceReminderNotesResults!
   descendentNotes(orderBy: WorkspaceDescendentNotesOrderBy, reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceDescendentNotesResults!
-  childNotebooks(reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceChildNotebooksResults!
+  childNotebooks(orderBy: WorkspaceChildNotebooksOrderBy, reverseOrder: Boolean, pageInfo: PageInfo): WorkspaceChildNotebooksResults!
 
   """
   [WARNING: EXPENSIVE] The max updated value between all Notes and Notebooks in
@@ -5237,7 +4985,6 @@ type Workspace {
   lastEditor: Profile
   CommandPolicy: FolderCommandPolicy!
   shareCount: Float!
-  pinnedContents: [PinnedContent!]!
 }
 
 enum WorkspaceAccessStatus {
@@ -5256,13 +5003,19 @@ type WorkspaceAllMembershipsResultFields {
   id: String!
   type: String!
   unindexed: Membership!
-  parent: NoteOrNotebookOrWorkspace!
+  parent: NoteOrNotebookOrTaskOrWorkspace!
   label: String!
 }
 
 type WorkspaceAllMembershipsResults {
   count: Int!
   list: [WorkspaceAllMembershipsResultFields!]!
+}
+
+enum WorkspaceChildNotebooksOrderBy {
+  label
+  updated
+  created
 }
 
 type WorkspaceChildNotebooksResultFields {
@@ -5300,26 +5053,6 @@ type WorkspaceChildNotesResultFields {
 type WorkspaceChildNotesResults {
   count: Int!
   list: [WorkspaceChildNotesResultFields!]!
-}
-
-enum WorkspaceCreate_defaultRole {
-  READ
-  COMPLETE
-  EDIT
-  MANAGE
-}
-
-enum WorkspaceCreate_type {
-  INVITE_ONLY
-  DISCOVERABLE
-  OPEN
-}
-
-enum WorkspaceDefaultRole {
-  READ
-  COMPLETE
-  EDIT
-  MANAGE
 }
 
 enum WorkspaceDescendentNotesOrderBy {
@@ -5380,6 +5113,7 @@ input WorkspaceFilter {
 enum WorkspaceFilterField {
   label
   id
+  accessStatus
   description
   workspaceType
   created
@@ -5389,14 +5123,11 @@ enum WorkspaceFilterField {
   isSample
   notesCount
   notebooksCount
-  accessStatus
 }
 
-enum WorkspaceInvite_privilege {
-  READ
-  COMPLETE
-  EDIT
-  MANAGE
+enum WorkspaceLayoutStyle {
+  LIST
+  BOARD
 }
 
 type WorkspaceListResults {
@@ -5418,7 +5149,7 @@ type WorkspaceOwnMembershipsResultFields {
   id: String!
   type: String!
   unindexed: Membership!
-  parent: NoteOrNotebookOrWorkspace!
+  parent: NoteOrNotebookOrTaskOrWorkspace!
   label: String!
 }
 
@@ -5427,8 +5158,18 @@ type WorkspaceOwnMembershipsResults {
   list: [WorkspaceOwnMembershipsResultFields!]!
 }
 
-type workspacePublicList {
-  workspaces: [WorkspaceResult!]!
+type WorkspacePublicList {
+  workspaces: [WorkspacePublicListWorkspaces!]!
+}
+
+type WorkspacePublicListWorkspaces {
+  id: String!
+  label: String!
+  description: String
+  type: Int
+  contact: String
+  created: Float
+  updated: Float
 }
 
 enum WorkspaceReminderNotesOrderBy {
@@ -5462,29 +5203,15 @@ type WorkspaceReminderNotesResults {
   list: [WorkspaceReminderNotesResultFields!]!
 }
 
-type WorkspaceResult {
-  id: String!
-  label: String!
-  description: String
-  type: Int!
-  contact: String
-  created: Float!
-  updated: Float!
-}
-
-enum WorkspaceSetLayoutStyle_layoutStyle {
-  LIST
-  BOARD
-}
-
 input WorkspaceSort {
   field: WorkspaceSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum WorkspaceSortField {
   label
   id
+  accessStatus
   description
   workspaceType
   created
@@ -5494,7 +5221,6 @@ enum WorkspaceSortField {
   isSample
   notesCount
   notebooksCount
-  accessStatus
 }
 
 type WorkspacesResultFields {
@@ -5513,20 +5239,7 @@ type WorkspacesResults {
   list: [WorkspacesResultFields!]!
 }
 
-enum WorkspaceUpdate_defaultRole {
-  READ
-  COMPLETE
-  EDIT
-  MANAGE
-}
-
-enum WorkspaceUpdate_type {
-  INVITE_ONLY
-  DISCOVERABLE
-  OPEN
-}
-
-enum WorkspaceWorkspaceType {
+enum WorkspaceType {
   INVITE_ONLY
   DISCOVERABLE
   OPEN

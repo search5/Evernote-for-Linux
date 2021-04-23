@@ -3,44 +3,18 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPublishedNotebookPlugin = exports.PublishedNotebookAccessStatusEnum = exports.PublishedNotebookAccessStatusEnumSchema = void 0;
+exports.getPublishedNotebookPlugin = exports.PublishedNotebookAccessStatusEnumSchema = exports.PublishedNotebookAccessStatusEnum = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_thrift_connector_1 = require("en-thrift-connector");
-const graphql_1 = require("graphql");
-exports.PublishedNotebookAccessStatusEnumSchema = ['OPEN', 'MEMBER'];
 var PublishedNotebookAccessStatusEnum;
 (function (PublishedNotebookAccessStatusEnum) {
     PublishedNotebookAccessStatusEnum["OPEN"] = "OPEN";
     PublishedNotebookAccessStatusEnum["MEMBER"] = "MEMBER";
 })(PublishedNotebookAccessStatusEnum = exports.PublishedNotebookAccessStatusEnum || (exports.PublishedNotebookAccessStatusEnum = {}));
-function buildArgs() {
-    return {
-        limit: {
-            type: conduit_core_1.schemaToGraphQLType('number?'),
-        },
-        filters: {
-            type: new graphql_1.GraphQLList(new graphql_1.GraphQLInputObjectType({
-                name: 'PublishedNotebookFilter',
-                fields: {
-                    field: { type: conduit_core_1.schemaToGraphQLType(['label', 'description'], 'PublishedNotebooksFilterField', false) },
-                    search: { type: conduit_core_1.schemaToGraphQLType('string') },
-                },
-            })),
-        },
-        sort: {
-            type: new graphql_1.GraphQLInputObjectType({
-                name: `PublishedNotebookSort`,
-                fields: {
-                    field: { type: conduit_core_1.schemaToGraphQLType(['label', 'created', 'updated', 'accessStatus'], 'PublishedNotebooksSortField', false) },
-                    order: { type: conduit_core_1.IndexOrderType },
-                },
-            }),
-        },
-    };
-}
+exports.PublishedNotebookAccessStatusEnumSchema = conduit_utils_1.Enum(PublishedNotebookAccessStatusEnum, 'PublishedNotebookAccessStatus');
 async function getAuthDataForSyncContext(context, syncContext) {
     const metadata = await context.db.getSyncContextMetadata(context, syncContext);
     if (!metadata || !metadata.authToken) {
@@ -142,117 +116,38 @@ function getPublishedNotebookPlugin() {
         }
         return list;
     }
-    async function notebookPublishResolver(parent, args = {}, context) {
-        conduit_core_1.validateDB(context);
-        const nbID = args.notebook;
-        if (!args || !nbID) {
-            throw new conduit_utils_1.MissingParameterError('missing notebook id');
-        }
-        const notebook = await context.db.getNode(context, { id: nbID, type: en_core_entity_types_1.CoreEntityTypes.Notebook });
-        if (!notebook) {
-            throw new conduit_utils_1.NotFoundError(nbID);
-        }
-        const businessAuth = await getAuthDataForSyncContext(context, conduit_core_1.VAULT_USER_CONTEXT);
-        const serviceData = {
-            guid: en_thrift_connector_1.convertGuidToService(nbID, en_core_entity_types_1.CoreEntityTypes.Notebook),
-            name: notebook.label,
-            published: true,
-            businessNotebook: {
-                privilege: args.privilegeLevel,
-                recommended: Boolean(args.recommended),
-                notebookDescription: args.description,
-            },
-        };
-        const notestore = context.thriftComm.getNoteStore(businessAuth.urls.noteStoreUrl);
-        await notestore.updateNotebookWithResultSpec(context.trc, businessAuth.token, serviceData, {
-            includeNotebookRecipientSettings: false,
-            includeNotebookRestrictions: false,
-            includeSharedNotebooks: false,
-        });
-        return { success: true };
-    }
-    async function notebookJoinResolver(parent, args, context) {
-        conduit_core_1.validateDB(context);
-        const nbID = args === null || args === void 0 ? void 0 : args.notebook;
-        if (!nbID) {
-            throw new conduit_utils_1.MissingParameterError('missing notebook id');
-        }
-        const serviceGuid = en_thrift_connector_1.convertGuidToService(nbID, en_core_entity_types_1.CoreEntityTypes.Notebook);
-        // for setNotebookRecipientSettings had to use personal auth
-        const auth = await getAuthDataForSyncContext(context, conduit_core_1.PERSONAL_USER_CONTEXT);
-        const authToken = auth.token;
-        const noteStore = context.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
-        const recipientSettings = new en_conduit_sync_types_1.TNotebookRecipientSettings({ recipientStatus: en_conduit_sync_types_1.TRecipientStatus.IN_MY_LIST });
-        await noteStore.setNotebookRecipientSettings(context.trc, authToken, serviceGuid, recipientSettings);
-        return { success: true };
-    }
     return {
         queries: {
             PublishedNotebookList: {
-                type: new graphql_1.GraphQLList(new graphql_1.GraphQLObjectType({
-                    name: 'PublishedNotebookList',
-                    fields: {
-                        id: { type: conduit_core_1.schemaToGraphQLType('ID') },
-                        label: { type: conduit_core_1.schemaToGraphQLType('string') },
-                        description: { type: conduit_core_1.schemaToGraphQLType('string') },
-                        workspaceID: { type: conduit_core_1.schemaToGraphQLType('ID?') },
-                        created: { type: conduit_core_1.schemaToGraphQLType('number') },
-                        updated: { type: conduit_core_1.schemaToGraphQLType('number') },
-                        accessStatus: { type: conduit_core_1.schemaToGraphQLType(exports.PublishedNotebookAccessStatusEnumSchema, 'accessStatus') },
-                        membersCount: { type: conduit_core_1.schemaToGraphQLType('number') },
-                        ownerID: { type: conduit_core_1.schemaToGraphQLType('ID?') },
-                        notesCount: { type: conduit_core_1.schemaToGraphQLType('number') },
-                        businessNotebook: { type: new graphql_1.GraphQLObjectType({
-                                name: 'BusinessNotebook',
-                                fields: {
-                                    notebookDescription: { type: conduit_core_1.schemaToGraphQLType('string') },
-                                    privilege: { type: conduit_core_1.schemaToGraphQLType('number') },
-                                    recommended: { type: conduit_core_1.schemaToGraphQLType('boolean') },
-                                }
-                            }),
-                        },
-                    },
-                })),
-                args: buildArgs(),
+                type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.ListOfStructs({
+                    id: 'ID',
+                    label: 'string',
+                    description: 'string',
+                    workspaceID: conduit_utils_1.NullableID,
+                    created: 'number',
+                    updated: 'number',
+                    accessStatus: exports.PublishedNotebookAccessStatusEnumSchema,
+                    membersCount: 'number',
+                    ownerID: conduit_utils_1.NullableID,
+                    notesCount: 'number',
+                    businessNotebook: conduit_utils_1.NullableStruct({
+                        notebookDescription: 'string',
+                        privilege: 'number',
+                        recommended: 'boolean',
+                    }, 'BusinessNotebook'),
+                }, 'PublishedNotebookList')),
+                args: conduit_core_1.schemaToGraphQLArgs({
+                    limit: conduit_utils_1.NullableNumber,
+                    filters: conduit_utils_1.NullableListOf(conduit_utils_1.Struct({
+                        field: conduit_utils_1.Enum(['label', 'description'], 'PublishedNotebooksFilterField'),
+                        search: 'string',
+                    }, 'PublishedNotebookFilter')),
+                    sort: conduit_utils_1.NullableStruct({
+                        field: conduit_utils_1.Enum(['label', 'created', 'updated', 'accessStatus'], 'PublishedNotebooksSortField'),
+                        order: conduit_utils_1.Nullable(conduit_core_1.IndexOrderTypeSchema),
+                    }, 'PublishedNotebookSort'),
+                }),
                 resolve: resolvePublishedNotebookspace,
-            },
-        },
-        mutations: {
-            notebookPublish: {
-                args: {
-                    notebook: {
-                        type: conduit_core_1.schemaToGraphQLType('string'),
-                    },
-                    description: {
-                        type: conduit_core_1.schemaToGraphQLType('string'),
-                    },
-                    recommended: {
-                        type: conduit_core_1.schemaToGraphQLType('boolean?'),
-                    },
-                    privilegeLevel: {
-                        type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLEnumType({
-                            name: 'privilegeLevel',
-                            values: {
-                                READ_NOTEBOOK: { value: en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.READ_NOTEBOOK },
-                                MODIFY_NOTEBOOK_PLUS_ACTIVITY: { value: en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.MODIFY_NOTEBOOK_PLUS_ACTIVITY },
-                                READ_NOTEBOOK_PLUS_ACTIVITY: { value: en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.READ_NOTEBOOK_PLUS_ACTIVITY },
-                                GROUP: { value: en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.GROUP },
-                                FULL_ACCESS: { value: en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.FULL_ACCESS },
-                            },
-                        })),
-                    },
-                },
-                type: conduit_core_1.GenericMutationResult,
-                resolve: notebookPublishResolver,
-            },
-            notebookJoin: {
-                args: {
-                    notebook: {
-                        type: conduit_core_1.schemaToGraphQLType('string'),
-                    },
-                },
-                type: conduit_core_1.GenericMutationResult,
-                resolve: notebookJoinResolver,
             },
         },
     };

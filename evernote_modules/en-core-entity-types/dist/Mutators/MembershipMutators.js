@@ -10,11 +10,10 @@ const EntityConstants_1 = require("../EntityConstants");
 const MembershipPrivilege_1 = require("../MembershipPrivilege");
 exports.membershipUpdatePrivilege = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         membership: 'ID',
-        privilege: Object.values(MembershipPrivilege_1.MembershipPrivilege),
+        privilege: MembershipPrivilege_1.MembershipPrivilegeSchema,
     },
-    optionalParams: {},
     execute: async (trc, ctx, params) => {
         const membershipRef = { id: params.membership, type: EntityConstants_1.CoreEntityTypes.Membership };
         const membershipEntity = await ctx.fetchEntity(trc, membershipRef);
@@ -35,10 +34,9 @@ exports.membershipUpdatePrivilege = {
 };
 exports.membershipDelete = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
-    requiredParams: {
+    params: {
         membership: 'ID',
     },
-    optionalParams: {},
     execute: null,
     executeOnService: async (trc, ctx, params) => {
         const membershipRef = { id: params.membership, type: EntityConstants_1.CoreEntityTypes.Membership };

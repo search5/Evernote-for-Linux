@@ -8,14 +8,7 @@ const conduit_storage_1 = require("conduit-storage");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const Converters_1 = require("./Converters");
 const ProfileConverter_1 = require("./ProfileConverter");
-function lookupToString(lookupTable, type, defaultRet) {
-    return type && lookupTable[type] || defaultRet;
-}
-const attachmentTypeLookup = [
-    'UNKNOWN',
-    'NOTE',
-    'NOTEBOOK',
-];
+const attachmentTypeLookup = Object.values(en_core_entity_types_1.InvitationType);
 function convertIdentityGuidFromService(guid) {
     return `Identity:${guid}`;
 }
@@ -25,6 +18,7 @@ function convertIdentityGuidToService(nodeID) {
 }
 exports.convertIdentityGuidToService = convertIdentityGuidToService;
 function invitationFromAttachment(invitationID, serviceData, sharerID, sentAt) {
+    var _a, _b;
     const shareNode = {
         id: invitationID,
         type: en_core_entity_types_1.CoreEntityTypes.Invitation,
@@ -35,7 +29,7 @@ function invitationFromAttachment(invitationID, serviceData, sharerID, sentAt) {
         NodeFields: {
             created: sentAt || null,
             snippet: serviceData.snippet || '',
-            invitationType: lookupToString(attachmentTypeLookup, serviceData.type, 'UNKNOWN'),
+            invitationType: (_b = attachmentTypeLookup[(_a = serviceData.type) !== null && _a !== void 0 ? _a : 0]) !== null && _b !== void 0 ? _b : en_core_entity_types_1.InvitationType.UNKNOWN,
             internal_attachment: serviceData,
         },
         inputs: {},

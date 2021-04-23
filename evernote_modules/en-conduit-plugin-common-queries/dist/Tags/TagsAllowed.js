@@ -12,35 +12,9 @@ exports.tagsAllowedPlugin = void 0;
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 const conduit_core_1 = require("conduit-core");
+const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const graphql_1 = require("graphql");
-function buildArgs() {
-    const fieldsType = conduit_core_1.schemaToGraphQLType(['refsCount', 'label', '?'], 'TagsAllowedField');
-    const filters = {
-        type: new graphql_1.GraphQLList(new graphql_1.GraphQLInputObjectType({
-            name: `TagInContextFilter`,
-            fields: {
-                field: { type: new graphql_1.GraphQLNonNull(fieldsType) },
-                isSet: { type: conduit_core_1.schemaToGraphQLType('boolean?') },
-                min: { type: conduit_core_1.IndexRange },
-                max: { type: conduit_core_1.IndexRange },
-                match: { type: conduit_core_1.IndexMatch },
-                prefix: { type: conduit_core_1.schemaToGraphQLType('string?') },
-            },
-        })),
-    };
-    const sorts = {
-        type: new graphql_1.GraphQLList(new graphql_1.GraphQLInputObjectType({
-            name: `TagsInContextSort`,
-            fields: {
-                field: { type: new graphql_1.GraphQLNonNull(fieldsType) },
-                order: { type: conduit_core_1.IndexOrderType },
-            },
-        })),
-    };
-    return Object.assign(Object.assign({}, conduit_core_1.schemaToGraphQLArgs({ id: 'ID' })), { filters,
-        sorts });
-}
+const FieldsTypeSchema = conduit_utils_1.Enum(['refsCount', 'label'], 'TagsAllowedField');
 async function filterAlreadyOwnedTags(root, tags) {
     const ownedTags = [];
     if (root.type === en_core_entity_types_1.CoreEntityTypes.Note) {
@@ -119,21 +93,30 @@ async function tagsAllowedResolver(parent, args, context, info) {
     };
 }
 exports.tagsAllowedPlugin = {
-    args: buildArgs(),
-    type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLObjectType({
-        name: 'TagsAllowed',
-        fields: {
-            count: { type: conduit_core_1.schemaToGraphQLType('number') },
-            indexUsed: { type: conduit_core_1.schemaToGraphQLType('string[]') },
-            list: {
-                type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(conduit_core_1.schemaToGraphQLType({
-                    id: 'ID',
-                    label: 'string',
-                    refsCount: 'number?',
-                }, 'TagsAllowedListResults', false))),
-            },
-        },
-    })),
+    args: conduit_core_1.schemaToGraphQLArgs({
+        id: 'ID',
+        filters: conduit_utils_1.NullableListOf(conduit_utils_1.Struct({
+            field: FieldsTypeSchema,
+            isSet: conduit_utils_1.NullableBoolean,
+            min: conduit_core_1.IndexRangeSchema,
+            max: conduit_core_1.IndexRangeSchema,
+            match: conduit_core_1.IndexMatchSchema,
+            prefix: conduit_utils_1.NullableString,
+        }, 'TagInContextFilter')),
+        sorts: conduit_utils_1.NullableListOf(conduit_utils_1.Struct({
+            field: FieldsTypeSchema,
+            order: conduit_core_1.IndexOrderTypeSchema,
+        }, 'TagsInContextSort')),
+    }),
+    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({
+        count: 'number',
+        indexUsed: conduit_utils_1.ListOf('string'),
+        list: conduit_utils_1.ListOfStructs({
+            id: 'ID',
+            label: 'string',
+            refsCount: conduit_utils_1.NullableNumber,
+        }, 'TagsAllowedListResults'),
+    }, 'TagsAllowed')),
     resolve: tagsAllowedResolver,
 };
 //# sourceMappingURL=TagsAllowed.js.map
