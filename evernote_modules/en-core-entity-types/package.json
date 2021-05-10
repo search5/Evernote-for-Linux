@@ -1,6 +1,6 @@
 {
   "name": "en-core-entity-types",
-  "version": "1.33.4",
+  "version": "1.34.4",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -14,10 +14,10 @@
     "chai": "^4.2.0"
   },
   "dependencies": {
-    "conduit-core": "1.33.4",
-    "conduit-storage": "1.33.4",
-    "conduit-utils": "1.33.4",
-    "conduit-view-types": "1.33.4",
-    "en-data-model": "^2.7.16"
+    "conduit-core": "1.34.4",
+    "conduit-storage": "1.34.4",
+    "conduit-utils": "1.34.4",
+    "conduit-view-types": "1.34.4",
+    "en-data-model": "^3.4.2"
   }
 }

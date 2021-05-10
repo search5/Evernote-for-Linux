@@ -6,28 +6,14 @@ exports.scheduledNotificationIndexConfig = exports.scheduledNotificationTypeDef 
  */
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
-const ScheduledNotificationConstants_1 = require("../ScheduledNotificationConstants");
+const en_data_model_1 = require("en-data-model");
+const en_notifications_data_model_1 = require("en-notifications-data-model");
 exports.scheduledNotificationTypeDef = {
-    name: ScheduledNotificationConstants_1.ScheduledNotificationEntityTypes.ScheduledNotification,
+    name: en_data_model_1.EntityTypes.ScheduledNotification,
     syncSource: conduit_storage_1.SyncSource.NSYNC,
     nsyncFeatureGroup: 'Tasks',
     fieldValidation: {},
-    schema: {
-        scheduledNotificationType: ScheduledNotificationConstants_1.ScheduledNotificationTypeSchema,
-        created: 'timestamp',
-        updated: 'timestamp',
-        mute: 'boolean',
-        data: conduit_utils_1.NullableStruct({
-            calendarEventId: 'string',
-            notificationTime: 'number',
-            clientType: 'string',
-            title: 'string',
-            startTime: 'number',
-            endTime: 'number',
-            location: 'string',
-            noteID: conduit_utils_1.NullableString,
-        }),
-    },
+    schema: Object.assign(Object.assign({}, conduit_utils_1.shallowCloneExcluding(en_notifications_data_model_1.ScheduledNotificationEntitySchema.fields, ['scheduling', 'dataSource'])), { created: 'timestamp', updated: 'timestamp' }),
     cache: {
         dataSourceUpdatedAt: {
             allowStale: true,
@@ -45,7 +31,7 @@ exports.scheduledNotificationTypeDef = {
             constraint: conduit_storage_1.EdgeConstraint.REQUIRED,
             type: conduit_storage_1.EdgeType.ANCESTRY,
             from: {
-                type: ScheduledNotificationConstants_1.ScheduledNotificationEntityTypes.Reminder,
+                type: en_data_model_1.EntityTypes.Reminder,
                 constraint: conduit_storage_1.EdgeConstraint.OPTIONAL,
                 denormalize: 'scheduledNotification',
             },
@@ -53,7 +39,7 @@ exports.scheduledNotificationTypeDef = {
         dataSource: {
             constraint: conduit_storage_1.EdgeConstraint.REQUIRED,
             type: conduit_storage_1.EdgeType.LINK,
-            to: ScheduledNotificationConstants_1.ScheduledNotificationEntityTypes.Task,
+            to: en_data_model_1.EntityTypes.Task,
         },
     },
 };

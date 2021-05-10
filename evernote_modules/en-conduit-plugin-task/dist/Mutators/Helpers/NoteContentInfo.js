@@ -6,13 +6,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.genTasksDataCreateOps = exports.taskGroupUpsertPlanFor = exports.taskGroupUpsertPlan = exports.getNoteContentInfoIDByNoteID = exports.getNoteContentInfoID = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const TaskConstants_1 = require("../../TaskConstants");
+const en_data_model_1 = require("en-data-model");
 const Permission_1 = require("./Permission");
 const Task_1 = require("./Task");
 async function getNoteContentInfoID(trc, ctx, noteRef, copyOwnerRef) {
     // if the Note container is available, it will be used to resolve the actual ownerID
     const owner = copyOwnerRef || noteRef || ctx.vaultUserID || ctx.userID;
-    const noteContentInfoIDGen = await ctx.generateDeterministicIDWithPrefix(trc, owner, TaskConstants_1.TaskEntityTypes.NoteContentInfo, noteRef.id, true);
+    const noteContentInfoIDGen = await ctx.generateDeterministicIDWithPrefix(trc, owner, en_data_model_1.EntityTypes.NoteContentInfo, noteRef.id, true);
     const noteContentInfoID = noteContentInfoIDGen[1];
     return { noteContentInfoIDGen, noteContentInfoID };
 }
@@ -32,7 +32,7 @@ async function taskGroupUpsertPlan(trc, ctx, params, copyOwnerRef) {
         await Permission_1.checkNoteEditPermissionByNoteId(trc, ctx, params.noteID);
     }
     const { noteContentInfoIDGen, noteContentInfoID } = await getNoteContentInfoID(trc, ctx, containerRef, copyOwnerRef);
-    const noteContentInfoRef = { id: noteContentInfoID, type: TaskConstants_1.TaskEntityTypes.NoteContentInfo };
+    const noteContentInfoRef = { id: noteContentInfoID, type: en_data_model_1.EntityTypes.NoteContentInfo };
     const existingNoteContentInfo = await ctx.fetchEntity(trc, noteContentInfoRef);
     let plan;
     if (existingNoteContentInfo) {
@@ -41,8 +41,8 @@ async function taskGroupUpsertPlan(trc, ctx, params, copyOwnerRef) {
             const parentNoteRef = { type: parentEdge.srcType, id: parentEdge.srcID };
             const parentNote = await ctx.fetchEntity(trc, parentNoteRef);
             if (parentNote) {
-                const taskRefs = await ctx.traverseGraph(trc, { type: parentNote.type, id: parentNote.id }, [{ edge: ['outputs', 'tasks'], type: TaskConstants_1.TaskEntityTypes.Task }]);
-                const existingTasks = await ctx.fetchEntities(trc, TaskConstants_1.TaskEntityTypes.Task, taskRefs.map(t => t.edge.dstID));
+                const taskRefs = await ctx.traverseGraph(trc, { type: parentNote.type, id: parentNote.id }, [{ edge: ['outputs', 'tasks'], type: en_data_model_1.EntityTypes.Task }]);
+                const existingTasks = await ctx.fetchEntities(trc, en_data_model_1.EntityTypes.Task, taskRefs.map(t => t.edge.dstID));
                 for (const task of existingTasks) {
                     if (!task) {
                         continue;
@@ -60,7 +60,7 @@ async function taskGroupUpsertPlan(trc, ctx, params, copyOwnerRef) {
             ops: [{
                     changeType: 'Node:UPDATE',
                     nodeRef: noteContentInfoRef,
-                    node: ctx.assignFields(TaskConstants_1.TaskEntityTypes.NoteContentInfo, {
+                    node: ctx.assignFields(en_data_model_1.EntityTypes.NoteContentInfo, {
                         taskGroupNoteLevelIDs: params.taskGroupNoteLevelIDs,
                         updated: ctx.timestamp,
                         sourceOfChange: params.sourceOfChange,
@@ -98,7 +98,7 @@ exports.taskGroupUpsertPlan = taskGroupUpsertPlan;
 async function taskGroupUpsertPlanFor(trc, ctx, noteID, taskGroupNoteLevelID, sourceOfChange, copyOwnerRef) {
     const taskGroupNoteLevelIDs = [];
     const noteContentInfoID = getNoteContentInfoIDByNoteID(noteID);
-    const noteContentInfoRef = { id: noteContentInfoID, type: TaskConstants_1.TaskEntityTypes.NoteContentInfo };
+    const noteContentInfoRef = { id: noteContentInfoID, type: en_data_model_1.EntityTypes.NoteContentInfo };
     const noteContentInfo = await ctx.fetchEntity(trc, noteContentInfoRef);
     if (noteContentInfo) {
         const noteContentInfoTaskGroups = noteContentInfo.NodeFields.taskGroupNoteLevelIDs;

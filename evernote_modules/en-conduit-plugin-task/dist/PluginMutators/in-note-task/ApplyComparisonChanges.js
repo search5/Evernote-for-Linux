@@ -11,7 +11,7 @@ var __asyncValues = (this && this.__asyncValues) || function (o) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.applyReminderComparisonChanges = exports.applyTaskComparisonChanges = void 0;
-const TaskConstants_1 = require("../../TaskConstants");
+const en_data_model_1 = require("en-data-model");
 const Types_1 = require("./Types");
 async function applyTaskComparisonChanges(context, comparisonResult, sourceOfChange) {
     var e_1, _a;
@@ -38,7 +38,7 @@ async function applyTaskComparisonChanges(context, comparisonResult, sourceOfCha
                         status,
                         sourceOfChange,
                     });
-                    const newTask = await context.db.getNode(context, { id: mutation.results.result.toString(), type: TaskConstants_1.TaskEntityTypes.Task });
+                    const newTask = await context.db.getNode(context, { id: mutation.results.result.toString(), type: en_data_model_1.EntityTypes.Task });
                     result.graphDbNode = newTask;
                     break;
                 }

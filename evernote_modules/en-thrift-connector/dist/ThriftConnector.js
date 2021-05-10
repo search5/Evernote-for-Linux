@@ -33,6 +33,7 @@ const en_nsync_connector_1 = require("en-nsync-connector");
 const Auth = __importStar(require("./Auth"));
 const AccountLimitsConverter_1 = require("./Converters/AccountLimitsConverter");
 const NotebookConverter_1 = require("./Converters/NotebookConverter");
+const UserConverter_1 = require("./Converters/UserConverter");
 const WorkspaceConverter_1 = require("./Converters/WorkspaceConverter");
 const Helpers_1 = require("./Helpers");
 const ApplicationDataPlugin_1 = require("./Plugins/ApplicationDataPlugin");
@@ -170,6 +171,32 @@ function init(di, configs) {
             vaultRef: { id: conduit_core_1.VAULT_USER_ID, type: en_core_entity_types_1.CoreEntityTypes.User },
         });
     }
+    // TODO: remove this once no longer needed for migrating a field in a noWait query ( Today is: 04/21/2021 )
+    const meUpdater = async (context, node) => {
+        var _a, _b;
+        conduit_core_1.validateDB(context);
+        if (node.type !== 'User') {
+            throw new Error('meUpdater requires a user node');
+        }
+        if (!((_a = node.NodeFields) === null || _a === void 0 ? void 0 : _a.serviceLevel)) {
+            throw new Error('meUpdater requires a serviceLevel');
+        }
+        if (!node.syncContexts || !node.syncContexts.length) {
+            throw new Error('meUpdater requires syncContext');
+        }
+        const serviceLevelV1 = node.NodeFields.serviceLevel;
+        let ret = node;
+        if (conduit_utils_1.isNullish((_b = node.NodeFields) === null || _b === void 0 ? void 0 : _b.serviceLevelV2)) {
+            const serviceLevelV2 = UserConverter_1.toServiceLevelV2(serviceLevelV1);
+            ret = await context.db.transactSyncedStorage(context.trc, 'meUpdater', async (graphTransaction) => {
+                return await graphTransaction.updateNode(context.trc, node.syncContexts[0], node, { NodeFields: { serviceLevelV2 } });
+            });
+            if (ret === null) {
+                throw new Error('update of me node during temp migration failed');
+            }
+        }
+        return ret;
+    };
     return {
         di: {
             // persisted personal/vault sync context metadata do not have auth tokens because the tokens can only be stored inside secure storage.
@@ -223,6 +250,7 @@ function init(di, configs) {
                 };
             },
             getHttpTransport: di.getHttpTransport,
+            meUpdater,
         },
         plugins: [
             ApplicationDataPlugin_1.getApplicationDataPlugin(),

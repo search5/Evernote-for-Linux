@@ -188,9 +188,9 @@ exports.notebookDelete = {
             results: {},
             ops: [],
         };
+        const children = await ctx.traverseGraph(trc, nodeRef, [{ edge: ['outputs', 'children'], type: EntityConstants_1.CoreEntityTypes.Note }]);
         // in optimistic we need to mimic what the monolith will be doing internally (moving notes in the notebook to trash / default notebook)
         if (ctx.isOptimistic) {
-            const children = await ctx.traverseGraph(trc, nodeRef, [{ edge: ['outputs', 'children'], type: EntityConstants_1.CoreEntityTypes.Note }]);
             const childrenInTrash = await ctx.traverseGraph(trc, nodeRef, [{ edge: ['outputs', 'childrenInTrash'], type: EntityConstants_1.CoreEntityTypes.Note }]);
             // move notes to trash and change parent to default nb.
             const defaultNotebook = await ctx.traverseGraph(trc, { id: conduit_core_1.PERSONAL_USER_ID, type: EntityConstants_1.CoreEntityTypes.User }, [{
@@ -216,6 +216,16 @@ exports.notebookDelete = {
                     });
                 }
             }
+        }
+        else {
+            // TODO: clean this part when migrating the logic to Conduit v2
+            plan.ops.push({
+                changeType: 'Custom',
+                commandName: 'taskNotesMoveToTrash',
+                params: {
+                    noteIDs: children.map(child => child.id),
+                },
+            });
         }
         // delete the notebook
         plan.ops.push({

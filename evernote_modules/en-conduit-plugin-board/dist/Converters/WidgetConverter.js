@@ -6,28 +6,28 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getWidgetNode = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_data_model_1 = require("en-data-model");
+const en_home_data_model_1 = require("en-home-data-model");
 const en_nsync_connector_1 = require("en-nsync-connector");
-const BoardConstants_1 = require("../BoardConstants");
 const getWidgetNode = async (trc, instance, context) => {
     const initial = en_nsync_connector_1.createInitialNode(instance);
     if (!initial) {
         conduit_utils_1.logger.error('Missing initial values');
         return null;
     }
-    let selectedTab;
-    if (instance.widgetType === en_data_model_1.WidgetType.Clipped) {
+    let selectedTab = null;
+    if (instance.widgetType === en_home_data_model_1.WidgetType.Clipped) {
         // Fall back to a supported tab for forwards compatibility.
-        selectedTab = en_data_model_1.BoardSchema.ClippedTabsSet.has(instance.selectedTab)
+        selectedTab = conduit_utils_1.isNullish(instance.selectedTab) ? null : (en_home_data_model_1.BoardSchema.ClippedTabsSet.has(instance.selectedTab)
             ? instance.selectedTab
-            : en_data_model_1.WidgetSelectedTab.WebClips;
+            : en_home_data_model_1.WidgetSelectedTab.WebClips);
     }
-    else if (instance.widgetType === en_data_model_1.WidgetType.Notebooks || instance.widgetType === en_data_model_1.WidgetType.Notes) {
+    else if (instance.widgetType === en_home_data_model_1.WidgetType.Notebooks || instance.widgetType === en_home_data_model_1.WidgetType.Notes) {
         // Fall back to a supported tab for forwards compatibility.
-        selectedTab = en_data_model_1.BoardSchema.CommonTabsSet.has(instance.selectedTab)
+        selectedTab = conduit_utils_1.isNullish(instance.selectedTab) ? null : (en_home_data_model_1.BoardSchema.CommonTabsSet.has(instance.selectedTab)
             ? instance.selectedTab
-            : en_data_model_1.WidgetSelectedTab.Recent;
+            : en_home_data_model_1.WidgetSelectedTab.Recent);
     }
-    const widget = Object.assign(Object.assign({}, initial), { type: BoardConstants_1.BoardEntityTypes.Widget, NodeFields: {
+    const widget = Object.assign(Object.assign({}, initial), { type: en_data_model_1.EntityTypes.Widget, NodeFields: {
             boardType: instance.boardType,
             widgetType: instance.widgetType,
             internalID: instance.internalID,
@@ -56,10 +56,10 @@ const getWidgetNode = async (trc, instance, context) => {
     if (instance.parentEntity) {
         edgesToCreate.push({
             srcID: instance.parentEntity.id,
-            srcType: BoardConstants_1.BoardEntityTypes.Board,
+            srcType: en_data_model_1.EntityTypes.Board,
             srcPort: 'children',
             dstID: instance.ref.id,
-            dstType: BoardConstants_1.BoardEntityTypes.Widget,
+            dstType: en_data_model_1.EntityTypes.Widget,
             dstPort: 'parent',
         });
     }

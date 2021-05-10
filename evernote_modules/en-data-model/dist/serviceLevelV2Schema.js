@@ -11,39 +11,39 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getServiceLevelV2Summary = exports.ServiceLevelV2Summaries = void 0;
 const en_ts_utils_1 = require("en-ts-utils");
-const ts_types_1 = require("./ts-types");
+const schema_types_1 = require("./schema-types");
 exports.ServiceLevelV2Summaries = {
     free: {
-        thriftServiceLevel: ts_types_1.ThriftServiceLevelV2.FREE,
-        serviceLevel: ts_types_1.ServiceLevelV2.FREE,
-        adjustedServiceLevel: ts_types_1.AdjustedServiceLevelV2.FREE,
+        thriftServiceLevel: schema_types_1.ThriftServiceLevelV2.FREE,
+        serviceLevel: schema_types_1.ServiceLevelV2.FREE,
+        adjustedServiceLevel: schema_types_1.AdjustedServiceLevelV2.FREE,
     },
     // Dead SKU, but we can't force users off of it.
     plus: {
-        thriftServiceLevel: ts_types_1.ThriftServiceLevelV2.PLUS,
-        serviceLevel: ts_types_1.ServiceLevelV2.PLUS,
-        adjustedServiceLevel: ts_types_1.AdjustedServiceLevelV2.PLUS,
+        thriftServiceLevel: schema_types_1.ThriftServiceLevelV2.PLUS,
+        serviceLevel: schema_types_1.ServiceLevelV2.PLUS,
+        adjustedServiceLevel: schema_types_1.AdjustedServiceLevelV2.PLUS,
     },
     // Dead SKU, but we can't force users off of it..  Only the highest paying SKUs get auto-migrated to PERSONAL
     premium: {
-        thriftServiceLevel: ts_types_1.ThriftServiceLevelV2.PREMIUM,
-        serviceLevel: ts_types_1.ServiceLevelV2.PREMIUM,
-        adjustedServiceLevel: ts_types_1.AdjustedServiceLevelV2.PREMIUM,
+        thriftServiceLevel: schema_types_1.ThriftServiceLevelV2.PREMIUM,
+        serviceLevel: schema_types_1.ServiceLevelV2.PREMIUM,
+        adjustedServiceLevel: schema_types_1.AdjustedServiceLevelV2.PREMIUM,
     },
     personal: {
-        thriftServiceLevel: ts_types_1.ThriftServiceLevelV2.PERSONAL,
-        serviceLevel: ts_types_1.ServiceLevelV2.PERSONAL,
-        adjustedServiceLevel: ts_types_1.AdjustedServiceLevelV2.PERSONAL,
+        thriftServiceLevel: schema_types_1.ThriftServiceLevelV2.PERSONAL,
+        serviceLevel: schema_types_1.ServiceLevelV2.PERSONAL,
+        adjustedServiceLevel: schema_types_1.AdjustedServiceLevelV2.PERSONAL,
     },
     professional: {
-        thriftServiceLevel: ts_types_1.ThriftServiceLevelV2.PROFESSIONAL,
-        serviceLevel: ts_types_1.ServiceLevelV2.PROFESSIONAL,
-        adjustedServiceLevel: ts_types_1.AdjustedServiceLevelV2.PROFESSIONAL,
+        thriftServiceLevel: schema_types_1.ThriftServiceLevelV2.PROFESSIONAL,
+        serviceLevel: schema_types_1.ServiceLevelV2.PROFESSIONAL,
+        adjustedServiceLevel: schema_types_1.AdjustedServiceLevelV2.PROFESSIONAL,
     },
     teams: {
-        thriftServiceLevel: ts_types_1.ThriftServiceLevelV2.TEAMS,
-        serviceLevel: ts_types_1.ServiceLevelV2.TEAMS,
-        adjustedServiceLevel: ts_types_1.AdjustedServiceLevelV2.TEAMS,
+        thriftServiceLevel: schema_types_1.ThriftServiceLevelV2.TEAMS,
+        serviceLevel: schema_types_1.ServiceLevelV2.TEAMS,
+        adjustedServiceLevel: schema_types_1.AdjustedServiceLevelV2.TEAMS,
     }
 };
 const serviceLevelV2SummaryMap = (() => {
@@ -54,8 +54,8 @@ const serviceLevelV2SummaryMap = (() => {
         result.set(summary.thriftServiceLevel, summary);
     }
     // Deprecated String ServiceLevel Lookup Support
-    result.set(ts_types_1.DeprecatedServiceLevel.BASIC, exports.ServiceLevelV2Summaries.free);
-    result.set(ts_types_1.DeprecatedServiceLevel.BUSINESS, exports.ServiceLevelV2Summaries.teams);
+    result.set(schema_types_1.DeprecatedServiceLevel.BASIC, exports.ServiceLevelV2Summaries.free);
+    result.set(schema_types_1.DeprecatedServiceLevel.BUSINESS, exports.ServiceLevelV2Summaries.teams);
     return result;
 })();
 /*

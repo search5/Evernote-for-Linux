@@ -26,7 +26,7 @@ exports.createNotePinDefinition = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_data_model_1 = require("en-data-model");
-const BoardConstants_1 = require("./BoardConstants");
+const en_home_data_model_1 = require("en-home-data-model");
 const Utilities = __importStar(require("./Utilities"));
 const createNotePinDefinition = () => {
     return {
@@ -48,13 +48,13 @@ const createNotePinDefinition = () => {
             // Get the current User...
             const userNode = await Utilities.getCurrentUserNode(context);
             const boardID = en_data_model_1.DefaultDeterministicIdGenerator.createId({
-                entityType: BoardConstants_1.BoardEntityTypes.Board,
+                entityType: en_data_model_1.EntityTypes.Board,
                 userID: userNode.NodeFields.internal_userID,
-                leadingSegments: en_data_model_1.BoardSchema.formDeterministicBoardIdParts(userNode.NodeFields.internal_userID),
+                leadingSegments: en_home_data_model_1.BoardSchema.formDeterministicBoardIdParts(userNode.NodeFields.internal_userID),
             });
-            const widgetEdges = await context.db.traverseGraph(context, { type: BoardConstants_1.BoardEntityTypes.Board, id: boardID }, [{ edge: ['outputs', 'children'], type: BoardConstants_1.BoardEntityTypes.Widget }]);
-            const matchingPinnedNote = (await context.db.batchGetNodes(context, BoardConstants_1.BoardEntityTypes.Widget, widgetEdges.map(widgetEdge => widgetEdge.id)))
-                .find(w => !!w && (!args.widget && w.NodeFields.widgetType === en_data_model_1.WidgetType.Pinned || w.id === args.widget));
+            const widgetEdges = await context.db.traverseGraph(context, { type: en_data_model_1.EntityTypes.Board, id: boardID }, [{ edge: ['outputs', 'children'], type: en_data_model_1.EntityTypes.Widget }]);
+            const matchingPinnedNote = (await context.db.batchGetNodes(context, en_data_model_1.EntityTypes.Widget, widgetEdges.map(widgetEdge => widgetEdge.id)))
+                .find(w => !!w && (!args.widget && w.NodeFields.widgetType === en_home_data_model_1.WidgetType.Pinned || w.id === args.widget));
             // Check that a matching widget was found
             if (!matchingPinnedNote) {
                 throw new conduit_utils_1.InternalError('Could not find Pinned Widget');

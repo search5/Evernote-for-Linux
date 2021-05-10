@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TaskDeleteContainmentRules = void 0;
 const conduit_core_1 = require("conduit-core");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const TaskConstants_1 = require("../TaskConstants");
+const en_data_model_1 = require("en-data-model");
 exports.TaskDeleteContainmentRules = [{
         on: 'Node:DELETE',
         where: { type: en_core_entity_types_1.CoreEntityTypes.Note },
@@ -17,7 +17,7 @@ exports.TaskDeleteContainmentRules = [{
     }];
 async function onNoteDelete(ctx, trc, nodeRef, ops) {
     // delete defaultTaskNote association
-    const taskUserSettingsRefs = await ctx.traverseGraph(trc, nodeRef, [{ edge: ['inputs', 'taskUserSettingsForDefaultNote'], type: TaskConstants_1.TaskEntityTypes.TaskUserSettings }]);
+    const taskUserSettingsRefs = await ctx.traverseGraph(trc, nodeRef, [{ edge: ['inputs', 'taskUserSettingsForDefaultNote'], type: en_data_model_1.EntityTypes.TaskUserSettings }]);
     if (taskUserSettingsRefs.length) {
         ops.push({
             changeType: 'Edge:MODIFY',

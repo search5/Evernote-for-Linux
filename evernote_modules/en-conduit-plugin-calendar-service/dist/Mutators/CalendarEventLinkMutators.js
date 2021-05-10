@@ -2,6 +2,25 @@
 /*!
  * Copyright 2021 Evernote Corporation. All rights reserved.
  */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __rest = (this && this.__rest) || function (s, e) {
     var t = {};
     for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
@@ -14,20 +33,23 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkNoteEditPermissionByNoteId = exports.calendarEventLinkDelete = exports.calendarEventLinkCreate = void 0;
+exports.checkNoteEditPermissionByNoteId = exports.calendarEventUnlink = exports.calendarEventLinkInternal = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const CalendarConstants_1 = require("../CalendarConstants");
+const en_data_model_1 = require("en-data-model");
+const SimplyImmutable = __importStar(require("simply-immutable"));
 const CalendarServiceType_1 = require("../CalendarServiceType");
-exports.calendarEventLinkCreate = {
-    type: conduit_core_1.MutatorRemoteExecutorType.Local,
+const Utilities_1 = require("../Utilities");
+exports.calendarEventLinkInternal = {
+    type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
+    isInternal: true,
     params: {
-        eventID: 'string',
+        eventID: 'ID',
         noteID: 'ID',
-        isLinkedToAllInstances: 'boolean',
+        noteOwnerID: 'number',
         provider: 'string',
-        calendarUserId: 'string',
+        userIdFromExternalProvider: 'string',
         userCalendarExternalId: 'string',
         calendarEventExternalId: 'string',
         isAccountConnected: 'boolean',
@@ -36,29 +58,26 @@ exports.calendarEventLinkCreate = {
         end: 'timestamp',
         iCalendarUid: 'string',
         isBusy: 'boolean',
-        status: CalendarServiceType_1.CalendarEventStatusSchema,
-        links: 'string',
-        creatorEmail: 'string',
-        organizerEmail: 'string',
-        attendees: 'string',
+        status: CalendarServiceType_1.CalendarEventStatusInputSchema,
+        links: conduit_utils_1.ListOf(CalendarServiceType_1.CalendarEventUriInputSchema),
+        eventCreator: CalendarServiceType_1.CalendarContactInputSchema,
+        eventOrganizer: CalendarServiceType_1.CalendarContactInputSchema,
+        attendees: conduit_utils_1.ListOf(CalendarServiceType_1.CalendarEventAttendeeInputSchema),
         summary: conduit_utils_1.NullableString,
-        deletionTime: conduit_utils_1.NullableTimestamp,
+        externalProviderDeleted: conduit_utils_1.NullableTimestamp,
         displayColor: conduit_utils_1.NullableString,
         description: conduit_utils_1.NullableString,
         location: conduit_utils_1.NullableString,
         recurrentEventId: conduit_utils_1.NullableString,
         recurrence: conduit_utils_1.NullableString,
-        creatorDisplayName: conduit_utils_1.NullableString,
-        creatorAvatar: conduit_utils_1.NullableString,
-        organizerDisplayName: conduit_utils_1.NullableString,
-        organizerAvatar: conduit_utils_1.NullableString,
+        isRecurrenceInstance: conduit_utils_1.NullableBoolean,
     },
     execute: async (trc, ctx, params) => {
         const plan = {
             results: {},
             ops: [],
         };
-        const { noteID, isLinkedToAllInstances, creatorEmail, creatorAvatar, creatorDisplayName, organizerEmail, organizerAvatar, organizerDisplayName, eventID } = params, calendarEventParams = __rest(params, ["noteID", "isLinkedToAllInstances", "creatorEmail", "creatorAvatar", "creatorDisplayName", "organizerEmail", "organizerAvatar", "organizerDisplayName", "eventID"]);
+        const { noteID, eventID, noteOwnerID } = params, calendarEventParams = __rest(params, ["noteID", "eventID", "noteOwnerID"]);
         const containerRef = { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note };
         const note = await ctx.fetchEntity(trc, containerRef);
         if (!note) {
@@ -68,97 +87,89 @@ exports.calendarEventLinkCreate = {
         const permContext = new en_core_entity_types_1.MutationPermissionContext(trc, ctx);
         const policy = await en_core_entity_types_1.commandPolicyOfNote(noteID, permContext);
         if (!policy.canEditContent) {
-            throw new conduit_utils_1.PermissionError('Permission Denied');
+            throw new conduit_utils_1.PermissionError(`Permission Denied. Can't edit note`);
         }
-        const calendarEventGenID = await ctx.generateDeterministicIDWithPrefix(trc, ctx.userID, CalendarConstants_1.CalendarEntityTypes.CalendarEvent, eventID.replace('_CalendarEvent', ''));
-        const calendarEventID = calendarEventGenID[1];
-        const noteLinks = await ctx.traverseGraph(trc, note, [{ edge: ['outputs', 'calendarEventLinks'], type: CalendarConstants_1.CalendarEntityTypes.CalendarEventLink }]);
+        const linkedCalendarEvents = await ctx.traverseGraph(trc, note, [{ edge: ['outputs', 'calendarEvents'], type: en_data_model_1.EntityTypes.CalendarEvent }]);
         // avoid linking again this note to the same event
-        if (noteLinks && noteLinks.length > 0) {
-            for (const link of noteLinks) {
-                const events = await ctx.traverseGraph(trc, link, [{ edge: ['outputs', 'calendarEvent'], type: CalendarConstants_1.CalendarEntityTypes.CalendarEvent }]);
-                for (const event of events) {
-                    if (event.id === calendarEventID) {
-                        return {
-                            results: { result: calendarEventID },
-                            ops: [],
-                        };
-                    }
+        if (linkedCalendarEvents && linkedCalendarEvents.length > 0) {
+            for (const event of linkedCalendarEvents) {
+                if (event.id === eventID) {
+                    return {
+                        results: { result: eventID },
+                        ops: [],
+                    };
                 }
             }
         }
-        const calendarEventLinkGenID = await ctx.generateID(trc, ctx.userID, CalendarConstants_1.CalendarEntityTypes.CalendarEventLink);
-        const calendarEventLinkID = calendarEventLinkGenID[1];
-        const calendarEventLinkRef = { id: calendarEventLinkID, type: CalendarConstants_1.CalendarEntityTypes.CalendarEventLink };
-        const calendarEventLinkEntity = ctx.createEntity(calendarEventLinkRef, {
-            isLinkedToAllInstances,
-            linkedTimestamp: ctx.timestamp,
-        }, ctx.userID);
-        const calendarEventRef = { id: calendarEventID, type: CalendarConstants_1.CalendarEntityTypes.CalendarEvent };
-        const CalendarEventEntity = ctx.createEntity(calendarEventRef, Object.assign(Object.assign({}, calendarEventParams), { created: ctx.timestamp, lastModified: ctx.timestamp, eventCreator: { email: creatorEmail, displayName: creatorDisplayName, avatar: creatorAvatar }, eventOrganizer: { email: organizerEmail, displayName: organizerDisplayName, avatar: organizerAvatar } }), ctx.userID);
-        plan.results.result = calendarEventID;
-        plan.ops.push({
-            changeType: 'Node:CREATE',
-            node: calendarEventLinkEntity,
-            id: calendarEventLinkGenID,
-        }, {
-            changeType: 'Edge:MODIFY',
-            edgesToCreate: [{
-                    srcID: params.noteID, srcType: en_core_entity_types_1.CoreEntityTypes.Note, srcPort: 'calendarEventLinks',
-                    dstID: calendarEventLinkID, dstType: CalendarConstants_1.CalendarEntityTypes.CalendarEventLink, dstPort: 'note',
-                }, {
-                    srcID: calendarEventLinkRef.id, srcType: CalendarConstants_1.CalendarEntityTypes.CalendarEventLink, srcPort: 'calendarEvent',
-                    dstID: calendarEventRef.id, dstType: CalendarConstants_1.CalendarEntityTypes.CalendarEvent, dstPort: 'calendarEventLinks',
-                }],
-        }, {
-            changeType: 'Node:CREATE',
-            node: CalendarEventEntity,
-            id: calendarEventGenID,
-        });
+        const calendarEventRef = { id: eventID, type: en_data_model_1.EntityTypes.CalendarEvent };
+        const calendarEventNode = await ctx.fetchEntity(trc, calendarEventRef);
+        if (calendarEventNode) {
+            plan.ops.push({
+                changeType: 'Edge:MODIFY',
+                edgesToCreate: [{
+                        srcID: params.noteID, srcType: en_core_entity_types_1.CoreEntityTypes.Note, srcPort: 'calendarEvents',
+                        dstID: calendarEventRef.id, dstType: en_data_model_1.EntityTypes.CalendarEvent, dstPort: 'notes',
+                    }],
+            });
+        }
+        else {
+            const calendarEventID = Utilities_1.convertEventGuidFromService(eventID);
+            const calendarEventOptimisticID = SimplyImmutable.deepFreeze(['', calendarEventID, ctx.userID, ctx.userID]);
+            const CalendarEventEntity = ctx.createEntity(calendarEventRef, Object.assign(Object.assign({}, calendarEventParams), { created: ctx.timestamp, lastModified: ctx.timestamp }), ctx.userID);
+            plan.ops.push({
+                changeType: 'Node:CREATE',
+                node: CalendarEventEntity,
+                id: calendarEventOptimisticID,
+            }, {
+                changeType: 'Edge:MODIFY',
+                edgesToCreate: [{
+                        srcID: params.noteID, srcType: en_core_entity_types_1.CoreEntityTypes.Note, srcPort: 'calendarEvents',
+                        dstID: calendarEventRef.id, dstType: en_data_model_1.EntityTypes.CalendarEvent, dstPort: 'notes',
+                    }],
+            });
+        }
+        plan.results.result = eventID;
         return plan;
     },
 };
-exports.calendarEventLinkDelete = {
-    type: conduit_core_1.MutatorRemoteExecutorType.Local,
+exports.calendarEventUnlink = {
+    type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
     params: {
-        calendarEventLinkId: 'ID',
+        eventID: 'ID',
+        noteID: 'ID',
     },
     execute: async (trc, ctx, params) => {
         const plan = {
             results: {},
             ops: [],
         };
-        const calendarEventLinkRef = { id: params.calendarEventLinkId, type: CalendarConstants_1.CalendarEntityTypes.CalendarEventLink };
-        const calendarEventLink = await ctx.fetchEntity(trc, calendarEventLinkRef);
-        if (!calendarEventLink) {
-            throw new conduit_utils_1.NotFoundError(calendarEventLinkRef.id, 'Missing calendarEventLink in calendarEventLinkDelete');
+        const calendarEventRef = { id: params.eventID, type: en_data_model_1.EntityTypes.CalendarEvent };
+        const calendarEventNode = await ctx.fetchEntity(trc, calendarEventRef);
+        if (!calendarEventNode) {
+            throw new conduit_utils_1.NotFoundError(calendarEventRef.id, 'Could not fetch CalendarEvent in calendarEventUnlink');
         }
-        const note = await ctx.traverseGraph(trc, calendarEventLinkRef, [{ edge: ['inputs', 'note'], type: en_core_entity_types_1.CoreEntityTypes.Note }]);
-        if (!note || !note.length) {
-            throw new conduit_utils_1.NotFoundError(params.calendarEventLinkId, `Not found CalendarEventLink's parent Note ${params.calendarEventLinkId}`);
+        const noteRef = { id: params.noteID, type: en_core_entity_types_1.CoreEntityTypes.Note };
+        const noteNode = await ctx.fetchEntity(trc, noteRef);
+        if (!noteNode) {
+            throw new conduit_utils_1.NotFoundError(noteRef.id, 'Could not fetch Note in calendarEventUnlink');
         }
-        await checkNoteEditPermissionByNoteId(trc, ctx, note[0].id);
-        plan.results.result = calendarEventLinkRef.id;
+        await checkNoteEditPermissionByNoteId(trc, ctx, noteNode.id);
+        plan.results.result = calendarEventRef.id;
         plan.ops.push({
-            changeType: 'Node:DELETE',
-            nodeRef: calendarEventLinkRef,
-        }, {
             changeType: 'Edge:MODIFY',
             edgesToDelete: [
-                { dstID: params.calendarEventLinkId, dstType: CalendarConstants_1.CalendarEntityTypes.CalendarEventLink, dstPort: 'calendarEventLinks' },
-                { srcID: params.calendarEventLinkId, srcType: CalendarConstants_1.CalendarEntityTypes.CalendarEventLink, srcPort: 'note' },
+                {
+                    srcID: params.noteID, srcType: en_core_entity_types_1.CoreEntityTypes.Note, srcPort: 'calendarEvents',
+                    dstID: calendarEventRef.id, dstType: en_data_model_1.EntityTypes.CalendarEvent, dstPort: 'notes',
+                },
             ],
         });
-        const calendarEvent = await ctx.traverseGraph(trc, calendarEventLinkRef, [{ edge: ['outputs', 'calendarEvent'], type: CalendarConstants_1.CalendarEntityTypes.CalendarEvent }]);
-        if (!calendarEvent || !calendarEvent.length) {
-            throw new conduit_utils_1.NotFoundError(params.calendarEventLinkId, `Not found CalendarEventLink's related CalendarEvent ${params.calendarEventLinkId}`);
-        }
-        // get the calendarEvent links to se if it should be deleted
-        const calendarEventLinksfromCalendarEvent = await ctx.traverseGraph(trc, calendarEvent[0], [{ edge: ['inputs', 'calendarEventLinks'], type: CalendarConstants_1.CalendarEntityTypes.CalendarEventLink }]);
-        if (calendarEventLinksfromCalendarEvent.length === 1 && calendarEventLinksfromCalendarEvent[0].id === params.calendarEventLinkId) {
+        // Delete CalendarEvent Once it has no more notes associated
+        const eventLinkedNotes = await ctx.traverseGraph(trc, calendarEventRef, [{ edge: ['inputs', 'notes'], type: en_core_entity_types_1.CoreEntityTypes.Note }]);
+        if (eventLinkedNotes.length === 1 && eventLinkedNotes[0].id === params.noteID) {
             plan.ops.push({
                 changeType: 'Node:DELETE',
-                nodeRef: calendarEvent[0],
+                nodeRef: calendarEventRef,
             });
         }
         return plan;

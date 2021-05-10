@@ -6,8 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SearchProcessor = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
-const en_conduit_plugin_task_1 = require("en-conduit-plugin-task");
 const en_core_entity_types_1 = require("en-core-entity-types");
+const en_data_model_1 = require("en-data-model");
 const SearchExtractor_1 = require("./etl/SearchExtractor");
 const SearchLoader_1 = require("./etl/SearchLoader");
 const SearchTransformer_1 = require("./etl/SearchTransformer");
@@ -19,7 +19,7 @@ const SearchExporter_1 = require("./exporters/SearchExporter");
  */
 class SearchProcessor {
     constructor(graphDB, searchEngine) {
-        this.supportedStreamingEventTypes = [en_core_entity_types_1.CoreEntityTypes.Attachment, en_core_entity_types_1.CoreEntityTypes.Message, en_core_entity_types_1.CoreEntityTypes.Note, en_conduit_plugin_task_1.TaskEntityTypes.Task];
+        this.supportedStreamingEventTypes = [en_core_entity_types_1.CoreEntityTypes.Attachment, en_core_entity_types_1.CoreEntityTypes.Message, en_core_entity_types_1.CoreEntityTypes.Note, en_data_model_1.EntityTypes.Task];
         // maximum time for the processing pipeline
         this.maxProcessingTime = 200;
         // maximum intervals between two flushes

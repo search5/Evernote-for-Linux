@@ -7,7 +7,7 @@ exports.taskUserSettingsUpsert = exports.taskUserSettingsSetDefaultTaskNote = vo
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const TaskConstants_1 = require("../TaskConstants");
+const en_data_model_1 = require("en-data-model");
 const TaskUtils_1 = require("../TaskUtils");
 const Permission_1 = require("./Helpers/Permission");
 async function getNewTaskUserSettingsOps(trc, ctx, id, ref, defaultRemindersOffsets) {
@@ -31,7 +31,7 @@ async function getNewTaskUserSettingsOps(trc, ctx, id, ref, defaultRemindersOffs
 // as part of the request sending to the backend service.
 //
 async function ensureTaskUserSettingsID(trc, ctx) {
-    return ctx.generateDeterministicID(trc, ctx.userID, TaskConstants_1.TaskEntityTypes.TaskUserSettings, TaskConstants_1.TaskDeterministicIdGenerator);
+    return ctx.generateDeterministicID(trc, ctx.userID, en_data_model_1.EntityTypes.TaskUserSettings, en_data_model_1.DefaultDeterministicIdGenerator);
 }
 exports.taskUserSettingsSetDefaultTaskNote = {
     type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
@@ -49,7 +49,7 @@ exports.taskUserSettingsSetDefaultTaskNote = {
             throw new conduit_utils_1.NotFoundError(nodeRef.id, 'missing note in set as default');
         }
         await Permission_1.checkNoteEditPermissionByNoteId(trc, ctx, note.id);
-        const taskUserSettingsRef = { id: taskUserSettingsID, type: TaskConstants_1.TaskEntityTypes.TaskUserSettings };
+        const taskUserSettingsRef = { id: taskUserSettingsID, type: en_data_model_1.EntityTypes.TaskUserSettings };
         // get existing default-task-note
         const taskUserSettings = await ctx.fetchEntity(trc, taskUserSettingsRef);
         if (!taskUserSettings) {
@@ -72,13 +72,13 @@ exports.taskUserSettingsSetDefaultTaskNote = {
                 {
                     changeType: 'Edge:MODIFY',
                     edgesToCreate: [{
-                            srcID: taskUserSettingsID, srcType: TaskConstants_1.TaskEntityTypes.TaskUserSettings, srcPort: 'defaultTaskNote',
+                            srcID: taskUserSettingsID, srcType: en_data_model_1.EntityTypes.TaskUserSettings, srcPort: 'defaultTaskNote',
                             dstID: note.id, dstType: en_core_entity_types_1.CoreEntityTypes.Note, dstPort: 'taskUserSettingsForDefaultNote',
                         }],
                 }, {
                     changeType: 'Node:UPDATE',
                     nodeRef: taskUserSettingsRef,
-                    node: ctx.assignFields(TaskConstants_1.TaskEntityTypes.TaskUserSettings, {
+                    node: ctx.assignFields(en_data_model_1.EntityTypes.TaskUserSettings, {
                         pinDefaultTaskNote: params.pinDefaultTaskNote,
                     }),
                 }],
@@ -96,7 +96,7 @@ exports.taskUserSettingsUpsert = {
     execute: async (trc, ctx, params) => {
         const ops = [];
         const taskUserSettingsID = TaskUtils_1.getTaskUserSettingsByMutationContext(ctx);
-        const taskUserSettingsRef = { id: taskUserSettingsID, type: TaskConstants_1.TaskEntityTypes.TaskUserSettings };
+        const taskUserSettingsRef = { id: taskUserSettingsID, type: en_data_model_1.EntityTypes.TaskUserSettings };
         const taskUserSettings = await ctx.fetchEntity(trc, taskUserSettingsRef);
         if (!taskUserSettings) {
             ops.push(await getNewTaskUserSettingsOps(trc, ctx, taskUserSettingsID, taskUserSettingsRef));
@@ -112,7 +112,7 @@ exports.taskUserSettingsUpsert = {
                 {
                     changeType: 'Node:UPDATE',
                     nodeRef: taskUserSettingsRef,
-                    node: ctx.assignFields(TaskConstants_1.TaskEntityTypes.TaskUserSettings, {
+                    node: ctx.assignFields(en_data_model_1.EntityTypes.TaskUserSettings, {
                         defaultReminder: params.defaultReminder,
                         defaultRemindersOffsets: params.defaultRemindersOffsets,
                     }),

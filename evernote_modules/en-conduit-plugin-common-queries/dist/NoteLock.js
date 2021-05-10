@@ -21,13 +21,15 @@ const Notelock = conduit_core_1.schemaToGraphQLType(NotelockSchema);
 const NullableNotelock = conduit_core_1.schemaToGraphQLType(conduit_utils_1.Nullable(NotelockSchema));
 async function checkNoteUpsyncStatus(context, noteID) {
     conduit_core_1.validateDB(context);
-    await conduit_utils_1.withError(context.db.flushRemoteMutations());
     const noteNode = await context.db.getNode(context, { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note });
     if (conduit_utils_1.isNullish(noteNode)) {
         throw new conduit_utils_1.NotFoundError(noteID);
     }
     if (noteNode.version === 0) {
-        throw new conduit_utils_1.RetryError('Note is not upsynced yet', 5000 /* random number */);
+        const res = await conduit_utils_1.withError(context.db.flushRemoteMutations());
+        if (res.err || res.data.pending) {
+            throw new conduit_utils_1.RetryError('Note is not upsynced yet', 5000 /* random number */);
+        }
     }
 }
 function toNotelockResolver(f) {

@@ -7,8 +7,8 @@ exports.SearchExtractor = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
-const en_conduit_plugin_task_1 = require("en-conduit-plugin-task");
 const en_core_entity_types_1 = require("en-core-entity-types");
+const en_data_model_1 = require("en-data-model");
 /**
  * First stage of the search ETL pipeline. Extracts required information from the external storage (GraphDB).
  */
@@ -92,7 +92,7 @@ class SearchExtractor {
         return attachments;
     }
     async extractTask(trc, taskID) {
-        const taskNodeRef = { id: taskID, type: en_conduit_plugin_task_1.TaskEntityTypes.Task };
+        const taskNodeRef = { id: taskID, type: en_data_model_1.EntityTypes.Task };
         const taskNode = await this.graphDB.getNodeWithoutGraphQLContext(trc, taskNodeRef);
         if (!taskNode) {
             return undefined;

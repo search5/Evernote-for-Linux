@@ -132,9 +132,19 @@ class Searcher {
         resGroup.startIndex = engineResultGroup.startIndex;
         resGroup.totalResultCount = engineResultGroup.totalResultCount;
         result.results.push(resGroup);
+        if (engineResultGroup.resultFlags !== undefined) {
+            result.meta = {
+                resultFlags: {
+                    isValidQueryStr: engineResultGroup.resultFlags.isValidQueryStr,
+                    isBoolean: engineResultGroup.resultFlags.isBoolean,
+                    isGeo: engineResultGroup.resultFlags.isGeo,
+                    isFiltered: engineResultGroup.resultFlags.isFiltered,
+                },
+            };
+        }
         return result;
     }
-    isQuickSwitcherRequest(args) {
+    async isQuickSwitcherRequest(args) {
         if (!args.param || !args.param.resultSpec) {
             return false;
         }
@@ -148,13 +158,16 @@ class Searcher {
                 return false;
             }
         }
+        if (await this.isQueryWithFilters(args)) {
+            return false;
+        }
         return true;
     }
     async suggest(args, authData) {
         const searchExRet = SearchExUtil_1.emptySearchExResult();
         const searchStr = SearchExUtil_1.getSearchString(args);
         let engineResults = new Array();
-        if (this.isQuickSwitcherRequest(args)) {
+        if (await this.isQuickSwitcherRequest(args)) {
             engineResults = await this.searchEngine.suggest(searchStr, en_search_engine_shared_1.ENDocumentType.NOTE, en_search_engine_shared_1.ENSuggestOptimization.NONE);
         }
         else {
@@ -200,11 +213,6 @@ class Searcher {
         }
         return searchExRet;
     }
-    /**
-     * Returns true if query contains only locally indexed metadata filters
-     *
-     * @param args searchEx query.
-     */
     async isMetadataQuery(args) {
         const resSpec = SearchExUtil_1.findResultSpec(args, SearchSchemaTypes_1.SearchExResultType.NOTE);
         if (resSpec === null || !this.isSearchRequest(resSpec)) {
@@ -213,6 +221,18 @@ class Searcher {
         }
         const searchStr = SearchExUtil_1.getSearchString(args);
         return await this.searchEngine.isMetadataQuery(searchStr);
+    }
+    async isQueryWithFilters(args) {
+        const searchStr = SearchExUtil_1.getSearchString(args);
+        return await this.searchEngine.isQueryWithFilters(searchStr);
+    }
+    /**
+     * Returns true if query can be processed locally
+     *
+     * @param args searchEx query.
+     */
+    async isLocallyProcessedQuery(args) {
+        return await this.isMetadataQuery(args) || await this.isQuickSwitcherRequest(args);
     }
 }
 exports.Searcher = Searcher;

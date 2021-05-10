@@ -1,0 +1,1 @@
+{"version":3,"file":"UserCalendarData.js","sourceRoot":"","sources":["../../src/types/UserCalendarData.ts"],"names":[],"mappings":";;;AAAA,6CAA4D;AAiB/C,QAAA,sBAAsB,GAAG,oBAAM,CAAmB;IAC3D,WAAW,EAAE,4BAAc;IAC3B,YAAY,EAAE,4BAAc;IAC5B,WAAW,EAAE,4BAAc;IAC3B,QAAQ,EAAE,4BAAc;IACxB,SAAS,EAAE,SAAS;IACpB,OAAO,EAAE,SAAS;CACrB,EAAE,oBAAoB,CAAC,CAAC"}

@@ -113,7 +113,8 @@ async function meResolver(parent, args, context, info) {
         throw new conduit_utils_1.NoUserError('no current user');
     }
     try {
-        return await resolveNode(user, context, info);
+        const updatedUser = await context.meUpdater(context, user);
+        return await resolveNode(updatedUser, context, info);
     }
     catch (err) {
         if (err instanceof conduit_utils_1.NotFoundError) {

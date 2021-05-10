@@ -5,22 +5,22 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userCalendarSettingsTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
-const CalendarConstants_1 = require("../CalendarConstants");
+const en_calendar_data_model_1 = require("en-calendar-data-model");
+const en_data_model_1 = require("en-data-model");
 exports.userCalendarSettingsTypeDef = {
-    name: CalendarConstants_1.CalendarEntityTypes.UserCalendarSettings,
-    syncSource: conduit_storage_1.SyncSource.LOCAL,
+    name: en_data_model_1.EntityTypes.UserCalendarSettings,
+    syncSource: conduit_storage_1.SyncSource.NSYNC,
+    nsyncFeatureGroup: 'Calendar',
     fieldValidation: {},
-    schema: {
-        isActive: 'boolean',
-    },
+    schema: en_calendar_data_model_1.UserCalendarSettingsEntitySchema.fields,
     edges: {
         parent: {
             constraint: conduit_storage_1.EdgeConstraint.REQUIRED,
             type: conduit_storage_1.EdgeType.ANCESTRY_LINK,
             from: {
-                type: CalendarConstants_1.CalendarEntityTypes.CalendarAccount,
+                type: en_data_model_1.EntityTypes.CalendarAccount,
                 constraint: conduit_storage_1.EdgeConstraint.MANY,
-                denormalize: 'userCalendarSettings',
+                denormalize: 'calendars',
             },
         },
     },

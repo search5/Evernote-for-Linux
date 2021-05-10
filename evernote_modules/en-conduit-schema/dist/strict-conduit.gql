@@ -357,8 +357,6 @@ type Board {
   localChangeTimestamp: Float!
   boardType: BoardType!
   internalID: Float
-  isCustomized: Boolean
-  serviceLevel: BoardServiceLevels
   headerBG: BlobV2!
   headerBGMime: String
   headerBGFileName: String
@@ -366,18 +364,20 @@ type Board {
   headerBGPreviousUploadMime: String
   headerBGPreviousUploadFileName: String
   headerBGMode: BoardBackgroundMode
-  headerBGColor: BoardColorScheme
+  headerBGColor: BoardHeaderBGColor
   greetingText: String
   desktop: BoardDesktop!
   mobile: BoardMobile!
   freeTrialExpiration: Float
-  created: Float!
-  updated: Float!
   tasksVersion: Float
   calendarVersion: Float
   filteredNotesVersion: Float
   extraVersion: Float
   coreVersion: Float
+  serviceLevel: BoardServiceLevels
+  isCustomized: Boolean
+  created: Float!
+  updated: Float!
   children: [Widget!]!
   childrenCount: Int!
   isSupported: Boolean!
@@ -402,11 +402,6 @@ type BoardBootstrapResult {
   success: Boolean!
   result: String!
   board: Board!
-}
-
-type BoardColorScheme {
-  light: String!
-  dark: String!
 }
 
 input BoardColorSchemeInput {
@@ -443,8 +438,6 @@ enum BoardFilterField {
   id
   boardType
   internalID
-  isCustomized
-  serviceLevel
   headerBG_localChangeTimestamp
   headerBG_hash
   headerBG_size
@@ -472,18 +465,25 @@ enum BoardFilterField {
   desktop_layout
   mobile_layout
   freeTrialExpiration
-  updated
   tasksVersion
   calendarVersion
   filteredNotesVersion
   extraVersion
   coreVersion
+  serviceLevel
+  isCustomized
+  updated
   label
 }
 
 enum BoardFormFactor {
   Desktop
   Mobile
+}
+
+type BoardHeaderBGColor {
+  light: String!
+  dark: String!
 }
 
 input BoardHeaderFields {
@@ -562,8 +562,6 @@ enum BoardSortField {
   id
   boardType
   internalID
-  isCustomized
-  serviceLevel
   headerBG_localChangeTimestamp
   headerBG_hash
   headerBG_size
@@ -591,12 +589,14 @@ enum BoardSortField {
   desktop_layout
   mobile_layout
   freeTrialExpiration
-  updated
   tasksVersion
   calendarVersion
   filteredNotesVersion
   extraVersion
   coreVersion
+  serviceLevel
+  isCustomized
+  updated
   label
 }
 
@@ -642,20 +642,22 @@ type CalendarAccount {
   label: String!
   localChangeTimestamp: Float!
   isConnected: Boolean!
-  userCalendarSettings: [UserCalendarSettings!]!
-  userCalendarSettingsCount: Int!
+  provider: CalendarProvider!
+  userIdFromExternalProvider: String!
+  calendars: [UserCalendarSettings!]!
+  calendarsCount: Int!
 }
 
 type CalendarAccountResult {
-  id: String!
-  provider: CalendarProvider!
-  calendarUserId: String!
   isConnected: Boolean!
+  provider: CalendarProvider!
+  userIdFromExternalProvider: String!
+  id: String!
   calendars: [UserCalendarSettingsResult!]!
 }
 
 type CalendarContact {
-  email: String!
+  email: String
   displayName: String
   avatar: String
 }
@@ -666,12 +668,12 @@ type CalendarEvent {
   label: String!
   localChangeTimestamp: Float!
   provider: CalendarProvider!
-  calendarUserId: String!
+  userIdFromExternalProvider: String!
   userCalendarExternalId: String!
   calendarEventExternalId: String!
   created: Float!
   lastModified: Float!
-  deletionTime: Float
+  externalProviderDeleted: Float
   isAccountConnected: Boolean!
   summary: String
   displayColor: String
@@ -685,57 +687,81 @@ type CalendarEvent {
   iCalendarUid: String!
   isBusy: Boolean!
   status: CalendarEventStatus!
-  links: String!
+  links: [CalendarEventUriResult!]!
   eventCreator: CalendarContact!
   eventOrganizer: CalendarContact!
-  attendees: String!
-  calendarEventLinks: [CalendarEventLink!]!
-  calendarEventLinksCount: Int!
+  attendees: [CalendarEventAttendeeResult!]!
+  isRecurrenceInstance: Boolean
+  notes: [Note!]!
+  notesCount: Int!
 }
 
-type CalendarEventExternal {
-  id: String!
-  provider: CalendarProvider!
-  calendarUserId: String!
-  userCalendarExternalId: String!
-  calendarEventExternalId: String!
-  created: Float!
-  lastModified: Float!
-  deletionTime: Float
-  isAccountConnected: Boolean!
-  summary: String
-  description: String
-  displayColor: String
-  location: String
-  isAllDay: Boolean!
-  start: Float!
-  end: Float!
-  recurrentEventId: String
-  recurrence: String
-  iCalendarUid: String!
-  isBusy: Boolean!
-  status: CalendarEventStatus!
-  links: String!
-  eventCreator: CalendarContact!
-  eventOrganizer: CalendarContact!
-  attendees: String!
+type CalendarEventAttendeeResult {
+  contact: CalendarContact!
+  isOptional: Boolean!
+  responseStatus: CalendarEventAttendeeStatus!
+  isResource: Boolean
+  isSelf: Boolean
 }
 
-type CalendarEventLink {
-  type: String!
+enum CalendarEventAttendeeStatus {
+  ACCEPTED
+  DECLINED
+  NEEDSACTION
+  TENTATIVE
+}
+
+type CalendarEventLinkedNotesResult {
   id: String!
   label: String!
-  localChangeTimestamp: Float!
-  isLinkedToAllInstances: Boolean!
-  linkedTimestamp: Float!
-  calendarEvent: CalendarEvent
-  note: Note
+}
+
+type CalendarEventResult {
+  provider: CalendarProvider!
+  userIdFromExternalProvider: String!
+  userCalendarExternalId: String!
+  calendarEventExternalId: String!
+  created: Float!
+  lastModified: Float!
+  externalProviderDeleted: Float
+  isAccountConnected: Boolean!
+  summary: String
+  displayColor: String
+  description: String
+  location: String
+  isAllDay: Boolean!
+  start: Float!
+  end: Float!
+  recurrentEventId: String
+  recurrence: String
+  iCalendarUid: String!
+  isBusy: Boolean!
+  status: CalendarEventStatus!
+  links: [CalendarEventUriResult!]!
+  eventCreator: CalendarContact!
+  eventOrganizer: CalendarContact!
+  attendees: [CalendarEventAttendeeResult!]!
+  isRecurrenceInstance: Boolean
+  id: String!
+  linkedNotes: [CalendarEventLinkedNotesResult!]!
 }
 
 enum CalendarEventStatus {
   CONFIRMED
   CANCELED
   TENTATIVE
+}
+
+type CalendarEventUriResult {
+  type: CalendarEventUriType!
+  description: String!
+  uri: String!
+}
+
+enum CalendarEventUriType {
+  GENERIC
+  CONFERENCE
+  WEB
 }
 
 enum CalendarNotificationOptions {
@@ -815,7 +841,7 @@ enum CommEngineClientType {
 }
 
 type CommEngineConfig {
-  cooldownPeriodMillis: Int!
+  cooldownPeriodMillis: Int
 }
 
 enum CommEngineEventType {
@@ -826,24 +852,24 @@ enum CommEngineEventType {
 }
 
 type CommEngineMessage {
-  key: String!
-  priority: Int!
-  content: CommEngineMessageContent!
-  messageContent: CommEngineMessageContent!
-  placement: Int!
-  offline: Boolean!
-  expires: Float!
+  key: String
+  priority: Int
+  content: CommEngineMessageContent
+  messageContent: CommEngineMessageContent
+  placement: Int
+  offline: Boolean
+  expires: Float
 }
 
 type CommEngineMessageContent {
-  templateUri: String!
-  contentVariablesJson: String!
+  templateUri: String
+  contentVariablesJson: String
 }
 
 type CommEngineResponseSchema {
   messages: [CommEngineMessage!]!
-  messageRequestGuid: String!
-  config: CommEngineConfig!
+  messageRequestGuid: String
+  config: CommEngineConfig
 }
 
 input CommEvent {
@@ -1498,8 +1524,8 @@ type Note {
   tags: [Tag!]!
   tagsCount: Int!
   shortcut: Shortcut
-  calendarEventLinks: [CalendarEventLink!]!
-  calendarEventLinksCount: Int!
+  calendarEvents: [CalendarEvent!]!
+  calendarEventsCount: Int!
   noteContentInfo: NoteContentInfo
   tasks: [Task!]!
   tasksCount: Int!
@@ -2036,9 +2062,9 @@ type NoteContentInfo {
   label: String!
   localChangeTimestamp: Float!
   taskGroupNoteLevelIDs: [String!]
+  sourceOfChange: String
   created: Float!
   updated: Float!
-  sourceOfChange: String
   parent: Note
 }
 
@@ -2071,9 +2097,9 @@ enum NoteContentInfoFilterField {
   parent
   id
   taskGroupNoteLevelIDs
+  sourceOfChange
   created
   updated
-  sourceOfChange
   label
 }
 
@@ -2096,9 +2122,9 @@ enum NoteContentInfoSortField {
   parent
   id
   taskGroupNoteLevelIDs
+  sourceOfChange
   created
   updated
-  sourceOfChange
   label
 }
 
@@ -2784,14 +2810,14 @@ type Reminder {
   label: String!
   localChangeTimestamp: Float!
   reminderDate: Float
-  reminderDateUIOption: ReminderDateUIOption!
+  reminderDateUIOption: ReminderDateUIOption
   timeZone: String
-  created: Float!
-  updated: Float!
   dueDateOffset: Float
-  noteLevelID: String!
   sourceOfChange: String
   status: ReminderStatus
+  noteLevelID: String
+  created: Float!
+  updated: Float!
   scheduledNotification: ScheduledNotification
   source: Task
 }
@@ -2818,11 +2844,11 @@ enum ReminderFilterField {
   id
   reminderDateUIOption
   timeZone
-  created
   dueDateOffset
-  noteLevelID
   sourceOfChange
   status
+  noteLevelID
+  created
   label
 }
 
@@ -2856,11 +2882,11 @@ enum ReminderSortField {
   id
   reminderDateUIOption
   timeZone
-  created
   dueDateOffset
-  noteLevelID
   sourceOfChange
   status
+  noteLevelID
+  created
   label
 }
 
@@ -2890,6 +2916,13 @@ type RemindersResults {
 enum ReminderStatus {
   active
   muted
+}
+
+type ResultFlags {
+  isValidQueryStr: Boolean
+  isBoolean: Boolean
+  isGeo: Boolean
+  isFiltered: Boolean
 }
 
 type RootMutationType {
@@ -2922,10 +2955,10 @@ type RootMutationType {
   boardHeaderCustomize(board: String!, fields: BoardHeaderFields): AutoMutatorRes!
   boardSetIsCustomized(board: String!, isCustomized: Boolean!): AutoMutatorRes!
   boardStartFreeTrial(board: String!, durationInDays: Float): AutoMutatorRes!
-  calendarAccountUpdate(calendarAccountId: String!, isConnected: Boolean!): AutoMutatorRes!
-  calendarEventLinkCreate(eventID: String!, noteID: String!, isLinkedToAllInstances: Boolean!, provider: String!, calendarUserId: String!, userCalendarExternalId: String!, calendarEventExternalId: String!, isAccountConnected: Boolean!, isAllDay: Boolean!, start: Float!, end: Float!, iCalendarUid: String!, isBusy: Boolean!, status: CalendarEventStatus!, links: String!, creatorEmail: String!, organizerEmail: String!, attendees: String!, summary: String, deletionTime: Float, displayColor: String, description: String, location: String, recurrentEventId: String, recurrence: String, creatorDisplayName: String, creatorAvatar: String, organizerDisplayName: String, organizerAvatar: String): AutoMutatorRes!
-  calendarEventLinkDelete(calendarEventLinkId: String!): AutoMutatorRes!
+  calendarEventLink(noteID: String!, eventID: String!): AutoMutatorRes!
+  calendarEventUnlink(eventID: String!, noteID: String!): AutoMutatorRes!
   calendarSettingsUpsert(useTemplateForNewNotes: Boolean!, mobileOpenNoteMinutes: CalendarNotificationOptions!, mobileCreateNoteMinutes: CalendarNotificationOptions!, desktopOpenNoteMinutes: CalendarNotificationOptions!, desktopCreateNoteMinutes: CalendarNotificationOptions!): AutoMutatorRes!
+  calendarUserCalendarSettingsUpdate(userCalendarSettingsId: String!, isActive: Boolean!): AutoMutatorRes!
   clearNSyncBackoff: Boolean!
   clientLogin(serviceHost: String!, externalServiceHost: String, email: String!, password: String, allowFacadeAsPersonal: Boolean): LoginResult!
   clientLoginWithCookies(serviceHost: String!, userSlot: Int): LoginResult!
@@ -3045,7 +3078,7 @@ type RootMutationType {
   tagSetName(tag: String!, name: String!, eventLabel: String): AutoMutatorRes!
   targetUrlCreate(url: String!, utm_source: String!, utm_medium: String!, host: String, two_factor_token: String, url_params: String): String!
   targetUrlCreateWithOAuth(serviceHost: String!, tokenPayload: String!, serviceProvider: String!, url: String!, utm_source: String!, utm_medium: String!, urlParams: String): String!
-  taskAssign(task: String!, assigneeID: String, sourceOfChange: String): AutoMutatorRes!
+  taskAssign(task: String!, assigneeID: String, assigneeEmail: String, sourceOfChange: String): AutoMutatorRes!
   taskCreate(container: String!, label: String!, taskGroupNoteLevelID: String!, dueDate: Float, timeZone: String, dueDateUIOption: TaskDueDateUIOption, flag: Boolean, sortWeight: String, status: String, noteLevelID: String, sourceOfChange: String): AutoMutatorRes!
   taskDelete(task: String!, sourceOfChange: String): AutoMutatorRes!
   taskGroupCreateDefaultTaskNoteUpsert(defaultTaskNoteLabel: String!, pinDefaultTaskNote: Boolean, noteContent: String): TaskGroupCreateDefaultTaskNoteUpsertResult!
@@ -3062,7 +3095,6 @@ type RootMutationType {
   threadValidateRecipients(participants: [String!], emails: [String!]): AutoMutatorRes!
   twoFactorAuthSendCode(serviceHost: String!, token: String!, sendToBackupPhone: Boolean!, textMsgTemplate: String!, useVoice: Boolean!): String!
   userAssociateWithOpenID(provider: ServiceProvider!, tokenPayload: String!): GenericMutationResult!
-  userCalendarSettingsUpdate(userCalendarSettingsId: String!, isActive: Boolean!): AutoMutatorRes!
   userSetReminderSetting(setting: UserReminderEmailConfig!): AutoMutatorRes!
   userSettingsClear(userID: String): GenericMutationResult!
   userSettingsRemove(key: String!, userID: String): GenericMutationResult!
@@ -3104,7 +3136,6 @@ type RootQueryType {
   CEDataForTemplates(noteID: String): CEDataForTemplates!
   CalendarAccount(id: String!): CalendarAccount
   CalendarEvent(id: String!): CalendarEvent
-  CalendarEventLink(id: String!): CalendarEventLink
   CalendarSettings(id: String!): CalendarSettings
   ContentConflictsInWidget(widget: String!, reverseOrder: Boolean, pageInfo: PageInfo): ContentConflictsInWidgetResults!
   CrossPromotionsInfo: CrossPromotionInfo!
@@ -3199,10 +3230,10 @@ type RootQueryType {
   calendarAccounts(activeCalendarOnly: Boolean): [CalendarAccountResult!]!
 
   """Get an event by id"""
-  calendarEventById(id: String!): CalendarEventExternal!
+  calendarEventById(id: String!): CalendarEventResult!
 
   """List all events from a specified time window"""
-  calendarEvents(from: Float!, to: Float!, provider: CalendarProvider): [CalendarEventExternal!]!
+  calendarEvents(from: Float!, to: Float!, provider: CalendarProvider): [CalendarEventResult!]!
 
   """Get the user's calendar settings"""
   calendarSettings: CalendarSettingsResult!
@@ -3321,25 +3352,14 @@ type ScheduledNotification {
   label: String!
   localChangeTimestamp: Float!
   scheduledNotificationType: ScheduledNotificationType!
+  mute: Boolean!
+  payload: ScheduledNotificationPayload
   created: Float!
   updated: Float!
-  mute: Boolean!
-  data: ScheduledNotificationData
   dataSourceUpdatedAt: Float!
   schedulingUpdatedAt: Float!
   dataSource: Task
   scheduling: Reminder
-}
-
-type ScheduledNotificationData {
-  calendarEventId: String!
-  notificationTime: Float!
-  clientType: String!
-  title: String!
-  startTime: Float!
-  endTime: Float!
-  location: String!
-  noteID: String
 }
 
 input ScheduledNotificationFilter {
@@ -3354,17 +3374,18 @@ input ScheduledNotificationFilter {
 enum ScheduledNotificationFilterField {
   id
   scheduledNotificationType
+  mute
+  payload_calendarEventId
+  payload_notificationTime
+  payload_clientType
+  payload_title
+  payload_startTime
+  payload_endTime
+  payload_location
+  payload_noteID
+  payload_isAllDay
   created
   updated
-  mute
-  data_calendarEventId
-  data_notificationTime
-  data_clientType
-  data_title
-  data_startTime
-  data_endTime
-  data_location
-  data_noteID
   label
 }
 
@@ -3378,6 +3399,18 @@ type ScheduledNotificationListResults {
   list: [ScheduledNotification!]!
 }
 
+type ScheduledNotificationPayload {
+  calendarEventId: String!
+  notificationTime: Float!
+  clientType: String!
+  title: String!
+  startTime: Float!
+  endTime: Float!
+  location: String
+  noteID: String
+  isAllDay: Boolean
+}
+
 input ScheduledNotificationSort {
   field: ScheduledNotificationSortField!
   order: IndexOrderType!
@@ -3386,17 +3419,18 @@ input ScheduledNotificationSort {
 enum ScheduledNotificationSortField {
   id
   scheduledNotificationType
+  mute
+  payload_calendarEventId
+  payload_notificationTime
+  payload_clientType
+  payload_title
+  payload_startTime
+  payload_endTime
+  payload_location
+  payload_noteID
+  payload_isAllDay
   created
   updated
-  mute
-  data_calendarEventId
-  data_notificationTime
-  data_clientType
-  data_title
-  data_startTime
-  data_endTime
-  data_location
-  data_noteID
   label
 }
 
@@ -3455,6 +3489,7 @@ input SearchExLocation {
 }
 
 type SearchExMeta {
+  resultFlags: ResultFlags
   searchLogInfo: SearchLogInfo
 }
 
@@ -3751,7 +3786,7 @@ type StackedNotebookListStack {
 
 input StackedNotebookSort {
   field: StackedNotebookSortField!
-  order: IndexOrderType
+  order: IndexOrderType!
 }
 
 enum StackedNotebookSortField {
@@ -4018,8 +4053,6 @@ type Task {
   id: String!
   label: String!
   localChangeTimestamp: Float!
-  created: Float!
-  updated: Float!
   dueDate: Float
   dueDateUIOption: TaskDueDateUIOption
   timeZone: String
@@ -4031,6 +4064,9 @@ type Task {
   statusUpdated: Float
   taskGroupNoteLevelID: String!
   sourceOfChange: String
+  assigneeEmail: String
+  created: Float!
+  updated: Float!
   memberships: [Membership!]!
   membershipsCount: Int!
   reminders: [Reminder!]!
@@ -4084,8 +4120,6 @@ enum TaskFilterField {
   status
   taskGroupNoteLevelID
   id
-  created
-  updated
   dueDate
   dueDateUIOption
   timeZone
@@ -4094,6 +4128,9 @@ enum TaskFilterField {
   noteLevelID
   statusUpdated
   sourceOfChange
+  assigneeEmail
+  created
+  updated
 }
 
 type TaskGroupCreateDefaultTaskNoteUpsertResult {
@@ -4252,8 +4289,6 @@ enum TaskSortField {
   status
   taskGroupNoteLevelID
   id
-  created
-  updated
   dueDate
   dueDateUIOption
   timeZone
@@ -4262,6 +4297,9 @@ enum TaskSortField {
   noteLevelID
   statusUpdated
   sourceOfChange
+  assigneeEmail
+  created
+  updated
 }
 
 enum TaskStatus {
@@ -4274,11 +4312,13 @@ type TaskUserSettings {
   id: String!
   label: String!
   localChangeTimestamp: Float!
-  created: Float!
-  updated: Float!
   defaultReminder: Boolean
   defaultRemindersOffsets: [Float!]
   pinDefaultTaskNote: Boolean
+  taskAssignDate: Float
+  taskAssignCount: Float
+  created: Float!
+  updated: Float!
   defaultTaskNote: Note
 }
 
@@ -4294,11 +4334,13 @@ input TaskUserSettingsFilter {
 enum TaskUserSettingsFilterField {
   label
   id
-  created
-  updated
   defaultReminder
   defaultRemindersOffsets
   pinDefaultTaskNote
+  taskAssignDate
+  taskAssignCount
+  created
+  updated
 }
 
 type TaskUserSettingsListResults {
@@ -4319,11 +4361,13 @@ input TaskUserSettingsSort {
 enum TaskUserSettingsSortField {
   label
   id
-  created
-  updated
   defaultReminder
   defaultRemindersOffsets
   pinDefaultTaskNote
+  taskAssignDate
+  taskAssignCount
+  created
+  updated
 }
 
 type Thread {
@@ -4537,7 +4581,7 @@ type UserAttributes {
 }
 
 type UserCalendarResult {
-  displayName: String!
+  displayName: String
   displayColor: String
   description: String
   timezone: String
@@ -4551,16 +4595,16 @@ type UserCalendarSettings {
   label: String!
   localChangeTimestamp: Float!
   isActive: Boolean!
+  userCalendarExternalId: String!
+  data: UserCalendarResult!
   parent: CalendarAccount
 }
 
 type UserCalendarSettingsResult {
-  id: String!
-  provider: CalendarProvider!
-  calendarUserId: String!
-  userCalendarExternalId: String!
   isActive: Boolean!
+  userCalendarExternalId: String!
   data: UserCalendarResult!
+  id: String!
 }
 
 type UserInfo {
@@ -4626,14 +4670,14 @@ type Widget {
   widgetType: WidgetType!
   mutableWidgetType: BoardMutableWidgetTypes
   internalID: Float
-  mobile: WidgetMobile!
-  desktop: WidgetDesktop!
+  mobile: WidgetFormFactor!
+  desktop: WidgetFormFactor!
   selectedTab: WidgetTabs
   content: BlobV2WithContent!
+  backgroundColor: WidgetBackgroundColor
+  filteredNotesQuery: WidgetSearchQuery
   created: Float!
   updated: Float!
-  filteredNotesQuery: WidgetFilteredNotesQuery
-  backgroundColor: WidgetBackgroundColor
   contentProvider: Note
   conflicts: [WidgetContentConflict!]!
   conflictsCount: Int!
@@ -4745,13 +4789,6 @@ input WidgetCustomizeParams {
   darkBGColor: String
 }
 
-type WidgetDesktop {
-  panelKey: String
-  sortWeight: String!
-  width: Float!
-  height: Float!
-}
-
 input WidgetFilter {
   field: WidgetFilterField!
   isSet: Boolean
@@ -4759,10 +4796,6 @@ input WidgetFilter {
   max: IndexRange
   match: IndexMatch
   prefix: String
-}
-
-type WidgetFilteredNotesQuery {
-  query: String!
 }
 
 enum WidgetFilterField {
@@ -4779,13 +4812,13 @@ enum WidgetFilterField {
   boardType
   softDelete
   internalID
-  mobile_panelKey
   mobile_width
   mobile_height
-  desktop_panelKey
+  mobile_panelKey
   desktop_sortWeight
   desktop_width
   desktop_height
+  desktop_panelKey
   content_localChangeTimestamp
   content_hash
   content_size
@@ -4795,11 +4828,18 @@ enum WidgetFilterField {
   content_version
   content_path
   content_content
-  updated
-  filteredNotesQuery_query
   backgroundColor_light
   backgroundColor_dark
+  filteredNotesQuery_query
+  updated
   label
+}
+
+type WidgetFormFactor {
+  sortWeight: String!
+  width: Float!
+  height: Float!
+  panelKey: String
 }
 
 type WidgetListResults {
@@ -4812,11 +4852,8 @@ type WidgetListResults {
   list: [Widget!]!
 }
 
-type WidgetMobile {
-  panelKey: String
-  sortWeight: String!
-  width: Float!
-  height: Float!
+type WidgetSearchQuery {
+  query: String!
 }
 
 enum WidgetsInBoardPlatform {
@@ -4866,13 +4903,13 @@ enum WidgetSortField {
   boardType
   softDelete
   internalID
-  mobile_panelKey
   mobile_width
   mobile_height
-  desktop_panelKey
+  mobile_panelKey
   desktop_sortWeight
   desktop_width
   desktop_height
+  desktop_panelKey
   content_localChangeTimestamp
   content_hash
   content_size
@@ -4882,10 +4919,10 @@ enum WidgetSortField {
   content_version
   content_path
   content_content
-  updated
-  filteredNotesQuery_query
   backgroundColor_light
   backgroundColor_dark
+  filteredNotesQuery_query
+  updated
   label
 }
 

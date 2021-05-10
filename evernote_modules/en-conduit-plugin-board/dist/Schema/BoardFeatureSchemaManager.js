@@ -22,7 +22,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BoardFeatureSchemaManager = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_data_model_1 = require("en-data-model");
-const BoardConstants_1 = require("../BoardConstants");
+const en_home_data_model_1 = require("en-home-data-model");
 const Utilities = __importStar(require("../Utilities"));
 const calendar_1 = require("./calendar");
 const core_1 = require("./core");
@@ -37,14 +37,14 @@ class BoardFeatureSchemaManager {
     }
     static createHomeGAWidgetTypes() {
         return [
-            en_data_model_1.WidgetType.Clipped,
-            en_data_model_1.WidgetType.Notebooks,
-            en_data_model_1.WidgetType.Notes,
-            en_data_model_1.WidgetType.OnboardingChecklist,
-            en_data_model_1.WidgetType.Pinned,
-            en_data_model_1.WidgetType.ScratchPad,
-            en_data_model_1.WidgetType.Shortcuts,
-            en_data_model_1.WidgetType.Tags,
+            en_home_data_model_1.WidgetType.Clipped,
+            en_home_data_model_1.WidgetType.Notebooks,
+            en_home_data_model_1.WidgetType.Notes,
+            en_home_data_model_1.WidgetType.OnboardingChecklist,
+            en_home_data_model_1.WidgetType.Pinned,
+            en_home_data_model_1.WidgetType.ScratchPad,
+            en_home_data_model_1.WidgetType.Shortcuts,
+            en_home_data_model_1.WidgetType.Tags,
         ];
     }
     getUpgradePipeline(board, feature, requestedVersion) {
@@ -72,11 +72,11 @@ class BoardFeatureSchemaManager {
     }
     createFeatureVersionPipelines() {
         return new Map([
-            [en_data_model_1.BoardFeature.Calendar, [calendar_1.calendarFeatureVersionOne]],
-            [en_data_model_1.BoardFeature.Tasks, [tasks_1.tasksFeatureVersionOne]],
-            [en_data_model_1.BoardFeature.FilteredNotes, [filteredNotes_1.filteredNotesFeatureVersionOne]],
-            [en_data_model_1.BoardFeature.Core, [core_1.coreFeatureVersionOne]],
-            [en_data_model_1.BoardFeature.Extra, [extra_1.extraFeatureVersionOne]],
+            [en_home_data_model_1.BoardFeature.Calendar, [calendar_1.calendarFeatureVersionOne]],
+            [en_home_data_model_1.BoardFeature.Tasks, [tasks_1.tasksFeatureVersionOne]],
+            [en_home_data_model_1.BoardFeature.FilteredNotes, [filteredNotes_1.filteredNotesFeatureVersionOne]],
+            [en_home_data_model_1.BoardFeature.Core, [core_1.coreFeatureVersionOne]],
+            [en_home_data_model_1.BoardFeature.Extra, [extra_1.extraFeatureVersionOne]],
         ]);
     }
     filterFeaturesRequested(featuresRequested, featureVersionsRequested) {
@@ -105,7 +105,7 @@ class BoardFeatureSchemaManager {
         }
         const featuresRequestedResult = [];
         const featureVersionsRequestedResult = [];
-        for (const feature of Object.values(en_data_model_1.BoardFeature)) {
+        for (const feature of Object.values(en_home_data_model_1.BoardFeature)) {
             const currentVersion = board.NodeFields[BoardFeatureSchemaManager.formFeatureKey(feature)];
             const indexOfFeature = featuresRequested.indexOf(feature);
             // The board already has a feature version number, and we need to run a comparison.
@@ -132,7 +132,7 @@ class BoardFeatureSchemaManager {
             featureVersions: featureVersionsRequestedResult,
         };
     }
-    async generateDefaultLayout(trc, ctx, userAdjustedServiceLevelV2, features, featureVersions, boardType = en_data_model_1.BoardType.Home, boardInternalID = 0, useServiceLevelV2Layouts = false) {
+    async generateDefaultLayout(trc, ctx, userAdjustedServiceLevelV2, features, featureVersions, boardType = en_home_data_model_1.BoardType.Home, boardInternalID = 0, useServiceLevelV2Layouts = false) {
         // This is the original list of widgets determined at Home Feature launch and is part of the Core Board Schema Definition.
         const widgetTypes = BoardFeatureSchemaManager.createHomeGAWidgetTypes();
         for (let i = 0; i < features.length; i++) {
@@ -160,7 +160,7 @@ class BoardFeatureSchemaManager {
         widget.isEnabled = defaults.isEnabled;
         widget.internalID = defaults.internalID;
         widget.mutableWidgetType = defaults.mutableWidgetType;
-        if (!platform || platform === en_data_model_1.DeviceFormFactor.Desktop) {
+        if (!platform || platform === en_home_data_model_1.DeviceFormFactor.Desktop) {
             if (!widget.desktop) {
                 widget.desktop = {
                     panelKey: undefined,
@@ -170,7 +170,7 @@ class BoardFeatureSchemaManager {
             widget.desktop.width = defaults.desktopWidth;
             widget.desktop.sortWeight = defaults.desktopSortWeight;
         }
-        if (!platform || platform === en_data_model_1.DeviceFormFactor.Mobile) {
+        if (!platform || platform === en_home_data_model_1.DeviceFormFactor.Mobile) {
             if (!widget.mobile) {
                 widget.mobile = {
                     panelKey: undefined,
@@ -234,8 +234,8 @@ class BoardFeatureSchemaManager {
         return {
             widget: widgetStash,
             edge: {
-                srcID: boardID, srcType: BoardConstants_1.BoardEntityTypes.Board, srcPort: 'children',
-                dstID: widgetNodeID, dstType: BoardConstants_1.BoardEntityTypes.Widget, dstPort: 'parent',
+                srcID: boardID, srcType: en_data_model_1.EntityTypes.Board, srcPort: 'children',
+                dstID: widgetNodeID, dstType: en_data_model_1.EntityTypes.Widget, dstPort: 'parent',
             },
         };
     }

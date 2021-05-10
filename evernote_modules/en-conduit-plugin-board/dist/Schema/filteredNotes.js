@@ -4,10 +4,10 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.filteredNotesFeatureVersionOne = void 0;
-const en_data_model_1 = require("en-data-model");
+const en_home_data_model_1 = require("en-home-data-model");
 exports.filteredNotesFeatureVersionOne = {
     widgetTypeGenerator: () => {
-        return [en_data_model_1.WidgetType.FilteredNotes];
+        return [en_home_data_model_1.WidgetType.FilteredNotes];
     },
     schemeUpgradeConverter: async () => {
         return {};

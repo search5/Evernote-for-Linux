@@ -7,8 +7,8 @@ exports.SearchStorageChangeReceiver = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
-const en_conduit_plugin_task_1 = require("en-conduit-plugin-task");
 const en_core_entity_types_1 = require("en-core-entity-types");
+const en_data_model_1 = require("en-data-model");
 const trc = conduit_utils_1.createTraceContext('SearchStorageChangeReceiver');
 /**
  * Receives database events and adds them to the SearchProcessor main processing queue.
@@ -33,7 +33,7 @@ class SearchStorageChangeReceiver {
             }
             // Task creation / update events are required in order
             // to update the corresponding note if the existing tasks are updated
-            if (nodeType === en_conduit_plugin_task_1.TaskEntityTypes.Task) {
+            if (nodeType === en_data_model_1.EntityTypes.Task) {
                 if (this.supportedStorageChangeTypes.has(event.type)) {
                     return true;
                 }
@@ -57,7 +57,7 @@ class SearchStorageChangeReceiver {
      */
     isTaskEvent(event) {
         const tableName = event.path[conduit_storage_1.StorageChangePath.TableName];
-        if (tableName && tableName === conduit_storage_1.tableForNodeType(en_conduit_plugin_task_1.TaskEntityTypes.Task) && this.supportedStorageChangeTypes.has(event.type)) {
+        if (tableName && tableName === conduit_storage_1.tableForNodeType(en_data_model_1.EntityTypes.Task) && this.supportedStorageChangeTypes.has(event.type)) {
             conduit_utils_1.logger.trace(`SearchStorageChangeReceiver: taskEvent ${event.type}`);
             return true;
         }

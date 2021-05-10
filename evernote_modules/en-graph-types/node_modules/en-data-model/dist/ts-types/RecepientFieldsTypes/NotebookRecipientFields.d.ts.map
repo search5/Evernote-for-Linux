@@ -1,1 +1,0 @@
-{"version":3,"file":"NotebookRecipientFields.d.ts","sourceRoot":"","sources":["../../../src/ts-types/RecepientFieldsTypes/NotebookRecipientFields.ts"],"names":[],"mappings":"AACA;;;;GAIG;AAEH,OAAO,EAAC,QAAQ,EAAC,MAAM,uBAAuB,CAAC;AAE/C,MAAM,WAAW,uBAAwB,SAAQ,QAAQ;IACvD,mBAAmB,EAAE,OAAO,CAAC;IAC7B,mBAAmB,EAAE,OAAO,CAAC;CAC9B"}

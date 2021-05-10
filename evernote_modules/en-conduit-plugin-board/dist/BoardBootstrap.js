@@ -26,8 +26,8 @@ exports.createBoardBootstrapDefinition = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_data_model_1 = require("en-data-model");
+const en_home_data_model_1 = require("en-home-data-model");
 const graphql_1 = require("graphql");
-const BoardConstants_1 = require("./BoardConstants");
 const BoardFeatureSchemaManager_1 = require("./Schema/BoardFeatureSchemaManager");
 const Utilities = __importStar(require("./Utilities"));
 // Bootstrap a Board and detect schema changes on upgrade.
@@ -41,7 +41,7 @@ const createBoardBootstrapDefinition = (di) => {
                  */
                 parent: conduit_utils_1.NullableEntityRef,
                 resetLayout: conduit_utils_1.NullableBoolean,
-                platform: conduit_utils_1.Nullable(BoardConstants_1.DeviceFormFactorSchema),
+                platform: conduit_utils_1.Nullable(en_home_data_model_1.DeviceFormFactorSchema),
                 features: conduit_utils_1.NullableStruct({
                     calendar: conduit_utils_1.NullableInt,
                     tasks: conduit_utils_1.NullableInt,
@@ -57,7 +57,7 @@ const createBoardBootstrapDefinition = (di) => {
                         success: { type: conduit_core_1.schemaToGraphQLType('boolean') },
                         result: { type: conduit_core_1.schemaToGraphQLType('string') },
                     };
-                    conduit_core_1.schemaFieldToGraphQL(autoResolverData, resultMap, 'board', 'EntityRef', 'BoardBootstrapResult', [BoardConstants_1.BoardEntityTypes.Board], undefined);
+                    conduit_core_1.schemaFieldToGraphQL(autoResolverData, resultMap, 'board', 'EntityRef', 'BoardBootstrapResult', [en_data_model_1.EntityTypes.Board], undefined);
                     return resultMap;
                 },
             }),
@@ -70,13 +70,13 @@ const createBoardBootstrapDefinition = (di) => {
                 // Get the Board attached to the current User...
                 const userNode = await Utilities.getCurrentUserNode(context);
                 const boardID = en_data_model_1.DefaultDeterministicIdGenerator.createId({
-                    entityType: 'Board',
+                    entityType: en_data_model_1.EntityTypes.Board,
                     userID: userNode.NodeFields.internal_userID,
-                    leadingSegments: en_data_model_1.BoardSchema.formDeterministicBoardIdParts(userNode.NodeFields.internal_userID),
+                    leadingSegments: en_home_data_model_1.BoardSchema.formDeterministicBoardIdParts(userNode.NodeFields.internal_userID),
                 });
                 conduit_core_1.validateDB(context);
                 const { features: featuresParam, resetLayout, platform, } = args;
-                const boardNodeRef = { id: boardID, type: BoardConstants_1.BoardEntityTypes.Board };
+                const boardNodeRef = { id: boardID, type: en_data_model_1.EntityTypes.Board };
                 const board = await context.db.getNode(context, boardNodeRef);
                 const schemaFeatures = Utilities.getBoardPluginFeatures(di).schema;
                 const features = [];

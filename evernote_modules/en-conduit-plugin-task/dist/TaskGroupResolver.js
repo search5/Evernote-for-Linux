@@ -8,9 +8,9 @@ exports.TaskGroupResolver = exports.NoteContentInfoTaskGroupsResolver = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
+const en_data_model_1 = require("en-data-model");
 const graphql_1 = require("graphql");
 const NoteContentInfo_1 = require("./Mutators/Helpers/NoteContentInfo");
-const TaskConstants_1 = require("./TaskConstants");
 function NoteContentInfoTaskGroupsResolver(autoResolverData) {
     return {
         type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableListOf('string')),
@@ -44,7 +44,7 @@ async function getNoteTaskGroups(noteID, context) {
     }
     let taskGroupOutputs = null;
     const noteContentInfoID = NoteContentInfo_1.getNoteContentInfoIDByNoteID(noteID);
-    const noteContentInfoRef = { id: noteContentInfoID, type: TaskConstants_1.TaskEntityTypes.NoteContentInfo };
+    const noteContentInfoRef = { id: noteContentInfoID, type: en_data_model_1.EntityTypes.NoteContentInfo };
     const noteContentInfo = await context.db.getNode(context, noteContentInfoRef);
     if (noteContentInfo === null || noteContentInfo === void 0 ? void 0 : noteContentInfo.NodeFields.taskGroupNoteLevelIDs) {
         // we sort based on this int, assuming we won't have more than 1000000 taskGroupNoteLevelIDs in a note we should be good
@@ -60,7 +60,7 @@ async function getNoteTaskGroups(noteID, context) {
     }
     if (taskGroupOutputs && note.outputs.tasks) {
         const taskIDs = Object.values(note.outputs.tasks).map(edge => edge.dstID);
-        const tasks = await context.db.batchGetNodes(context, TaskConstants_1.TaskEntityTypes.Task, taskIDs);
+        const tasks = await context.db.batchGetNodes(context, en_data_model_1.EntityTypes.Task, taskIDs);
         taskGroupOutputs.forEach(taskGroup => {
             taskGroup.tasks = tasks.filter((task) => task.NodeFields.taskGroupNoteLevelID === taskGroup.noteLevelID).map((task) => {
                 return task.id;
@@ -72,7 +72,7 @@ async function getNoteTaskGroups(noteID, context) {
 async function resolveTasksForTaskGroup(nodeRef, _, context, info) {
     if (nodeRef && nodeRef.tasks) {
         return await conduit_utils_1.allSettled(nodeRef.tasks.map(async (taskID) => {
-            return await conduit_core_1.resolveNode({ type: TaskConstants_1.TaskEntityTypes.Task, id: taskID }, context, info);
+            return await conduit_core_1.resolveNode({ type: en_data_model_1.EntityTypes.Task, id: taskID }, context, info);
         }));
     }
 }

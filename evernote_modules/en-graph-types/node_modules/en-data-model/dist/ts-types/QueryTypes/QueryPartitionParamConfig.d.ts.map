@@ -1,1 +1,0 @@
-{"version":3,"file":"QueryPartitionParamConfig.d.ts","sourceRoot":"","sources":["../../../src/ts-types/QueryTypes/QueryPartitionParamConfig.ts"],"names":[],"mappings":"AACA;;;;GAIG;AAEH,OAAO,EAAC,eAAe,EAAC,MAAM,gCAAgC,CAAC;AAE/D,MAAM,WAAW,yBAAyB;IACxC,YAAY,EAAE,OAAO,CAAC;IACtB,SAAS,EAAE,eAAe,CAAC;CAC5B"}

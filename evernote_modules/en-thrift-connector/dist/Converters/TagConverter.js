@@ -14,6 +14,7 @@ const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
+const simply_immutable_1 = require("simply-immutable");
 const Converters_1 = require("./Converters");
 const Helpers_1 = require("./Helpers");
 function tagFromService(serviceData) {
@@ -81,17 +82,23 @@ class TagConverterClass {
             seed: serviceGuidSeed,
             name: tag.label,
         };
-        try {
-            const resp = await noteStore.createTag(trc, auth.token, serviceData);
-            await exports.TagConverter.convertFromService(trc, params, syncContext, resp);
-            return true;
-        }
-        catch (e) {
-            if (e instanceof conduit_utils_1.ServiceError && e.errorCode === en_conduit_sync_types_1.EDAMErrorCode.DATA_CONFLICT) {
-                throw new conduit_utils_1.RetryError('Tag Name Conflict', 5000);
+        const resp = await noteStore.createTag(trc, auth.token, serviceData);
+        await exports.TagConverter.convertFromService(trc, params, syncContext, resp);
+        return true;
+    }
+    async handleErrorToService(trc, err, params, change) {
+        switch (change.changeType) {
+            case 'Node:CREATE': {
+                if (err instanceof conduit_utils_1.ServiceError && err.errorCode === en_conduit_sync_types_1.EDAMErrorCode.DATA_CONFLICT) {
+                    // Duplicate label, rename it, and try again!
+                    const newLabel = `${change.node.label}_${Date.now().toString().slice(-6)}`;
+                    conduit_utils_1.logger.info(`Encountered conflict with tag label ${change.node.label}. Retrying again with new label ${newLabel}`);
+                    return simply_immutable_1.replaceImmutable(change, ['node', 'label'], newLabel);
+                }
+                break;
             }
-            throw e;
         }
+        return null;
     }
     async deleteFromService(trc, params, syncContext, ids) {
         const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
@@ -161,6 +168,9 @@ __decorate([
 __decorate([
     conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Tag)
 ], TagConverterClass.prototype, "createOnService", null);
+__decorate([
+    conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Tag)
+], TagConverterClass.prototype, "handleErrorToService", null);
 __decorate([
     conduit_utils_1.traceAsync(en_core_entity_types_1.CoreEntityTypes.Tag)
 ], TagConverterClass.prototype, "deleteFromService", null);

@@ -6,13 +6,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.parseAndValidateTasksExportData = exports.getTasksExportData = exports.getTaskUserSettingsIdByUserId = exports.getTaskUserSettingsByMutationContext = exports.TasksExportDataSchema = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
+const en_data_model_1 = require("en-data-model");
+const en_tasks_data_model_1 = require("en-tasks-data-model");
 const NoteContentInfo_1 = require("./Mutators/Helpers/NoteContentInfo");
-const TaskConstants_1 = require("./TaskConstants");
 const TaskCreateDataSchema = {
     label: 'string',
     dueDate: conduit_utils_1.NullableNumber,
     timeZone: conduit_utils_1.NullableString,
-    dueDateUIOption: conduit_utils_1.Nullable(TaskConstants_1.DueDateUIOptionSchema),
+    dueDateUIOption: conduit_utils_1.Nullable(en_tasks_data_model_1.DueDateUIOptionSchema),
     flag: conduit_utils_1.NullableBoolean,
     sortWeight: conduit_utils_1.NullableString,
     noteLevelID: conduit_utils_1.NullableString,
@@ -39,8 +40,8 @@ function getTaskUserSettingsByMutationContext(ctx) {
 }
 exports.getTaskUserSettingsByMutationContext = getTaskUserSettingsByMutationContext;
 function getTaskUserSettingsIdByUserId(userID) {
-    return TaskConstants_1.TaskDeterministicIdGenerator.createId({
-        entityType: TaskConstants_1.TaskEntityTypes.TaskUserSettings,
+    return en_data_model_1.DefaultDeterministicIdGenerator.createId({
+        entityType: en_data_model_1.EntityTypes.TaskUserSettings,
         userID,
     });
 }
@@ -51,11 +52,11 @@ async function getTasksExportData(context, note) {
     const tasks = [];
     let taskGroupNoteLevelIDs = [];
     const noteContentInfoID = NoteContentInfo_1.getNoteContentInfoIDByNoteID(note.id);
-    const info = await context.db.getNode(context, { id: noteContentInfoID, type: TaskConstants_1.TaskEntityTypes.NoteContentInfo });
+    const info = await context.db.getNode(context, { id: noteContentInfoID, type: en_data_model_1.EntityTypes.NoteContentInfo });
     if (info) {
         taskGroupNoteLevelIDs = info.NodeFields.taskGroupNoteLevelIDs || [];
         const taskIDs = Object.values(note.outputs.tasks).map(edge => edge.dstID);
-        const taskNodes = await context.db.batchGetNodes(context, TaskConstants_1.TaskEntityTypes.Task, taskIDs);
+        const taskNodes = await context.db.batchGetNodes(context, en_data_model_1.EntityTypes.Task, taskIDs);
         for (const task of taskNodes) {
             if (!task) {
                 continue;

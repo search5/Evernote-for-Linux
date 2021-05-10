@@ -5,24 +5,24 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.calendarSettingsUpsert = void 0;
 const conduit_core_1 = require("conduit-core");
-const CalendarConstants_1 = require("../CalendarConstants");
-const CalendarSettings_1 = require("../EntityTypes/CalendarSettings");
+const en_calendar_data_model_1 = require("en-calendar-data-model");
+const en_data_model_1 = require("en-data-model");
 exports.calendarSettingsUpsert = {
-    type: conduit_core_1.MutatorRemoteExecutorType.Local,
+    type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
     params: {
         useTemplateForNewNotes: 'boolean',
-        mobileOpenNoteMinutes: CalendarSettings_1.NotificationOptionsSchema,
-        mobileCreateNoteMinutes: CalendarSettings_1.NotificationOptionsSchema,
-        desktopOpenNoteMinutes: CalendarSettings_1.NotificationOptionsSchema,
-        desktopCreateNoteMinutes: CalendarSettings_1.NotificationOptionsSchema,
+        mobileOpenNoteMinutes: en_calendar_data_model_1.NotificationOptionsSchema,
+        mobileCreateNoteMinutes: en_calendar_data_model_1.NotificationOptionsSchema,
+        desktopOpenNoteMinutes: en_calendar_data_model_1.NotificationOptionsSchema,
+        desktopCreateNoteMinutes: en_calendar_data_model_1.NotificationOptionsSchema,
     },
     execute: async (trc, ctx, params) => {
         const plan = {
             results: {},
             ops: [],
         };
-        const calendarSettingsGenId = await ctx.generateDeterministicID(trc, ctx.userID, CalendarConstants_1.CalendarEntityTypes.CalendarSettings, CalendarConstants_1.CalendarSettingsDeterministicIdGenerator);
-        const calendarSettingsRef = { id: calendarSettingsGenId[1], type: CalendarConstants_1.CalendarEntityTypes.CalendarSettings };
+        const calendarSettingsGenId = await ctx.generateDeterministicID(trc, ctx.userID, en_data_model_1.EntityTypes.CalendarSettings, en_data_model_1.DefaultDeterministicIdGenerator);
+        const calendarSettingsRef = { id: calendarSettingsGenId[1], type: en_data_model_1.EntityTypes.CalendarSettings };
         const newFields = {
             useTemplateForNewNotes: params.useTemplateForNewNotes,
             desktopReminders: {
@@ -48,7 +48,7 @@ exports.calendarSettingsUpsert = {
             plan.ops.push({
                 changeType: 'Node:UPDATE',
                 nodeRef: calendarSettingsRef,
-                node: ctx.assignFields(CalendarConstants_1.CalendarEntityTypes.CalendarSettings, newFields),
+                node: ctx.assignFields(en_data_model_1.EntityTypes.CalendarSettings, newFields),
             });
         }
         return plan;

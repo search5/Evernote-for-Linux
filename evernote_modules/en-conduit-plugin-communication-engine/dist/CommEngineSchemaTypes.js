@@ -16,22 +16,22 @@ exports.SupportedPlacementSchema = conduit_utils_1.EnumWithKeys(en_conduit_sync_
 exports.ClientTypeSchema = conduit_utils_1.EnumWithKeys(en_conduit_sync_types_1.TCommEngineClientType, 'CommEngineClientType');
 // MessageContent is deprecated, remove on next breaking change
 const MessageContentSchema = conduit_utils_1.Struct({
-    templateUri: 'string',
-    contentVariablesJson: 'string',
+    templateUri: conduit_utils_1.NullableString,
+    contentVariablesJson: conduit_utils_1.NullableString,
 }, 'CommEngineMessageContent');
 exports.ResponseSchema = conduit_utils_1.Struct({
     messages: conduit_utils_1.ListOfStructs({
-        key: 'string',
-        priority: 'int',
-        content: MessageContentSchema,
-        messageContent: MessageContentSchema,
-        placement: 'int',
-        offline: 'boolean',
-        expires: 'number',
+        key: conduit_utils_1.NullableString,
+        priority: conduit_utils_1.NullableInt,
+        content: conduit_utils_1.Nullable(MessageContentSchema),
+        messageContent: conduit_utils_1.Nullable(MessageContentSchema),
+        placement: conduit_utils_1.NullableInt,
+        offline: conduit_utils_1.NullableBoolean,
+        expires: conduit_utils_1.NullableNumber,
     }, 'CommEngineMessage'),
-    messageRequestGuid: 'string',
-    config: conduit_utils_1.Struct({
-        cooldownPeriodMillis: 'int',
+    messageRequestGuid: conduit_utils_1.NullableString,
+    config: conduit_utils_1.NullableStruct({
+        cooldownPeriodMillis: conduit_utils_1.NullableInt,
     }, 'CommEngineConfig'),
 }, 'CommEngineResponseSchema');
 //# sourceMappingURL=CommEngineSchemaTypes.js.map

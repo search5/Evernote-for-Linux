@@ -7,8 +7,8 @@ exports.getReminderNodeAndEdges = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
+const en_data_model_1 = require("en-data-model");
 const en_nsync_connector_1 = require("en-nsync-connector");
-const TaskConstants_1 = require("../TaskConstants");
 const ScheduledNotificationConverter_1 = require("./ScheduledNotificationConverter");
 const getReminderNodeAndEdges = async (trc, instance, context) => {
     var _a, _b, _c;
@@ -20,7 +20,7 @@ const getReminderNodeAndEdges = async (trc, instance, context) => {
     if (!initial) {
         return null;
     }
-    const reminder = Object.assign(Object.assign({}, initial), { type: TaskConstants_1.TaskEntityTypes.Reminder, NodeFields: {
+    const reminder = Object.assign(Object.assign({}, initial), { type: en_data_model_1.EntityTypes.Reminder, NodeFields: {
             created: instance.created,
             updated: instance.updated,
             reminderDate: instance.reminderDate || null,
@@ -39,13 +39,13 @@ const getReminderNodeAndEdges = async (trc, instance, context) => {
     const parentID = (_b = instance.parentEntity) === null || _b === void 0 ? void 0 : _b.id;
     const parentType = en_conduit_sync_types_1.entityTypeAsNodeType(context.eventManager.di, (_c = instance.parentEntity) === null || _c === void 0 ? void 0 : _c.type, en_core_entity_types_1.CoreEntityTypes.Note);
     if (parentID && parentType) {
-        const currentReminder = await context.tx.getNode(trc, null, { type: TaskConstants_1.TaskEntityTypes.Reminder, id: reminder.id });
+        const currentReminder = await context.tx.getNode(trc, null, { type: en_data_model_1.EntityTypes.Reminder, id: reminder.id });
         const currentParentEdge = conduit_utils_1.firstStashEntry(currentReminder === null || currentReminder === void 0 ? void 0 : currentReminder.inputs.source);
         if (currentParentEdge) {
             const currentParentID = currentParentEdge.srcID;
             if (parentID !== currentParentID) {
                 edgesToDelete.push({
-                    dstID: reminder.id, dstType: TaskConstants_1.TaskEntityTypes.Reminder, dstPort: 'source',
+                    dstID: reminder.id, dstType: en_data_model_1.EntityTypes.Reminder, dstPort: 'source',
                 });
             }
         }
@@ -53,7 +53,7 @@ const getReminderNodeAndEdges = async (trc, instance, context) => {
             srcType: parentType,
             srcID: parentID,
             srcPort: 'reminders',
-            dstType: TaskConstants_1.TaskEntityTypes.Reminder,
+            dstType: en_data_model_1.EntityTypes.Reminder,
             dstID: reminder.id,
             dstPort: 'source',
         });

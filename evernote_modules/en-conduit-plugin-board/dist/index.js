@@ -19,14 +19,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getENBoardPlugin = exports.MutableWidgetType = exports.WidgetType = exports.DeviceFormFactor = exports.BoardFeature = void 0;
+exports.getENBoardPlugin = void 0;
 /*
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
+const en_data_model_1 = require("en-data-model");
+const en_home_data_model_1 = require("en-home-data-model");
 const BoardBootstrap_1 = require("./BoardBootstrap");
-const BoardConstants_1 = require("./BoardConstants");
 const BoardCustomize_1 = require("./BoardCustomize");
 const BoardConverter_1 = require("./Converters/BoardConverter");
 const WidgetContentConflictConverter_1 = require("./Converters/WidgetContentConflictConverter");
@@ -39,18 +40,7 @@ const WidgetMutators_1 = require("./Mutators/WidgetMutators");
 const NotePin_1 = require("./NotePin");
 const BoardRules_1 = require("./Rules/BoardRules");
 const Utilities = __importStar(require("./Utilities"));
-var en_data_model_1 = require("en-data-model");
-Object.defineProperty(exports, "BoardFeature", { enumerable: true, get: function () { return en_data_model_1.BoardFeature; } });
-Object.defineProperty(exports, "DeviceFormFactor", { enumerable: true, get: function () { return en_data_model_1.DeviceFormFactor; } });
-Object.defineProperty(exports, "WidgetType", { enumerable: true, get: function () { return en_data_model_1.WidgetType; } });
-Object.defineProperty(exports, "MutableWidgetType", { enumerable: true, get: function () { return en_data_model_1.MutableWidgetType; } });
 const FIVE_MB_BASE64 = 7182747; // ceil(5 MiB limit * 1.37 approximation of average increase) for Base64 encoding without compression.
-var NSyncEntityType;
-(function (NSyncEntityType) {
-    NSyncEntityType[NSyncEntityType["BOARD"] = 12] = "BOARD";
-    NSyncEntityType[NSyncEntityType["WIDGET"] = 13] = "WIDGET";
-    NSyncEntityType[NSyncEntityType["WIDGET_CONTENT_CONFLICT"] = 18] = "WIDGET_CONTENT_CONFLICT";
-})(NSyncEntityType || (NSyncEntityType = {}));
 function getENBoardPlugin() {
     return {
         name: 'ENBoard',
@@ -65,10 +55,10 @@ function getENBoardPlugin() {
         defineQueries: di => {
             const boardFeatureSchema = Utilities.getBoardPluginFeatures(di).schema;
             const queries = {
-                'Board.headerBG': di.fileResolver(BoardConstants_1.BoardEntityTypes.Board, 'headerBG', false),
-                'Board.headerBGPreviousUpload': di.fileResolver(BoardConstants_1.BoardEntityTypes.Board, 'headerBGPreviousUpload', false),
+                'Board.headerBG': di.fileResolver(en_data_model_1.EntityTypes.Board, 'headerBG', false),
+                'Board.headerBGPreviousUpload': di.fileResolver(en_data_model_1.EntityTypes.Board, 'headerBGPreviousUpload', false),
                 ['Widget.mutableWidgetType']: {
-                    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Nullable(BoardConstants_1.MutableWidgetTypeSchema)),
+                    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Nullable(en_home_data_model_1.MutableWidgetTypeSchema)),
                     resolve: async (widget, _, context) => {
                         const { boardType, mutableWidgetType, } = widget;
                         return Utilities.safeMutableWidgetType(boardFeatureSchema, boardType, mutableWidgetType);
@@ -79,10 +69,10 @@ function getENBoardPlugin() {
         },
         entityTypes: di => {
             const entityTypes = {
-                [BoardConstants_1.BoardEntityTypes.Board]: {
+                [en_data_model_1.EntityTypes.Board]: {
                     typeDef: Board_1.boardTypeDef,
                     indexConfig: Board_1.boardIndexConfig,
-                    nsyncConverters: { [NSyncEntityType.BOARD]: BoardConverter_1.getBoardNode },
+                    nsyncConverters: { [en_data_model_1.NSyncEntityType.BOARD]: BoardConverter_1.getBoardNode },
                     blobUploadDefs: {
                         headerBG: {
                             customCommandName: 'boardSetHeaderBG',
@@ -102,15 +92,15 @@ function getENBoardPlugin() {
                         },
                     },
                 },
-                [BoardConstants_1.BoardEntityTypes.Widget]: {
+                [en_data_model_1.EntityTypes.Widget]: {
                     typeDef: Widget_1.widgetTypeDef,
                     indexConfig: Widget_1.createWidgetIndexConfig(di),
-                    nsyncConverters: { [NSyncEntityType.WIDGET]: WidgetConverter_1.getWidgetNode },
+                    nsyncConverters: { [en_data_model_1.NSyncEntityType.WIDGET]: WidgetConverter_1.getWidgetNode },
                 },
-                [BoardConstants_1.BoardEntityTypes.WidgetContentConflict]: {
+                [en_data_model_1.EntityTypes.WidgetContentConflict]: {
                     typeDef: WidgetContentConflict_1.widgetContentConflictTypeDef,
                     indexConfig: WidgetContentConflict_1.widgetContentConflictIndexConfig,
-                    nsyncConverters: { [NSyncEntityType.WIDGET_CONTENT_CONFLICT]: WidgetContentConflictConverter_1.getWidgetContentConflictNodeAndEdges },
+                    nsyncConverters: { [en_data_model_1.NSyncEntityType.WIDGET_CONTENT_CONFLICT]: WidgetContentConflictConverter_1.getWidgetContentConflictNodeAndEdges },
                 },
             };
             return entityTypes;

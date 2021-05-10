@@ -1,1 +1,0 @@
-{"version":3,"file":"ShortcutTargetRef.d.ts","sourceRoot":"","sources":["../../../src/ts-types/CommonTypes/ShortcutTargetRef.ts"],"names":[],"mappings":"AACA;;;;GAIG;AAEH,OAAO,EAAC,QAAQ,EAAC,MAAM,YAAY,CAAC;AACpC,OAAO,EAAC,kBAAkB,EAAC,MAAM,sBAAsB,CAAC;AAExD,MAAM,WAAW,iBAAiB;IAChC,IAAI,EAAE,kBAAkB,CAAC;IACzB,EAAE,EAAE,QAAQ,CAAC;CACd"}

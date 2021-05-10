@@ -5,20 +5,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.noteContentInfoIndexConfig = exports.noteContentInfoTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
-const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const TaskConstants_1 = require("../TaskConstants");
+const en_data_model_1 = require("en-data-model");
+const en_tasks_data_model_1 = require("en-tasks-data-model");
 exports.noteContentInfoTypeDef = {
-    name: TaskConstants_1.TaskEntityTypes.NoteContentInfo,
+    name: en_data_model_1.EntityTypes.NoteContentInfo,
     syncSource: conduit_storage_1.SyncSource.NSYNC,
     nsyncFeatureGroup: 'Tasks',
     fieldValidation: {},
-    schema: {
-        taskGroupNoteLevelIDs: conduit_utils_1.NullableListOf('string'),
-        created: 'timestamp',
-        updated: 'timestamp',
-        sourceOfChange: conduit_utils_1.NullableString,
-    },
+    schema: Object.assign(Object.assign({}, en_tasks_data_model_1.NoteContentInfoEntitySchema.fields), { created: 'timestamp', updated: 'timestamp' }),
     edges: {
         parent: {
             constraint: conduit_storage_1.EdgeConstraint.REQUIRED,

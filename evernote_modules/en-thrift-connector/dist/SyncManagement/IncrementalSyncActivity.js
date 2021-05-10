@@ -36,9 +36,10 @@ class IncrementalSyncBaseActivity extends SyncActivity_1.SyncActivity {
     }
     async syncNotestore(trc, isVault, subBucketSize, offset) {
         const syncParams = this.initParams(isVault ? 'vault' : 'personal', 'notestore', CHUNK_TIMEBOX, subBucketSize, offset);
-        const catchUpRefs = await NoteStoreSync_1.syncForward(trc, syncParams);
-        if (catchUpRefs.length) {
-            await this.context.syncManager.addActivity(trc, new CatchupSyncActivity_1.CatchupSyncActivity(this.ibaseDI, this.context, isVault, catchUpRefs, subBucketSize, offset));
+        await NoteStoreSync_1.syncForward(trc, syncParams);
+        const catchupSyncState = await SyncHelpers_1.getCatchupSyncState(trc, syncParams);
+        if (catchupSyncState.guids.notebooks.length || catchupSyncState.guids.workspaces.length) {
+            await this.context.syncManager.addActivity(trc, new CatchupSyncActivity_1.CatchupSyncActivity(this.ibaseDI, this.context, isVault, subBucketSize, offset));
         }
     }
     async syncSharedNotebook(trc, shareGuid) {

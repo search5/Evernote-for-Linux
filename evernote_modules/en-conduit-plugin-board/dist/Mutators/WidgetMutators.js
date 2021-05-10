@@ -27,7 +27,7 @@ const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
-const BoardConstants_1 = require("../BoardConstants");
+const en_home_data_model_1 = require("en-home-data-model");
 const BoardWidgetBuilder_1 = require("../BoardWidgetBuilder");
 const Utilities = __importStar(require("../Utilities"));
 /* Set ScratchPad content */
@@ -65,7 +65,7 @@ const createWidgetScratchPadSetContentMutator = (di) => {
         },
         execute: async (trc, ctx, params) => {
             const { widget: widgetID, size, hash, previousContentHash, scratchPadContent: content, } = params;
-            const nodeRef = { id: widgetID, type: BoardConstants_1.BoardEntityTypes.Widget };
+            const nodeRef = { id: widgetID, type: en_data_model_1.EntityTypes.Widget };
             const widget = await ctx.fetchEntity(trc, nodeRef);
             if (!widget) {
                 throw new conduit_utils_1.NotFoundError(params.widget, 'missing widget in update');
@@ -74,7 +74,7 @@ const createWidgetScratchPadSetContentMutator = (di) => {
              * Do not check mutable widget type, as it may have changed between replays and we do not want to lose data.
              *  New WidgetTypes/MutableWidgetTypes that need Content should specify a new property.
              */
-            if (widget.NodeFields.widgetType !== en_data_model_1.WidgetType.ScratchPad && widget.NodeFields.widgetType !== en_data_model_1.WidgetType.Extra) {
+            if (widget.NodeFields.widgetType !== en_home_data_model_1.WidgetType.ScratchPad && widget.NodeFields.widgetType !== en_home_data_model_1.WidgetType.Extra) {
                 throw new conduit_utils_1.InvalidParameterError(`Cannot update scratch pad content for a WidgetType of ${widget.NodeFields.widgetType}`);
             }
             const ops = [];
@@ -86,8 +86,8 @@ const createWidgetScratchPadSetContentMutator = (di) => {
             );
             // We have a conflict and our size is greater than zero, we need to generate/update a conflict.
             if (conflictDetected && size > 0) {
-                const conflictAssociations = await ctx.traverseGraph(trc, nodeRef, [{ edge: ['outputs', 'conflicts'], type: BoardConstants_1.BoardEntityTypes.WidgetContentConflict }]);
-                const conflicts = await ctx.fetchEntities(trc, BoardConstants_1.BoardEntityTypes.WidgetContentConflict, conflictAssociations.filter(a => a.edge).map(a => a.edge.dstID));
+                const conflictAssociations = await ctx.traverseGraph(trc, nodeRef, [{ edge: ['outputs', 'conflicts'], type: en_data_model_1.EntityTypes.WidgetContentConflict }]);
+                const conflicts = await ctx.fetchEntities(trc, en_data_model_1.EntityTypes.WidgetContentConflict, conflictAssociations.filter(a => a.edge).map(a => a.edge.dstID));
                 // We cannot have a conflict on equal content.
                 const conflictToUpdate = conflicts.find(c => (c === null || c === void 0 ? void 0 : c.NodeFields.content.content) === widget.NodeFields.content.content);
                 // If we have a matching conflict, just update the data and let the client become consistent.
@@ -95,18 +95,18 @@ const createWidgetScratchPadSetContentMutator = (di) => {
                     ops.push({
                         changeType: 'Node:UPDATE',
                         nodeRef,
-                        node: ctx.assignFields(BoardConstants_1.BoardEntityTypes.WidgetContentConflict, {
+                        node: ctx.assignFields(en_data_model_1.EntityTypes.WidgetContentConflict, {
                             updated: ctx.timestamp,
                         }),
                     });
                 }
                 else { // Here, we need to create a new conflict.
-                    const conflictId = await ctx.generateID(trc, ctx.userID, BoardConstants_1.BoardEntityTypes.WidgetContentConflict);
+                    const conflictId = await ctx.generateID(trc, ctx.userID, en_data_model_1.EntityTypes.WidgetContentConflict);
                     const conflictEntityId = conflictId[1];
                     ops.push({
                         id: conflictId,
                         changeType: 'Node:CREATE',
-                        node: ctx.createEntity({ id: conflictEntityId, type: BoardConstants_1.BoardEntityTypes.WidgetContentConflict }, {
+                        node: ctx.createEntity({ id: conflictEntityId, type: en_data_model_1.EntityTypes.WidgetContentConflict }, {
                             created: ctx.timestamp,
                             updated: ctx.timestamp,
                             content: {
@@ -123,7 +123,7 @@ const createWidgetScratchPadSetContentMutator = (di) => {
                         changeType: 'Edge:MODIFY',
                         edgesToCreate: [{
                                 dstID: conflictEntityId,
-                                dstType: BoardConstants_1.BoardEntityTypes.WidgetContentConflict,
+                                dstType: en_data_model_1.EntityTypes.WidgetContentConflict,
                                 dstPort: 'parent',
                                 srcID: nodeRef.id,
                                 srcType: nodeRef.type,
@@ -137,7 +137,7 @@ const createWidgetScratchPadSetContentMutator = (di) => {
                 ops.push({
                     changeType: 'Node:UPDATE',
                     nodeRef,
-                    node: ctx.assignFields(BoardConstants_1.BoardEntityTypes.Widget, {
+                    node: ctx.assignFields(en_data_model_1.EntityTypes.Widget, {
                         updated: ctx.timestamp,
                     }),
                 });
@@ -146,7 +146,7 @@ const createWidgetScratchPadSetContentMutator = (di) => {
                 ops.push({
                     changeType: 'Node:UPDATE',
                     nodeRef,
-                    node: ctx.assignFields(BoardConstants_1.BoardEntityTypes.Widget, {
+                    node: ctx.assignFields(en_data_model_1.EntityTypes.Widget, {
                         updated: ctx.timestamp,
                         content: {
                             size,
@@ -176,7 +176,7 @@ const createWidgetResolveConflictMutator = () => {
         },
         execute: async (trc, ctx, params) => {
             const { conflict: conflictID, conflictHash, } = params;
-            const nodeRef = { id: conflictID, type: BoardConstants_1.BoardEntityTypes.WidgetContentConflict };
+            const nodeRef = { id: conflictID, type: en_data_model_1.EntityTypes.WidgetContentConflict };
             const conflict = await ctx.fetchEntity(trc, nodeRef);
             if (!conflict) {
                 throw new conduit_utils_1.NotFoundError(conflictID, 'missing conflict in update');
@@ -201,7 +201,7 @@ const createWidgetSetSelectedTabMutator = () => {
         type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
         params: {
             widget: 'ID',
-            tabToSelect: BoardConstants_1.WidgetSelectedTabsSchema,
+            tabToSelect: en_home_data_model_1.WidgetSelectedTabsSchema,
         },
         buffering: {
             time: 1500,
@@ -215,7 +215,7 @@ const createWidgetSetSelectedTabMutator = () => {
             },
         },
         execute: async (trc, ctx, params) => {
-            const nodeRef = { id: params.widget, type: BoardConstants_1.BoardEntityTypes.Widget };
+            const nodeRef = { id: params.widget, type: en_data_model_1.EntityTypes.Widget };
             const widget = await ctx.fetchEntity(trc, nodeRef);
             if (!widget) {
                 throw new conduit_utils_1.NotFoundError(params.widget, 'missing widget in update');
@@ -226,7 +226,7 @@ const createWidgetSetSelectedTabMutator = () => {
                     {
                         changeType: 'Node:UPDATE',
                         nodeRef,
-                        node: ctx.assignFields(BoardConstants_1.BoardEntityTypes.Widget, {
+                        node: ctx.assignFields(en_data_model_1.EntityTypes.Widget, {
                             selectedTab: params.tabToSelect,
                             updated: ctx.timestamp,
                         }),
@@ -249,14 +249,14 @@ const createWidgetCustomizeMutator = () => {
             mobileSortWeight: conduit_utils_1.NullableString,
             noteToUnpin: conduit_utils_1.NullableID,
             noteToPin: conduit_utils_1.NullableID,
-            mutableWidgetType: conduit_utils_1.Nullable(BoardConstants_1.MutableWidgetTypeSchema),
+            mutableWidgetType: conduit_utils_1.Nullable(en_home_data_model_1.MutableWidgetTypeSchema),
             filteredNotesQueryString: conduit_utils_1.NullableString,
             label: conduit_utils_1.NullableString,
             lightBGColor: conduit_utils_1.NullableString,
             darkBGColor: conduit_utils_1.NullableString,
         },
         execute: async (trc, ctx, params) => {
-            const nodeRef = { id: params.widget, type: BoardConstants_1.BoardEntityTypes.Widget };
+            const nodeRef = { id: params.widget, type: en_data_model_1.EntityTypes.Widget };
             const widget = await ctx.fetchEntity(trc, nodeRef);
             if (!widget) {
                 throw new conduit_utils_1.NotFoundError(params.widget, 'missing widget in widgetCustomize');
@@ -267,7 +267,7 @@ const createWidgetCustomizeMutator = () => {
             };
             const alreadyUnpinned = new Set();
             if (params.noteToPin) {
-                Utilities.validateMutableWidgetTypes('contentProvider', en_data_model_1.WidgetType.Pinned, en_data_model_1.MutableWidgetType.Pinned, widget, params.mutableWidgetType);
+                Utilities.validateMutableWidgetTypes('contentProvider', en_home_data_model_1.WidgetType.Pinned, en_home_data_model_1.MutableWidgetType.Pinned, widget, params.mutableWidgetType);
                 // Currently, we only want to allow one note per widget, and this ensures we unpin all notes not included in the mutation.
                 const notes = await ctx.traverseGraph(trc, nodeRef, [{ edge: ['outputs', 'contentProvider'], type: en_core_entity_types_1.CoreEntityTypes.Note }]);
                 if (notes.length) {
@@ -293,7 +293,7 @@ const createWidgetCustomizeMutator = () => {
             }
             // Only unpin the note if the parameter is passed in and we aren't doing it already.
             if ((params.noteToUnpin) && (!alreadyUnpinned.has(params.noteToUnpin))) {
-                Utilities.validateMutableWidgetTypes('contentProvider', en_data_model_1.WidgetType.Pinned, en_data_model_1.MutableWidgetType.Pinned, widget, params.mutableWidgetType);
+                Utilities.validateMutableWidgetTypes('contentProvider', en_home_data_model_1.WidgetType.Pinned, en_home_data_model_1.MutableWidgetType.Pinned, widget, params.mutableWidgetType);
                 plan.ops.push({
                     changeType: 'Edge:MODIFY',
                     remoteFields: {},
@@ -305,13 +305,13 @@ const createWidgetCustomizeMutator = () => {
             }
             const fields = {};
             if (params.mutableWidgetType) {
-                if (widget.NodeFields.widgetType !== en_data_model_1.WidgetType.Extra) {
+                if (widget.NodeFields.widgetType !== en_home_data_model_1.WidgetType.Extra) {
                     throw new conduit_utils_1.InvalidParameterError(`Cannot set a mutable widget for a WidgetType of ${widget.NodeFields.widgetType}`);
                 }
                 fields.mutableWidgetType = params.mutableWidgetType;
             }
             if (params.filteredNotesQueryString) {
-                Utilities.validateMutableWidgetTypes('filteredNotesQuery.query', en_data_model_1.WidgetType.FilteredNotes, en_data_model_1.MutableWidgetType.FilteredNotes, widget, params.mutableWidgetType);
+                Utilities.validateMutableWidgetTypes('filteredNotesQuery.query', en_home_data_model_1.WidgetType.FilteredNotes, en_home_data_model_1.MutableWidgetType.FilteredNotes, widget, params.mutableWidgetType);
                 fields.filteredNotesQuery = {
                     query: params.filteredNotesQueryString,
                 };
@@ -327,15 +327,15 @@ const createWidgetCustomizeMutator = () => {
                  * This sets up the width validation scenario.  Since we only have one, this is fairly simple now, but as implementation
                  * grows, this could get very complex and may need its own file/components.
                  */
-                const parentNodeRefs = await ctx.traverseGraph(trc, nodeRef, [{ edge: ['inputs', 'parent'], type: BoardConstants_1.BoardEntityTypes.Board }]);
+                const parentNodeRefs = await ctx.traverseGraph(trc, nodeRef, [{ edge: ['inputs', 'parent'], type: en_data_model_1.EntityTypes.Board }]);
                 if (parentNodeRefs.length !== 1) {
                     throw new conduit_utils_1.GraphNodeError(nodeRef.id, nodeRef.type, `Invalid number of parents: ${parentNodeRefs.length}`);
                 }
-                const board = await ctx.fetchEntity(trc, { id: parentNodeRefs[0].id, type: BoardConstants_1.BoardEntityTypes.Board });
+                const board = await ctx.fetchEntity(trc, { id: parentNodeRefs[0].id, type: en_data_model_1.EntityTypes.Board });
                 if (!board) {
                     throw new conduit_utils_1.NotFoundError(parentNodeRefs[0].id, 'Could not find parent board');
                 }
-                if (board.NodeFields.desktop.layout !== en_data_model_1.BoardDesktopLayout.ThreeColumnFlex) {
+                if (board.NodeFields.desktop.layout !== en_home_data_model_1.BoardDesktopLayout.ThreeColumnFlex) {
                     throw new Error(`Invalid layout: ${board.NodeFields.desktop.layout}`);
                 }
                 const widthIsOutOfRange = params.desktopWidth < 1 || params.desktopWidth > 3;
@@ -368,7 +368,7 @@ const createWidgetCustomizeMutator = () => {
                 plan.ops.push({
                     changeType: 'Node:UPDATE',
                     nodeRef,
-                    node: ctx.assignFields(BoardConstants_1.BoardEntityTypes.Widget, fields),
+                    node: ctx.assignFields(en_data_model_1.EntityTypes.Widget, fields),
                 });
             }
             return plan;
@@ -418,7 +418,7 @@ const createWidgetDeleteMutator = () => {
         },
         execute: async (trc, ctx, params) => {
             const { widget: widgetID, } = params;
-            const nodeRef = { id: widgetID, type: BoardConstants_1.BoardEntityTypes.Widget };
+            const nodeRef = { id: widgetID, type: en_data_model_1.EntityTypes.Widget };
             const widget = await ctx.fetchEntity(trc, nodeRef);
             if (!widget) {
                 throw new conduit_utils_1.NotFoundError(widgetID, 'Missing Widget to Update');
@@ -429,7 +429,7 @@ const createWidgetDeleteMutator = () => {
                     ops: [{
                             changeType: 'Node:UPDATE',
                             nodeRef,
-                            node: ctx.assignFields(BoardConstants_1.BoardEntityTypes.Widget, {
+                            node: ctx.assignFields(en_data_model_1.EntityTypes.Widget, {
                                 updated: ctx.timestamp,
                                 softDelete: true,
                             }),
@@ -440,7 +440,7 @@ const createWidgetDeleteMutator = () => {
              * A safe gaurd against our isDeterministicID check.
              * This might need to be removed later once we are battle tested and have non-deterministic widgets on Home.
              */
-            if (widget.NodeFields.boardType === en_data_model_1.BoardType.Home) {
+            if (widget.NodeFields.boardType === en_home_data_model_1.BoardType.Home) {
                 throw new conduit_utils_1.InvalidOperationError(`Cannot hard delete Home widget with id ${widget.id} and boardtType ${widget.NodeFields.boardType}`);
             }
             return {
@@ -465,7 +465,7 @@ const createWidgetRestoreMutator = () => {
             if (!en_data_model_1.DefaultDeterministicIdGenerator.isDeterministicId(widgetID)) {
                 throw new conduit_utils_1.InvalidOperationError(`Non-deterministic Widget with id '${widgetID}' cannot be restored.`);
             }
-            const nodeRef = { id: widgetID, type: BoardConstants_1.BoardEntityTypes.Widget };
+            const nodeRef = { id: widgetID, type: en_data_model_1.EntityTypes.Widget };
             const widget = await ctx.fetchEntity(trc, nodeRef);
             if (!widget) {
                 throw new conduit_utils_1.NotFoundError(widgetID, 'Missing Widget to Update');
@@ -475,7 +475,7 @@ const createWidgetRestoreMutator = () => {
                 ops: [{
                         changeType: 'Node:UPDATE',
                         nodeRef,
-                        node: ctx.assignFields(BoardConstants_1.BoardEntityTypes.Widget, {
+                        node: ctx.assignFields(en_data_model_1.EntityTypes.Widget, {
                             updated: ctx.timestamp,
                             softDelete: false,
                         }),

@@ -6,15 +6,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.reminderUpdate = exports.reminderDelete = exports.reminderCreate = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const TaskConstants_1 = require("../TaskConstants");
+const en_data_model_1 = require("en-data-model");
+const en_tasks_data_model_1 = require("en-tasks-data-model");
 const ScheduledNotificationHelpers_1 = require("./Helpers/ScheduledNotificationHelpers");
 async function validateReminderParams(trc, ctx, taskId, reminderDateUIOption, reminderDate, dueDateOffset) {
-    const taskRef = { id: taskId, type: TaskConstants_1.TaskEntityTypes.Task };
+    const taskRef = { id: taskId, type: en_data_model_1.EntityTypes.Task };
     const task = await ctx.fetchEntity(trc, taskRef);
     if (!task) {
         throw new conduit_utils_1.NotFoundError(`Not found Reminder source`);
     }
-    if (reminderDateUIOption === TaskConstants_1.ReminderDateUIOption.relative_to_due) {
+    if (reminderDateUIOption === en_tasks_data_model_1.ReminderDateUIOption.relative_to_due) {
         if (!task.NodeFields.dueDate) {
             throw new conduit_utils_1.InvalidOperationError(`Relative reminder cannot be created for a task without due date.`);
         }
@@ -34,7 +35,7 @@ exports.reminderCreate = {
         source: 'ID',
         reminderDate: conduit_utils_1.NullableTimestamp,
         timeZone: conduit_utils_1.NullableString,
-        reminderDateUIOption: conduit_utils_1.Nullable(TaskConstants_1.ReminderDateUIOptionSchema),
+        reminderDateUIOption: conduit_utils_1.Nullable(en_tasks_data_model_1.ReminderDateUIOptionSchema),
         dueDateOffset: conduit_utils_1.NullableNumber,
         noteLevelID: conduit_utils_1.NullableString,
         sourceOfChange: conduit_utils_1.NullableString,
@@ -46,7 +47,7 @@ exports.reminderCreate = {
         paramsOut.sourceOfChange = (_b = paramsIn.sourceOfChange) !== null && _b !== void 0 ? _b : '';
     },
     execute: async (trc, ctx, params) => {
-        const taskRef = { id: params.source, type: TaskConstants_1.TaskEntityTypes.Task };
+        const taskRef = { id: params.source, type: en_data_model_1.EntityTypes.Task };
         let task = await ctx.fetchEntity(trc, taskRef);
         if (!task) {
             // it could happen in conflict situations and we should simply ignore it.
@@ -56,10 +57,10 @@ exports.reminderCreate = {
             };
         }
         task = await validateReminderParams(trc, ctx, task.id, params.reminderDateUIOption, params.reminderDate, params.dueDateOffset);
-        const reminderGenID = await ctx.generateID(trc, ctx.userID, TaskConstants_1.TaskEntityTypes.Reminder);
+        const reminderGenID = await ctx.generateID(trc, ctx.userID, en_data_model_1.EntityTypes.Reminder);
         const reminderID = reminderGenID[1];
-        const reminderEntity = ctx.createEntity({ id: reminderID, type: TaskConstants_1.TaskEntityTypes.Reminder }, {
-            reminderDate: params.reminderDateUIOption === TaskConstants_1.ReminderDateUIOption.relative_to_due ? task.NodeFields.dueDate + params.dueDateOffset : params.reminderDate,
+        const reminderEntity = ctx.createEntity({ id: reminderID, type: en_data_model_1.EntityTypes.Reminder }, {
+            reminderDate: params.reminderDateUIOption === en_tasks_data_model_1.ReminderDateUIOption.relative_to_due ? task.NodeFields.dueDate + params.dueDateOffset : params.reminderDate,
             timeZone: params.timeZone,
             reminderDateUIOption: params.reminderDateUIOption,
             created: ctx.timestamp,
@@ -67,7 +68,7 @@ exports.reminderCreate = {
             dueDateOffset: params.dueDateOffset,
             noteLevelID: params.noteLevelID,
             sourceOfChange: params.sourceOfChange,
-            status: TaskConstants_1.ReminderStatus.active,
+            status: en_tasks_data_model_1.ReminderStatus.active,
         }, ctx.userID);
         const plan = {
             results: {
@@ -85,7 +86,7 @@ exports.reminderCreate = {
                         }],
                 }],
         };
-        const muteSn = reminderEntity.NodeFields.status === TaskConstants_1.ReminderStatus.muted;
+        const muteSn = reminderEntity.NodeFields.status === en_tasks_data_model_1.ReminderStatus.muted;
         ScheduledNotificationHelpers_1.addScheduledNotificationCreateOps(trc, ctx, reminderEntity, taskRef, plan.ops, muteSn);
         return plan;
     },
@@ -97,7 +98,7 @@ exports.reminderDelete = {
         reminder: 'ID',
     },
     execute: async (trc, ctx, params) => {
-        const nodeRef = { id: params.reminder, type: TaskConstants_1.TaskEntityTypes.Reminder };
+        const nodeRef = { id: params.reminder, type: en_data_model_1.EntityTypes.Reminder };
         const reminder = await ctx.fetchEntity(trc, nodeRef);
         if (!reminder) {
             // it could happen in conflict situations and we should simply ignore it
@@ -116,7 +117,7 @@ exports.reminderDelete = {
                 {
                     changeType: 'Edge:MODIFY',
                     edgesToDelete: [
-                        { dstID: params.reminder, dstType: TaskConstants_1.TaskEntityTypes.Reminder, dstPort: 'source' },
+                        { dstID: params.reminder, dstType: en_data_model_1.EntityTypes.Reminder, dstPort: 'source' },
                     ],
                 },
             ],
@@ -129,7 +130,7 @@ exports.reminderUpdate = {
     type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
     params: {
         reminder: 'ID',
-        reminderDateUIOption: TaskConstants_1.ReminderDateUIOptionSchema,
+        reminderDateUIOption: en_tasks_data_model_1.ReminderDateUIOptionSchema,
         reminderDate: conduit_utils_1.NullableTimestamp,
         timeZone: conduit_utils_1.NullableString,
         dueDateOffset: conduit_utils_1.NullableNumber,
@@ -140,7 +141,7 @@ exports.reminderUpdate = {
         paramsOut.sourceOfChange = (_a = paramsIn.sourceOfChange) !== null && _a !== void 0 ? _a : '';
     },
     execute: async (trc, ctx, params) => {
-        const reminderRef = { id: params.reminder, type: TaskConstants_1.TaskEntityTypes.Reminder };
+        const reminderRef = { id: params.reminder, type: en_data_model_1.EntityTypes.Reminder };
         const reminder = await ctx.fetchEntity(trc, reminderRef);
         if (!reminder) {
             // it could happen in conflict situations and we should simply ignore it.
@@ -155,7 +156,7 @@ exports.reminderUpdate = {
         }
         const task = await validateReminderParams(trc, ctx, taskEdge.srcID, params.reminderDateUIOption, params.reminderDate, params.dueDateOffset);
         const fields = {
-            reminderDate: params.reminderDateUIOption === TaskConstants_1.ReminderDateUIOption.relative_to_due ? task.NodeFields.dueDate + params.dueDateOffset : params.reminderDate,
+            reminderDate: params.reminderDateUIOption === en_tasks_data_model_1.ReminderDateUIOption.relative_to_due ? task.NodeFields.dueDate + params.dueDateOffset : params.reminderDate,
             timeZone: params.timeZone,
             reminderDateUIOption: params.reminderDateUIOption,
             updated: ctx.timestamp,
@@ -168,7 +169,7 @@ exports.reminderUpdate = {
                 {
                     changeType: 'Node:UPDATE',
                     nodeRef: reminderRef,
-                    node: ctx.assignFields(TaskConstants_1.TaskEntityTypes.Reminder, fields),
+                    node: ctx.assignFields(en_data_model_1.EntityTypes.Reminder, fields),
                 },
             ],
         };

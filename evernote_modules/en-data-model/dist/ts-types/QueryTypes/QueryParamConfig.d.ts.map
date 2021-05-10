@@ -1,1 +1,0 @@
-{"version":3,"file":"QueryParamConfig.d.ts","sourceRoot":"","sources":["../../../src/ts-types/QueryTypes/QueryParamConfig.ts"],"names":[],"mappings":"AACA;;;;GAIG;AAEH,OAAO,EAAC,qBAAqB,EAAC,MAAM,yBAAyB,CAAC;AAC9D,OAAO,EAAC,yBAAyB,EAAC,MAAM,6BAA6B,CAAC;AACtE,OAAO,EAAC,oBAAoB,EAAC,MAAM,wBAAwB,CAAC;AAE5D,oBAAY,gBAAgB,GAAG,qBAAqB,GAAG,yBAAyB,GAAG,oBAAoB,CAAC"}

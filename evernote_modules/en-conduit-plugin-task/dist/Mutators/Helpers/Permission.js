@@ -21,7 +21,7 @@ async function checkTaskEditPermission(trc, ctx, task) {
         return;
     }
     else {
-        throw new conduit_utils_1.PermissionError(`Permission Denied, no COMPLETE permission on task ${task.id}`);
+        throw new conduit_utils_1.PermissionError('Permission Denied');
     }
 }
 exports.checkTaskEditPermission = checkTaskEditPermission;

@@ -1,6 +1,6 @@
 {
   "name": "conduit-view",
-  "version": "1.33.4",
+  "version": "1.34.4",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -13,9 +13,10 @@
     "@types/node": "^10.12.2"
   },
   "dependencies": {
-    "conduit-utils": "1.33.4",
-    "conduit-view-types": "1.33.4",
-    "en-data-model": "^2.7.16",
+    "conduit-utils": "1.34.4",
+    "conduit-view-types": "1.34.4",
+    "en-data-model": "^3.4.2",
+    "en-home-data-model": "^3.4.2",
     "graphql": "^14.0.2",
     "graphql-tag": "^2.10.1",
     "simply-immutable": "^2.1.1"

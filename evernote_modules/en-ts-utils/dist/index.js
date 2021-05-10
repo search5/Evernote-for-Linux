@@ -32,6 +32,7 @@ const logger_1 = require("./logger");
 const TimeConstants_1 = require("./TimeConstants");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 __exportStar(require("./Comparator"), exports);
+__exportStar(require("./DataSchema"), exports);
 __exportStar(require("./DebugSettings"), exports);
 __exportStar(require("./DeterministicIdGenerator"), exports);
 __exportStar(require("./ExecutionQueue"), exports);

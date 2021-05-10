@@ -5,19 +5,19 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ScheduledNotificationRules = void 0;
 const conduit_core_1 = require("conduit-core");
+const en_data_model_1 = require("en-data-model");
 const ScheduledNotificationHelpers_1 = require("../Mutators/Helpers/ScheduledNotificationHelpers");
 const ScheduledNotificationUtils_1 = require("../ScheduledNotifications/ScheduledNotificationUtils");
-const TaskConstants_1 = require("../TaskConstants");
 exports.ScheduledNotificationRules = [{
         on: 'Node:UPDATE',
-        where: { type: TaskConstants_1.TaskEntityTypes.Reminder },
+        where: { type: en_data_model_1.EntityTypes.Reminder },
         when: conduit_core_1.GraphMutationRuleWhen.Always,
         getExtraOps: async (trc, ctx, op) => {
             return await updateAssociatedSNs(trc, ctx, op.nodeRef, { scheduling: true });
         },
     }, {
         on: 'Node:UPDATE',
-        where: { type: TaskConstants_1.TaskEntityTypes.Task },
+        where: { type: en_data_model_1.EntityTypes.Task },
         when: conduit_core_1.GraphMutationRuleWhen.Always,
         getExtraOps: async (trc, ctx, op) => {
             return await updateAssociatedSNs(trc, ctx, op.nodeRef, { dataSource: true });

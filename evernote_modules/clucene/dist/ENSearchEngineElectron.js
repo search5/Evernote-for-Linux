@@ -42,7 +42,7 @@ class ENSearchEngineElectron {
         const parsedQuery = queryBuilder.build();
         // console.log('parsedQuery: ', parsedQuery);
         if (parsedQuery === null) {
-            return en_search_engine_shared_1.ENCLuceneHelper.emptySearchResultGroup();
+            return en_search_engine_shared_1.ENCLuceneHelper.setResultFlags(en_search_engine_shared_1.ENCLuceneHelper.emptySearchResultGroup(), pquery);
         }
         const searchWordsBuilder = new en_search_engine_shared_1.ESQueryStringBuilder(pquery.searchWords);
         searchWordsBuilder.dontPrintAnd = false;
@@ -56,7 +56,8 @@ class ENSearchEngineElectron {
             from: offset !== null && offset !== void 0 ? offset : 0,
             size: maxNotes !== null && maxNotes !== void 0 ? maxNotes : -1,
         };
-        return await this.clucene.search(queryWithParams);
+        const result = await this.clucene.search(queryWithParams);
+        return en_search_engine_shared_1.ENCLuceneHelper.setResultFlags(result, pquery);
     }
     async suggest(query, documentType, optimization) {
         const suggestOptimization = optimization !== null && optimization !== void 0 ? optimization : ENSearchEngineElectron.defaultSuggestOptimization;
@@ -157,6 +158,9 @@ class ENSearchEngineElectron {
      */
     async isMetadataQuery(query) {
         return en_search_engine_shared_1.QueryStringParser.isMetadataQuery(query);
+    }
+    async isQueryWithFilters(query) {
+        return en_search_engine_shared_1.QueryStringParser.isQueryWithFilters(query);
     }
     async indexInfo() {
         return {};

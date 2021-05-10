@@ -5,45 +5,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.boardIndexConfig = exports.boardTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
-const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
-const BoardConstants_1 = require("../BoardConstants");
-const DesktopFormFactor = conduit_utils_1.Struct({
-    layout: BoardConstants_1.BoardDesktopLayoutSchema,
-});
-const MobileFormFactor = conduit_utils_1.Struct({
-    layout: BoardConstants_1.BoardMobileLayoutSchema,
-});
+const en_home_data_model_1 = require("en-home-data-model");
 exports.boardTypeDef = {
-    name: BoardConstants_1.BoardEntityTypes.Board,
+    name: en_data_model_1.EntityTypes.Board,
     syncSource: conduit_storage_1.SyncSource.NSYNC,
     nsyncFeatureGroup: 'Home',
-    schema: {
-        boardType: BoardConstants_1.BoardTypeSchema,
-        internalID: conduit_utils_1.NullableNumber,
-        isCustomized: conduit_utils_1.NullableBoolean,
-        serviceLevel: conduit_utils_1.Nullable(BoardConstants_1.BoardServiceLevelSchema),
-        headerBG: en_core_entity_types_1.BlobV2Schema,
-        headerBGMime: conduit_utils_1.NullableString,
-        headerBGFileName: conduit_utils_1.NullableString,
-        headerBGPreviousUpload: en_core_entity_types_1.BlobV2Schema,
-        headerBGPreviousUploadMime: conduit_utils_1.NullableString,
-        headerBGPreviousUploadFileName: conduit_utils_1.NullableString,
-        headerBGMode: conduit_utils_1.Nullable(BoardConstants_1.BoardBackgroundModeSchema),
-        headerBGColor: conduit_utils_1.Nullable(BoardConstants_1.BoardColorSchemeSchema),
-        greetingText: conduit_utils_1.NullableString,
-        desktop: DesktopFormFactor,
-        mobile: MobileFormFactor,
-        freeTrialExpiration: conduit_utils_1.NullableTimestamp,
-        created: 'timestamp',
-        updated: 'timestamp',
-        tasksVersion: conduit_utils_1.NullableNumber,
-        calendarVersion: conduit_utils_1.NullableNumber,
-        filteredNotesVersion: conduit_utils_1.NullableNumber,
-        extraVersion: conduit_utils_1.NullableNumber,
-        coreVersion: conduit_utils_1.NullableNumber,
-    },
+    schema: Object.assign(Object.assign({}, en_home_data_model_1.BoardEntitySchema.fields), { created: 'timestamp', updated: 'timestamp', headerBG: en_core_entity_types_1.BlobV2Schema, headerBGPreviousUpload: en_core_entity_types_1.BlobV2Schema }),
 };
 exports.boardIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.boardTypeDef, {
     indexResolvers: {
@@ -51,7 +20,7 @@ exports.boardIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports
         isSupported: {
             schemaType: 'boolean',
             resolver: async (trc, node, _) => {
-                return [Boolean(en_data_model_1.BoardType[node.NodeFields.boardType])];
+                return [Boolean(en_home_data_model_1.BoardType[node.NodeFields.boardType])];
             },
             graphqlPath: ['isSupported'],
             isUnSyncedField: true,

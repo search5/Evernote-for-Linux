@@ -21,13 +21,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __exportStar = (this && this.__exportStar) || function(m, exports) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getENTaskPlugin = exports.genScheduledNotificationId = exports.TasksExportDataSchema = exports.parseAndValidateTasksExportData = exports.getTaskUserSettingsIdByUserId = exports.getTasksExportData = exports.genTasksDataCreateOps = exports.getNoteContentInfoIDByNoteID = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
+const en_data_model_1 = require("en-data-model");
 const NoteContentInfoConverter_1 = require("./Converters/NoteContentInfoConverter");
 const ReminderConverter_1 = require("./Converters/ReminderConverter");
 const TaskConverter_1 = require("./Converters/TaskConverter");
@@ -47,13 +45,11 @@ const index_1 = require("./PluginMutators/in-note-task/index");
 const ReminderStatusContainmentRules_1 = require("./Rules/ReminderStatusContainmentRules");
 const ScheduledNotificationRules_1 = require("./Rules/ScheduledNotificationRules");
 const TaskDeleteContainmentRules_1 = require("./Rules/TaskDeleteContainmentRules");
-const TaskConstants_1 = require("./TaskConstants");
 const TaskGroupResolver_1 = require("./TaskGroupResolver");
 var NoteContentInfo_2 = require("./Mutators/Helpers/NoteContentInfo");
 Object.defineProperty(exports, "getNoteContentInfoIDByNoteID", { enumerable: true, get: function () { return NoteContentInfo_2.getNoteContentInfoIDByNoteID; } });
 var NoteContentInfo_3 = require("./Mutators/Helpers/NoteContentInfo");
 Object.defineProperty(exports, "genTasksDataCreateOps", { enumerable: true, get: function () { return NoteContentInfo_3.genTasksDataCreateOps; } });
-__exportStar(require("./TaskConstants"), exports);
 var TaskUtils_1 = require("./TaskUtils");
 Object.defineProperty(exports, "getTasksExportData", { enumerable: true, get: function () { return TaskUtils_1.getTasksExportData; } });
 Object.defineProperty(exports, "getTaskUserSettingsIdByUserId", { enumerable: true, get: function () { return TaskUtils_1.getTaskUserSettingsIdByUserId; } });
@@ -61,13 +57,6 @@ Object.defineProperty(exports, "parseAndValidateTasksExportData", { enumerable: 
 Object.defineProperty(exports, "TasksExportDataSchema", { enumerable: true, get: function () { return TaskUtils_1.TasksExportDataSchema; } });
 var ScheduledNotificationUtils_1 = require("./ScheduledNotifications/ScheduledNotificationUtils");
 Object.defineProperty(exports, "genScheduledNotificationId", { enumerable: true, get: function () { return ScheduledNotificationUtils_1.genScheduledNotificationId; } });
-var NSyncEntityType;
-(function (NSyncEntityType) {
-    NSyncEntityType[NSyncEntityType["NOTE_CONTENT_INFO"] = 14] = "NOTE_CONTENT_INFO";
-    NSyncEntityType[NSyncEntityType["TASK"] = 15] = "TASK";
-    NSyncEntityType[NSyncEntityType["REMINDER"] = 16] = "REMINDER";
-    NSyncEntityType[NSyncEntityType["TASK_USER_SETTINGS"] = 17] = "TASK_USER_SETTINGS";
-})(NSyncEntityType || (NSyncEntityType = {}));
 function getENTaskPlugin() {
     return {
         name: 'ENTask',
@@ -102,26 +91,26 @@ function getENTaskPlugin() {
         },
         entityTypes: () => {
             const entityTypes = {
-                [TaskConstants_1.TaskEntityTypes.NoteContentInfo]: {
+                [en_data_model_1.EntityTypes.NoteContentInfo]: {
                     typeDef: NoteContentInfo_1.noteContentInfoTypeDef,
                     indexConfig: NoteContentInfo_1.noteContentInfoIndexConfig,
                     dataResolver: NoteContentInfoDataResolver_1.NoteContentInfoDataResolver,
-                    nsyncConverters: { [NSyncEntityType.NOTE_CONTENT_INFO]: NoteContentInfoConverter_1.getNoteContentInfoNodeAndEdges },
+                    nsyncConverters: { [en_data_model_1.NSyncEntityType.NOTE_CONTENT_INFO]: NoteContentInfoConverter_1.getNoteContentInfoNodeAndEdges },
                 },
-                [TaskConstants_1.TaskEntityTypes.Reminder]: {
+                [en_data_model_1.EntityTypes.Reminder]: {
                     typeDef: Reminder_1.reminderTypeDef,
                     indexConfig: Reminder_1.reminderIndexConfig,
-                    nsyncConverters: { [NSyncEntityType.REMINDER]: ReminderConverter_1.getReminderNodeAndEdges },
+                    nsyncConverters: { [en_data_model_1.NSyncEntityType.REMINDER]: ReminderConverter_1.getReminderNodeAndEdges },
                 },
-                [TaskConstants_1.TaskEntityTypes.Task]: {
+                [en_data_model_1.EntityTypes.Task]: {
                     typeDef: Task_1.taskTypeDef,
                     indexConfig: Task_1.taskIndexConfig,
-                    nsyncConverters: { [NSyncEntityType.TASK]: TaskConverter_1.getTaskNodeAndEdges },
+                    nsyncConverters: { [en_data_model_1.NSyncEntityType.TASK]: TaskConverter_1.getTaskNodeAndEdges },
                 },
-                [TaskConstants_1.TaskEntityTypes.TaskUserSettings]: {
+                [en_data_model_1.EntityTypes.TaskUserSettings]: {
                     typeDef: TaskUserSettings_1.taskUserSettingsDef,
                     indexConfig: TaskUserSettings_1.taskUserSettingsIndexConfig,
-                    nsyncConverters: { [NSyncEntityType.TASK_USER_SETTINGS]: TaskUserSettingsConverter_1.getTaskUserSettingsNodeAndEdges },
+                    nsyncConverters: { [en_data_model_1.NSyncEntityType.TASK_USER_SETTINGS]: TaskUserSettingsConverter_1.getTaskUserSettingsNodeAndEdges },
                 },
             };
             return entityTypes;

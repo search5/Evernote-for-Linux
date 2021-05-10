@@ -5,13 +5,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.commonTraverseGraphAdapter = exports.forEachTaskReminderScheduledNotification = exports.genScheduledNotificationId = exports.getScheduledNotificationType = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_conduit_plugin_scheduled_notification_shared_1 = require("en-conduit-plugin-scheduled-notification-shared");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const TaskConstants_1 = require("../TaskConstants");
+const en_data_model_1 = require("en-data-model");
+const en_notifications_data_model_1 = require("en-notifications-data-model");
 function getScheduledNotificationType(dataSourceType) {
     switch (dataSourceType) {
-        case TaskConstants_1.TaskEntityTypes.Task:
-            return en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationType.TaskReminder;
+        case en_data_model_1.EntityTypes.Task:
+            return en_notifications_data_model_1.ScheduledNotificationType.TaskReminder;
         default:
             throw new conduit_utils_1.InvalidParameterError(`dataSourceEnity type not accounted for- ${dataSourceType}. No matching for ScheduledNotificationType`);
     }
@@ -23,12 +23,12 @@ function genScheduledNotificationId(scheduledNotificationType, schedulingEntityI
 exports.genScheduledNotificationId = genScheduledNotificationId;
 async function forEachTaskReminderSNOnReminder(trc, ctx, reminderRef, cb) {
     const snRefs = await ctx.traverseGraph(trc, reminderRef, [
-        { edge: ['outputs', 'scheduledNotification'], type: en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.ScheduledNotification }
+        { edge: ['outputs', 'scheduledNotification'], type: en_data_model_1.EntityTypes.ScheduledNotification }
     ]);
     await cb(snRefs[0], reminderRef);
 }
 async function forEachTaskReminderSNOnTask(trc, ctx, taskRef, cb) {
-    const reminders = await ctx.traverseGraph(trc, taskRef, [{ edge: ['outputs', 'reminders'], type: TaskConstants_1.TaskEntityTypes.Reminder }]);
+    const reminders = await ctx.traverseGraph(trc, taskRef, [{ edge: ['outputs', 'reminders'], type: en_data_model_1.EntityTypes.Reminder }]);
     for (const reminder of reminders) {
         await forEachTaskReminderSNOnReminder(trc, ctx, reminder, cb);
     }
@@ -37,14 +37,14 @@ async function forEachTaskReminderScheduledNotification(trc, ctx, traverseStartR
     if (traverseStartRef.type === 'Notebook') {
         const notes = await ctx.traverseGraph(trc, traverseStartRef, [{ edge: ['outputs', 'children'], type: en_core_entity_types_1.CoreEntityTypes.Note }]);
         for (const note of notes) {
-            const tasks = await ctx.traverseGraph(trc, { type: note.type, id: note.id }, [{ edge: ['outputs', 'tasks'], type: TaskConstants_1.TaskEntityTypes.Task }]);
+            const tasks = await ctx.traverseGraph(trc, { type: note.type, id: note.id }, [{ edge: ['outputs', 'tasks'], type: en_data_model_1.EntityTypes.Task }]);
             for (const task of tasks) {
                 await forEachTaskReminderSNOnTask(trc, ctx, task, cb);
             }
         }
     }
     else if (traverseStartRef.type === 'Note') {
-        const tasks = await ctx.traverseGraph(trc, traverseStartRef, [{ edge: ['outputs', 'tasks'], type: TaskConstants_1.TaskEntityTypes.Task }]);
+        const tasks = await ctx.traverseGraph(trc, traverseStartRef, [{ edge: ['outputs', 'tasks'], type: en_data_model_1.EntityTypes.Task }]);
         for (const task of tasks) {
             await forEachTaskReminderSNOnTask(trc, ctx, task, cb);
         }

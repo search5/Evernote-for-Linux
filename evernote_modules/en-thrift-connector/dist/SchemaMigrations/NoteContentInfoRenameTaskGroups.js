@@ -23,12 +23,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerRenameNoteContentInfoTaskGroups = void 0;
+const en_data_model_1 = require("en-data-model");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const Migrations_1 = require("../SyncFunctions/Migrations");
 function registerRenameNoteContentInfoTaskGroups() {
     Migrations_1.registerMigrationFunctionByName('NCI-rename-taskgroup-1.29', async (trc, params) => {
         await params.syncEngine.transact(trc, 'SchemaMigration: NCI-rename-taskgroup-1.29', async (tx) => {
-            const oldNodes = await tx.getGraphNodesByType(trc, null, 'NoteContentInfo');
+            const oldNodes = await tx.getGraphNodesByType(trc, null, en_data_model_1.EntityTypes.NoteContentInfo);
             for (let node of oldNodes) {
                 if (!node.syncContexts.length || node.NodeFields.hasOwnProperty('taskGroupNoteLevelIDs')) {
                     continue;

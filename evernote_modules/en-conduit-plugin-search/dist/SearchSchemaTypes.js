@@ -17,6 +17,20 @@ const SearchLogInfoType = new graphql_1.GraphQLObjectType({
         searchGuid: { type: graphql_1.GraphQLString },
     },
 });
+/** Additional info about the query and performed processing steps */
+const ResultFlagsType = new graphql_1.GraphQLObjectType({
+    name: 'ResultFlags',
+    fields: {
+        /** Search string is valid according to Evernote search grammar */
+        isValidQueryStr: { type: graphql_1.GraphQLBoolean },
+        /** Search string contains boolean operators */
+        isBoolean: { type: graphql_1.GraphQLBoolean },
+        /** Search string contains geo operators */
+        isGeo: { type: graphql_1.GraphQLBoolean },
+        /** Search string contains filters */
+        isFiltered: { type: graphql_1.GraphQLBoolean },
+    },
+});
 const SearchResultType = new graphql_1.GraphQLObjectType({
     name: 'SearchResult',
     fields: {
@@ -278,6 +292,8 @@ exports.GraphQLSearchExResultGroup = new graphql_1.GraphQLObjectType({
 exports.GraphQLSearchExMeta = new graphql_1.GraphQLObjectType({
     name: 'SearchExMeta',
     fields: {
+        /** Additional info about the query and performed processing steps */
+        resultFlags: { type: ResultFlagsType },
         /** Pass this to SendLogRequest when user clicks a note. */
         searchLogInfo: { type: SearchLogInfoType },
     },

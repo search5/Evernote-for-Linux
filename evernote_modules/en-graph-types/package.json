@@ -1,6 +1,6 @@
 {
   "name": "en-graph-types",
-  "version": "1.3.0",
+  "version": "2.0.0",
   "license": "UNLICENSED",
   "publishConfig": {
     "registry": "http://localhost:4873"
@@ -10,7 +10,7 @@
   ],
   "main": "dist/index",
   "dependencies": {
-    "en-data-model": "^2.7.0",
-    "en-ts-utils": "^4.1.0"
+    "en-data-model": "^3.2.1",
+    "en-ts-utils": "^5.1.0"
   }
 }

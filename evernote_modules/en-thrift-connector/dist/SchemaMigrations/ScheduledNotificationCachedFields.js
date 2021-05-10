@@ -23,14 +23,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerScheduledNotificationCachedFields = void 0;
+const en_data_model_1 = require("en-data-model");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const Migrations_1 = require("../SyncFunctions/Migrations");
-// conduit v2 - auto save nsync data on write without validation.
-// Move local fields inside ScheduledNotification into CachedFields.
 function registerScheduledNotificationCachedFields() {
+    // conduit v2 - auto save nsync data on write without validation.
+    // Move local fields inside ScheduledNotification into CachedFields.
     Migrations_1.registerMigrationFunctionByName('SN-field-2-cached-1.29', async (trc, params) => {
         await params.syncEngine.transact(trc, 'SchemaMigration: SN-field-2-cached-1.29', async (tx) => {
-            const oldNodes = await tx.getGraphNodesByType(trc, null, 'ScheduledNotification');
+            const oldNodes = await tx.getGraphNodesByType(trc, null, en_data_model_1.EntityTypes.ScheduledNotification);
             for (const node of oldNodes) {
                 if (node.NodeFields.dataSourceUpdatedAt === undefined && node.NodeFields.schedulingUpdatedAt === undefined) {
                     continue;
@@ -44,6 +45,19 @@ function registerScheduledNotificationCachedFields() {
                 let newNode = SimplyImmutable.deleteImmutable(node, ['NodeFields', 'dataSourceUpdatedAt']);
                 newNode = SimplyImmutable.deleteImmutable(node, ['NodeFields', 'schedulingUpdatedAt']);
                 await tx.replaceNode(trc, syncContext, newNode);
+            }
+        });
+    });
+    // conduit v2 - match conduit field name with nsync field name
+    Migrations_1.registerMigrationFunctionByName('SN-data-2-payload-1.34', async (trc, params) => {
+        await params.syncEngine.transact(trc, 'SchemaMigration: SN-data-2-payload-1.34', async (tx) => {
+            const oldNodes = await tx.getGraphNodesByType(trc, null, en_data_model_1.EntityTypes.ScheduledNotification);
+            for (const node of oldNodes) {
+                if ('payload' in node.NodeFields) {
+                    continue;
+                }
+                const syncContext = node.syncContexts[0];
+                await tx.replaceNode(trc, syncContext, SimplyImmutable.replaceImmutable(node, ['NodeFields', 'payload'], node.NodeFields.data));
             }
         });
     });

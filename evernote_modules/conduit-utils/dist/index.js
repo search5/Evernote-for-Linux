@@ -16,7 +16,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.clearMutableTimeout = exports.setTimeoutForTimestamp = exports.MemLogger = exports.memoize = exports.timeboxExecution = exports.DefaultWidgetRanker = exports.bytesToUuid = exports.uuid = exports.md5Base64 = exports.md5 = exports.createLCGGenerator = exports.generateRandomString = exports.rateLimitErrorLog = exports.getSessionBlock = exports.logAndDiscardError = exports.getVisibleItems = exports.Priority = void 0;
+exports.shallowCloneExcluding = exports.clearMutableTimeout = exports.setTimeoutForTimestamp = exports.MemLogger = exports.memoize = exports.timeboxExecution = exports.DefaultWidgetRanker = exports.bytesToUuid = exports.uuid = exports.md5Base64 = exports.md5 = exports.createLCGGenerator = exports.generateRandomString = exports.rateLimitErrorLog = exports.getSessionBlock = exports.logAndDiscardError = exports.getVisibleItems = exports.Priority = void 0;
 const en_ts_utils_1 = require("en-ts-utils");
 const js_md5_1 = __importDefault(require("js-md5"));
 const uuid_1 = __importDefault(require("uuid"));
@@ -215,4 +215,12 @@ function setTimeoutForTimestampHelper(fn, unixTimeMs, mutableTimeoutId) {
     }
     return mutableTimeoutId;
 }
+function shallowCloneExcluding(obj, fields) {
+    const ret = Object.assign({}, obj);
+    for (const field of fields) {
+        delete ret[field];
+    }
+    return ret;
+}
+exports.shallowCloneExcluding = shallowCloneExcluding;
 //# sourceMappingURL=index.js.map

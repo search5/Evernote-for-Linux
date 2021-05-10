@@ -7,13 +7,14 @@ exports.taskMove = exports.taskAssign = exports.taskUpdate = exports.taskDelete 
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
+const en_data_model_1 = require("en-data-model");
+const en_tasks_data_model_1 = require("en-tasks-data-model");
 const ReminderStatusContainmentRules_1 = require("../Rules/ReminderStatusContainmentRules");
-const TaskConstants_1 = require("../TaskConstants");
 const NoteContentInfo_1 = require("./Helpers/NoteContentInfo");
 const Permission_1 = require("./Helpers/Permission");
 const Task_1 = require("./Helpers/Task");
 async function genericUpdateExecutionPlan(trc, ctx, taskID, fields) {
-    const nodeRef = { id: taskID, type: TaskConstants_1.TaskEntityTypes.Task };
+    const nodeRef = { id: taskID, type: en_data_model_1.EntityTypes.Task };
     const task = await ctx.fetchEntity(trc, nodeRef);
     if (!task) {
         throw new conduit_utils_1.NotFoundError(taskID, 'missing task in update');
@@ -32,7 +33,7 @@ async function taskUpdateOps(trc, ctx, taskRef, fields) {
         {
             changeType: 'Node:UPDATE',
             nodeRef: taskRef,
-            node: ctx.assignFields(TaskConstants_1.TaskEntityTypes.Task, fields),
+            node: ctx.assignFields(en_data_model_1.EntityTypes.Task, fields),
         },
     ];
     const profile = await en_core_entity_types_1.getAccountProfileRef(trc, ctx);
@@ -55,7 +56,7 @@ exports.taskCreate = {
         taskGroupNoteLevelID: 'string',
         dueDate: conduit_utils_1.NullableTimestamp,
         timeZone: conduit_utils_1.NullableString,
-        dueDateUIOption: conduit_utils_1.Nullable(TaskConstants_1.DueDateUIOptionSchema),
+        dueDateUIOption: conduit_utils_1.Nullable(en_tasks_data_model_1.DueDateUIOptionSchema),
         flag: conduit_utils_1.NullableBoolean,
         sortWeight: conduit_utils_1.NullableString,
         status: conduit_utils_1.NullableString,
@@ -97,7 +98,7 @@ exports.taskDelete = {
         paramsOut.sourceOfChange = (_a = paramsIn.sourceOfChange) !== null && _a !== void 0 ? _a : '';
     },
     execute: async (trc, ctx, params) => {
-        const nodeRef = { id: params.task, type: TaskConstants_1.TaskEntityTypes.Task };
+        const nodeRef = { id: params.task, type: en_data_model_1.EntityTypes.Task };
         const task = await ctx.fetchEntity(trc, nodeRef);
         if (!task) {
             throw new conduit_utils_1.NotFoundError(nodeRef.id, 'Missing task in taskDelete');
@@ -114,8 +115,8 @@ exports.taskDelete = {
             ops: [
                 {
                     changeType: 'Node:UPDATE',
-                    nodeRef: { id: noteContentInfoID, type: TaskConstants_1.TaskEntityTypes.NoteContentInfo },
-                    node: ctx.assignFields(TaskConstants_1.TaskEntityTypes.NoteContentInfo, { sourceOfChange: params.sourceOfChange }),
+                    nodeRef: { id: noteContentInfoID, type: en_data_model_1.EntityTypes.NoteContentInfo },
+                    node: ctx.assignFields(en_data_model_1.EntityTypes.NoteContentInfo, { sourceOfChange: params.sourceOfChange }),
                 },
                 {
                     changeType: 'Node:DELETE',
@@ -123,7 +124,7 @@ exports.taskDelete = {
                 }, {
                     changeType: 'Edge:MODIFY',
                     edgesToDelete: [
-                        { dstID: params.task, dstType: TaskConstants_1.TaskEntityTypes.Task, dstPort: 'parent' },
+                        { dstID: params.task, dstType: en_data_model_1.EntityTypes.Task, dstPort: 'parent' },
                     ],
                 },
             ],
@@ -138,10 +139,10 @@ exports.taskUpdate = {
         label: conduit_utils_1.NullableString,
         dueDate: conduit_utils_1.NullableTimestamp,
         timeZone: conduit_utils_1.NullableString,
-        dueDateUIOption: conduit_utils_1.Nullable(TaskConstants_1.DueDateUIOptionSchema),
+        dueDateUIOption: conduit_utils_1.Nullable(en_tasks_data_model_1.DueDateUIOptionSchema),
         flag: conduit_utils_1.NullableBoolean,
         sortWeight: conduit_utils_1.NullableString,
-        status: conduit_utils_1.Nullable(TaskConstants_1.TaskStatusSchema),
+        status: conduit_utils_1.Nullable(en_tasks_data_model_1.TaskStatusSchema),
         sourceOfChange: conduit_utils_1.NullableString,
         taskGroupNoteLevelID: conduit_utils_1.NullableString,
     },
@@ -181,7 +182,7 @@ exports.taskUpdate = {
             sourceOfChange: params.sourceOfChange,
             taskGroupNoteLevelID: params.taskGroupNoteLevelID,
         };
-        const taskRef = { id: params.task, type: TaskConstants_1.TaskEntityTypes.Task };
+        const taskRef = { id: params.task, type: en_data_model_1.EntityTypes.Task };
         const noteID = await Task_1.getParentNoteId(trc, ctx, params.task);
         const plan = await genericUpdateExecutionPlan(trc, ctx, params.task, fields);
         if (params.taskGroupNoteLevelID) {
@@ -201,11 +202,11 @@ exports.taskUpdate = {
             }
         }
         await Permission_1.checkTaskEditPermission(trc, ctx, existingTask);
-        const reminderRefs = await ctx.traverseGraph(trc, taskRef, [{ edge: ['outputs', 'reminders'], type: TaskConstants_1.TaskEntityTypes.Reminder }]);
+        const reminderRefs = await ctx.traverseGraph(trc, taskRef, [{ edge: ['outputs', 'reminders'], type: en_data_model_1.EntityTypes.Reminder }]);
         const reminderIds = reminderRefs.map(reminder => {
             return reminder.id;
         });
-        const reminders = await ctx.fetchEntities(trc, TaskConstants_1.TaskEntityTypes.Reminder, reminderIds);
+        const reminders = await ctx.fetchEntities(trc, en_data_model_1.EntityTypes.Reminder, reminderIds);
         const deletedReminders = {};
         let ops = [];
         // update reminders date on dueDate change
@@ -215,7 +216,7 @@ exports.taskUpdate = {
                 if (!reminder) {
                     return false;
                 }
-                return reminder.NodeFields.reminderDateUIOption === TaskConstants_1.ReminderDateUIOption.relative_to_due;
+                return reminder.NodeFields.reminderDateUIOption === en_tasks_data_model_1.ReminderDateUIOption.relative_to_due;
             })
                 .map(reminder => {
                 const reminderFields = {
@@ -227,8 +228,8 @@ exports.taskUpdate = {
                 }
                 return {
                     changeType: 'Node:UPDATE',
-                    nodeRef: { id: reminder.id, type: TaskConstants_1.TaskEntityTypes.Reminder },
-                    node: ctx.assignFields(TaskConstants_1.TaskEntityTypes.Reminder, reminderFields),
+                    nodeRef: { id: reminder.id, type: en_data_model_1.EntityTypes.Reminder },
+                    node: ctx.assignFields(en_data_model_1.EntityTypes.Reminder, reminderFields),
                 };
             });
             // delete relative reminders on deleting dueDate
@@ -239,18 +240,18 @@ exports.taskUpdate = {
                 if (!reminder) {
                     return false;
                 }
-                return reminder.NodeFields.reminderDateUIOption === TaskConstants_1.ReminderDateUIOption.relative_to_due;
+                return reminder.NodeFields.reminderDateUIOption === en_tasks_data_model_1.ReminderDateUIOption.relative_to_due;
             })
                 .map(reminder => {
                 deletedReminders[reminder.id] = true;
                 return {
                     changeType: 'Node:DELETE',
-                    nodeRef: { id: reminder.id, type: TaskConstants_1.TaskEntityTypes.Reminder },
+                    nodeRef: { id: reminder.id, type: en_data_model_1.EntityTypes.Reminder },
                 };
             });
         }
         if (params.status) {
-            const reminderStatus = params.status === TaskConstants_1.TaskStatus.completed ? TaskConstants_1.ReminderStatus.muted : TaskConstants_1.ReminderStatus.active;
+            const reminderStatus = params.status === en_tasks_data_model_1.TaskStatus.completed ? en_tasks_data_model_1.ReminderStatus.muted : en_tasks_data_model_1.ReminderStatus.active;
             await ReminderStatusContainmentRules_1.updateReminderStatus(ctx, trc, taskRef.id, ops, reminderStatus, reminders.filter(r => r && !deletedReminders[r.id]));
         }
         // let's remove the associations
@@ -259,7 +260,7 @@ exports.taskUpdate = {
                 ops.push({
                     changeType: 'Edge:MODIFY',
                     edgesToDelete: [
-                        { dstID: op.nodeRef.id, dstType: TaskConstants_1.TaskEntityTypes.Reminder, dstPort: 'source' },
+                        { dstID: op.nodeRef.id, dstType: en_data_model_1.EntityTypes.Reminder, dstPort: 'source' },
                     ],
                 });
             }
@@ -274,6 +275,7 @@ exports.taskAssign = {
     params: {
         task: 'ID',
         assigneeID: conduit_utils_1.NullableID,
+        assigneeEmail: conduit_utils_1.NullableString,
         sourceOfChange: conduit_utils_1.NullableString,
     },
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
@@ -283,9 +285,13 @@ exports.taskAssign = {
     execute: async (trc, ctx, params) => {
         const fields = {
             sourceOfChange: params.sourceOfChange,
+            assigneeEmail: null,
         };
+        if (params.assigneeID && params.assigneeEmail) {
+            throw new conduit_utils_1.InvalidOperationError('either assigneeID or assigneeEmail should have value');
+        }
         const noteID = await Task_1.getParentNoteId(trc, ctx, params.task);
-        const taskRef = { id: params.task, type: TaskConstants_1.TaskEntityTypes.Task };
+        const taskRef = { id: params.task, type: en_data_model_1.EntityTypes.Task };
         const existingTask = await ctx.fetchEntity(trc, taskRef);
         if (!existingTask) {
             throw new conduit_utils_1.NotFoundError(params.task, 'Task not found in taskAssign');
@@ -298,29 +304,40 @@ exports.taskAssign = {
             results: {},
             ops: [],
         };
-        if (existingAssigneeId === params.assigneeID || (!existingAssigneeId && !params.assigneeID)) {
+        if ((params.assigneeID && existingAssigneeId === params.assigneeID) ||
+            (!existingAssigneeId && !existingTask.NodeFields.assigneeEmail && !params.assigneeID && !params.assigneeEmail) ||
+            (params.assigneeEmail && params.assigneeEmail === existingTask.NodeFields.assigneeEmail)) {
             return plan;
         }
         // delete the existing edge
         const edgeModifyOps = {
             changeType: 'Edge:MODIFY',
             edgesToDelete: [
-                { srcID: params.task, srcType: TaskConstants_1.TaskEntityTypes.Task, srcPort: 'assignee' },
-                { srcID: params.task, srcType: TaskConstants_1.TaskEntityTypes.Task, srcPort: 'assignedBy' },
-                { srcID: params.task, srcType: TaskConstants_1.TaskEntityTypes.Task, srcPort: 'memberships' },
+                { srcID: params.task, srcType: en_data_model_1.EntityTypes.Task, srcPort: 'assignee' },
+                { srcID: params.task, srcType: en_data_model_1.EntityTypes.Task, srcPort: 'assignedBy' },
+                { srcID: params.task, srcType: en_data_model_1.EntityTypes.Task, srcPort: 'memberships' },
             ],
+            edgesToCreate: [],
         };
         plan.ops.push(edgeModifyOps);
+        const profile = await en_core_entity_types_1.getAccountProfileRef(trc, ctx);
+        let assigned = false;
+        if (params.assigneeEmail) {
+            assigned = true;
+            fields.assigneeEmail = params.assigneeEmail;
+        }
         if (params.assigneeID) {
-            edgeModifyOps.edgesToCreate = [{
-                    srcID: params.task,
-                    srcType: TaskConstants_1.TaskEntityTypes.Task,
-                    srcPort: 'assignee',
-                    dstID: params.assigneeID,
-                    dstType: en_core_entity_types_1.CoreEntityTypes.Profile,
-                    dstPort: null,
-                }];
-            const profile = await en_core_entity_types_1.getAccountProfileRef(trc, ctx);
+            assigned = true;
+            edgeModifyOps.edgesToCreate.push({
+                srcID: params.task,
+                srcType: en_data_model_1.EntityTypes.Task,
+                srcPort: 'assignee',
+                dstID: params.assigneeID,
+                dstType: en_core_entity_types_1.CoreEntityTypes.Profile,
+                dstPort: null,
+            });
+        }
+        if (assigned) {
             if (profile) {
                 edgeModifyOps.edgesToCreate.push({
                     srcID: taskRef.id, srcType: taskRef.type, srcPort: 'assignedBy',
@@ -330,24 +347,26 @@ exports.taskAssign = {
                     dstID: profile.id, dstType: profile.type, dstPort: null,
                 });
                 // create membership
-                const owner = { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note } || ctx.vaultUserID || ctx.userID;
-                const membershipOps = await en_core_entity_types_1.createMembershipOps(trc, ctx, owner, {
-                    privilege: en_core_entity_types_1.MembershipPrivilege.COMPLETE,
-                    recipientIsMe: profile.id === params.assigneeID,
-                    parentRef: { id: taskRef.id, type: taskRef.type },
-                    profileEdgeMap: {
-                        recipient: params.assigneeID,
-                        sharer: profile.id,
-                        owner: profile.id,
-                    },
-                });
-                plan.ops.push(...membershipOps);
+                if (params.assigneeID) {
+                    const owner = { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note } || ctx.vaultUserID || ctx.userID;
+                    const membershipOps = await en_core_entity_types_1.createMembershipOps(trc, ctx, owner, {
+                        privilege: en_core_entity_types_1.MembershipPrivilege.COMPLETE,
+                        recipientIsMe: profile.id === params.assigneeID,
+                        parentRef: { id: taskRef.id, type: taskRef.type },
+                        profileEdgeMap: {
+                            recipient: params.assigneeID,
+                            sharer: profile.id,
+                            owner: profile.id,
+                        },
+                    });
+                    plan.ops.push(...membershipOps);
+                }
             }
         }
         plan.ops.push({
             changeType: 'Node:UPDATE',
             nodeRef: taskRef,
-            node: ctx.assignFields(TaskConstants_1.TaskEntityTypes.Task, fields),
+            node: ctx.assignFields(en_data_model_1.EntityTypes.Task, fields),
         });
         return plan;
     },
@@ -378,7 +397,7 @@ exports.taskMove = {
         paramsOut.destNoteOwnerID = await ctx.resolveOwnerRef(trc, owner);
     },
     execute: async (trc, ctx, params) => {
-        const nodeRef = { id: params.task, type: TaskConstants_1.TaskEntityTypes.Task };
+        const nodeRef = { id: params.task, type: en_data_model_1.EntityTypes.Task };
         const task = await ctx.fetchEntity(trc, nodeRef);
         if (!task) {
             throw new conduit_utils_1.NotFoundError(params.task, 'Task not found in taskMove');
@@ -430,8 +449,8 @@ exports.taskMove = {
         }
         ops.push({
             changeType: 'Node:UPDATE',
-            nodeRef: { id: NoteContentInfo_1.getNoteContentInfoIDByNoteID(srcNoteID), type: TaskConstants_1.TaskEntityTypes.NoteContentInfo },
-            node: ctx.assignFields(TaskConstants_1.TaskEntityTypes.NoteContentInfo, {
+            nodeRef: { id: NoteContentInfo_1.getNoteContentInfoIDByNoteID(srcNoteID), type: en_data_model_1.EntityTypes.NoteContentInfo },
+            node: ctx.assignFields(en_data_model_1.EntityTypes.NoteContentInfo, {
                 sourceOfChange: params.sourceOfChange,
             }),
         });

@@ -15,22 +15,19 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getENScheduledNotificationPlugin = void 0;
 const en_conduit_plugin_scheduled_notification_shared_1 = require("en-conduit-plugin-scheduled-notification-shared");
+const en_data_model_1 = require("en-data-model");
 const ScheduledNotification_1 = require("./Converters/ScheduledNotification");
 __exportStar(require("./notificationManagerSNUtilityDI"), exports);
 __exportStar(require("./ScheduledNotificationConstants"), exports);
-var NSyncEntityType;
-(function (NSyncEntityType) {
-    NSyncEntityType[NSyncEntityType["SCHEDULED_NOTIFICATION"] = 19] = "SCHEDULED_NOTIFICATION";
-})(NSyncEntityType || (NSyncEntityType = {}));
 function getENScheduledNotificationPlugin() {
     return {
         name: 'ENScheduledNotification',
         entityTypes: () => {
             const entityTypes = {
-                [en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.ScheduledNotification]: {
+                [en_data_model_1.EntityTypes.ScheduledNotification]: {
                     typeDef: en_conduit_plugin_scheduled_notification_shared_1.scheduledNotificationTypeDef,
                     indexConfig: en_conduit_plugin_scheduled_notification_shared_1.scheduledNotificationIndexConfig,
-                    nsyncConverters: { [NSyncEntityType.SCHEDULED_NOTIFICATION]: ScheduledNotification_1.getSnNodeAndEdges },
+                    nsyncConverters: { [en_data_model_1.NSyncEntityType.SCHEDULED_NOTIFICATION]: ScheduledNotification_1.getSnNodeAndEdges },
                 },
             };
             return entityTypes;

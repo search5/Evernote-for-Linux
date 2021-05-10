@@ -1,6 +1,6 @@
 {
   "name": "conduit-utils",
-  "version": "1.33.4",
+  "version": "1.34.4",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -18,7 +18,8 @@
     }
   },
   "dependencies": {
-    "en-ts-utils": "5.0.1",
+    "en-data-model": "^3.4.2",
+    "en-ts-utils": "5.1.0",
     "js-md5": "^0.7.3",
     "uuid": "^3.3.2"
   },

@@ -7,19 +7,14 @@ exports.taskUserSettingsIndexConfig = exports.taskUserSettingsDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const TaskConstants_1 = require("../TaskConstants");
+const en_data_model_1 = require("en-data-model");
+const en_tasks_data_model_1 = require("en-tasks-data-model");
 exports.taskUserSettingsDef = {
-    name: TaskConstants_1.TaskEntityTypes.TaskUserSettings,
+    name: en_data_model_1.EntityTypes.TaskUserSettings,
     syncSource: conduit_storage_1.SyncSource.NSYNC,
     nsyncFeatureGroup: 'Tasks',
     fieldValidation: {},
-    schema: {
-        created: 'timestamp',
-        updated: 'timestamp',
-        defaultReminder: conduit_utils_1.NullableBoolean,
-        defaultRemindersOffsets: conduit_utils_1.NullableListOf('number'),
-        pinDefaultTaskNote: conduit_utils_1.NullableBoolean,
-    },
+    schema: Object.assign(Object.assign({}, conduit_utils_1.shallowCloneExcluding(en_tasks_data_model_1.TaskUserSettingsEntitySchema.fields, ['defaultTaskNoteID'])), { created: 'timestamp', updated: 'timestamp' }),
     edges: {
         defaultTaskNote: {
             constraint: conduit_storage_1.EdgeConstraint.OPTIONAL,

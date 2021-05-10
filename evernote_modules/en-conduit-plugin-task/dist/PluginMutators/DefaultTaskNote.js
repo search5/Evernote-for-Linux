@@ -7,8 +7,8 @@ exports.taskGroupCreateDefaultTaskNoteUpsert = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
+const en_data_model_1 = require("en-data-model");
 const NoteContentInfo_1 = require("../Mutators/Helpers/NoteContentInfo");
-const TaskConstants_1 = require("../TaskConstants");
 const TaskUtils_1 = require("../TaskUtils");
 const Utilities_1 = require("../Utilities");
 const MutatorResultSchema = conduit_utils_1.Struct({
@@ -30,9 +30,9 @@ async function resolver(parent, argsIn, context) {
     const userNode = await Utilities_1.getCurrentUserNode(context);
     const taskUserSettingsId = TaskUtils_1.getTaskUserSettingsIdByUserId(userNode.NodeFields.internal_userID);
     let defaultTaskNoteList = [];
-    const existingTaskUserSettings = await context.db.getNode(context, { id: taskUserSettingsId, type: TaskConstants_1.TaskEntityTypes.TaskUserSettings });
+    const existingTaskUserSettings = await context.db.getNode(context, { id: taskUserSettingsId, type: en_data_model_1.EntityTypes.TaskUserSettings });
     if (Boolean(existingTaskUserSettings)) {
-        defaultTaskNoteList = await context.db.traverseGraph(context, { type: TaskConstants_1.TaskEntityTypes.TaskUserSettings, id: existingTaskUserSettings.id }, [{
+        defaultTaskNoteList = await context.db.traverseGraph(context, { type: en_data_model_1.EntityTypes.TaskUserSettings, id: existingTaskUserSettings.id }, [{
                 edge: ['outputs', 'defaultTaskNote'],
                 type: en_core_entity_types_1.CoreEntityTypes.Note,
             }]);
@@ -63,7 +63,7 @@ async function resolver(parent, argsIn, context) {
     else {
         const noteContentInfoID = NoteContentInfo_1.getNoteContentInfoIDByNoteID(existingDefaultTaskNote.id);
         const noteContentInfo = await context.db.getNode(context, {
-            type: TaskConstants_1.TaskEntityTypes.NoteContentInfo,
+            type: en_data_model_1.EntityTypes.NoteContentInfo,
             id: noteContentInfoID,
         });
         if (!noteContentInfo || !noteContentInfo.NodeFields.taskGroupNoteLevelIDs) {

@@ -29,7 +29,6 @@ const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const AccountLimitsConverter_1 = require("../Converters/AccountLimitsConverter");
-const Converters_1 = require("../Converters/Converters");
 const ProfileConverter_1 = require("../Converters/ProfileConverter");
 const ChunkConversion_1 = require("./ChunkConversion");
 const SyncHelpers_1 = require("./SyncHelpers");
@@ -191,17 +190,18 @@ async function getAndProcessRemoteSyncState(trc, params, isCatchup) {
     }
     return remoteSyncState.updateCount;
 }
-async function syncForwardInternal(trc, params, filter, isCatchup) {
+async function syncForwardInternal(trc, params, filter, catchupSyncInfo) {
+    var _a;
     await params.yieldCheck;
     const noteStore = params.thriftComm.getNoteStore(params.auth.urls.noteStoreUrl);
     const authToken = params.auth.token;
-    let lastUpdateCount = (await SyncHelpers_1.getLocalSyncState(trc, params, exports.EmptyNoteStoreSyncState)).lastUpdateCount;
-    let updateCount = await getAndProcessRemoteSyncState(trc, params, isCatchup);
+    let lastUpdateCount = (_a = catchupSyncInfo === null || catchupSyncInfo === void 0 ? void 0 : catchupSyncInfo.lastUpdatedCount) !== null && _a !== void 0 ? _a : (await SyncHelpers_1.getLocalSyncState(trc, params, exports.EmptyNoteStoreSyncState)).lastUpdateCount;
+    let updateCount = await getAndProcessRemoteSyncState(trc, params, Boolean(catchupSyncInfo));
     const isIncremental = lastUpdateCount > 0;
-    const catchUpWorkspaces = [];
-    const catchUpNotebooks = [];
     while (true) {
         await params.yieldCheck;
+        const catchUpWorkspaces = [];
+        const catchUpNotebooks = [];
         const syncAvailable = params.syncStatePath ? await SyncHelpers_1.checkIfSyncAvailable(trc, params, exports.EmptyNoteStoreSyncState, updateCount) : updateCount > lastUpdateCount;
         if (!syncAvailable) {
             break;
@@ -217,7 +217,7 @@ async function syncForwardInternal(trc, params, filter, isCatchup) {
         else {
             lastUpdateCount = updateCount;
         }
-        if (isIncremental && params.isVault && !isCatchup && chunk.workspaces && chunk.workspaces.length) {
+        if (isIncremental && params.isVault && !catchupSyncInfo && chunk.workspaces && chunk.workspaces.length) {
             for (const ws of chunk.workspaces) {
                 if (ws.workspace && ws.workspace.guid) {
                     // TODO filter out workspaces that we already have
@@ -225,7 +225,7 @@ async function syncForwardInternal(trc, params, filter, isCatchup) {
                 }
             }
         }
-        if (isIncremental && params.isVault && !isCatchup && chunk.notebooks && chunk.notebooks.length) {
+        if (isIncremental && params.isVault && !catchupSyncInfo && chunk.notebooks && chunk.notebooks.length) {
             for (const nb of chunk.notebooks) {
                 const creatorID = nb.contact && nb.contact.id;
                 if (nb.guid && creatorID !== params.personalUserID) {
@@ -234,16 +234,23 @@ async function syncForwardInternal(trc, params, filter, isCatchup) {
                 }
             }
         }
-        await ChunkConversion_1.convertSyncChunk(trc, params, chunk, lastUpdateCount);
+        await ChunkConversion_1.convertSyncChunk(trc, params, chunk, lastUpdateCount, async (tx) => {
+            var _a, _b, _c, _d;
+            if (catchupSyncInfo) {
+                if ((_a = filter.workspaceGuids) === null || _a === void 0 ? void 0 : _a.length) {
+                    await SyncHelpers_1.updateCatchupSyncLastUpdateCount(trc, params, en_core_entity_types_1.CoreEntityTypes.Workspace, filter.workspaceGuids, lastUpdateCount, tx);
+                }
+                if ((_b = filter.notebookGuids) === null || _b === void 0 ? void 0 : _b.length) {
+                    await SyncHelpers_1.updateCatchupSyncLastUpdateCount(trc, params, en_core_entity_types_1.CoreEntityTypes.Notebook, filter.notebookGuids, lastUpdateCount, tx);
+                }
+            }
+            await SyncHelpers_1.addCatchupSyncState(trc, params, { notebooks: catchUpNotebooks, workspaces: catchUpWorkspaces }, tx);
+            if (chunk.expungedNotebooks || chunk.expungedWorkspaces) {
+                await SyncHelpers_1.deleteCatchupSyncState(trc, params, { notebooks: (_c = chunk.expungedNotebooks) !== null && _c !== void 0 ? _c : [], workspaces: (_d = chunk.expungedWorkspaces) !== null && _d !== void 0 ? _d : [] }, tx);
+            }
+        });
         params.setProgress && await params.setProgress(trc, lastUpdateCount / updateCount);
     }
-    const wsRefs = catchUpWorkspaces.map(guid => {
-        return { id: Converters_1.convertGuidFromService(guid, en_core_entity_types_1.CoreEntityTypes.Workspace), type: en_core_entity_types_1.CoreEntityTypes.Workspace };
-    });
-    const nbRefs = catchUpNotebooks.map(guid => {
-        return { id: Converters_1.convertGuidFromService(guid, en_core_entity_types_1.CoreEntityTypes.Notebook), type: en_core_entity_types_1.CoreEntityTypes.Notebook };
-    });
-    return wsRefs.concat(nbRefs);
 }
 /**
  * Helper method called whenever an account "count" changes.
@@ -262,26 +269,20 @@ async function updateLocalStateAndAccountCounts(trc, params, transactionName, sy
     });
 }
 async function syncForward(trc, params) {
-    return await syncForwardInternal(trc, params, params.isVault ? gVaultFullSyncFilter : gPersonalFullSyncFilter, false);
+    await syncForwardInternal(trc, params, params.isVault ? gVaultFullSyncFilter : gPersonalFullSyncFilter);
 }
 exports.syncForward = syncForward;
-async function syncCatchup(trc, params, catchupRefs) {
-    const wsGuids = [];
-    const nbGuids = [];
-    for (const ref of catchupRefs) {
-        const guid = Converters_1.convertGuidToService(ref.id, ref.type);
-        if (ref.type === en_core_entity_types_1.CoreEntityTypes.Workspace) {
-            wsGuids.push(guid);
-        }
-        else if (ref.type === en_core_entity_types_1.CoreEntityTypes.Notebook) {
-            nbGuids.push(guid);
-        }
+async function syncCatchup(trc, params) {
+    const { guids: { workspaces: workspaceGuids, notebooks: notebookGuids } } = await SyncHelpers_1.getCatchupSyncState(trc, params);
+    if (workspaceGuids.length) {
+        const wsLastUpdateCount = await SyncHelpers_1.getCatchupSyncMinLastUpdateCount(trc, params, en_core_entity_types_1.CoreEntityTypes.Workspace);
+        await syncForwardInternal(trc, params, Object.assign(Object.assign({ workspaceGuids }, gCatchupSyncFilter), { includeWorkspaces: true }), { lastUpdatedCount: wsLastUpdateCount });
+        await SyncHelpers_1.deleteCatchupSyncState(trc, params, { notebooks: [], workspaces: workspaceGuids });
     }
-    if (wsGuids.length) {
-        await syncForwardInternal(trc, params, Object.assign(Object.assign({ workspaceGuids: wsGuids }, gCatchupSyncFilter), { includeWorkspaces: true }), true);
-    }
-    if (nbGuids.length) {
-        await syncForwardInternal(trc, params, Object.assign({ notebookGuids: nbGuids }, gCatchupSyncFilter), true);
+    if (notebookGuids.length) {
+        const nbLastUpdateCount = await SyncHelpers_1.getCatchupSyncMinLastUpdateCount(trc, params, en_core_entity_types_1.CoreEntityTypes.Notebook);
+        await syncForwardInternal(trc, params, Object.assign({ notebookGuids }, gCatchupSyncFilter), { lastUpdatedCount: nbLastUpdateCount });
+        await SyncHelpers_1.deleteCatchupSyncState(trc, params, { notebooks: notebookGuids, workspaces: [] });
     }
 }
 exports.syncCatchup = syncCatchup;
@@ -407,7 +408,7 @@ async function syncBootstrap(trc, params, syncNotes, backgroundNoteSyncStatePath
         if (!gBootstrapTags) {
             filter = Object.assign(Object.assign({}, filter), { includeTags: false });
         }
-        await syncForwardInternal(trc, params, filter, false);
+        await syncForwardInternal(trc, params, filter);
     }
     // for the background note syncing, set the lastUpdateCount to the remote update count and the target to 0
     const noteSyncParams = Object.assign(Object.assign({}, params), { syncStatePath: backgroundNoteSyncStatePath });

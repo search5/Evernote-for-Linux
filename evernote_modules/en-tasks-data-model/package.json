@@ -1,0 +1,20 @@
+{
+  "name": "en-tasks-data-model",
+  "version": "3.4.3",
+  "publishConfig": {
+    "registry": "http://localhost:4873"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index",
+  "dependencies": {
+    "en-data-model": "3.4.3",
+    "en-ts-utils": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.2.10",
+    "@types/node": "^13.13.4",
+    "chai": "^4.2.0"
+  }
+}

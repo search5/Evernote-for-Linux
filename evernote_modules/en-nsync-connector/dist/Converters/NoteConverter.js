@@ -7,9 +7,8 @@ exports.getNoteNodeAndEdges = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const BaseConverter_1 = require("./BaseConverter");
-const EDAM_NOTE_TITLE_QUALITY_UNTITLED = 0; // copied from en-thrift-internal
 const getNoteNodeAndEdges = async (trc, instance, context) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r;
     const attrs = instance.attributes;
     if (!attrs) {
         conduit_utils_1.logger.warn('missing note attributes');
@@ -27,7 +26,7 @@ const getNoteNodeAndEdges = async (trc, instance, context) => {
         return null;
     }
     const note = Object.assign(Object.assign({}, initial), { type: en_core_entity_types_1.CoreEntityTypes.Note, NodeFields: {
-            isUntitled: attrs.noteTitleQuality === EDAM_NOTE_TITLE_QUALITY_UNTITLED,
+            isUntitled: instance.isUntitled,
             isExternal,
             isMetadata: false,
             created: instance.created,
@@ -73,16 +72,16 @@ const getNoteNodeAndEdges = async (trc, instance, context) => {
                 },
                 Share: {
                     shareDate: (_l = attrs.shareDate) !== null && _l !== void 0 ? _l : null,
-                    sharedWithBusiness: (_m = attrs.sharedWithBusiness) !== null && _m !== void 0 ? _m : null,
+                    sharedWithBusiness: false,
                 },
                 Editor: {
-                    author: (_o = attrs.author) !== null && _o !== void 0 ? _o : null,
-                    lastEditedBy: (_p = attrs.lastEditedBy) !== null && _p !== void 0 ? _p : null,
+                    author: (_m = attrs.author) !== null && _m !== void 0 ? _m : null,
+                    lastEditedBy: (_o = attrs.lastEditedBy) !== null && _o !== void 0 ? _o : null,
                 },
                 Source: {
-                    source: (_q = attrs.source) !== null && _q !== void 0 ? _q : null,
-                    sourceURL: (_r = attrs.sourceURL) !== null && _r !== void 0 ? _r : null,
-                    sourceApplication: (_s = attrs.sourceApplication) !== null && _s !== void 0 ? _s : null,
+                    source: (_p = attrs.source) !== null && _p !== void 0 ? _p : null,
+                    sourceURL: (_q = attrs.sourceURL) !== null && _q !== void 0 ? _q : null,
+                    sourceApplication: (_r = attrs.sourceApplication) !== null && _r !== void 0 ? _r : null,
                 },
             },
         }, inputs: {

@@ -22,52 +22,24 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createWidgetIndexConfig = exports.widgetTypeDef = exports.ColorSchemeSchema = exports.SearchQuerySchema = exports.WidgetFormFactorSchema = void 0;
+exports.createWidgetIndexConfig = exports.widgetTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
-const BoardConstants_1 = require("../BoardConstants");
+const en_home_data_model_1 = require("en-home-data-model");
 const Utilities = __importStar(require("../Utilities"));
-exports.WidgetFormFactorSchema = conduit_utils_1.Struct({
-    panelKey: conduit_utils_1.NullableString,
-    sortWeight: 'string',
-    width: 'number',
-    height: 'number',
-});
-exports.SearchQuerySchema = conduit_utils_1.Struct({
-    query: 'string',
-});
-exports.ColorSchemeSchema = conduit_utils_1.Struct({
-    light: 'string',
-    dark: 'string',
-});
 exports.widgetTypeDef = {
-    name: BoardConstants_1.BoardEntityTypes.Widget,
+    name: en_data_model_1.EntityTypes.Widget,
     syncSource: conduit_storage_1.SyncSource.NSYNC,
     nsyncFeatureGroup: 'Home',
-    schema: {
-        boardType: BoardConstants_1.BoardTypeSchema,
-        isEnabled: 'boolean',
-        softDelete: conduit_utils_1.NullableBoolean,
-        widgetType: conduit_utils_1.Enum(en_data_model_1.WidgetType, 'WidgetType'),
-        mutableWidgetType: conduit_utils_1.Nullable(BoardConstants_1.MutableWidgetTypeSchema),
-        internalID: conduit_utils_1.NullableNumber,
-        mobile: exports.WidgetFormFactorSchema,
-        desktop: exports.WidgetFormFactorSchema,
-        selectedTab: conduit_utils_1.Nullable(BoardConstants_1.WidgetSelectedTabsSchema),
-        content: en_core_entity_types_1.BlobV2WithContentSchema,
-        created: 'timestamp',
-        updated: 'timestamp',
-        filteredNotesQuery: conduit_utils_1.Nullable(exports.SearchQuerySchema),
-        backgroundColor: conduit_utils_1.Nullable(exports.ColorSchemeSchema),
-    },
+    schema: Object.assign(Object.assign({}, conduit_utils_1.shallowCloneExcluding(en_home_data_model_1.WidgetEntitySchema.fields, ['parentID'])), { created: 'timestamp', updated: 'timestamp', content: en_core_entity_types_1.BlobV2WithContentSchema }),
     edges: {
         parent: {
             constraint: conduit_storage_1.EdgeConstraint.REQUIRED,
             type: conduit_storage_1.EdgeType.ANCESTRY_LINK,
             from: {
-                type: BoardConstants_1.BoardEntityTypes.Board,
+                type: en_data_model_1.EntityTypes.Board,
                 constraint: conduit_storage_1.EdgeConstraint.MANY,
                 denormalize: 'children',
             },
@@ -96,7 +68,7 @@ const createWidgetIndexConfig = (di) => {
             isEnabled: conduit_storage_1.getIndexByResolverForPrimitives(exports.widgetTypeDef, ['NodeFields', 'isEnabled']),
             selectedTab: conduit_storage_1.getIndexByResolverForPrimitives(exports.widgetTypeDef, ['NodeFields', 'selectedTab']),
             mutableWidgetType: {
-                schemaType: conduit_utils_1.Nullable(BoardConstants_1.MutableWidgetTypeSchema),
+                schemaType: conduit_utils_1.Nullable(en_home_data_model_1.MutableWidgetTypeSchema),
                 resolver: async (trc, node, _) => {
                     const { boardType, mutableWidgetType, } = node.NodeFields;
                     return [Utilities.safeMutableWidgetType(schemaFeatures, boardType, mutableWidgetType)];

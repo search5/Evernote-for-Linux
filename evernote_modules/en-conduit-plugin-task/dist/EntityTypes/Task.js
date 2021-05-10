@@ -7,27 +7,14 @@ exports.taskIndexConfig = exports.taskTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const TaskConstants_1 = require("../TaskConstants");
+const en_data_model_1 = require("en-data-model");
+const en_tasks_data_model_1 = require("en-tasks-data-model");
 exports.taskTypeDef = {
-    name: TaskConstants_1.TaskEntityTypes.Task,
+    name: en_data_model_1.EntityTypes.Task,
     syncSource: conduit_storage_1.SyncSource.NSYNC,
     nsyncFeatureGroup: 'Tasks',
     fieldValidation: {},
-    schema: {
-        created: 'timestamp',
-        updated: 'timestamp',
-        dueDate: conduit_utils_1.NullableTimestamp,
-        dueDateUIOption: conduit_utils_1.Nullable(TaskConstants_1.DueDateUIOptionSchema),
-        timeZone: conduit_utils_1.NullableString,
-        status: TaskConstants_1.TaskStatusSchema,
-        inNote: 'boolean',
-        flag: 'boolean',
-        sortWeight: 'string',
-        noteLevelID: 'string',
-        statusUpdated: conduit_utils_1.NullableTimestamp,
-        taskGroupNoteLevelID: 'string',
-        sourceOfChange: conduit_utils_1.NullableString,
-    },
+    schema: Object.assign(Object.assign({}, conduit_utils_1.shallowCloneExcluding(en_tasks_data_model_1.TaskEntitySchema.fields, ['assigneeIdentityID', 'assigneeUserID', 'assignedByUserID'])), { created: 'timestamp', updated: 'timestamp' }),
     hasMemberships: {
         constraint: conduit_storage_1.EdgeConstraint.MANY,
         type: conduit_storage_1.EdgeType.MEMBERSHIP,

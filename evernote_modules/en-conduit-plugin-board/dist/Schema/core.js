@@ -24,7 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.coreFeatureVersionOne = void 0;
 const en_data_model_1 = require("en-data-model");
-const BoardConstants_1 = require("../BoardConstants");
+const en_home_data_model_1 = require("en-home-data-model");
 const Utilities = __importStar(require("../Utilities"));
 const WidgetDefaultsFactory_1 = require("./WidgetDefaultsFactory");
 exports.coreFeatureVersionOne = {
@@ -57,10 +57,10 @@ exports.coreFeatureVersionOne = {
         const widgetMutationsRet = [];
         if (widgets) {
             // It is possible due to release schedules we catch the Board Service Level ahead of this upgrade, so lets use it if it exists.
-            const userAdjustedServiceLevelV2 = en_data_model_1.BoardSchema.calculateUserAdjustedServiceLevel((_a = board === null || board === void 0 ? void 0 : board.NodeFields.serviceLevel) !== null && _a !== void 0 ? _a : params.serviceLevel);
+            const userAdjustedServiceLevelV2 = en_home_data_model_1.BoardSchema.calculateUserAdjustedServiceLevel((_a = board === null || board === void 0 ? void 0 : board.NodeFields.serviceLevel) !== null && _a !== void 0 ? _a : params.serviceLevel);
             const v1Factory = new WidgetDefaultsFactory_1.WidgetDefaultsFactory(false);
             const v2Factory = new WidgetDefaultsFactory_1.WidgetDefaultsFactory(true);
-            const widgetTypes = [...Object.values(en_data_model_1.WidgetType), ...new Array(en_data_model_1.BoardSchema.MaxExtraWidgets - 1).fill(en_data_model_1.WidgetType.Extra)];
+            const widgetTypes = [...Object.values(en_home_data_model_1.WidgetType), ...new Array(en_home_data_model_1.BoardSchema.MaxExtraWidgets - 1).fill(en_home_data_model_1.WidgetType.Extra)];
             const v1Config = await v1Factory.create(params.trc, params.ctx, userAdjustedServiceLevelV2, params.boardType, widgetTypes);
             const v2Config = await v2Factory.create(params.trc, params.ctx, userAdjustedServiceLevelV2, params.boardType, widgetTypes);
             // We must do an order check, as LexoRankHandler will generate new sort weights as the length of default widgets changes.
@@ -89,7 +89,7 @@ exports.coreFeatureVersionOne = {
                 const defaults = (_b = widgetDefaultsById.get(widget.id)) === null || _b === void 0 ? void 0 : _b.defaults;
                 if (defaults) {
                     widgetMutationsRet.push({
-                        ref: { type: BoardConstants_1.BoardEntityTypes.Widget, id: widget.id },
+                        ref: { type: en_data_model_1.EntityTypes.Widget, id: widget.id },
                         mutation: {
                             internalID: defaults.internalID,
                         },
@@ -105,6 +105,8 @@ exports.coreFeatureVersionOne = {
                     isEnabled: widget.NodeFields.isEnabled,
                     internalID: 0,
                     mutableWidgetType: widget.NodeFields.mutableWidgetType,
+                    selectedTab: null,
+                    serviceLevelV1Upgrade: null,
                 });
             }
             for (const [id, mutation] of widgetMutations.entries()) {
@@ -152,6 +154,8 @@ exports.coreFeatureVersionOne = {
                         isEnabled: mutation.isEnabled,
                         internalID: 0,
                         mutableWidgetType: mutation.mutableWidgetType,
+                        selectedTab: null,
+                        serviceLevelV1Upgrade: null,
                     });
                 }
             }
@@ -168,6 +172,7 @@ exports.coreFeatureVersionOne = {
                     mutableWidgetType: actual.mutableWidgetType,
                     widgetType: actual.widgetType,
                     id: actual.id,
+                    serviceLevelV1Upgrade: actual.serviceLevelV1Upgrade,
                 });
             }
             actualValuesArray.sort((a, b) => {
@@ -182,6 +187,7 @@ exports.coreFeatureVersionOne = {
                     mutableWidgetType: actual.mutableWidgetType,
                     widgetType: actual.widgetType,
                     id: actual.id,
+                    serviceLevelV1Upgrade: actual.serviceLevelV1Upgrade,
                 });
             }
             expectedV1FlattenedLayout.sort((a, b) => {

@@ -5,17 +5,17 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getSnNodeAndEdgesForReminder = exports.getSnNodeAndEdgesForTask = exports.createSnEntity = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_conduit_plugin_scheduled_notification_shared_1 = require("en-conduit-plugin-scheduled-notification-shared");
+const en_data_model_1 = require("en-data-model");
+const en_tasks_data_model_1 = require("en-tasks-data-model");
 const simply_immutable_1 = require("simply-immutable");
 const ScheduledNotificationUtils_1 = require("../ScheduledNotifications/ScheduledNotificationUtils");
-const TaskConstants_1 = require("../TaskConstants");
 function createSnEntity(schedulingEntityRef, dataSourceEntityRef, currentUserID, isMute) {
     const timestamp = Date.now();
     const scheduledNotificationType = ScheduledNotificationUtils_1.getScheduledNotificationType(dataSourceEntityRef.type);
     const id = ScheduledNotificationUtils_1.genScheduledNotificationId(scheduledNotificationType, schedulingEntityRef.id);
     const sn = {
         id,
-        type: en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.ScheduledNotification,
+        type: en_data_model_1.EntityTypes.ScheduledNotification,
         localChangeTimestamp: 0,
         label: '',
         syncContexts: [],
@@ -25,6 +25,7 @@ function createSnEntity(schedulingEntityRef, dataSourceEntityRef, currentUserID,
             mute: isMute,
             created: timestamp,
             updated: timestamp,
+            payload: null,
         },
         owner: currentUserID,
         inputs: {
@@ -39,7 +40,7 @@ function createSnEntity(schedulingEntityRef, dataSourceEntityRef, currentUserID,
 exports.createSnEntity = createSnEntity;
 async function getSnNodeAndEdgesForTask(trc, task, context) {
     const nodesToUpsert = [];
-    await ScheduledNotificationUtils_1.forEachTaskReminderScheduledNotification(trc, ScheduledNotificationUtils_1.commonTraverseGraphAdapter(context.tx), { id: task.id, type: TaskConstants_1.TaskEntityTypes.Task }, async (snRef) => {
+    await ScheduledNotificationUtils_1.forEachTaskReminderScheduledNotification(trc, ScheduledNotificationUtils_1.commonTraverseGraphAdapter(context.tx), { id: task.id, type: en_data_model_1.EntityTypes.Task }, async (snRef) => {
         const existingSn = snRef && (await context.tx.getNode(trc, null, snRef));
         if (existingSn) {
             const updatedSn = simply_immutable_1.updateImmutable(existingSn, ['NodeFields'], {
@@ -60,7 +61,7 @@ async function getSnNodeAndEdgesForReminder(trc, reminder, taskRef, deleted, con
         conduit_utils_1.logger.error(`Error processing ScheduledNotification changes for Reminder sync: ${reminder.id} -- parentEntity for synced reminders must not be null`);
         return nodesAndEdges;
     }
-    const isMute = reminder.NodeFields.status === TaskConstants_1.ReminderStatus.muted;
+    const isMute = reminder.NodeFields.status === en_tasks_data_model_1.ReminderStatus.muted;
     await ScheduledNotificationUtils_1.forEachTaskReminderScheduledNotification(trc, ScheduledNotificationUtils_1.commonTraverseGraphAdapter(context.tx), reminder, async (snRef) => {
         // One SN per reminder ->
         const existingSn = snRef && (await context.tx.getNode(trc, null, snRef));
@@ -99,10 +100,10 @@ async function getScheduledNotificationCreateNodeAndEdges(trc, schedulingEntityR
     nodesToUpsert.push(sn);
     edgesToCreate.push({
         srcID: schedulingEntityRef.id, srcType: schedulingEntityRef.type, srcPort: 'scheduledNotification',
-        dstID: snID, dstType: en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.ScheduledNotification, dstPort: 'scheduling',
+        dstID: snID, dstType: en_data_model_1.EntityTypes.ScheduledNotification, dstPort: 'scheduling',
     });
     edgesToCreate.push({
-        srcID: snID, srcType: en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.ScheduledNotification, srcPort: 'dataSource',
+        srcID: snID, srcType: en_data_model_1.EntityTypes.ScheduledNotification, srcPort: 'dataSource',
         dstID: dataSourceEntityRef.id, dstType: dataSourceEntityRef.type, dstPort: null,
     });
     return { nodes: { nodesToDelete: [], nodesToUpsert }, edges: { edgesToDelete: [], edgesToCreate } };

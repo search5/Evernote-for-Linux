@@ -52,6 +52,15 @@ class ENCLuceneHelper {
         }
         return result;
     }
+    static setResultFlags(searchResult, parsedQuery) {
+        searchResult.resultFlags = {
+            isValidQueryStr: parsedQuery.success,
+            isBoolean: parsedQuery.isBoolean,
+            isGeo: parsedQuery.isGeo,
+            isFiltered: parsedQuery.filter !== null,
+        };
+        return searchResult;
+    }
     static emptySearchResultGroup() {
         return {
             totalResultCount: 0,

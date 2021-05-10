@@ -137,10 +137,10 @@ function getENSearchPlugin(provideSearchEngine, di) {
             const messageArgs = SearchExUtil_1.selectResultGroup(args, SearchSchemaTypes_1.SearchExResultType.MESSAGE);
             const resultPromises = [];
             if (searchExArgs) {
-                if (gSearcher && await gSearcher.isMetadataQuery(searchExArgs) &&
+                if (gSearcher && await gSearcher.isLocallyProcessedQuery(searchExArgs) &&
                     gSearchStorageProcessor && gSearchStorageProcessor.isInitialIndexationFinished()) {
-                    // metadata filtering query - offline search is enough
-                    resultPromises.push(gSearcher.searchExOneType(searchExArgs, SearchSchemaTypes_1.SearchExResultType.NOTE));
+                    // offline search is enough
+                    resultPromises.push(offlineModeSearchEx(searchExArgs, authData));
                 }
                 else {
                     resultPromises.push(EnThriftSearch_1.onlineSearchEx(context.trc, context.thriftComm, authData, searchExArgs, setShareAcceptMetadataForNote));

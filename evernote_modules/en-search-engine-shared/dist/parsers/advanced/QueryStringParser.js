@@ -18,9 +18,14 @@ class QSPNode {
     }
 }
 exports.QSPNode = QSPNode;
+/**
+ * This is a basic result of the query parsing procedure.
+ */
 class ParsedQuery {
     constructor() {
         this.success = true;
+        this.isBoolean = false; // query string contains boolean operators
+        this.isGeo = false; // query string contains geographical operators
     }
     setError(errorMsg) {
         this.success = false;
@@ -28,6 +33,7 @@ class ParsedQuery {
         return this;
     }
 }
+exports.ParsedQuery = ParsedQuery;
 class QueryStringParserParam {
     constructor() {
         this.timeZone = null;
@@ -301,6 +307,7 @@ class QueryStringParser {
     static parseWithParams(queryStr, param) {
         const result = new ParsedQuery();
         const queryWords = QueryStringParser.tokenizeSearchStrWithSeparateParentheses(queryStr, param.booleanOperatorsEnabled);
+        this.setResultFlags(queryWords, result);
         const tokParam = new QueryToken_1.QSPConstructorParam();
         tokParam.timeZone = param.timeZone;
         tokParam.extractBooleanOperators = param.booleanOperatorsEnabled;
@@ -359,6 +366,13 @@ class QueryStringParser {
         QueryStringParser.toInfix(pquery.fullQuery, metadataChecker);
         return metadataChecker.success;
     }
+    // Checks if query contains filters
+    static isQueryWithFilters(queryStr) {
+        const pquery = QueryStringParser.parse(queryStr);
+        if (!pquery.success)
+            return false;
+        return pquery.filter !== null;
+    }
     /**
     * Takes a search expression and tokenizes it into individual search terms, which may
     * either be literals (words or quoted phrased) or advanced search expressions.
@@ -379,6 +393,17 @@ class QueryStringParser {
             }
         }
         return result;
+    }
+    /**
+     * Sets additional query info that is required in SearchExApi.ResultType.Meta
+     */
+    static setResultFlags(queryTokens, result) {
+        for (const tok of queryTokens) {
+            if (tok === 'AND' || tok === 'OR' || tok === 'NOT')
+                result.isBoolean = true;
+            if (tok.startsWith('geodistance:'))
+                result.isGeo = true;
+        }
     }
     /**
     * Adds implied AND operators.

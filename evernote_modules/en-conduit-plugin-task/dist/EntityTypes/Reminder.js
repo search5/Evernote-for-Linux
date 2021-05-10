@@ -5,30 +5,20 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.reminderIndexConfig = exports.reminderTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
-const conduit_utils_1 = require("conduit-utils");
-const TaskConstants_1 = require("../TaskConstants");
+const en_data_model_1 = require("en-data-model");
+const en_tasks_data_model_1 = require("en-tasks-data-model");
 exports.reminderTypeDef = {
-    name: TaskConstants_1.TaskEntityTypes.Reminder,
+    name: en_data_model_1.EntityTypes.Reminder,
     syncSource: conduit_storage_1.SyncSource.NSYNC,
     nsyncFeatureGroup: 'Tasks',
     fieldValidation: {},
-    schema: {
-        reminderDate: conduit_utils_1.NullableTimestamp,
-        reminderDateUIOption: TaskConstants_1.ReminderDateUIOptionSchema,
-        timeZone: conduit_utils_1.NullableString,
-        created: 'timestamp',
-        updated: 'timestamp',
-        dueDateOffset: conduit_utils_1.NullableNumber,
-        noteLevelID: 'string',
-        sourceOfChange: conduit_utils_1.NullableString,
-        status: conduit_utils_1.Nullable(TaskConstants_1.ReminderStatusSchema),
-    },
+    schema: Object.assign(Object.assign({}, en_tasks_data_model_1.ReminderEntitySchema.fields), { created: 'timestamp', updated: 'timestamp' }),
     edges: {
         source: {
             constraint: conduit_storage_1.EdgeConstraint.REQUIRED,
             type: conduit_storage_1.EdgeType.ANCESTRY,
             from: {
-                type: TaskConstants_1.TaskEntityTypes.Task,
+                type: en_data_model_1.EntityTypes.Task,
                 constraint: conduit_storage_1.EdgeConstraint.MANY,
                 denormalize: 'reminders',
             },

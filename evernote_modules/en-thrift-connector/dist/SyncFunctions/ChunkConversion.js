@@ -101,7 +101,7 @@ async function processSyncUpdates(trc, converterParams, syncContext, dataConvert
     }
 }
 exports.processSyncUpdates = processSyncUpdates;
-async function convertSyncChunk(trc, params, chunk, lastUpdateCount) {
+async function convertSyncChunk(trc, params, chunk, lastUpdateCount, onChunkProcess) {
     const expungeVersion = chunk.chunkHighUSN || chunk.prevChunkHighUSN || 0;
     let isChunkProcessed = false;
     while (!isChunkProcessed) {
@@ -175,6 +175,7 @@ async function convertSyncChunk(trc, params, chunk, lastUpdateCount) {
                 };
                 await graphTransaction.updateSyncState(trc, params.syncStatePath, update);
             }
+            onChunkProcess && await onChunkProcess(graphTransaction);
             return isComplete;
         });
         if (!isChunkProcessed) {

@@ -2,15 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getBoardNode = void 0;
 const conduit_utils_1 = require("conduit-utils");
+const en_data_model_1 = require("en-data-model");
 const en_nsync_connector_1 = require("en-nsync-connector");
-const BoardConstants_1 = require("../BoardConstants");
 const getBoardNode = async (trc, instance, context) => {
     const initial = en_nsync_connector_1.createInitialNode(instance);
     if (!initial) {
         conduit_utils_1.logger.error('Missing initial values');
         return null;
     }
-    const board = Object.assign(Object.assign({}, initial), { type: BoardConstants_1.BoardEntityTypes.Board, NodeFields: {
+    const board = Object.assign(Object.assign({}, initial), { type: en_data_model_1.EntityTypes.Board, NodeFields: {
             boardType: instance.boardType,
             isCustomized: instance.isCustomized,
             internalID: instance.internalID,

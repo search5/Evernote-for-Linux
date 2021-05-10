@@ -1,1 +1,1 @@
-{"version":3,"file":"CalendarConstants.d.ts","sourceRoot":"","sources":["../src/CalendarConstants.ts"],"names":[],"mappings":"AAKA,OAAO,EAAE,wBAAwB,EAAE,MAAM,eAAe,CAAC;AAEzD,eAAO,MAAM,mBAAmB;;;;;;CAM/B,CAAC;AAEF,eAAO,MAAM,wCAAwC,EAAE,QAAQ,CAAC,wBAAwB,CAIpF,CAAC"}
+{"version":3,"file":"CalendarConstants.d.ts","sourceRoot":"","sources":["../src/CalendarConstants.ts"],"names":[],"mappings":"AAIA,eAAO,MAAM,2BAA2B,mBAAmB,CAAC;AAE5D,eAAO,MAAM,aAAa,QAAQ,CAAC"}

@@ -5,13 +5,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addOpsForTaskReminderSNCreate = exports.addOpsForTaskReminderSNUpsert = exports.addScheduledNotificationCreateOps = exports.createNewScheduledNotification = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const en_conduit_plugin_scheduled_notification_shared_1 = require("en-conduit-plugin-scheduled-notification-shared");
+const en_data_model_1 = require("en-data-model");
+const en_tasks_data_model_1 = require("en-tasks-data-model");
 const ScheduledNotificationUtils_1 = require("../../ScheduledNotifications/ScheduledNotificationUtils");
-const TaskConstants_1 = require("../../TaskConstants");
 function createNewScheduledNotification(trc, ctx, schedulingEntityRef, dataSourceEntityRef, mute) {
     const scheduledNotificationType = ScheduledNotificationUtils_1.getScheduledNotificationType(dataSourceEntityRef.type);
     const id = `${scheduledNotificationType}:${schedulingEntityRef.id}`;
-    const sn = ctx.createEntity({ id, type: en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.ScheduledNotification }, {
+    const sn = ctx.createEntity({ id, type: en_data_model_1.EntityTypes.ScheduledNotification }, {
         dataSourceUpdatedAt: ctx.timestamp,
         schedulingUpdatedAt: ctx.timestamp,
         scheduledNotificationType,
@@ -54,18 +54,18 @@ async function addOpsForTaskReminderSNUpsert(trc, ctx, ops, fields, reminderRef,
         ops.push({
             changeType: 'Node:UPDATE',
             nodeRef: snRef,
-            node: ctx.assignFields(en_conduit_plugin_scheduled_notification_shared_1.ScheduledNotificationEntityTypes.ScheduledNotification, Object.assign(Object.assign({}, fields), { updated: ctx.timestamp })),
+            node: ctx.assignFields(en_data_model_1.EntityTypes.ScheduledNotification, Object.assign(Object.assign({}, fields), { updated: ctx.timestamp })),
         });
     }
 }
 exports.addOpsForTaskReminderSNUpsert = addOpsForTaskReminderSNUpsert;
 async function addOpsForTaskReminderSNCreate(trc, ctx, ops, reminderRef) {
-    const taskRef = (await ctx.traverseGraph(trc, reminderRef, [{ edge: ['inputs', 'source'], type: TaskConstants_1.TaskEntityTypes.Task }]))[0];
+    const taskRef = (await ctx.traverseGraph(trc, reminderRef, [{ edge: ['inputs', 'source'], type: en_data_model_1.EntityTypes.Task }]))[0];
     if (!taskRef) {
         throw new conduit_utils_1.InvalidOperationError('Cannot create a ScheduledNotification for a reminder that has no Task source edge');
     }
     const task = await ctx.fetchEntity(trc, taskRef);
-    addScheduledNotificationCreateOps(trc, ctx, reminderRef, taskRef, ops, (task === null || task === void 0 ? void 0 : task.NodeFields.status) === TaskConstants_1.TaskStatus.completed);
+    addScheduledNotificationCreateOps(trc, ctx, reminderRef, taskRef, ops, (task === null || task === void 0 ? void 0 : task.NodeFields.status) === en_tasks_data_model_1.TaskStatus.completed);
 }
 exports.addOpsForTaskReminderSNCreate = addOpsForTaskReminderSNCreate;
 //# sourceMappingURL=ScheduledNotificationHelpers.js.map

@@ -286,7 +286,7 @@ exports.stackedNotebookListPlugin = {
     args: conduit_core_1.schemaToGraphQLArgs({
         sort: conduit_utils_1.NullableStruct({
             field: conduit_utils_1.Enum(['label', 'created', 'updated'], 'StackedNotebookSortField'),
-            order: conduit_utils_1.Nullable(conduit_core_1.IndexOrderTypeSchema),
+            order: conduit_core_1.IndexOrderTypeSchema,
         }, 'StackedNotebookSort'),
     }),
     resolve: stackedNotebookList,

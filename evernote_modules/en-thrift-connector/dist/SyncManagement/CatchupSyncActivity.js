@@ -5,10 +5,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.catchupSyncActivityHydrator = exports.CatchupSyncActivity = void 0;
 const NoteStoreSync_1 = require("../SyncFunctions/NoteStoreSync");
+const SyncHelpers_1 = require("../SyncFunctions/SyncHelpers");
 const SyncActivity_1 = require("./SyncActivity");
 const CHUNK_TIMEBOX = 200;
 class CatchupSyncActivity extends SyncActivity_1.SyncActivity {
-    constructor(di, context, isVault, catchupRefs, subBucketSize, offset, timeout = 0) {
+    constructor(di, context, isVault, subBucketSize, offset, timeout = 0) {
         super(di, context, {
             activityType: SyncActivity_1.SyncActivityType.CatchupSyncActivity,
             priority: SyncActivity_1.SyncActivityPriority.BACKGROUND,
@@ -20,22 +21,18 @@ class CatchupSyncActivity extends SyncActivity_1.SyncActivity {
             subBucketSize,
             offset,
         });
-        this.catchupRefs = catchupRefs;
     }
     async runSyncImpl(trc) {
-        const catchupRefsSyncParams = this.initParams(this.options.isVault ? 'vault' : 'personal', 'notestore', CHUNK_TIMEBOX, this.options.subBucketSize, this.options.offset);
-        const catchUpRefs = this.catchupRefs.length ? this.catchupRefs : await NoteStoreSync_1.syncForward(trc, catchupRefsSyncParams);
-        if (catchUpRefs.length) {
-            const syncParams = this.initParams(this.options.isVault ? 'vault' : 'personal', null, CHUNK_TIMEBOX);
-            await NoteStoreSync_1.syncCatchup(trc, syncParams, catchUpRefs);
+        const syncParams = this.initParams(this.options.isVault ? 'vault' : 'personal', null, CHUNK_TIMEBOX);
+        const catchupRefs = await SyncHelpers_1.getCatchupSyncState(trc, syncParams);
+        if (catchupRefs.guids.notebooks.length || catchupRefs.guids.workspaces.length) {
+            await NoteStoreSync_1.syncCatchup(trc, syncParams);
         }
     }
 }
 exports.CatchupSyncActivity = CatchupSyncActivity;
 function catchupSyncActivityHydrator(di, context, p, timeout) {
-    // Provide an empty array as catchupRefs to make the activity refresh target refs.
-    // Hydration/Dehydration can be happened for CatchupSyncActivity when it throws an error during sync or aborted/canceled.
-    return new CatchupSyncActivity(di, context, p.options.isVault, [], p.options.subBucketSize, p.options.offset, timeout);
+    return new CatchupSyncActivity(di, context, p.options.isVault, p.options.subBucketSize, p.options.offset, timeout);
 }
 exports.catchupSyncActivityHydrator = catchupSyncActivityHydrator;
 //# sourceMappingURL=CatchupSyncActivity.js.map

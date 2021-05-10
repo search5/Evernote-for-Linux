@@ -7,7 +7,7 @@ exports.taskGroupUpsertInNoteContentInfo = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const TaskConstants_1 = require("../TaskConstants");
+const en_data_model_1 = require("en-data-model");
 const TaskUtils_1 = require("../TaskUtils");
 const NoteContentInfo_1 = require("./Helpers/NoteContentInfo");
 /* Insert/Update TaskGroups in NoteContentInfo */
@@ -25,7 +25,7 @@ exports.taskGroupUpsertInNoteContentInfo = {
         if (!conduit_utils_1.isNullish(paramsOut.noteID)) {
             return;
         }
-        const taskUserSettings = await ctx.fetchEntity(trc, { id: TaskUtils_1.getTaskUserSettingsByMutationContext(ctx), type: TaskConstants_1.TaskEntityTypes.TaskUserSettings });
+        const taskUserSettings = await ctx.fetchEntity(trc, { id: TaskUtils_1.getTaskUserSettingsByMutationContext(ctx), type: en_data_model_1.EntityTypes.TaskUserSettings });
         if (!taskUserSettings) {
             throw new conduit_utils_1.NotFoundError(conduit_core_1.PERSONAL_USER_ID, 'TaskUserSettings does not exist');
         }

@@ -19,7 +19,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // - some protobuf stuff is corrected, such as optionality of all fields and Long types converted to number
 // See https://source.build.etonreve.com/projects/MS/repos/nsync-service/browse/src/util/document-convertors.ts#163
 __exportStar(require("./CommonTypes"), exports);
-__exportStar(require("./EntityInstances"), exports);
 __exportStar(require("./SyncDocuments"), exports);
 __exportStar(require("./SyncInstances"), exports);
 //# sourceMappingURL=index.js.map

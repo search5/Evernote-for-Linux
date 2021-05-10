@@ -26,22 +26,22 @@ exports.createBoardMutators = exports.BoardHeaderFieldsSchema = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_data_model_1 = require("en-data-model");
-const BoardConstants_1 = require("../BoardConstants");
+const en_home_data_model_1 = require("en-home-data-model");
 const BoardFeatureSchemaManager_1 = require("../Schema/BoardFeatureSchemaManager");
 const Utilities = __importStar(require("../Utilities"));
 const emptyContentHash = conduit_utils_1.md5('');
 exports.BoardHeaderFieldsSchema = conduit_utils_1.NullableStruct({
-    headerBGMode: conduit_utils_1.Nullable(BoardConstants_1.BoardBackgroundModeSchema),
-    headerBGColor: conduit_utils_1.Nullable(conduit_utils_1.ExtendStruct(BoardConstants_1.BoardColorSchemeSchema, {}, 'BoardColorSchemeInput')),
+    headerBGMode: conduit_utils_1.Nullable(en_home_data_model_1.BoardBackgroundModeSchema),
+    headerBGColor: conduit_utils_1.Nullable(conduit_utils_1.ExtendStruct(en_home_data_model_1.BoardColorSchemeSchema, {}, 'BoardColorSchemeInput')),
     greetingText: conduit_utils_1.NullableString,
 }, 'BoardHeaderFields');
 const createBoardCreateHomeMutator = (di) => {
     const boardCreateHome = {
         type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
         params: {
-            serviceLevel: BoardConstants_1.BoardServiceLevelSchema,
+            serviceLevel: en_home_data_model_1.BoardServiceLevelSchema,
             resetLayout: conduit_utils_1.NullableBoolean,
-            platform: conduit_utils_1.Nullable(BoardConstants_1.DeviceFormFactorSchema),
+            platform: conduit_utils_1.Nullable(en_home_data_model_1.DeviceFormFactorSchema),
             features: conduit_utils_1.NullableListOf('string'),
             featureVersions: conduit_utils_1.NullableListOf('number'),
         },
@@ -68,11 +68,11 @@ const createBoardCreateHomeMutator = (di) => {
             }
             // Lazily initialization since this mutator is called very infrequently.
             const boardFeatureSchemaManager = new BoardFeatureSchemaManager_1.BoardFeatureSchemaManager(di);
-            const boardGenID = await ctx.generateDeterministicID(trc, ctx.userID, BoardConstants_1.BoardEntityTypes.Board, en_data_model_1.DefaultDeterministicIdGenerator, en_data_model_1.BoardSchema.formDeterministicBoardIdParts(ctx.userID));
+            const boardGenID = await ctx.generateDeterministicID(trc, ctx.userID, en_data_model_1.EntityTypes.Board, en_data_model_1.DefaultDeterministicIdGenerator, en_home_data_model_1.BoardSchema.formDeterministicBoardIdParts(ctx.userID));
             const boardID = boardGenID[1];
-            const boardRef = { type: BoardConstants_1.BoardEntityTypes.Board, id: boardID };
+            const boardRef = { type: en_data_model_1.EntityTypes.Board, id: boardID };
             const board = await ctx.fetchEntity(trc, boardRef);
-            const userFeatureLevel = en_data_model_1.BoardSchema.calculateUserAdjustedServiceLevel(serviceLevel);
+            const userFeatureLevel = en_home_data_model_1.BoardSchema.calculateUserAdjustedServiceLevel(serviceLevel);
             const { features, featureVersions, } = boardFeatureSchemaManager.mergeToMinimumFeatureVersions(featuresParam, featureVersionsParam, board);
             const boardCreateHomeStash = {
                 board: {
@@ -89,16 +89,16 @@ const createBoardCreateHomeMutator = (di) => {
                 internalID: 0,
                 serviceLevel,
                 updated: ctx.timestamp,
-                boardType: en_data_model_1.BoardType.Home,
+                boardType: en_home_data_model_1.BoardType.Home,
             };
             /*
              * If board not exists, create the Board
              */
             if (!board) {
                 boardCreateHomeStash.board.mutation = Object.assign(Object.assign({}, requiredBoardUpdateFields), { created: ctx.timestamp, isCustomized: false, desktop: {
-                        layout: en_data_model_1.BoardDesktopLayout.ThreeColumnFlex,
+                        layout: en_home_data_model_1.BoardDesktopLayout.ThreeColumnFlex,
                     }, mobile: {
-                        layout: en_data_model_1.BoardMobileLayout.SingleColumnStack,
+                        layout: en_home_data_model_1.BoardMobileLayout.SingleColumnStack,
                     } });
             }
             else if (!resetLayout) {
@@ -106,16 +106,16 @@ const createBoardCreateHomeMutator = (di) => {
             }
             else { // Reset board layout, only updates corresponding platform
                 const desktopDefault = {
-                    layout: en_data_model_1.BoardDesktopLayout.ThreeColumnFlex,
+                    layout: en_home_data_model_1.BoardDesktopLayout.ThreeColumnFlex,
                 };
                 const mobileDefault = {
-                    layout: en_data_model_1.BoardMobileLayout.SingleColumnStack,
+                    layout: en_home_data_model_1.BoardMobileLayout.SingleColumnStack,
                 };
                 const layout = {};
-                if (platform === en_data_model_1.DeviceFormFactor.Desktop) {
+                if (platform === en_home_data_model_1.DeviceFormFactor.Desktop) {
                     layout.desktop = desktopDefault;
                 }
-                else if (platform === en_data_model_1.DeviceFormFactor.Mobile) {
+                else if (platform === en_home_data_model_1.DeviceFormFactor.Mobile) {
                     layout.mobile = mobileDefault;
                 }
                 else {
@@ -125,13 +125,13 @@ const createBoardCreateHomeMutator = (di) => {
                 boardCreateHomeStash.board.mutation = Object.assign(Object.assign({}, requiredBoardUpdateFields), layout);
             }
             const boardPluginFeatures = Utilities.getBoardPluginFeatures(di);
-            const widgetEdges = (await ctx.traverseGraph(trc, boardRef, [{ edge: ['outputs', 'children'], type: BoardConstants_1.BoardEntityTypes.Widget }])).filter(e => Boolean(e.edge));
-            const boardLayoutSummary = await boardFeatureSchemaManager.generateDefaultLayout(trc, ctx, userFeatureLevel, features, featureVersions, en_data_model_1.BoardType.Home, 0, Boolean(boardPluginFeatures.useServiceLevelV2Layouts));
+            const widgetEdges = (await ctx.traverseGraph(trc, boardRef, [{ edge: ['outputs', 'children'], type: en_data_model_1.EntityTypes.Widget }])).filter(e => Boolean(e.edge));
+            const boardLayoutSummary = await boardFeatureSchemaManager.generateDefaultLayout(trc, ctx, userFeatureLevel, features, featureVersions, en_home_data_model_1.BoardType.Home, 0, Boolean(boardPluginFeatures.useServiceLevelV2Layouts));
             const widgetsFound = new Set();
             let existingWidgets;
             if (widgetEdges.length > 0) {
                 // Fetch the widget entities here; note that we have already filtered for undefined edges, so the ! operator is safe.
-                existingWidgets = await ctx.fetchEntities(trc, BoardConstants_1.BoardEntityTypes.Widget, widgetEdges.map(we => we.edge.dstID));
+                existingWidgets = await ctx.fetchEntities(trc, en_data_model_1.EntityTypes.Widget, widgetEdges.map(we => we.edge.dstID));
                 for (const widget of existingWidgets) {
                     if (widget) {
                         widgetsFound.add(widget.id);
@@ -183,7 +183,7 @@ const createBoardCreateHomeMutator = (di) => {
                         operation: 'CREATE',
                         idGen: requiredWidget.idGen,
                         nodeRef: {
-                            type: BoardConstants_1.BoardEntityTypes.Widget,
+                            type: en_data_model_1.EntityTypes.Widget,
                             id: widgetID,
                         },
                     });
@@ -205,7 +205,7 @@ const createBoardCreateHomeMutator = (di) => {
                         serviceLevel,
                         feature,
                         featureVersion,
-                        boardType: en_data_model_1.BoardType.Home,
+                        boardType: en_home_data_model_1.BoardType.Home,
                         board,
                         boardRef,
                         boardLayoutSummary,
@@ -226,7 +226,7 @@ const createBoardCreateHomeMutator = (di) => {
                     plan.ops.push({
                         changeType: 'Node:UPDATE',
                         nodeRef: widget.nodeRef,
-                        node: ctx.assignFields(BoardConstants_1.BoardEntityTypes.Widget, widget.mutation),
+                        node: ctx.assignFields(en_data_model_1.EntityTypes.Widget, widget.mutation),
                     });
                 }
                 else if (widget.idGen) {
@@ -242,7 +242,7 @@ const createBoardCreateHomeMutator = (di) => {
                 plan.ops.push({
                     changeType: 'Node:UPDATE',
                     nodeRef: boardCreateHomeStash.board.nodeRef,
-                    node: ctx.assignFields(BoardConstants_1.BoardEntityTypes.Board, boardCreateHomeStash.board.mutation),
+                    node: ctx.assignFields(en_data_model_1.EntityTypes.Board, boardCreateHomeStash.board.mutation),
                 });
             }
             else if (boardCreateHomeStash.board.idGen) {
@@ -271,7 +271,7 @@ const createBoardStartFreeTrialMutator = () => {
         },
         execute: async (trc, ctx, params) => {
             var _a;
-            const nodeRef = { id: params.board, type: BoardConstants_1.BoardEntityTypes.Board };
+            const nodeRef = { id: params.board, type: en_data_model_1.EntityTypes.Board };
             const board = await ctx.fetchEntity(trc, nodeRef);
             if (!board) {
                 throw new conduit_utils_1.NotFoundError(nodeRef.id, 'Missing Board to update');
@@ -281,7 +281,7 @@ const createBoardStartFreeTrialMutator = () => {
             if (durationInDays < 0 || durationInDays > 90) {
                 throw new conduit_utils_1.InternalError('Free trial duration not in range');
             }
-            if (board.NodeFields.boardType !== en_data_model_1.BoardType.Home) {
+            if (board.NodeFields.boardType !== en_home_data_model_1.BoardType.Home) {
                 throw new conduit_utils_1.InternalError('Cannot do a free trial for a board that is not a Home board');
             }
             if (board.NodeFields.freeTrialExpiration) {
@@ -292,7 +292,7 @@ const createBoardStartFreeTrialMutator = () => {
                 ops: [{
                         changeType: 'Node:UPDATE',
                         nodeRef,
-                        node: ctx.assignFields(BoardConstants_1.BoardEntityTypes.Board, {
+                        node: ctx.assignFields(en_data_model_1.EntityTypes.Board, {
                             updated: ctx.timestamp,
                             freeTrialExpiration: ctx.timestamp + (conduit_utils_1.MILLIS_IN_ONE_DAY * durationInDays),
                         }),
@@ -311,7 +311,7 @@ const createBoardSetIsCustomized = () => {
             isCustomized: 'boolean',
         },
         execute: async (trc, ctx, params) => {
-            const nodeRef = { id: params.board, type: BoardConstants_1.BoardEntityTypes.Board };
+            const nodeRef = { id: params.board, type: en_data_model_1.EntityTypes.Board };
             const board = await ctx.fetchEntity(trc, nodeRef);
             if (!board) {
                 throw new conduit_utils_1.NotFoundError(nodeRef.id, 'Missing Board to update');
@@ -321,7 +321,7 @@ const createBoardSetIsCustomized = () => {
                 ops: [{
                         changeType: 'Node:UPDATE',
                         nodeRef,
-                        node: ctx.assignFields(BoardConstants_1.BoardEntityTypes.Board, {
+                        node: ctx.assignFields(en_data_model_1.EntityTypes.Board, {
                             updated: ctx.timestamp,
                             isCustomized: params.isCustomized,
                         }),
@@ -338,10 +338,10 @@ async function createDeleteBoardImageExecutionPlan(trc, ctx, param, boardID) {
             {
                 changeType: 'Node:UPDATE',
                 nodeRef: {
-                    type: BoardConstants_1.BoardEntityTypes.Board,
+                    type: en_data_model_1.EntityTypes.Board,
                     id: boardID,
                 },
-                node: ctx.assignFields(BoardConstants_1.BoardEntityTypes.Board, {
+                node: ctx.assignFields(en_data_model_1.EntityTypes.Board, {
                     updated: ctx.timestamp,
                     [`${param}Mime`]: null,
                     [`${param}FileName`]: null,
@@ -388,7 +388,7 @@ const createBoardHeaderCustomizeMutator = () => {
             fields: exports.BoardHeaderFieldsSchema,
         },
         execute: async (trc, ctx, params) => {
-            const nodeRef = { id: params.board, type: BoardConstants_1.BoardEntityTypes.Board };
+            const nodeRef = { id: params.board, type: en_data_model_1.EntityTypes.Board };
             const board = await ctx.fetchEntity(trc, nodeRef);
             if (!board) {
                 throw new conduit_utils_1.NotFoundError(nodeRef.id, 'Missing Board to update');
@@ -396,7 +396,7 @@ const createBoardHeaderCustomizeMutator = () => {
             if (!params.fields || Object.keys(params.fields).length === 0) {
                 throw new conduit_utils_1.InvalidParameterError('Missing fields to customize');
             }
-            if (params.fields && params.fields.headerBGMode === en_data_model_1.BoardBackgroundMode.Color && (!params.fields.headerBGColor && !board.NodeFields.headerBGColor)) {
+            if (params.fields && params.fields.headerBGMode === en_home_data_model_1.BoardBackgroundMode.Color && (!params.fields.headerBGColor && !board.NodeFields.headerBGColor)) {
                 throw new conduit_utils_1.InvalidParameterError('Cannot set color mode without color');
             }
             return {
@@ -404,7 +404,7 @@ const createBoardHeaderCustomizeMutator = () => {
                 ops: [{
                         changeType: 'Node:UPDATE',
                         nodeRef,
-                        node: ctx.assignFields(BoardConstants_1.BoardEntityTypes.Board, Object.assign({ updated: ctx.timestamp }, params.fields)),
+                        node: ctx.assignFields(en_data_model_1.EntityTypes.Board, Object.assign({ updated: ctx.timestamp }, params.fields)),
                     }],
             };
         },

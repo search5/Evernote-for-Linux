@@ -6,7 +6,7 @@ exports.createBoardCustomizeDefinition = void 0;
  */
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const BoardConstants_1 = require("./BoardConstants");
+const en_home_data_model_1 = require("en-home-data-model");
 const BoardMutators_1 = require("./Mutators/BoardMutators");
 const createBoardCustomizeDefinition = () => {
     return {
@@ -24,7 +24,7 @@ const createBoardCustomizeDefinition = () => {
                 isEnabled: conduit_utils_1.NullableBoolean,
                 noteToPin: conduit_utils_1.NullableID,
                 noteToUnpin: conduit_utils_1.NullableID,
-                mutableWidgetType: conduit_utils_1.Nullable(BoardConstants_1.MutableWidgetTypeSchema),
+                mutableWidgetType: conduit_utils_1.Nullable(en_home_data_model_1.MutableWidgetTypeSchema),
                 filteredNotesQueryString: conduit_utils_1.NullableString,
                 label: conduit_utils_1.NullableString,
                 lightBGColor: conduit_utils_1.NullableString,

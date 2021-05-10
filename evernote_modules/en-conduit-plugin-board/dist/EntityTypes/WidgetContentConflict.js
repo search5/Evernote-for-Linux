@@ -5,23 +5,21 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.widgetContentConflictIndexConfig = exports.widgetContentConflictTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
+const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const BoardConstants_1 = require("../BoardConstants");
+const en_data_model_1 = require("en-data-model");
+const en_home_data_model_1 = require("en-home-data-model");
 exports.widgetContentConflictTypeDef = {
-    name: BoardConstants_1.BoardEntityTypes.WidgetContentConflict,
+    name: en_data_model_1.EntityTypes.WidgetContentConflict,
     nsyncFeatureGroup: 'Home',
     syncSource: conduit_storage_1.SyncSource.NSYNC,
-    schema: {
-        content: en_core_entity_types_1.BlobV2WithContentSchema,
-        created: 'timestamp',
-        updated: 'timestamp',
-    },
+    schema: Object.assign(Object.assign({}, conduit_utils_1.shallowCloneExcluding(en_home_data_model_1.WidgetContentConflictEntitySchema.fields, ['parentID'])), { created: 'timestamp', updated: 'timestamp', content: en_core_entity_types_1.BlobV2WithContentSchema }),
     edges: {
         parent: {
             constraint: conduit_storage_1.EdgeConstraint.REQUIRED,
             type: conduit_storage_1.EdgeType.ANCESTRY_LINK,
             from: {
-                type: BoardConstants_1.BoardEntityTypes.Widget,
+                type: en_data_model_1.EntityTypes.Widget,
                 constraint: conduit_storage_1.EdgeConstraint.MANY,
                 denormalize: 'conflicts',
             },

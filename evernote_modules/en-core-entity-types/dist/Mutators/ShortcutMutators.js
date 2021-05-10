@@ -7,6 +7,7 @@ exports.shortcutCreate = exports.shortcutRemove = exports.shortcutSetSortOrder =
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const EntityConstants_1 = require("../EntityConstants");
+const SHORTCUT_MAX_COUNT = 255;
 const SHORTCUT_SOURCE_TYPES = [
     EntityConstants_1.CoreEntityTypes.Workspace,
     EntityConstants_1.CoreEntityTypes.Notebook,
@@ -130,6 +131,10 @@ exports.shortcutCreate = {
         }
         if (source.type === EntityConstants_1.CoreEntityTypes.Notebook && source.NodeFields.isPartialNotebook) {
             throw new Error('Shortcut cannot be created for partial notebooks');
+        }
+        const res = await ctx.queryGraph(trc, EntityConstants_1.CoreEntityTypes.Shortcut, 'Shortcuts', {});
+        if (res.length >= SHORTCUT_MAX_COUNT) {
+            throw new Error(`Too many shortcuts`);
         }
         const shortcutGenID = await ctx.generateCustomID(trc, ctx.userID, EntityConstants_1.CoreEntityTypes.Shortcut, null, source);
         if (!shortcutGenID) {

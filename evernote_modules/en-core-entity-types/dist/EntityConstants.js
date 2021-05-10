@@ -4,25 +4,28 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CoreEntityTypes = void 0;
+const en_data_model_1 = require("en-data-model");
 exports.CoreEntityTypes = {
+    // nsync-backed entity types (but not for v1+)
+    Attachment: en_data_model_1.EntityTypes.Attachment,
+    Note: en_data_model_1.EntityTypes.Note,
+    Notebook: en_data_model_1.EntityTypes.Notebook,
+    SavedSearch: en_data_model_1.EntityTypes.SavedSearch,
+    Shortcut: en_data_model_1.EntityTypes.Shortcut,
+    Tag: en_data_model_1.EntityTypes.Tag,
+    Workspace: en_data_model_1.EntityTypes.Workspace,
+    // conduit-only entity types, populated by monolith data
     AccountLimits: 'AccountLimits',
-    Attachment: 'Attachment',
     BetaFeature: 'BetaFeature',
     Invitation: 'Invitation',
     MaestroProps: 'MaestroProps',
     Membership: 'Membership',
     Message: 'Message',
-    Note: 'Note',
-    Notebook: 'Notebook',
     Preferences: 'Preferences',
     Profile: 'Profile',
     Promotion: 'Promotion',
-    SavedSearch: 'SavedSearch',
-    Shortcut: 'Shortcut',
     Stack: 'Stack',
-    Tag: 'Tag',
     Thread: 'Thread',
     User: 'User',
-    Workspace: 'Workspace',
 };
 //# sourceMappingURL=EntityConstants.js.map

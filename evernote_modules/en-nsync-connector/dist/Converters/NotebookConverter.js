@@ -15,7 +15,7 @@ const getNotebookNodesAndEdges = async (trc, instance, context) => {
         conduit_utils_1.logger.error('Missing initial values');
         return null;
     }
-    const settings = context.eventManager.getProcessingEntity(initial.id, 'RecipientSettings');
+    // const settings = context.eventManager.getProcessingEntity<ClientNSyncTypes.RecipientSettings>(initial.id, 'RecipientSettings');
     const isExternal = context.currentUserID !== instance.ownerId;
     const notebook = Object.assign(Object.assign({}, initial), { type: en_core_entity_types_1.CoreEntityTypes.Notebook, NodeFields: {
             created: instance.created,
@@ -27,8 +27,8 @@ const getNotebookNodesAndEdges = async (trc, instance, context) => {
             internal_shareCountProfiles: {},
             internal_linkedNotebookParams: {},
             markedForOffline: false,
-            reminderNotifyEmail: (settings === null || settings === void 0 ? void 0 : settings.reminderNotifyEmail) === false,
-            reminderNotifyInApp: (settings === null || settings === void 0 ? void 0 : settings.reminderNotifyInApp) === false,
+            reminderNotifyEmail: false,
+            reminderNotifyInApp: false,
         }, inputs: {
             parent: {},
             stack: {},
@@ -58,9 +58,8 @@ const getNotebookNodesAndEdges = async (trc, instance, context) => {
     let stackName = null;
     if (isOwner && instance.stack) {
         stackName = instance.stack;
-    }
-    else if (!isOwner && (settings === null || settings === void 0 ? void 0 : settings.stack)) {
-        stackName = settings.stack;
+        // } else if (!isOwner && settings?.stack) {
+        //  stackName = settings.stack;
     }
     const stackChanges = await StackConverter_1.getStackEntity(trc, stackName, notebook, context.tx);
     conduit_utils_1.logger.debug(notebook.id);

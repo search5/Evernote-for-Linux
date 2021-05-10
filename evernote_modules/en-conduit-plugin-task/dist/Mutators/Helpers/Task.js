@@ -6,7 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getParentNoteId = exports.taskCreatePlan = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const TaskConstants_1 = require("../../TaskConstants");
+const en_data_model_1 = require("en-data-model");
+const en_tasks_data_model_1 = require("en-tasks-data-model");
 const NoteContentInfo_1 = require("./NoteContentInfo");
 const Permission_1 = require("./Permission");
 async function taskCreatePlan(trc, ctx, params) {
@@ -25,14 +26,14 @@ async function taskCreatePlan(trc, ctx, params) {
     }
     // if the Note container is available, it will be used to resolve the actual ownerID
     const owner = params.copyOwnerRef || containerRef || ctx.vaultUserID || ctx.userID;
-    const taskGenID = await ctx.generateID(trc, owner, TaskConstants_1.TaskEntityTypes.Task, params.key);
+    const taskGenID = await ctx.generateID(trc, owner, en_data_model_1.EntityTypes.Task, params.key);
     const taskID = taskGenID[1];
-    const taskEntity = ctx.createEntity({ id: taskID, type: TaskConstants_1.TaskEntityTypes.Task }, {
+    const taskEntity = ctx.createEntity({ id: taskID, type: en_data_model_1.EntityTypes.Task }, {
         label: params.label,
         dueDate: params.dueDate,
         timeZone: params.timeZone,
         dueDateUIOption: params.dueDateUIOption,
-        status: params.status || TaskConstants_1.TaskStatus.open,
+        status: params.status || en_tasks_data_model_1.TaskStatus.open,
         flag: params.flag,
         created: ctx.timestamp,
         updated: ctx.timestamp,
@@ -71,10 +72,10 @@ async function taskCreatePlan(trc, ctx, params) {
             plan.ops.push({
                 changeType: 'Edge:MODIFY',
                 edgesToCreate: [{
-                        srcID: taskID, srcType: TaskConstants_1.TaskEntityTypes.Task, srcPort: 'creator',
+                        srcID: taskID, srcType: en_data_model_1.EntityTypes.Task, srcPort: 'creator',
                         dstID: profile.id, dstType: profile.type, dstPort: null,
                     }, {
-                        srcID: taskID, srcType: TaskConstants_1.TaskEntityTypes.Task, srcPort: 'lastEditor',
+                        srcID: taskID, srcType: en_data_model_1.EntityTypes.Task, srcPort: 'lastEditor',
                         dstID: profile.id, dstType: profile.type, dstPort: null,
                     }],
             });
@@ -84,7 +85,7 @@ async function taskCreatePlan(trc, ctx, params) {
 }
 exports.taskCreatePlan = taskCreatePlan;
 async function getParentNoteId(trc, ctx, taskID) {
-    const taskRef = { id: taskID, type: TaskConstants_1.TaskEntityTypes.Task };
+    const taskRef = { id: taskID, type: en_data_model_1.EntityTypes.Task };
     const noteEdge = await ctx.traverseGraph(trc, taskRef, [{ edge: ['inputs', 'parent'], type: en_core_entity_types_1.CoreEntityTypes.Note }]);
     if (!noteEdge || !noteEdge.length || !noteEdge[0].edge) {
         throw new conduit_utils_1.NotFoundError('The task does not have parent Note');

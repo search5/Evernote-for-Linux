@@ -5,14 +5,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.calendarAccountTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
-const CalendarConstants_1 = require("../CalendarConstants");
+const en_calendar_data_model_1 = require("en-calendar-data-model");
+const en_data_model_1 = require("en-data-model");
 exports.calendarAccountTypeDef = {
-    name: CalendarConstants_1.CalendarEntityTypes.CalendarAccount,
-    syncSource: conduit_storage_1.SyncSource.LOCAL,
+    name: en_data_model_1.EntityTypes.CalendarAccount,
+    syncSource: conduit_storage_1.SyncSource.NSYNC,
+    nsyncFeatureGroup: 'Calendar',
     fieldValidation: {},
-    schema: {
-        isConnected: 'boolean',
-    },
+    schema: en_calendar_data_model_1.CalendarAccountEntitySchema.fields,
     edges: {},
 };
 //# sourceMappingURL=CalendarAccount.js.map

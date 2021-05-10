@@ -81,7 +81,7 @@ class ElectronNotifications {
             timeoutType: 'default',
             icon: notificationData.iconPath ? electron_1.nativeImage.createFromDataURL(notificationData.iconPath) : undefined,
         });
-        notification.on('click', () => {
+        notification.on('click', conduit_utils_1.once(() => {
             analytics_1.recordBodyClickEvent();
             const callback = notificationData.onClick;
             this.removePendingNotification(notificationData.id);
@@ -91,7 +91,7 @@ class ElectronNotifications {
                 return;
             }
             conduit_utils_1.logger.info('No onClick callback defined for ElectronNotification');
-        });
+        }));
         notification.on('action', (_, actionIdx) => {
             var _a;
             // TODO: add analytics

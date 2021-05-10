@@ -7,14 +7,14 @@ exports.getTaskUserSettings = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const TaskConstants_1 = require("./TaskConstants");
+const en_data_model_1 = require("en-data-model");
 const TaskUtils_1 = require("./TaskUtils");
 const Utilities_1 = require("./Utilities");
 async function getTaskUserSettings(parent, args, context) {
     conduit_core_1.validateDB(context, 'Must be authenticated to work with tasks');
     const userNode = await Utilities_1.getCurrentUserNode(context);
     const taskUserSettingsId = TaskUtils_1.getTaskUserSettingsIdByUserId(userNode.NodeFields.internal_userID);
-    const existingTaskUserSettings = await context.db.getNode(context, { id: taskUserSettingsId, type: TaskConstants_1.TaskEntityTypes.TaskUserSettings });
+    const existingTaskUserSettings = await context.db.getNode(context, { id: taskUserSettingsId, type: en_data_model_1.EntityTypes.TaskUserSettings });
     if (!existingTaskUserSettings) {
         return null;
     }

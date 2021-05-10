@@ -42,20 +42,20 @@ const yetToImplement = async (trc: TracingContext, instance: ClientNSyncTypes.En
 */
 exports.CoreEntityNSyncConverters = {
     // Core, V1 Entity Types
-    [en_core_entity_types_1.CoreEntityTypes.Attachment]: { [en_data_model_1.ClientNSyncTypes.EntityType.ATTACHMENT]: AttachmentConverter_1.getAttachmentNodeAndEdges },
-    [en_core_entity_types_1.CoreEntityTypes.Note]: {
-        [en_data_model_1.ClientNSyncTypes.EntityType.NOTE]: NoteConverter_1.getNoteNodeAndEdges,
-        [en_data_model_1.ClientNSyncTypes.EntityType.NOTE_ATTACHMENTS]: shouldNotImplement,
-        [en_data_model_1.ClientNSyncTypes.EntityType.NOTE_TAGS]: shouldNotImplement,
+    [en_data_model_1.EntityTypes.Attachment]: { [en_data_model_1.NSyncEntityType.ATTACHMENT]: AttachmentConverter_1.getAttachmentNodeAndEdges },
+    [en_data_model_1.EntityTypes.Note]: {
+        [en_data_model_1.NSyncEntityType.NOTE]: NoteConverter_1.getNoteNodeAndEdges,
+        [en_data_model_1.NSyncEntityType.NOTE_ATTACHMENTS]: shouldNotImplement,
+        [en_data_model_1.NSyncEntityType.NOTE_TAGS]: shouldNotImplement,
     },
-    [en_core_entity_types_1.CoreEntityTypes.Notebook]: {
-        [en_data_model_1.ClientNSyncTypes.EntityType.NOTEBOOK]: NotebookConverter_1.getNotebookNodesAndEdges,
-        [en_data_model_1.ClientNSyncTypes.EntityType.RECIPIENT_SETTINGS]: RecipientSettingsConverter_1.getRecipientSettingsNodesAndEdges,
+    [en_data_model_1.EntityTypes.Notebook]: {
+        [en_data_model_1.NSyncEntityType.NOTEBOOK]: NotebookConverter_1.getNotebookNodesAndEdges,
+        [en_data_model_1.NSyncEntityType.RECIPIENT_SETTINGS]: RecipientSettingsConverter_1.getRecipientSettingsNodesAndEdges,
     },
-    [en_core_entity_types_1.CoreEntityTypes.SavedSearch]: { [en_data_model_1.ClientNSyncTypes.EntityType.SAVED_SEARCH]: SavedSearchConverter_1.getSavedSearchNodesAndEdges },
-    [en_core_entity_types_1.CoreEntityTypes.Shortcut]: { [en_data_model_1.ClientNSyncTypes.EntityType.SHORTCUT]: ShortcutConverter_1.getShortcutNodesAndEdges },
-    [en_core_entity_types_1.CoreEntityTypes.Tag]: { [en_data_model_1.ClientNSyncTypes.EntityType.TAG]: TagConverter_1.getTagNodesAndEdges },
-    [en_core_entity_types_1.CoreEntityTypes.Workspace]: { [en_data_model_1.ClientNSyncTypes.EntityType.WORKSPACE]: WorkspaceConverter_1.getWorkspaceNodesAndEdges },
+    [en_data_model_1.EntityTypes.SavedSearch]: { [en_data_model_1.NSyncEntityType.SAVED_SEARCH]: SavedSearchConverter_1.getSavedSearchNodesAndEdges },
+    [en_data_model_1.EntityTypes.Shortcut]: { [en_data_model_1.NSyncEntityType.SHORTCUT]: ShortcutConverter_1.getShortcutNodesAndEdges },
+    [en_data_model_1.EntityTypes.Tag]: { [en_data_model_1.NSyncEntityType.TAG]: TagConverter_1.getTagNodesAndEdges },
+    [en_data_model_1.EntityTypes.Workspace]: { [en_data_model_1.NSyncEntityType.WORKSPACE]: WorkspaceConverter_1.getWorkspaceNodesAndEdges },
 };
 async function getEntityAndEdges(trc, instance, currentUserID, eventManager, tx, dataHelpers) {
     if (!instance.ref) {

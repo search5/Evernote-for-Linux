@@ -3,12 +3,12 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getTaskNodeAndEdges = void 0;
+exports.convertProfileGuidFromService = exports.getTaskNodeAndEdges = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
+const en_data_model_1 = require("en-data-model");
 const en_nsync_connector_1 = require("en-nsync-connector");
-const TaskConstants_1 = require("../TaskConstants");
 const ScheduledNotificationConverter_1 = require("./ScheduledNotificationConverter");
 const getTaskNodeAndEdges = async (trc, instance, context) => {
     var _a, _b, _c;
@@ -19,7 +19,7 @@ const getTaskNodeAndEdges = async (trc, instance, context) => {
     if (!initial) {
         return null;
     }
-    const task = Object.assign(Object.assign({}, initial), { type: TaskConstants_1.TaskEntityTypes.Task, NodeFields: {
+    const task = Object.assign(Object.assign({}, initial), { type: en_data_model_1.EntityTypes.Task, NodeFields: {
             created: instance.created,
             updated: instance.updated,
             dueDate: instance.dueDate || null,
@@ -33,6 +33,7 @@ const getTaskNodeAndEdges = async (trc, instance, context) => {
             statusUpdated: instance.statusUpdated || null,
             taskGroupNoteLevelID: instance.taskGroupNoteLevelID,
             sourceOfChange: (_a = instance.sourceOfChange) !== null && _a !== void 0 ? _a : null,
+            assigneeEmail: instance.assigneeEmail || null,
         }, inputs: {
             parent: {},
         }, outputs: {
@@ -47,7 +48,7 @@ const getTaskNodeAndEdges = async (trc, instance, context) => {
     nodesToUpsert.push(task);
     const { creator, lastEditor, assigneeIdentityID, assigneeUserID, assignedByUserID } = instance;
     if (creator) {
-        const creatorProfileId = convertGuidFromService(creator, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
+        const creatorProfileId = convertProfileGuidFromService(en_core_entity_types_1.PROFILE_SOURCE.User, creator);
         edgesToCreate.push({
             dstType: en_core_entity_types_1.CoreEntityTypes.Profile,
             dstID: creatorProfileId,
@@ -56,7 +57,7 @@ const getTaskNodeAndEdges = async (trc, instance, context) => {
         });
     }
     if (assignedByUserID) {
-        const assignedByProfileId = convertGuidFromService(assignedByUserID, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
+        const assignedByProfileId = convertProfileGuidFromService(en_core_entity_types_1.PROFILE_SOURCE.User, assignedByUserID);
         edgesToCreate.push({
             dstType: en_core_entity_types_1.CoreEntityTypes.Profile,
             dstID: assignedByProfileId,
@@ -70,7 +71,7 @@ const getTaskNodeAndEdges = async (trc, instance, context) => {
         });
     }
     if (lastEditor) {
-        const lastEditorProfileId = convertGuidFromService(lastEditor, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
+        const lastEditorProfileId = convertProfileGuidFromService(en_core_entity_types_1.PROFILE_SOURCE.User, lastEditor);
         edgesToCreate.push({
             dstType: en_core_entity_types_1.CoreEntityTypes.Profile,
             dstID: lastEditorProfileId,
@@ -81,13 +82,13 @@ const getTaskNodeAndEdges = async (trc, instance, context) => {
     const parentID = (_b = instance.parentEntity) === null || _b === void 0 ? void 0 : _b.id;
     const parentType = en_conduit_sync_types_1.entityTypeAsNodeType(context.eventManager.di, (_c = instance.parentEntity) === null || _c === void 0 ? void 0 : _c.type, en_core_entity_types_1.CoreEntityTypes.Note);
     if (parentID && parentType) {
-        const currentTask = await context.tx.getNode(trc, null, { type: TaskConstants_1.TaskEntityTypes.Task, id: task.id });
+        const currentTask = await context.tx.getNode(trc, null, { type: en_data_model_1.EntityTypes.Task, id: task.id });
         const currentParentEdge = conduit_utils_1.firstStashEntry(currentTask === null || currentTask === void 0 ? void 0 : currentTask.inputs.parent);
         if (currentParentEdge) {
             const currentParentID = currentParentEdge.srcID;
             if (parentID !== currentParentID) {
                 edgesToDelete.push({
-                    dstID: task.id, dstType: TaskConstants_1.TaskEntityTypes.Task, dstPort: 'parent',
+                    dstID: task.id, dstType: en_data_model_1.EntityTypes.Task, dstPort: 'parent',
                 });
             }
         }
@@ -95,17 +96,17 @@ const getTaskNodeAndEdges = async (trc, instance, context) => {
             srcType: parentType,
             srcID: parentID,
             srcPort: 'tasks',
-            dstType: TaskConstants_1.TaskEntityTypes.Task,
+            dstType: en_data_model_1.EntityTypes.Task,
             dstID: task.id,
             dstPort: 'parent',
         });
     }
     if (assigneeIdentityID || assigneeUserID) {
         const assigneeID = assigneeIdentityID ?
-            convertGuidFromService(assigneeIdentityID, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.Identity) :
-            convertGuidFromService(assigneeUserID, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
+            convertProfileGuidFromService(en_core_entity_types_1.PROFILE_SOURCE.Identity, assigneeIdentityID) :
+            convertProfileGuidFromService(en_core_entity_types_1.PROFILE_SOURCE.User, assigneeUserID);
         let reassigned = true;
-        const currentTask = await context.tx.getNode(trc, null, { type: TaskConstants_1.TaskEntityTypes.Task, id: task.id });
+        const currentTask = await context.tx.getNode(trc, null, { type: en_data_model_1.EntityTypes.Task, id: task.id });
         const currentAssigneeEdge = conduit_utils_1.firstStashEntry(currentTask === null || currentTask === void 0 ? void 0 : currentTask.outputs.assignee);
         if (currentAssigneeEdge) {
             const currentAssigneeID = currentAssigneeEdge.dstID;
@@ -138,10 +139,8 @@ const getTaskNodeAndEdges = async (trc, instance, context) => {
 };
 exports.getTaskNodeAndEdges = getTaskNodeAndEdges;
 // based on workspaces/shared/en-thrift-connector/src/Converters/Converters.ts
-function convertGuidFromService(guid, type, source) {
-    return convertProfileGuidFromService(source, guid);
-}
 function convertProfileGuidFromService(source, id) {
     return (`Profile:${source}:${id}`);
 }
+exports.convertProfileGuidFromService = convertProfileGuidFromService;
 //# sourceMappingURL=TaskConverter.js.map

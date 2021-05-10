@@ -22,7 +22,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.interruptible = exports.updateSyncType = exports.updateSyncProgressType = exports.clearSyncProgress = exports.updateSyncRate = exports.checkIfSyncAvailable = exports.getLocalSyncState = exports.hasRemoteValueChanged = exports.getConverterParamsFromSyncParams = exports.updateSyncContextPrivilegeImpl = exports.updateSyncContextPrivilege = exports.getInitialSnippetsToFetch = exports.updateInitialSnippetsToFetch = exports.MAX_INITIAL_SNIPPETS_TO_FETCH = exports.EmptySyncStateWithTurbo = exports.EmptySyncState = exports.TURBO_SYNC_DEFAULTS = exports.SYNC_TYPE_SYNC_STATE_PATH = exports.NOTES_SYNC_STATE_PATH = exports.POLL_JITTER = exports.RETRY_TIMEOUT = exports.MIN_POLL_INTERVAL = exports.DEFAULT_POLL_INTERVAL = void 0;
+exports.getCatchupSyncMinLastUpdateCount = exports.updateCatchupSyncLastUpdateCount = exports.deleteCatchupSyncState = exports.addCatchupSyncState = exports.getCatchupSyncState = exports.interruptible = exports.updateSyncType = exports.updateSyncProgressType = exports.clearSyncProgress = exports.updateSyncRate = exports.checkIfSyncAvailable = exports.getLocalSyncState = exports.hasRemoteValueChanged = exports.getConverterParamsFromSyncParams = exports.updateSyncContextPrivilegeImpl = exports.updateSyncContextPrivilege = exports.getInitialSnippetsToFetch = exports.updateInitialSnippetsToFetch = exports.MAX_INITIAL_SNIPPETS_TO_FETCH = exports.EmptySyncStateWithTurbo = exports.EmptySyncState = exports.TURBO_SYNC_DEFAULTS = exports.SYNC_TYPE_SYNC_STATE_PATH = exports.NOTES_SYNC_STATE_PATH = exports.POLL_JITTER = exports.RETRY_TIMEOUT = exports.MIN_POLL_INTERVAL = exports.DEFAULT_POLL_INTERVAL = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
@@ -36,6 +36,7 @@ exports.RETRY_TIMEOUT = 10000;
 exports.POLL_JITTER = 0.25;
 exports.NOTES_SYNC_STATE_PATH = 'backgroundNotes';
 exports.SYNC_TYPE_SYNC_STATE_PATH = ['SyncType'];
+const CATCHUP_SYNC_STATE_PATH = 'catchupRefs';
 exports.TURBO_SYNC_DEFAULTS = {
     NOTE_EDIT_BUFFER: 6 * 1000,
     NOTE_IDLE_BUFFER: 3 * 1000,
@@ -218,4 +219,79 @@ async function interruptible(params, p) {
     return conduit_utils_1.unwrapErrOrData(res);
 }
 exports.interruptible = interruptible;
+async function replaceCatchupSyncState(trc, params, transactionName, catchupSyncState, graphTransaction) {
+    if (graphTransaction) {
+        await graphTransaction.replaceSyncState(trc, [CATCHUP_SYNC_STATE_PATH], catchupSyncState);
+    }
+    else {
+        return params.syncEngine.graphStorage.transact(trc, transactionName, async (tx) => {
+            await tx.replaceSyncState(trc, [CATCHUP_SYNC_STATE_PATH], catchupSyncState);
+        });
+    }
+}
+async function getCatchupSyncState(trc, params, tx) {
+    const syncState = await (tx !== null && tx !== void 0 ? tx : params.syncEngine.graphStorage).getSyncState(trc, null, [CATCHUP_SYNC_STATE_PATH]);
+    return syncState ? SimplyImmutable.cloneMutable(syncState) : { guids: { notebooks: [], workspaces: [] }, lastUpdateCounts: { notebooks: {}, workspaces: {} } };
+}
+exports.getCatchupSyncState = getCatchupSyncState;
+async function addCatchupSyncState(trc, params, newCatchupGuids, graphTransaction) {
+    const syncState = await getCatchupSyncState(trc, params, graphTransaction);
+    const lastUpdateCounts = SimplyImmutable.cloneMutable(syncState.lastUpdateCounts);
+    const nbRefs = new Set(syncState.guids.notebooks);
+    const wsRefs = new Set(syncState.guids.workspaces);
+    for (const nbRef of newCatchupGuids.notebooks) {
+        nbRefs.add(nbRef);
+        if (conduit_utils_1.isNullish(lastUpdateCounts.notebooks[nbRef])) {
+            lastUpdateCounts.notebooks[nbRef] = 0;
+        }
+    }
+    for (const wsRef of newCatchupGuids.workspaces) {
+        wsRefs.add(wsRef);
+        if (conduit_utils_1.isNullish(lastUpdateCounts.workspaces[wsRef])) {
+            lastUpdateCounts.workspaces[wsRef] = 0;
+        }
+    }
+    const newSyncState = { lastUpdateCounts, guids: { notebooks: [...nbRefs], workspaces: [...wsRefs] } };
+    await replaceCatchupSyncState(trc, params, 'addCatchupSyncState', newSyncState, graphTransaction);
+}
+exports.addCatchupSyncState = addCatchupSyncState;
+async function deleteCatchupSyncState(trc, params, processedCatchupGuids, graphTransaction) {
+    const syncState = await getCatchupSyncState(trc, params, graphTransaction);
+    const lastUpdateCounts = SimplyImmutable.cloneMutable(syncState.lastUpdateCounts);
+    const nbRefs = new Set(syncState.guids.notebooks);
+    const wsRefs = new Set(syncState.guids.workspaces);
+    if (nbRefs.size) {
+        for (const nbGuid of processedCatchupGuids.notebooks) {
+            nbRefs.delete(nbGuid);
+            delete lastUpdateCounts.notebooks[nbGuid];
+        }
+    }
+    if (wsRefs.size) {
+        for (const wsGuid of processedCatchupGuids.workspaces) {
+            wsRefs.delete(wsGuid);
+            delete lastUpdateCounts.workspaces[wsGuid];
+        }
+    }
+    const newSyncState = { guids: { notebooks: [...nbRefs], workspaces: [...wsRefs] }, lastUpdateCounts };
+    await replaceCatchupSyncState(trc, params, 'deleteCatchupSyncState', newSyncState, graphTransaction);
+}
+exports.deleteCatchupSyncState = deleteCatchupSyncState;
+async function updateCatchupSyncLastUpdateCount(trc, params, nodeType, guids, lastUpdateCount, graphTransaction) {
+    const syncState = await getCatchupSyncState(trc, params, graphTransaction);
+    const lastUpdateCounts = SimplyImmutable.cloneMutable(syncState.lastUpdateCounts);
+    const updateCounts = nodeType === en_core_entity_types_1.CoreEntityTypes.Notebook ? lastUpdateCounts.notebooks : lastUpdateCounts.workspaces;
+    for (const guid of guids) {
+        updateCounts[guid] = lastUpdateCount;
+    }
+    const newSyncState = Object.assign(Object.assign({}, syncState), { lastUpdateCounts });
+    await replaceCatchupSyncState(trc, params, 'updateCatchupSyncLastUpdateCount', newSyncState, graphTransaction);
+}
+exports.updateCatchupSyncLastUpdateCount = updateCatchupSyncLastUpdateCount;
+async function getCatchupSyncMinLastUpdateCount(trc, params, nodeType, tx) {
+    const syncState = await getCatchupSyncState(trc, params, tx);
+    const lastUpdateCounts = nodeType === en_core_entity_types_1.CoreEntityTypes.Notebook ? syncState.lastUpdateCounts.notebooks : syncState.lastUpdateCounts.workspaces;
+    const candidates = Object.values(lastUpdateCounts);
+    return candidates.length ? Math.min(...candidates) : 0;
+}
+exports.getCatchupSyncMinLastUpdateCount = getCatchupSyncMinLastUpdateCount;
 //# sourceMappingURL=SyncHelpers.js.map

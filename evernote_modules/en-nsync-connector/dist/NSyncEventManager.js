@@ -56,7 +56,8 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         this.catchupFilter = null;
         this.nodeFilter = [];
         this.availability = null;
-        this.isRunning = false;
+        this.isPaused = false;
+        this.disconnectOnPause = null;
         this.isDisabled = false;
         this.toggleEventSync = null;
         this.enabledBeforeOverride = true; // Default is on
@@ -66,7 +67,7 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
                 throw new Error('NSyncEventManager not initialized');
             }
             if (disable === true) {
-                this.enabledBeforeOverride = this.isEnabled();
+                this.enabledBeforeOverride = this.isAvailable();
             }
             else {
                 disable = !this.enabledBeforeOverride;
@@ -126,7 +127,7 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             });
         }
         else {
-            this.isRunning = true;
+            this.isPaused = false;
             await this.createSync(trc);
         }
     }
@@ -137,13 +138,16 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
     isEnabled() {
         return !this.isDisabled;
     }
-    async clearBackoff(trc) {
+    async clearBackoff(trc, clearAttempts = false) {
         if (this.backoffSleep) {
             this.backoffSleep.cancel();
-            await this.updateConnectionInformation(trc, {
+            const update = {
                 backoff: 0,
-                attempts: 0,
-            });
+            };
+            if (clearAttempts) {
+                update.attempts = 0;
+            }
+            await this.updateConnectionInformation(trc, update);
             if (!this.eventSrc) {
                 await this.createSync(trc);
             }
@@ -315,7 +319,7 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             this.jwt = jwt;
             // Monolith token is required to determine this is Monolith-authed or NAP-authed during token refresh process
             this.monolithToken = monolithToken;
-            await this.clearBackoff(trc);
+            await this.clearBackoff(trc, true);
         }
         if (!this.eventSrc && this.isAvailable()) {
             await this.createSync(trc);
@@ -330,24 +334,27 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         }
     }
     async onSyncStateChange(trc, disabled, paused) {
-        // any change to isRunning?
-        const noRunningChange = this.isRunning === (!disabled && !paused);
         // set values
         this.isDisabled = disabled || !this.isAvailable();
-        this.isRunning = (!this.isDisabled && !paused);
-        if (noRunningChange) {
-            return;
+        this.isPaused = paused;
+        if (!this.isPaused && this.disconnectOnPause) {
+            clearTimeout(this.disconnectOnPause);
+            this.disconnectOnPause = null;
         }
-        if (this.isRunning) {
+        if (!this.isDisabled && !this.isPaused) {
             await this.createSync(trc);
         }
-        else {
+        else if (this.isDisabled) {
             this.destroySync();
-            if (this.isDisabled) {
-                await this.updateConnectionInformation(trc, {
-                    lastAttempt: 0,
-                });
-            }
+            await this.updateConnectionInformation(trc, {
+                lastAttempt: 0,
+            });
+        }
+        else if (this.isPaused && !this.disconnectOnPause) {
+            this.disconnectOnPause = setTimeout(() => {
+                this.destroySync();
+                this.disconnectOnPause = null;
+            }, 60000);
         }
     }
     onSyncMessage(message) {
@@ -398,8 +405,8 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         if (this.backoffSleep) {
             return;
         }
-        if (!this.isAvailable()) {
-            this.isRunning = false;
+        if (!this.isEnabled()) {
+            this.isPaused = true;
             return;
         }
         const connInfo = await this.getConnectionInformation(trc);
@@ -442,8 +449,6 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
                 return this.updateConnectionInformation(trc2, {
                     connectionID: event.data.toString(),
                     lastAttempt: 200,
-                    attempts: 0,
-                    backoff: 0,
                 });
             }).catch(err => conduit_utils_1.logger.error('Unable to update connection information', err));
             conduit_utils_1.traceTestCounts(trc, { [CONNECTED_KEY]: 1 });
@@ -485,6 +490,13 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             this.handleErrorEvent(err);
         });
         this.eventSrc.addEventListener('complete', (event) => {
+            // Clear backoff information after completing the connection
+            gTracePool.runTraced(this.di.getTestEventTracker(), async (trc2) => {
+                return this.updateConnectionInformation(trc2, {
+                    attempts: 0,
+                    backoff: 0,
+                });
+            }).catch(err => conduit_utils_1.logger.error('Unable to update connection information', err));
             // If there is a catchup filter set, don't enqueue event.
             // Instead, clear the filter and restart syncing with full filter
             if (this.catchupFilter) {
@@ -524,11 +536,14 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             conduit_utils_1.logger.error(`${errorEvent.status} from NSync: ${errorEvent.message}`);
             this.enqueueErrorEvent(new conduit_utils_1.ServiceError('NSyncInternal', errorEvent.status.toString(), errorEvent.message), 'service error');
         }
-        else if (errorEvent.message === undefined || errorEvent.message === 'network error') {
-            conduit_utils_1.logger.warn('Likely disconnect from nsync. Trying reconnect...');
+        else if (errorEvent.message === undefined) {
+            conduit_utils_1.logger.warn('Empty message from nsync. Likely disconnect. Trying reconnect...', errorEvent);
+        }
+        else if (errorEvent.message === 'network error') {
+            conduit_utils_1.logger.warn('Network error message from nsync. Trying reconnect...', errorEvent);
         }
         else if (errorEvent.message === '`EventSource` instance closed while sending.') { // TODO: False mocksse error. Remove with CON-2254. Very Soon!
-            if (this.isRunning === true) {
+            if (this.isPaused === false) {
                 conduit_utils_1.logger.warn(`Event source instance closed while sending.`);
             }
         }
@@ -550,6 +565,10 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         }
     }
     async flush(trc, context) {
+        if (this.isPaused) {
+            conduit_utils_1.logger.warn('Attempting to flush nsync event data while paused');
+            return;
+        }
         if (!this.docQueue.length) {
             return;
         }
