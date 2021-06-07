@@ -14,8 +14,8 @@ const getWorkspaceNodesAndEdges = async (trc, instance, context) => {
     const oldNode = await context.tx.getNode<Workspace>(trc, null, { id, type: CoreEntityTypes.Workspace });
     const viewed = oldNode?.NodeFields.viewed ?? false;
     const shareCountProfiles = oldNode?.NodeFields.internal_shareCountProfiles ?? {};
-    const initial = createInitialNode(instance);
-    if (!initial) {
+    const workspace = convertNsyncEntityToNode<Workspace>(instance, context);
+    if (!workspace) {
       logger.error('Missing initial values');
       return null;
     }
@@ -30,37 +30,15 @@ const getWorkspaceNodesAndEdges = async (trc, instance, context) => {
         logger.warn(`Missing defaultRole in map: ${instance.defaultRole}`);
       }
     }
-    const node: Workspace = {
-      ...initial,
-      type: CoreEntityTypes.Workspace,
-      NodeFields: {
-        accessStatus: WorkspaceAccessStatus.OPEN, // TODO v2: remove
-        created: instance.created,
-        updated: instance.updated,
-        description: instance.description || '',
-        defaultRole,
-        isSample: instance.isSample,
-        notesCount: 0, // TODO v2: remove?
-        notebooksCount: 0, // TODO v2: remove?
-        workspaceType,
-        viewed,
-        internal_shareCountProfiles: shareCountProfiles,
-      },
-      inputs: {},
-      outputs: {
-        children: {},
-        childrenInTrash: {}, // TODO v2: remove
-        memberships: {},
-        shortcut: {},
-        // pinnedContents: {}, // TODO v2: put back in
-        manager: {},
-      },
-      CacheFields: undefined, // TODO
-    };
+  
+    workspace.NodeFields.defaultRole = defaultRole;
+    workspace.NodeFields.workspaceType = workspaceType;
+    workspace.NodeFields.viewed = viewed;
+    workspace.NodeFields.internal_shareCountProfiles = shareCountProfiles;
   
     // TODO v2: Add edge to instance manager
     // manager: Number(instance.manager) as UserID,
-    return { nodes: { nodesToUpsert: [node], nodesToDelete: [] }};
+    return { nodes: { nodesToUpsert: [workspace], nodesToDelete: [] }};
     */
 };
 exports.getWorkspaceNodesAndEdges = getWorkspaceNodesAndEdges;

@@ -95,7 +95,8 @@ function addMarkedForOfflineMutators(out, resourceManager, offlineContentStrateg
                         if (!attachment) {
                             continue;
                         }
-                        await tx.removeNodeCachedFields(context.trc, { id: attachment.id, type: en_core_entity_types_1.CoreEntityTypes.Attachment }, ['data.content', 'recognition.content', 'alternateData.content']);
+                        const cachedFieldsToRemove = ['data.content', 'recognition.content', 'alternateData.content', 'internal_searchText'];
+                        await tx.removeNodeCachedFields(context.trc, { id: attachment.id, type: en_core_entity_types_1.CoreEntityTypes.Attachment }, cachedFieldsToRemove);
                         const dataBlob = attachment.NodeFields.data;
                         if (dataBlob.url && resourceManager && attachmentNoteMap[attachment.id]) {
                             const resourceRef = {

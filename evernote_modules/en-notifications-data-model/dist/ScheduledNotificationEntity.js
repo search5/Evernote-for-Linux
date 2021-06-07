@@ -14,7 +14,7 @@ exports.ScheduledNotificationEntitySchema = {
             calendarEventId: 'string',
             notificationTime: 'timestamp',
             clientType: 'string',
-            title: 'string',
+            title: en_ts_utils_1.NullableString,
             startTime: 'timestamp',
             endTime: 'timestamp',
             location: en_ts_utils_1.NullableString,

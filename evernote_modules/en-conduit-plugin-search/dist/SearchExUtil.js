@@ -3,7 +3,7 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getLocalSearchMode = exports.getSearchString = exports.emptyResultGroup = exports.emptySearchExResult = exports.combineResults = exports.findResultSpec = exports.selectResultGroup = exports.selectResultGroups = exports.setDefaults = exports.composeSearchFilterString = exports.objectIDToServiceGuid = exports.serviceGuidToObjectID = void 0;
+exports.getLocalSearchMode = exports.getSearchString = exports.emptyResultGroup = exports.emptySearchExResult = exports.combineResults = exports.findResultSpec = exports.selectResultGroup = exports.selectResultGroups = exports.setDefaults = exports.composeSearchFilterString = exports.escapeLabel = exports.objectIDToServiceGuid = exports.serviceGuidToObjectID = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_thrift_connector_1 = require("en-thrift-connector");
@@ -55,9 +55,10 @@ exports.objectIDToServiceGuid = objectIDToServiceGuid;
  *
  * @param stackName name of the stack
  */
-function escapeStack(stackName) {
-    return stackName.replace(/"/g, '\\"');
+function escapeLabel(label) {
+    return label.replace(/"/g, '\\"');
 }
+exports.escapeLabel = escapeLabel;
 function composeSearchFilterString(serviceGuid, type) {
     switch (type) {
         case SearchSchemaTypes_1.SearchExResultType.NOTE:
@@ -71,7 +72,7 @@ function composeSearchFilterString(serviceGuid, type) {
         case SearchSchemaTypes_1.SearchExResultType.AUTHOR:
             return 'creatorId:"' + serviceGuid + '"';
         case SearchSchemaTypes_1.SearchExResultType.STACK:
-            return 'stack:"' + escapeStack(serviceGuid) + '"';
+            return 'stack:"' + escapeLabel(serviceGuid) + '"';
         default:
             return serviceGuid;
     }

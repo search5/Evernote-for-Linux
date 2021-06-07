@@ -10,29 +10,7 @@ const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
 const TaskUtils_1 = require("../TaskUtils");
 const Permission_1 = require("./Helpers/Permission");
-async function getNewTaskUserSettingsOps(trc, ctx, id, ref, defaultRemindersOffsets) {
-    const settingsGenID = await ensureTaskUserSettingsID(trc, ctx);
-    if (settingsGenID[1] !== id) {
-        throw new Error(`Inconsistent taskUserSettingsID: expected<${id}>, but actual<${settingsGenID[1]}>`);
-    }
-    const taskUserSettingsEntity = ctx.createEntity(ref, {
-        label: 'USER_TASK_SETTINGS_LABEL',
-        created: ctx.timestamp,
-        updated: ctx.timestamp,
-        defaultRemindersOffsets,
-    }, ctx.userID);
-    return {
-        changeType: 'Node:CREATE',
-        node: taskUserSettingsEntity,
-        id: settingsGenID,
-    };
-}
-// make sure that the deterministic taskUserSettingsID is included in the guids field
-// as part of the request sending to the backend service.
-//
-async function ensureTaskUserSettingsID(trc, ctx) {
-    return ctx.generateDeterministicID(trc, ctx.userID, en_data_model_1.EntityTypes.TaskUserSettings, en_data_model_1.DefaultDeterministicIdGenerator);
-}
+const TaskUserSettings_1 = require("./Helpers/TaskUserSettings");
 exports.taskUserSettingsSetDefaultTaskNote = {
     type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
     params: {
@@ -43,7 +21,7 @@ exports.taskUserSettingsSetDefaultTaskNote = {
     execute: async (trc, ctx, params) => {
         const ops = [];
         const nodeRef = { id: params.noteID, type: en_core_entity_types_1.CoreEntityTypes.Note };
-        const taskUserSettingsID = TaskUtils_1.getTaskUserSettingsByMutationContext(ctx);
+        const taskUserSettingsID = TaskUtils_1.getTaskUserSettingsIdByMutationContext(ctx);
         const note = await ctx.fetchEntity(trc, nodeRef);
         if (!note) {
             throw new conduit_utils_1.NotFoundError(nodeRef.id, 'missing note in set as default');
@@ -53,10 +31,10 @@ exports.taskUserSettingsSetDefaultTaskNote = {
         // get existing default-task-note
         const taskUserSettings = await ctx.fetchEntity(trc, taskUserSettingsRef);
         if (!taskUserSettings) {
-            ops.push(await getNewTaskUserSettingsOps(trc, ctx, taskUserSettingsID, taskUserSettingsRef));
+            ops.push(await TaskUserSettings_1.getNewTaskUserSettingsOps(trc, ctx, taskUserSettingsID, taskUserSettingsRef));
         }
         else {
-            await ensureTaskUserSettingsID(trc, ctx);
+            await TaskUserSettings_1.ensureTaskUserSettingsID(trc, ctx);
             ops.push({
                 changeType: 'Edge:MODIFY',
                 edgesToDelete: [{
@@ -95,14 +73,14 @@ exports.taskUserSettingsUpsert = {
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     execute: async (trc, ctx, params) => {
         const ops = [];
-        const taskUserSettingsID = TaskUtils_1.getTaskUserSettingsByMutationContext(ctx);
+        const taskUserSettingsID = TaskUtils_1.getTaskUserSettingsIdByMutationContext(ctx);
         const taskUserSettingsRef = { id: taskUserSettingsID, type: en_data_model_1.EntityTypes.TaskUserSettings };
         const taskUserSettings = await ctx.fetchEntity(trc, taskUserSettingsRef);
         if (!taskUserSettings) {
-            ops.push(await getNewTaskUserSettingsOps(trc, ctx, taskUserSettingsID, taskUserSettingsRef));
+            ops.push(await TaskUserSettings_1.getNewTaskUserSettingsOps(trc, ctx, taskUserSettingsID, taskUserSettingsRef));
         }
         else {
-            await ensureTaskUserSettingsID(trc, ctx);
+            await TaskUserSettings_1.ensureTaskUserSettingsID(trc, ctx);
         }
         return {
             results: {

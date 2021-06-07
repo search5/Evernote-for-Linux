@@ -29,6 +29,7 @@ const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
 const en_home_data_model_1 = require("en-home-data-model");
 const BoardWidgetBuilder_1 = require("../BoardWidgetBuilder");
+const types_1 = require("../Schema/types");
 const Utilities = __importStar(require("../Utilities"));
 /* Set ScratchPad content */
 const createWidgetScratchPadSetContentMutator = (di) => {
@@ -70,13 +71,7 @@ const createWidgetScratchPadSetContentMutator = (di) => {
             if (!widget) {
                 throw new conduit_utils_1.NotFoundError(params.widget, 'missing widget in update');
             }
-            /*
-             * Do not check mutable widget type, as it may have changed between replays and we do not want to lose data.
-             *  New WidgetTypes/MutableWidgetTypes that need Content should specify a new property.
-             */
-            if (widget.NodeFields.widgetType !== en_home_data_model_1.WidgetType.ScratchPad && widget.NodeFields.widgetType !== en_home_data_model_1.WidgetType.Extra) {
-                throw new conduit_utils_1.InvalidParameterError(`Cannot update scratch pad content for a WidgetType of ${widget.NodeFields.widgetType}`);
-            }
+            Utilities.validateMutableWidgetTypes('content', en_home_data_model_1.WidgetType.ScratchPad, en_home_data_model_1.MutableWidgetType.ScratchPad, widget);
             const ops = [];
             const conflictDetected = (optimisticConflictDetectionEnabled && // Client/Conduit supports optimistic conflict detection.
                 previousContentHash && // Conflict detection is enabled in the client.
@@ -238,6 +233,7 @@ const createWidgetSetSelectedTabMutator = () => {
     };
     return widgetSetSelectedTab;
 };
+// TODO: Remove from Conduit after both clients are migrated to the V2 definition.
 const createWidgetCustomizeMutator = () => {
     const widgetCustomize = {
         type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
@@ -314,6 +310,9 @@ const createWidgetCustomizeMutator = () => {
                 Utilities.validateMutableWidgetTypes('filteredNotesQuery.query', en_home_data_model_1.WidgetType.FilteredNotes, en_home_data_model_1.MutableWidgetType.FilteredNotes, widget, params.mutableWidgetType);
                 fields.filteredNotesQuery = {
                     query: params.filteredNotesQueryString,
+                    resultSpec: {
+                        type: en_home_data_model_1.WidgetSearchType.NOTE,
+                    },
                 };
             }
             if (params.isEnabled === true || params.isEnabled === false) {
@@ -348,9 +347,11 @@ const createWidgetCustomizeMutator = () => {
                 fields['mobile.sortWeight'] = params.mobileSortWeight;
             }
             if (params.label) {
+                // eslint-disable-next-line @typescript-eslint/dot-notation
                 fields[`label`] = params.label;
             }
             if (params.lightBGColor && params.darkBGColor) {
+                // eslint-disable-next-line @typescript-eslint/dot-notation
                 fields[`backgroundColor`] = {
                     light: params.lightBGColor,
                     dark: params.darkBGColor,
@@ -485,15 +486,190 @@ const createWidgetRestoreMutator = () => {
     };
     return widgetRestore;
 };
+const createWidgetFeatureTrialEnableMutator = () => {
+    const widgetFeatureTrialEnable = {
+        type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
+        params: {
+            widget: 'ID',
+        },
+        execute: async (trc, ctx, params) => {
+            const { widget, } = params;
+            const widgetToEnableRef = { id: widget, type: en_data_model_1.EntityTypes.Widget };
+            const widgetToEnable = await ctx.fetchEntity(trc, widgetToEnableRef);
+            if (!widgetToEnable) {
+                throw new conduit_utils_1.NotFoundError(widget, 'Missing Widget to Update');
+            }
+            // Traverse the graph to get the parent board so we can traverse back down.
+            const boardEdge = (await ctx.traverseGraph(trc, widgetToEnableRef, [{ edge: ['inputs', 'parent'], type: en_data_model_1.EntityTypes.Board }]));
+            if (boardEdge.length === 0) {
+                throw new conduit_utils_1.NotFoundError(widget, 'Missing Widget Parent Board Association');
+            }
+            const [parentBoardEdge] = boardEdge;
+            if (!parentBoardEdge.edge) {
+                throw new conduit_utils_1.NotFoundError(widget, 'Missing Widget Parent Board Association');
+            }
+            // Get all the widgets and filter by the correct values.
+            const widgetEdges = (await ctx.traverseGraph(trc, { id: parentBoardEdge.edge.srcID, type: parentBoardEdge.type }, [{ edge: ['outputs', 'children'], type: en_data_model_1.EntityTypes.Widget }]));
+            const allEnabledOtherWidgets = (await ctx.fetchEntities(trc, en_data_model_1.EntityTypes.Widget, widgetEdges.filter(we => !!we.edge && we.edge.dstID !== widget).map(we => we.edge.dstID))).filter(w => !!w);
+            const lexoRankHandler = new conduit_utils_1.LexoRankHandler(50);
+            // The widget coming into the mutation will be enabled with a desktop width of 1.
+            const widgetMutations = new Map([
+                [widget, {
+                        isEnabled: true,
+                    }],
+            ]);
+            const mergeCustomizeParams = (id, mergeValues) => {
+                const valuesToUpdate = widgetMutations.get(id);
+                if (valuesToUpdate) {
+                    widgetMutations.set(id, Object.assign(Object.assign(Object.assign({}, valuesToUpdate), mergeValues), { updated: ctx.timestamp }));
+                }
+                else {
+                    widgetMutations.set(id, Object.assign(Object.assign({}, mergeValues), { updated: ctx.timestamp }));
+                }
+            };
+            try {
+                // Place the widget at the end of the board for desktop.
+                allEnabledOtherWidgets.sort(Utilities.widgetSortComparerFactory(en_home_data_model_1.DeviceFormFactor.Desktop));
+                const lastWidget = allEnabledOtherWidgets[allEnabledOtherWidgets.length - 1];
+                const sortWeight = lexoRankHandler.between(lastWidget.NodeFields.desktop.sortWeight, conduit_utils_1.LexoRankEndWeight);
+                mergeCustomizeParams(widget, { desktop: { sortWeight, width: 1, height: 1, panelKey: undefined } });
+            }
+            catch (_a) {
+                // We have a collision and need to redistribute all desktop weights.
+                const distribute = lexoRankHandler.distribute(allEnabledOtherWidgets.length + 1);
+                for (let i = 0; i < distribute.length; i++) {
+                    if (i < allEnabledOtherWidgets.length) {
+                        const widgetToUse = allEnabledOtherWidgets[i];
+                        mergeCustomizeParams(widgetToUse.id, { desktop: {
+                                sortWeight: distribute[i],
+                                width: widgetToUse.NodeFields.desktop.width,
+                                height: widgetToUse.NodeFields.desktop.height,
+                                panelKey: widgetToUse.NodeFields.desktop.panelKey,
+                            } });
+                    }
+                    else {
+                        mergeCustomizeParams(widgetToEnable.id, { desktop: { sortWeight: distribute[i], width: 1, height: 1, panelKey: undefined } });
+                    }
+                }
+            }
+            try {
+                // Place the widget at the end of the board for mobile
+                allEnabledOtherWidgets.sort(Utilities.widgetSortComparerFactory(en_home_data_model_1.DeviceFormFactor.Mobile));
+                const lastWidget = allEnabledOtherWidgets[allEnabledOtherWidgets.length - 1];
+                const sortWeight = lexoRankHandler.between(lastWidget.NodeFields.mobile.sortWeight, conduit_utils_1.LexoRankEndWeight);
+                mergeCustomizeParams(widget, { mobile: { sortWeight, width: 1, height: 1, panelKey: undefined } });
+            }
+            catch (_b) {
+                // We have a collision and need to redistribute all mobile weights.
+                const distribute = lexoRankHandler.distribute(allEnabledOtherWidgets.length + 1);
+                for (let i = 0; i < distribute.length; i++) {
+                    if (i < allEnabledOtherWidgets.length) {
+                        const widgetToUse = allEnabledOtherWidgets[i];
+                        mergeCustomizeParams(widgetToUse.id, { mobile: {
+                                sortWeight: distribute[i],
+                                width: widgetToUse.NodeFields.mobile.width,
+                                height: widgetToUse.NodeFields.mobile.height,
+                                panelKey: widgetToUse.NodeFields.mobile.panelKey,
+                            } });
+                    }
+                    else {
+                        mergeCustomizeParams(widgetToEnable.id, { mobile: { sortWeight: distribute[i], width: 1, height: 1, panelKey: undefined } });
+                    }
+                }
+            }
+            const plan = {
+                results: {},
+                ops: [],
+            };
+            for (const [id, mutation] of widgetMutations) {
+                plan.ops.push({
+                    changeType: 'Node:UPDATE',
+                    nodeRef: { id, type: en_data_model_1.EntityTypes.Widget },
+                    node: ctx.assignFields(en_data_model_1.EntityTypes.Widget, mutation),
+                });
+            }
+            return plan;
+        },
+    };
+    return widgetFeatureTrialEnable;
+};
+const createWidgetCustomizeVerIIMutator = () => {
+    const widgetCustomizeVerII = {
+        type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
+        params: {
+            widget: 'ID',
+            associations: types_1.WidgetCustomizeAssociationsInput,
+            fields: types_1.WidgetCustomizeFieldsInput,
+        },
+        execute: async (trc, ctx, params) => {
+            const { widget: widgetID, fields: fieldParams, associations: associationParams, } = params;
+            const widgetRef = { id: widgetID, type: en_data_model_1.EntityTypes.Widget };
+            const widget = await ctx.fetchEntity(trc, widgetRef);
+            if (!widget) {
+                throw new conduit_utils_1.NotFoundError(params.widget, 'Missing Widget to Update');
+            }
+            const plan = {
+                results: {},
+                ops: [],
+            };
+            let widgetCustomizeV2Mutations;
+            if ((fieldParams === null || fieldParams === void 0 ? void 0 : fieldParams.isEnabled) === false) {
+                widgetCustomizeV2Mutations = await BoardWidgetBuilder_1.createDisabledWidgetCustomizeV2Mutations(trc, ctx, widget);
+            }
+            else {
+                widgetCustomizeV2Mutations = await BoardWidgetBuilder_1.createEnabledWidgetCustomizeV2Mutations(trc, ctx, widget, associationParams, fieldParams);
+            }
+            const fields = widgetCustomizeV2Mutations.mutationAndRef.mutation;
+            if (fields && Object.keys(fields).length) {
+                /*
+                * Only update updated once if the Widget is customized
+                * Also, only apply field updates once in case we can ensure transaction atomicty
+                */
+                fields.updated = ctx.timestamp;
+                // These particular fields are only partials in the mutator definition, and Conduit expects a full definition to succeed.
+                if (fields.desktop) {
+                    const newValues = fields.desktop;
+                    fields.desktop = Object.assign(Object.assign({}, widget.NodeFields.desktop), newValues);
+                }
+                if (fields.mobile) {
+                    const newValues = fields.mobile;
+                    fields.mobile = Object.assign(Object.assign({}, widget.NodeFields.mobile), newValues);
+                }
+                plan.ops.push({
+                    changeType: 'Node:UPDATE',
+                    nodeRef: widgetRef,
+                    node: ctx.assignFields(en_data_model_1.EntityTypes.Widget, fields),
+                });
+            }
+            if (widgetCustomizeV2Mutations.entitiesToDelete.length > 0) {
+                plan.ops.push({
+                    changeType: 'Node:DELETE_MULTI',
+                    nodes: widgetCustomizeV2Mutations.entitiesToDelete,
+                });
+            }
+            if (widgetCustomizeV2Mutations.associationsToCreate.length > 0 || widgetCustomizeV2Mutations.associationsToDelete.length > 0) {
+                plan.ops.push({
+                    changeType: 'Edge:MODIFY',
+                    edgesToDelete: widgetCustomizeV2Mutations.associationsToDelete,
+                    edgesToCreate: widgetCustomizeV2Mutations.associationsToCreate,
+                });
+            }
+            return plan;
+        },
+    };
+    return widgetCustomizeVerII;
+};
 const createWidgetMutators = (di) => {
     return {
         widgetUnpinNote: createWidgetUnpinNoteMutator(),
         widgetCustomize: createWidgetCustomizeMutator(),
+        widgetCustomizeVerII: createWidgetCustomizeVerIIMutator(),
         widgetSetSelectedTab: createWidgetSetSelectedTabMutator(),
         widgetResolveConflict: createWidgetResolveConflictMutator(),
         widgetScratchPadSetContent: createWidgetScratchPadSetContentMutator(di),
         widgetDelete: createWidgetDeleteMutator(),
         widgetRestore: createWidgetRestoreMutator(),
+        widgetFeatureTrialEnable: createWidgetFeatureTrialEnableMutator(),
     };
 };
 exports.createWidgetMutators = createWidgetMutators;

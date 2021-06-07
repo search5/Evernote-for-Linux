@@ -231,6 +231,31 @@
         ],
         "indexCondition": []
       },
+      "66a5692159e6b2ca937ec172f9e7a038": {
+        "index": [
+          {
+            "field": "invitedTime",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "recipientIsMe",
+            "value": true
+          }
+        ]
+      },
       "a248e49768a44464250cabc2e229b41e": {
         "index": [
           {
@@ -756,6 +781,40 @@
           }
         ]
       },
+      "2885fa3bc4cb0e457491c7ee8aedfe4c": {
+        "index": [
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "hasTaskGroup",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
       "28a55bbd1bff076657821014b31f1d0b": {
         "index": [
           {
@@ -950,17 +1009,17 @@
           }
         ]
       },
-      "4c3c36d3f89aec50e078ecb962cc0bc8": {
+      "487354ccc280c8b85ed3841745afa332": {
         "index": [
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
           {
             "field": "updated",
             "order": "DESC",
             "type": "timestamp"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
           },
           {
             "field": "created",
@@ -975,7 +1034,7 @@
         ],
         "indexCondition": [
           {
-            "field": "hasTask",
+            "field": "hasTaskGroup",
             "value": true
           },
           {
@@ -1069,6 +1128,40 @@
         "indexCondition": [
           {
             "field": "hasSource",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "6ca8f0d733d159f56275edbd2abf6d58": {
+        "index": [
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "hasTaskGroup",
             "value": true
           },
           {
@@ -1213,40 +1306,6 @@
         "indexCondition": [
           {
             "field": "hasReminder",
-            "value": true
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "9572a676bb7997c9f79148c658e65bde": {
-        "index": [
-          {
-            "field": "updated",
-            "order": "DESC",
-            "type": "timestamp"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "created",
-            "order": "DESC",
-            "type": "timestamp"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "hasTask",
             "value": true
           },
           {
@@ -2052,40 +2111,6 @@
           }
         ]
       },
-      "d2756c1a745dd821ac1c36c40f1e2307": {
-        "index": [
-          {
-            "field": "created",
-            "order": "DESC",
-            "type": "timestamp"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "updated",
-            "order": "DESC",
-            "type": "timestamp"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "hasTask",
-            "value": true
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
       "d6998be68872144f4e76adda8bc7e459": {
         "index": [
           {
@@ -2405,6 +2430,26 @@
   },
   "NoteContentInfo": {
     "indexes": {
+      "84d2a998df1ce8e6e4f8f66c33c7f2e9": {
+        "index": [
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "hasTaskGroup",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      },
       "parent": {
         "index": [
           {
@@ -2422,7 +2467,8 @@
       }
     },
     "lookups": [
-      "parent"
+      "parent",
+      "hasTaskGroup"
     ]
   },
   "Notebook": {
@@ -3330,6 +3376,31 @@
   },
   "Task": {
     "indexes": {
+      "0dd1911faa85ad65ea3875dd4cc0d26e": {
+        "index": [
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "inTrash",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "sortWeight",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      },
       "ae47c2637cb99bb25244150d33de6c84": {
         "index": [
           {

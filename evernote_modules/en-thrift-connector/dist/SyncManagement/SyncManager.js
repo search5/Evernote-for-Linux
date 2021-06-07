@@ -141,15 +141,6 @@ class SyncManager {
             this.initialDownsyncTimings = {};
             if (this.activityContext.syncEventManager) {
                 await this.activityContext.syncEventManager.updateToken(trc, Auth.hasNapAuthInfo(auth) ? auth.napAuthInfo.jwt : '', auth.token);
-                // set nsyncDisabled flag since NSyncEventManagers init cannot call toggleNSync during init
-                // (toggleNSync calls syncEventManager.isAvailable, but syncEventManager isn't set yet)
-                await this.activityContext.syncEngine.transactEphemeral(trc, 'InitNSyncDisabled', async (tx) => {
-                    if (!this.activityContext.syncEventManager) {
-                        return;
-                    }
-                    await tx.setValue(trc, 'SyncManager', 'nsyncDisabled', !this.activityContext.syncEventManager.isAvailable());
-                });
-                // Don't need to call onSyncStateChange, as NSyncEventManager enables or disables itself in the constructor on the same function
             }
             this.di.emitEvent(conduit_view_types_1.ConduitEvent.START_SYNCING_WITH_AUTH);
             const activities = [];
@@ -359,13 +350,12 @@ class SyncManager {
     async addReindexingActivity(trc, graphTransaction, makeImmediate) {
         await this.addActivity(trc, this.getReindexingActivity(trc, makeImmediate), graphTransaction);
     }
-    async onSyncStateChange(trc, skipSyncEventManager) {
+    async onSyncStateChange(trc) {
         var _a;
         const syncPaused = await this.activityContext.syncEngine.getEphemeralFlag(trc, 'SyncManager', 'syncPaused');
         const syncDisabled = await this.activityContext.syncEngine.getEphemeralFlag(trc, 'SyncManager', 'syncDisabled');
-        const nSyncDisabled = await this.activityContext.syncEngine.getEphemeralFlag(trc, 'SyncManager', 'nsyncDisabled');
         const shouldSync = this.auth !== null && !syncPaused && !syncDisabled;
-        await ((_a = this.activityContext.syncEventManager) === null || _a === void 0 ? void 0 : _a.onSyncStateChange(trc, nSyncDisabled || syncDisabled, syncPaused));
+        await ((_a = this.activityContext.syncEventManager) === null || _a === void 0 ? void 0 : _a.onSyncStateChange(trc, syncDisabled, syncPaused));
         if (shouldSync === this.isSyncing) {
             return;
         }

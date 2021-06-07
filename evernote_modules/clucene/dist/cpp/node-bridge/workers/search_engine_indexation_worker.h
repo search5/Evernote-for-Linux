@@ -12,7 +12,7 @@
 #include "Misc.h"
 #include "repl_tchar.h"
 
-#include "search_engine_context.h"
+#include "ense_scheduler.h"
 #include "search_document_context.h"
 
 namespace en_search 
@@ -21,7 +21,7 @@ namespace en_search
     public:
         SearchEngineIndexationWorker(
             Napi::Function& callback, 
-            std::shared_ptr<SearchEngineContext> search_engine_context,
+            std::shared_ptr<evernote::cosm::core::ENScheduler> scheduler,
             const std::string& guid,
             std::unique_ptr<SearchDocumentContext> search_document_context);
 
@@ -38,7 +38,7 @@ namespace en_search
     void OnOK() override;
 
     private:
-        std::shared_ptr<SearchEngineContext> search_engine_context_;
+        std::shared_ptr<evernote::cosm::core::ENScheduler> scheduler_;
         std::string guid_;
         std::unique_ptr<SearchDocumentContext> search_document_context_;
 

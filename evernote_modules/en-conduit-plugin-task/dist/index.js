@@ -42,9 +42,9 @@ const TaskMutators = __importStar(require("./Mutators/TaskMutators"));
 const TaskUserSettingsMutators = __importStar(require("./Mutators/TaskUserSettingsMutators"));
 const DefaultTaskNote_1 = require("./PluginMutators/DefaultTaskNote");
 const index_1 = require("./PluginMutators/in-note-task/index");
-const ReminderStatusContainmentRules_1 = require("./Rules/ReminderStatusContainmentRules");
+const NoteUpdateContainmentRules_1 = require("./Rules/NoteUpdateContainmentRules");
 const ScheduledNotificationRules_1 = require("./Rules/ScheduledNotificationRules");
-const TaskDeleteContainmentRules_1 = require("./Rules/TaskDeleteContainmentRules");
+const TaskExpungeContainmentRules_1 = require("./Rules/TaskExpungeContainmentRules");
 const TaskGroupResolver_1 = require("./TaskGroupResolver");
 var NoteContentInfo_2 = require("./Mutators/Helpers/NoteContentInfo");
 Object.defineProperty(exports, "getNoteContentInfoIDByNoteID", { enumerable: true, get: function () { return NoteContentInfo_2.getNoteContentInfoIDByNoteID; } });
@@ -80,6 +80,8 @@ function getENTaskPlugin() {
                         defaultReminder: conduit_utils_1.NullableBoolean,
                         defaultRemindersOffsets: conduit_utils_1.NullableListOf('number'),
                         pinDefaultTaskNote: conduit_utils_1.NullableBoolean,
+                        taskAssignDate: conduit_utils_1.NullableTimestamp,
+                        taskAssignCount: conduit_utils_1.NullableNumber,
                     }, 'getTaskUserSettingsResult')),
                     resolve: GetTaskUserSettingsQuery_1.getTaskUserSettings,
                     description: 'Getting the TaskUserSetting for the current user.',
@@ -120,9 +122,9 @@ function getENTaskPlugin() {
         },
         mutationRules: () => {
             return [
-                ...ReminderStatusContainmentRules_1.ReminderStatusContainmentRules,
+                ...NoteUpdateContainmentRules_1.NoteUpdateContainmentRules,
                 ...ScheduledNotificationRules_1.ScheduledNotificationRules,
-                ...TaskDeleteContainmentRules_1.TaskDeleteContainmentRules,
+                ...TaskExpungeContainmentRules_1.TaskExpungeContainmentRules,
             ];
         },
     };

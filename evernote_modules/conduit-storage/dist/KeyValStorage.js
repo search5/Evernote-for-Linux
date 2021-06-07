@@ -72,6 +72,20 @@ class CorruptDBError extends Error {
     }
 }
 exports.CorruptDBError = CorruptDBError;
+async function cloneTable(trc, table, srcDB, dstDB) {
+    const keys = conduit_utils_1.chunkArray(await srcDB.getKeys(trc, null, table), 100);
+    for (const chunk of keys) {
+        const values = await srcDB.batchGetValues(trc, null, table, chunk);
+        await dstDB.transact(trc, `clone "${table}" table`, async (tx) => {
+            for (const key of chunk) {
+                const val = values[key];
+                if (val !== undefined) {
+                    await tx.setValue(trc, table, key, val);
+                }
+            }
+        });
+    }
+}
 class KeyValStorage extends StorageEventEmitter_1.StorageEventEmitter {
     constructor(dbName, cachePolicy, mutexTimeout, isOverlay = false, globalKey) {
         super();
@@ -430,24 +444,6 @@ class KeyValOverlayReadOnly extends KeyValStorage {
         }
         return true;
     }
-}
-__decorate([
-    conduit_utils_1.traceAsync('KeyValOverlay')
-], KeyValOverlayReadOnly.prototype, "commitTransaction", null);
-exports.KeyValOverlayReadOnly = KeyValOverlayReadOnly;
-class KeyValOverlay extends KeyValOverlayReadOnly {
-    constructor(underlyingStorage, inheritChangeEvents) {
-        super(underlyingStorage, inheritChangeEvents, undefined);
-    }
-    copyTableChangesFrom(overlay, table) {
-        const src = overlay.changes[table];
-        if (src) {
-            this.changes[table] = {
-                tableCleared: src.tableCleared,
-                values: Object.assign({}, src.values),
-            };
-        }
-    }
     async destructAndGenerateChangeEvents(trc) {
         const events = [];
         if (this.hasDBClear()) {
@@ -483,6 +479,170 @@ class KeyValOverlay extends KeyValOverlayReadOnly {
         this.underlyingStorage = underlyingStorage;
         if (inheritChangeEvents) {
             this.underlyingStorage.addChangeHandler(this);
+        }
+    }
+    async discardRedundantChanges(trc) {
+        if (this.isDestroyed) {
+            throw new Error('Overlay has been destructed');
+        }
+        if (!this.isInitialized) {
+            throw new conduit_utils_1.InternalError('Persisted KeyValOverlay must be initialized before use');
+        }
+        if (this.persistTable === undefined) {
+            throw new Error('No changes to discard');
+        }
+        if (this.hasDBClear()) {
+            throw new Error('Discarding db clear not supported');
+        }
+        for (const table in this.changes) {
+            const tableChanges = this.changes[table];
+            const keys = Object.keys(tableChanges.values);
+            // table was cleared. If the table in underlying storage has no keys, the change is redundant.
+            if (tableChanges.tableCleared && !keys.length) {
+                const actualKeys = await this.underlyingStorage.getKeys(trc, null, table);
+                if (!actualKeys.length) {
+                    delete this.changes[table];
+                }
+                continue;
+            }
+            // table was cleared then modified.
+            if (tableChanges.tableCleared && keys.length) {
+                const actualKeys = await this.underlyingStorage.getKeys(trc, null, table);
+                actualKeys.sort();
+                keys.sort();
+                if (!conduit_utils_1.isEqual(actualKeys, keys)) {
+                    // table clear change has not been applied yet. Changes to this table are not redundant.
+                    continue;
+                }
+                tableChanges.tableCleared = false;
+            }
+            // value changes.
+            const keyChunks = conduit_utils_1.chunkArray(keys, 100);
+            for (const chunk of keyChunks) {
+                // remove in-memory changes that have no affect on underlying storage.
+                const actualValues = await this.underlyingStorage.batchGetValues(trc, null, table, chunk);
+                const keysToRedundantChanges = [];
+                for (const key of chunk) {
+                    const val = tableChanges.values[key];
+                    const actual = actualValues[key];
+                    if (val === SimplyImmutable.REMOVE && actual === undefined || conduit_utils_1.isEqual(val, actual)) {
+                        delete tableChanges.values[key];
+                        keysToRedundantChanges.push(persistKey(table, key));
+                    }
+                }
+                // remove persisted redundant changes.
+                await this.underlyingStorage.transact(trc, 'KeyValStorage.discardRedundantChanges', async (tx) => {
+                    if (this.isDestroyed) {
+                        return;
+                    }
+                    if (this.persistTable === undefined) {
+                        return;
+                    }
+                    for (const key of keysToRedundantChanges) {
+                        await tx.removeValue(trc, this.persistTable, key);
+                    }
+                });
+            }
+            if (!Object.keys(tableChanges.values).length) {
+                delete this.changes[table];
+            }
+        }
+    }
+    findDifferentChanges(changeEvents) {
+        var _a, _b;
+        const ret = [];
+        for (const change of changeEvents) {
+            if (change.path[0] !== this.dbName) {
+                conduit_utils_1.logger.error('Unexpected DB name mismatch in KeyValOverlayReadOnly.findDifferentChanges', this.dbName, change.path);
+                continue;
+            }
+            if (change.type === StorageEventEmitter_1.StorageChangeType.Delete) {
+                switch (change.path.length) {
+                    case 1:
+                        if (!this.hasDBClear()) {
+                            ret.push(change);
+                        }
+                        break;
+                    case 2:
+                        if (!((_a = this.changes[change.path[1]]) === null || _a === void 0 ? void 0 : _a.tableCleared)) {
+                            ret.push(change);
+                        }
+                        break;
+                    case 3:
+                        const tableChanges = this.changes[change.path[1]];
+                        if ((tableChanges === null || tableChanges === void 0 ? void 0 : tableChanges.values[change.path[2]]) !== SimplyImmutable.REMOVE) {
+                            ret.push(change);
+                        }
+                        break;
+                    default:
+                        throw conduit_utils_1.absurd(change.path, 'unhandled delete storage event');
+                }
+            }
+            else if (change.type === StorageEventEmitter_1.StorageChangeType.Undo) {
+                throw new Error('Cannot diff an Undo change event');
+            }
+            else {
+                const table = change.path[1];
+                const key = change.path[2];
+                const currVal = (_b = this.changes[table]) === null || _b === void 0 ? void 0 : _b.values[key];
+                if (!conduit_utils_1.isEqual(currVal, change.value)) {
+                    ret.push(change);
+                }
+            }
+        }
+        return ret;
+    }
+    async importDataFrom(trc, db) {
+        if (this.isDestroyed) {
+            throw new Error('Overlay has been destructed');
+        }
+        if (!this.isInitialized) {
+            throw new conduit_utils_1.InternalError('Persisted KeyValOverlay must be initialized before use');
+        }
+        if (this.persistTable === undefined) {
+            throw new Error('Cannot import without table name');
+        }
+        if (!Object.keys(this.changes).length) {
+            throw new Error('Import to existing table not support');
+        }
+        await cloneTable(trc, this.persistTable, /* from */ db, /* to */ this);
+    }
+    async cloneDataTo(trc, db) {
+        if (this.isDestroyed) {
+            throw new Error('Overlay has been destructed');
+        }
+        if (!this.isInitialized) {
+            throw new conduit_utils_1.InternalError('Persisted KeyValOverlay must be initialized before use');
+        }
+        if (this.persistTable === undefined) {
+            throw new Error('Cannot import without table name');
+        }
+        const numTables = Object.keys(this.changes).length;
+        if (this.hasDBClear() && numTables === 1 || !numTables) {
+            // Nothing to clone. Terminate early.
+            return;
+        }
+        await cloneTable(trc, this.persistTable, /* from */ this, /* to */ db);
+    }
+}
+__decorate([
+    conduit_utils_1.traceAsync('KeyValOverlay')
+], KeyValOverlayReadOnly.prototype, "commitTransaction", null);
+__decorate([
+    conduit_utils_1.traceAsync('KeyValOverlay')
+], KeyValOverlayReadOnly.prototype, "destructAndGenerateChangeEvents", null);
+exports.KeyValOverlayReadOnly = KeyValOverlayReadOnly;
+class KeyValOverlay extends KeyValOverlayReadOnly {
+    constructor(underlyingStorage, inheritChangeEvents) {
+        super(underlyingStorage, inheritChangeEvents, undefined);
+    }
+    copyTableChangesFrom(overlay, table) {
+        const src = overlay.changes[table];
+        if (src) {
+            this.changes[table] = {
+                tableCleared: src.tableCleared,
+                values: Object.assign({}, src.values),
+            };
         }
     }
     generateUndoEvents() {
@@ -542,8 +702,5 @@ class KeyValOverlay extends KeyValOverlayReadOnly {
         }
     }
 }
-__decorate([
-    conduit_utils_1.traceAsync('KeyValOverlay')
-], KeyValOverlay.prototype, "destructAndGenerateChangeEvents", null);
 exports.KeyValOverlay = KeyValOverlay;
 //# sourceMappingURL=KeyValStorage.js.map

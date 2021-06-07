@@ -129,7 +129,6 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
                 this.queueOnDownsyncChanges();
             }
         };
-        // tslint:disable:variable-name
         // poke a hole for testing
         this._test = {
             optimisticMutationsCount: () => {
@@ -163,11 +162,11 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
         this.initOverlay();
         this.localKeyValStorage = await this.di.KeyValStorage(trc, GraphDB.DB_NAMES.LocalStorage);
         this.localKeyValStorage.addChangeHandler(this);
-        this.mutationManager = new MutationManager_1.MutationManager(this.localKeyValStorage);
+        this.memKeyValStorage = this.di.KeyValStorageMem(trc, 'SandboxStorage');
+        this.memKeyValStorage.addChangeHandler(this);
+        this.mutationManager = new MutationManager_1.MutationManager(this.di, this.localKeyValStorage);
         this.ephemeralState = new conduit_storage_1.KeyValOverlay(this.localKeyValStorage, true);
         this.ephemeralState.addChangeHandler(this);
-        this.memKeyValStorage = await this.di.KeyValStorageMem(trc, 'MemoryStorage');
-        this.memKeyValStorage.addChangeHandler(this);
         this.syncEngine = this.di.SyncEngine(this.remoteSyncedGraphStorage, this.ephemeralState, this.di.localSettings);
         this.stagedBlobManager = this.di.StagedBlobManager(this.remoteSyncedGraphStorage, this.localKeyValStorage, this.di.localSettings);
         this.fileUploader = new FileUploader_1.FileUploader(this.di, this, this.di.getResourceManager(), this.stagedBlobManager);
@@ -473,6 +472,10 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
             await ((_a = this.notificationManager) === null || _a === void 0 ? void 0 : _a.unschedulePendingNotifications(trc, this));
             await this.remoteSyncedGraphStorage.transact(trc, 'GraphDB.clear', async (db) => {
                 await db.clearAllData(trc);
+            });
+            // clear memKeyValStorage
+            await this.memKeyValStorage.transact(trc, 'GraphDB.memKeyValStorage.clear', async (db) => {
+                await db.clearAll(trc);
             });
             // clear localKeyValStorage
             await this.localKeyValStorage.transact(trc, 'GraphDB.LocalKeyValStorage.clear', async (db) => {
@@ -832,16 +835,6 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
         }
         const { mutationResults } = await this.runMutations(trc, auth.token, this.userID, this.syncEngine.getVaultUserID(), mutations, opts);
         const { retryMutations, failedMutations } = await this.mutationManager.processMutationUpsyncResults(trc, mutations, mutationResults);
-        // report errors coming back from runMutations
-        if (failedMutations) {
-            for (const m of failedMutations) {
-                const err = GraphMutationTypes_1.mutationUpsyncError(mutationResults[m.mutationID]);
-                if (!err) {
-                    throw new conduit_utils_1.InternalError('missing error in failed mutation');
-                }
-                await this.di.addError(trc, err, m);
-            }
-        }
         if (this.isDestroyed) {
             return retryMutations || [];
         }
@@ -966,6 +959,9 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
     getLocalKeyValStorage() {
         return this.localKeyValStorage;
     }
+    getMemoryStorage() {
+        return this.memKeyValStorage;
+    }
     /**
      * Provides access to notification manager to plugins
      */
@@ -977,6 +973,9 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
     }
     markDependencySynced(trc, depKey, depVersion) {
         return this.mutationManager.markDependencySynced(trc, depKey, depVersion);
+    }
+    getMutationStatus(trc, watcher, mutationID) {
+        return this.mutationManager.getMutationStatus(trc, watcher, mutationID);
     }
     destructed() {
         return this.isDestroyed;

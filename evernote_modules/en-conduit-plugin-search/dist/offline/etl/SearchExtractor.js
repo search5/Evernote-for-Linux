@@ -9,6 +9,8 @@ const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
+const en_thrift_connector_1 = require("en-thrift-connector");
+const SearchExtractorTypes_1 = require("./SearchExtractorTypes");
 /**
  * First stage of the search ETL pipeline. Extracts required information from the external storage (GraphDB).
  */
@@ -16,7 +18,57 @@ class SearchExtractor {
     constructor(graphDB) {
         this.noteContentField = 'content.content';
         this.recognitionField = 'recognition.content';
+        this.searchTextField = 'internal_searchText';
         this.graphDB = graphDB;
+    }
+    async extractTagEvent(trc, event) {
+        const tag = (await this.graphDB.getNodeWithoutGraphQLContext(trc, event.nodeRef));
+        return {
+            extractionEventType: SearchExtractorTypes_1.SearchStorageExtractionEventDocumentType.TAG,
+            nodeRef: event.nodeRef,
+            localTimestamp: event.localTimestamp,
+            eventType: event.eventType,
+            indexationType: event.indexationType,
+            data: tag,
+        };
+    }
+    async extractNotebookEvent(trc, event) {
+        const notebook = (await this.graphDB.getNodeWithoutGraphQLContext(trc, event.nodeRef));
+        return {
+            extractionEventType: SearchExtractorTypes_1.SearchStorageExtractionEventDocumentType.NOTEBOOK,
+            nodeRef: event.nodeRef,
+            localTimestamp: event.localTimestamp,
+            eventType: event.eventType,
+            indexationType: event.indexationType,
+            data: notebook,
+        };
+    }
+    async extractStackEvent(trc, event) {
+        const stack = (await this.graphDB.getNodeWithoutGraphQLContext(trc, event.nodeRef));
+        return {
+            extractionEventType: SearchExtractorTypes_1.SearchStorageExtractionEventDocumentType.STACK,
+            nodeRef: event.nodeRef,
+            localTimestamp: event.localTimestamp,
+            eventType: event.eventType,
+            indexationType: event.indexationType,
+            data: stack,
+        };
+    }
+    async extractWorkspaceEvent(trc, event) {
+        const workspace = (await this.graphDB.getNodeWithoutGraphQLContext(trc, event.nodeRef));
+        return {
+            extractionEventType: SearchExtractorTypes_1.SearchStorageExtractionEventDocumentType.WORKSPACE,
+            nodeRef: event.nodeRef,
+            localTimestamp: event.localTimestamp,
+            eventType: event.eventType,
+            indexationType: event.indexationType,
+            data: workspace,
+        };
+    }
+    async extractNoteIdsForWorkspace(trc, id) {
+        const notes = await this.graphDB.queryGraphWithoutGraphQLContext(trc, en_core_entity_types_1.CoreEntityTypes.Note, 'NotesInWorkspace', { workspace: id });
+        const noteIds = notes.map(note => note.id);
+        return noteIds;
     }
     async extractContainerInfo(trc, noteNode) {
         let notebook = null;
@@ -34,6 +86,17 @@ class SearchExtractor {
                     const stack = (await this.graphDB.getNodeWithoutGraphQLContext(trc, stackNodeRef));
                     if (stack) {
                         stackName = stack.label;
+                    }
+                }
+                // extract workspace
+                if (notebook) {
+                    const parentEdges = notebook.inputs.parent;
+                    for (const parentEdgeKey in parentEdges) {
+                        const parentEdge = parentEdges[parentEdgeKey];
+                        if (parentEdge.srcType === en_core_entity_types_1.CoreEntityTypes.Workspace) {
+                            const workspaceNodeRef = { id: parentEdge.srcID, type: en_core_entity_types_1.CoreEntityTypes.Workspace };
+                            workspace = (await this.graphDB.getNodeWithoutGraphQLContext(trc, workspaceNodeRef));
+                        }
                     }
                 }
             }
@@ -62,27 +125,30 @@ class SearchExtractor {
         }
         return data;
     }
-    async extractAttachment(trc, attachmentID) {
+    async extractAttachment(trc, attachmentID, needExtractSearchText) {
         const attachmentNodeRef = { id: attachmentID, type: en_core_entity_types_1.CoreEntityTypes.Attachment };
         const attachmentNode = await this.graphDB.getNodeWithoutGraphQLContext(trc, attachmentNodeRef);
         if (!attachmentNode) {
             return undefined;
         }
         const recognitionData = await this.extractCachedField(trc, attachmentNodeRef, this.recognitionField);
+        const searchText = needExtractSearchText ? await this.extractCachedField(trc, attachmentNodeRef, this.searchTextField) : undefined;
         const filename = attachmentNode.NodeFields.filename;
         const mime = attachmentNode.NodeFields.mime;
         conduit_utils_1.logger.trace(`SearchExtractor: extractAttachment: id: ${attachmentNodeRef.id}; recognitionData length: ${recognitionData === null || recognitionData === void 0 ? void 0 : recognitionData.length}; filename length: ${filename.length};`);
-        return { recognitionData, filename, mime };
+        return { recognitionData, filename, mime, searchText };
     }
     async extractAttachments(trc, noteNode) {
         const attachments = new Array();
+        const userNode = await this.getCurrentUser(trc);
+        const needExtractSearchText = en_thrift_connector_1.isSearchTextAllowed(userNode);
         let recognitionResourceFiles = 0;
         for (const attachment in noteNode.outputs.attachments) {
             if (recognitionResourceFiles >= SearchExtractor.maxRecognitionFilesPerNote) {
                 break;
             }
             const attachmentEdge = noteNode.outputs.attachments[attachment];
-            const extractedAttachment = await this.extractAttachment(trc, attachmentEdge.dstID);
+            const extractedAttachment = await this.extractAttachment(trc, attachmentEdge.dstID, needExtractSearchText);
             if (!extractedAttachment) {
                 continue;
             }
@@ -140,9 +206,11 @@ class SearchExtractor {
             // extract cached note content if it's downloaded
             const cached = await this.graphDB.getNodeCachedFieldRaw(trc, event.nodeRef, this.noteContentField);
             return {
+                extractionEventType: SearchExtractorTypes_1.SearchStorageExtractionEventDocumentType.NOTE,
                 nodeRef: event.nodeRef,
                 localTimestamp: event.localTimestamp,
                 eventType: event.eventType,
+                indexationType: event.indexationType,
                 data: [noteNode],
                 enmlContent: cached ? cached.values[this.noteContentField] : undefined,
                 containerInfo,
@@ -176,10 +244,12 @@ class SearchExtractor {
         if (messageNode) {
             conduit_utils_1.logger.trace('SearchExtractor: message id: ' + event.nodeRef.id + ';');
             return {
+                extractionEventType: SearchExtractorTypes_1.SearchStorageExtractionEventDocumentType.MESSAGE,
                 nodeRef: event.nodeRef,
                 localTimestamp: event.localTimestamp,
                 eventType: event.eventType,
                 data: [messageNode],
+                indexationType: event.indexationType,
             };
         }
         return null;
@@ -190,11 +260,30 @@ class SearchExtractor {
      * If it's not set, returns null. This method is required to perform login/logout processing.
      */
     async extractUserId(trc) {
-        const userNode = await this.graphDB.getNodeWithoutGraphQLContext(trc, { id: conduit_core_1.PERSONAL_USER_ID, type: en_core_entity_types_1.CoreEntityTypes.User });
-        if (userNode) {
-            return userNode.NodeFields.internal_userID;
+        const userNode = await this.getCurrentUser(trc);
+        return userNode ? userNode.NodeFields.internal_userID : null;
+    }
+    /**
+     * Returns current personal user
+     */
+    async getCurrentUser(trc) {
+        return await this.graphDB.getNodeWithoutGraphQLContext(trc, { id: conduit_core_1.PERSONAL_USER_ID, type: en_core_entity_types_1.CoreEntityTypes.User });
+    }
+    async processIndexEvent(trc, event) {
+        switch (event.nodeRef.type) {
+            case en_core_entity_types_1.CoreEntityTypes.Tag:
+                return await this.extractTagEvent(trc, event);
+            case en_core_entity_types_1.CoreEntityTypes.Notebook:
+                return await this.extractNotebookEvent(trc, event);
+            case en_core_entity_types_1.CoreEntityTypes.Stack:
+                return await this.extractStackEvent(trc, event);
+            case en_core_entity_types_1.CoreEntityTypes.Workspace:
+                return await this.extractWorkspaceEvent(trc, event);
+            case en_core_entity_types_1.CoreEntityTypes.Message:
+                return await this.extractMessage(trc, event);
+            default:
+                return await this.extractNote(trc, event);
         }
-        return null;
     }
     /**
      * Processes input event batch.
@@ -215,7 +304,7 @@ class SearchExtractor {
                     results.push(event);
                     break;
                 default:
-                    const result = event.nodeRef.type === en_core_entity_types_1.CoreEntityTypes.Note ? await this.extractNote(trc, event) : await this.extractMessage(trc, event);
+                    const result = await this.processIndexEvent(trc, event);
                     if (result) {
                         results.push(result);
                     }

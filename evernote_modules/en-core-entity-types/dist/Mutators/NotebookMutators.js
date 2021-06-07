@@ -6,10 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.notebookPublish = exports.notebookJoin = exports.notebookUnpublish = exports.notebookAcceptInvite = exports.notebookChangeInAppReminderSetting = exports.notebookChangeEmailReminderSetting = exports.notebookSetDisplayColor = exports.notebookSetNoteDisplayOrder = exports.notebookSetAsDefault = exports.notebookLeave = exports.notebookInvite = exports.notebookRemoveFromWorkspace = exports.notebookMoveToWorkspace = exports.notebookDelete = exports.notebookRename = exports.notebookCreate = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const AccountLimits_1 = require("../AccountLimits");
 const CommandPolicyRules_1 = require("../CommandPolicyRules");
 const EntityConstants_1 = require("../EntityConstants");
-const MembershipPrivilege_1 = require("../MembershipPrivilege");
 const ShareUtils_1 = require("../ShareUtils");
 const MiscHelpers_1 = require("./Helpers/MiscHelpers");
 const NoteMutatorHelpers_1 = require("./Helpers/NoteMutatorHelpers");
@@ -108,7 +108,7 @@ exports.notebookCreate = {
         else if (ctx.isOptimistic && ctx.vaultUserID && profile) {
             const membershipOps = await MutatorHelpers_1.createMembershipOps(trc, ctx, owner, {
                 recipientIsMe: true,
-                privilege: MembershipPrivilege_1.MembershipPrivilege.MANAGE,
+                privilege: en_conduit_sync_types_1.MembershipPrivilege.MANAGE,
                 parentRef: { id: notebookID, type: EntityConstants_1.CoreEntityTypes.Notebook },
                 profileEdgeMap: {
                     recipient: profile.id,
@@ -328,7 +328,7 @@ exports.notebookRemoveFromWorkspace = {
                 }
                 const membershipOps = await MutatorHelpers_1.createMembershipOps(trc, ctx, owner, {
                     recipientIsMe: true,
-                    privilege: MembershipPrivilege_1.MembershipPrivilege.MANAGE,
+                    privilege: en_conduit_sync_types_1.MembershipPrivilege.MANAGE,
                     parentRef: { id: params.notebook, type: EntityConstants_1.CoreEntityTypes.Notebook },
                     profileEdgeMap: {
                         recipient: profile.id,
@@ -345,7 +345,7 @@ exports.notebookInvite = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
     params: {
         notebook: 'ID',
-        privilege: MembershipPrivilege_1.MembershipPrivilegeSchema,
+        privilege: en_conduit_sync_types_1.MembershipPrivilegeSchema,
         emails: conduit_utils_1.NullableListOf('string'),
         userIDs: conduit_utils_1.NullableListOf('ID'),
         profileIDs: conduit_utils_1.NullableListOf('ID'),
@@ -542,7 +542,7 @@ exports.notebookPublish = {
     params: {
         notebook: 'ID',
         description: 'string',
-        privilege: MembershipPrivilege_1.MembershipPrivilegeSchema,
+        privilege: en_conduit_sync_types_1.MembershipPrivilegeSchema,
         recommended: conduit_utils_1.NullableBoolean,
     },
     execute: null,

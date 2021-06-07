@@ -187,7 +187,7 @@ class ConduitUserCore {
         const watcher = this.getOrAllocWatcher(query, vars, watcherInfo);
         const { doc, cacheID } = this.resolver.readQuery(query);
         const extendedContext = this.di.extendContext ? this.di.extendContext() : {};
-        const context = Object.assign(Object.assign({}, extendedContext), { db: this.getGraph(), autoResolverData: this.resolver.autoResolverData, trc: gTrcPool.alloc(this.di.getTestEventTracker()), watcher, indexer: this.indexer, clientCredentials: this.config.clientCredentials, nodeTypes: this.nodeTypes, errorManager: this.config.ErrorManager, localSettings: this.config.LocalSettings, offlineContentStrategy: this.config.OfflineContentStrategy, multiUserProvider: this.config.MultiUserProvider, querySelectionFields: {}, dataLoaders: {}, urlEncoder: this.di.urlEncoder, meUpdater: this.di.meUpdater });
+        const context = Object.assign(Object.assign({}, extendedContext), { db: this.getGraph(), autoResolverData: this.resolver.autoResolverData, trc: gTrcPool.alloc(this.di.getTestEventTracker()), watcher, indexer: this.indexer, clientCredentials: this.config.clientCredentials, nodeTypes: this.nodeTypes, errorManager: this.config.ErrorManager, localSettings: this.config.LocalSettings, offlineContentStrategy: this.config.OfflineContentStrategy, multiUserProvider: this.config.MultiUserProvider, querySelectionFields: {}, dataLoaders: {}, urlEncoder: this.di.urlEncoder });
         if (!noWaitQueryNames.has(doc.queryName)) {
             if (await ((_a = context.db) === null || _a === void 0 ? void 0 : _a.waitUntilReady(context.trc))) {
                 conduit_utils_1.logger.info(`Waited for critical sync activities to finish before running: ${doc.queryName}`);

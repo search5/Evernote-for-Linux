@@ -3,11 +3,31 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SearchEventJournal = void 0;
+exports.SearchEventJournal = exports.getSearchStorageChangeEvent = exports.getSearchEventJournalEntry = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_thrift_connector_1 = require("en-thrift-connector");
+const SearchProcessor_1 = require("../SearchProcessor");
 const SearchUtils_1 = require("../SearchUtils");
 const SearchEventJournalIndex_1 = require("./SearchEventJournalIndex");
+function getSearchEventJournalEntry(event) {
+    const searchStorageChangeEventType = SearchUtils_1.SearchTypeConversions.STORAGE_CHANGE_TYPE_TO_SEARCH_STORAGE_EVENT_TYPE.get(event.eventType);
+    if (searchStorageChangeEventType === undefined) {
+        conduit_utils_1.logger.error(`SearchEventJournal: unable to serialize event; reason: conduit storage event format has changed; unrecognized event type: ${event.eventType}`);
+        return undefined;
+    }
+    const tguid = en_thrift_connector_1.convertGuidToService(event.nodeRef.id, event.nodeRef.type);
+    const documentType = SearchUtils_1.SearchTypeConversions.NODE_TYPE_TO_DOCUMENT_TYPE.get(event.nodeRef.type);
+    return { guid: tguid, dt: documentType, et: searchStorageChangeEventType, it: event.indexationType };
+}
+exports.getSearchEventJournalEntry = getSearchEventJournalEntry;
+function getSearchStorageChangeEvent(event) {
+    const nodeType = SearchUtils_1.SearchTypeConversions.DOCUMENT_TYPE_TO_NODE_TYPE.get(event.dt);
+    const guid = en_thrift_connector_1.convertGuidFromService(event.guid, nodeType);
+    const eventType = SearchUtils_1.SearchTypeConversions.SEARCH_STORAGE_EVENT_TYPE_TO_STORAGE_CHANGE_TYPE.get(event.et);
+    const indexationType = event.it;
+    return { nodeRef: { id: guid, type: nodeType }, localTimestamp: Date.now(), eventType, indexationType };
+}
+exports.getSearchStorageChangeEvent = getSearchStorageChangeEvent;
 /**
  * Simple event journal implementation (persisted queue in the external database)
  */
@@ -40,7 +60,7 @@ class SearchEventJournal {
         for (const key of keys) {
             const value = values[key];
             if (value) {
-                const event = this.deserializeSearchStorageChangeEvent(value);
+                const event = getSearchStorageChangeEvent(value);
                 this.index.add(event);
             }
         }
@@ -137,33 +157,6 @@ class SearchEventJournal {
         }
         return false;
     }
-    /**
-     * Serializes SearchStorageChangeEvent. Required for the event export to the persistent storage.
-     *
-     * @param event capture data change event with timestamp and entry type
-     */
-    serializeSearchStorageChangeEvent(event) {
-        const searchStorageChangeEventType = SearchUtils_1.SearchTypeConversions.STORAGE_CHANGE_TYPE_TO_SEARCH_STORAGE_EVENT_TYPE.get(event.eventType);
-        if (searchStorageChangeEventType === undefined) {
-            conduit_utils_1.logger.error(`SearchEventJournal: unable to serialize event; reason: conduit storage event format has changed; unrecognized event type: ${event.eventType}`);
-            return undefined;
-        }
-        const tguid = en_thrift_connector_1.convertGuidToService(event.nodeRef.id, event.nodeRef.type);
-        const documentType = SearchUtils_1.SearchTypeConversions.NODE_TYPE_TO_DOCUMENT_TYPE.get(event.nodeRef.type);
-        return `${documentType}:${searchStorageChangeEventType}:${tguid}`;
-    }
-    /**
-     * Deserializes SearchStorageChangeEvent. Required for the event import from the persistent storage.
-     *
-     * @param event serialized SearchStorageChangeEvent
-     */
-    deserializeSearchStorageChangeEvent(event) {
-        const entries = event.split(':');
-        const nodeType = SearchUtils_1.SearchTypeConversions.DOCUMENT_TYPE_TO_NODE_TYPE.get(parseInt(entries[0], 10));
-        const eventType = SearchUtils_1.SearchTypeConversions.SEARCH_STORAGE_EVENT_TYPE_TO_STORAGE_CHANGE_TYPE.get(parseInt(entries[1], 10));
-        const guid = entries[2];
-        return { nodeRef: { id: en_thrift_connector_1.convertGuidFromService(guid, nodeType), type: nodeType }, localTimestamp: Date.now(), eventType };
-    }
     async exportInTransaction(trc, events, db) {
         let eventsToExport;
         let discardedEventsAccumulator = 0;
@@ -178,13 +171,14 @@ class SearchEventJournal {
             eventsToExport = events;
         }
         for (const event of eventsToExport) {
-            const serializedSearchStorageChangeEvent = this.serializeSearchStorageChangeEvent(event);
+            const serializedSearchStorageChangeEvent = getSearchEventJournalEntry(event);
             if (serializedSearchStorageChangeEvent === undefined) {
-                conduit_utils_1.logger.error(`SearchEventJournal: event with id ${event.nodeRef.id} discarded; reason: unable to serialize event!`);
+                conduit_utils_1.logger.trace(`SearchEventJournal: event with id ${event.nodeRef.id} discarded; reason: unable to serialize event!`);
                 discardedEventsAccumulator += 1;
                 continue;
             }
-            if (this.index.has(event)) {
+            if (this.index.has(event)
+                && (event.indexationType !== SearchProcessor_1.SearchStorageIndexationType.INITIAL_INDEXATION_EVENT && event.indexationType !== SearchProcessor_1.SearchStorageIndexationType.LAST_INITIAL_INDEXATION_EVENT)) {
                 conduit_utils_1.logger.trace(`SearchEventJournal: event with id ${event.nodeRef.id} discarded: reason: it's already in the index`);
                 discardedEventsAccumulator += 1;
                 continue;
@@ -215,7 +209,7 @@ class SearchEventJournal {
         const values = await db.batchGetValues(trc, null, this.getEventJournalTableName(), keys);
         for (const key of keys) {
             if (values[key]) {
-                const event = this.deserializeSearchStorageChangeEvent(values[key]);
+                const event = getSearchStorageChangeEvent(values[key]);
                 this.index.remove(event);
                 events.push(event);
             }
@@ -275,5 +269,5 @@ class SearchEventJournal {
 }
 exports.SearchEventJournal = SearchEventJournal;
 SearchEventJournal.eventJournalTableName = 'OfflineSearchEventJournal';
-SearchEventJournal.eventJournalVersion = 2;
+SearchEventJournal.eventJournalVersion = 3;
 //# sourceMappingURL=SearchEventJournal.js.map

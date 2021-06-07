@@ -52,6 +52,7 @@ var Tables;
     Tables["SyncContextMetadata"] = "SyncContextMetadata";
     Tables["SyncState"] = "SyncState";
     Tables["StoredIndexes"] = "StoredIndexes";
+    Tables["StoredResolverVersions"] = "StoredResolverVersions";
     Tables["CacheLookaside"] = "CacheLookaside";
     Tables["LoadedInMemory"] = "LoadedInMemory";
 })(Tables || (Tables = {}));
@@ -279,6 +280,9 @@ class GraphStorageBase extends StorageEventEmitter_1.StorageEventEmitter {
             }
         }
         return entries;
+    }
+    async loadStoredResolverVersions(trc) {
+        return await this.getFullTable(trc, null, Tables.StoredResolverVersions) || {};
     }
     shouldIndexSyncContext(syncContext) {
         for (const regex of this.config.syncContextIndexExcludes) {
@@ -595,7 +599,6 @@ class GraphTransactionContext extends GraphStorageBase {
         super(db, ephemeralDB, config, underlay);
         this.db = db;
         this.ephemeralDB = ephemeralDB;
-        this.config = config;
         this.readWriteIndexingTrees = {};
         this.pendingChanges = {};
         this.pendingPropagatedFields = {};
@@ -739,7 +742,8 @@ class GraphTransactionContext extends GraphStorageBase {
         }
     }
     // INDEX METHODS:
-    async _updateIndexes(trc, oldIndexes, newIndexes, priorities, localeChanged, setProgress) {
+    async _updateIndexes(trc, oldIndexes, newIndexes, priorities, localeChanged, mustBeReindexed, setProgress) {
+        const changedIndexes = {};
         const toReindex = {};
         const allTableNames = {};
         for (const tableName in oldIndexes) {
@@ -753,15 +757,14 @@ class GraphTransactionContext extends GraphStorageBase {
         for (const tableName in allTableNames) {
             const oldIndex = oldIndexes[tableName];
             const newIndex = newIndexes[tableName];
-            if (IndexSchemaDiff_1.hasStoredIndexChanged(oldIndex, newIndex) || localeChanged) {
+            if (tableName !== localeKey && (IndexSchemaDiff_1.hasStoredIndexChanged(oldIndex, newIndex) || localeChanged || mustBeReindexed[tableName])) {
                 ++changeCount;
                 await this.db.clearTable(trc, tableName);
                 await this.db.removeValue(trc, Tables.StoredIndexes, tableName);
                 if (newIndex) {
-                    if (tableName !== localeKey) {
-                        toReindex[newIndex.type] = toReindex[newIndex.type] || [];
-                        toReindex[newIndex.type].push(GraphIndexTypes_1.fromStoredIndexItem(newIndex.indexItem) || newIndex.lookupField);
-                    }
+                    changedIndexes[tableName] = newIndex;
+                    toReindex[newIndex.type] = toReindex[newIndex.type] || [];
+                    toReindex[newIndex.type].push(GraphIndexTypes_1.fromStoredIndexItem(newIndex.indexItem) || newIndex.lookupField);
                 }
             }
         }
@@ -781,11 +784,18 @@ class GraphTransactionContext extends GraphStorageBase {
             await setProgressPerType(type, 1);
             processedIndexes += toReindex[type].length;
         }
-        return { changeCount, propagatedFieldUpdatesByType };
+        return { changeCount, propagatedFieldUpdatesByType, changedIndexes };
     }
-    async _finalizeIndexesUpdate(trc, newIndexes) {
-        for (const tableName in newIndexes) {
-            await this.db.setValue(trc, Tables.StoredIndexes, tableName, newIndexes[tableName]);
+    async _finalizeIndexesUpdate(trc, newIndexes, changedIndexes, resolverVersions, shouldUpdateVersions) {
+        for (const tableName in changedIndexes) {
+            await this.db.setValue(trc, Tables.StoredIndexes, tableName, changedIndexes[tableName]);
+        }
+        // Update resolver versions if we found version changes
+        if (shouldUpdateVersions) {
+            for (const key in resolverVersions) {
+                const resolvers = resolverVersions[key];
+                await this.db.setValue(trc, Tables.StoredResolverVersions, key, resolvers);
+            }
         }
         // store for post-transact cache update
         this.newIndexes = newIndexes;
@@ -895,11 +905,12 @@ class GraphTransactionContext extends GraphStorageBase {
     }
     async createNodeInternal(trc, syncContext, nodeData, inputs, outputs, timestamp) {
         const internalFields = this.nodeDefaultEdgeStructure(nodeData.type);
-        const dummyNode = await this.getNodeInternal(trc, nodeData);
+        let dummyNode = await this.getNodeInternal(trc, nodeData);
         if (dummyNode && !dummyNode.dummy) {
             throw new conduit_utils_1.InternalError(`createNodeInternal called when an existing node already exists for ID=${nodeData.id}`);
         }
         if (dummyNode) {
+            dummyNode = SimplyImmutable.cloneMutable(dummyNode);
             for (const port in (dummyNode.inputs || {})) {
                 internalFields.inputs[port] = dummyNode.inputs[port];
             }
@@ -1174,6 +1185,10 @@ class GraphTransactionContext extends GraphStorageBase {
                 if (edge.srcID === propagatedFrom.id && edge.srcType === propagatedFrom.type) {
                     continue;
                 }
+                const ancestryNode = await this.getNodeInternal(trc, { type: edge.srcType, id: edge.srcID });
+                if (!ancestryNode || ancestryNode.dummy) {
+                    continue;
+                }
                 // still has access from a parent
                 return true;
             }
@@ -1304,7 +1319,7 @@ class GraphTransactionContext extends GraphStorageBase {
                 removedEdges.push(edge);
             }
         }
-        await this.removeEdges(trc, removedEdges, nodeRef);
+        await this.removeEdges(trc, removedEdges, timestamp, nodeRef);
         if (!isDummyNode) {
             // update indexes
             node = await this.getNodeInternal(trc, nodeRef);
@@ -1323,8 +1338,8 @@ class GraphTransactionContext extends GraphStorageBase {
     async replaceEdges(trc, edgesToDelete, edgesToCreate, timestamp) {
         await this.replaceEdgesInternal(trc, edgesToDelete, edgesToCreate, timestamp);
     }
-    async removeEdges(trc, edgesToDelete, excludeNode) {
-        await this.replaceEdgesInternal(trc, edgesToDelete, [], undefined, excludeNode);
+    async removeEdges(trc, edgesToDelete, timestamp, excludeNode) {
+        await this.replaceEdgesInternal(trc, edgesToDelete, [], timestamp, excludeNode);
     }
     // CACHE METHODS:
     async setNodeCachedField(trc, nodeRef, cacheField, cacheValue, dependentFieldValues) {
@@ -1493,7 +1508,7 @@ class GraphTransactionContext extends GraphStorageBase {
             // don't write if unchanged
             return node;
         }
-        await this.db.setValue(trc, tableForNodeType(node.type), node.id, node, /*noClone=*/ true);
+        await this.db.setValue(trc, tableForNodeType(node.type), node.id, node, /* noClone=*/ true);
         return node;
     }
     async removeSyncContextIndex(trc, syncContext, ref) {
@@ -1593,7 +1608,7 @@ class GraphTransactionContext extends GraphStorageBase {
             return {};
         }
         const pending = this.pendingPropagatedFields[nodeRef.type] && this.pendingPropagatedFields[nodeRef.type][nodeRef.id];
-        const propagatedFields = pending ? SimplyImmutable.cloneImmutable(pending) : {};
+        const propagatedFields = pending ? SimplyImmutable.cloneMutable(pending) : {};
         const origResolvedFields = origNode ? await this.config.indexer.resolveAllFields(trc, origNode, null, origNode.PropagatedFields || {}) : {};
         const resolvedFields = node ? await this.config.indexer.resolveAllFields(trc, node, this.nodeFieldLookup, propagatedFields) : {};
         const fieldsChanged = Object.keys(resolvedFields).filter(field => !conduit_utils_1.isEqual(origResolvedFields[field], resolvedFields[field]));
@@ -1793,7 +1808,7 @@ class GraphTransactionContext extends GraphStorageBase {
             return node;
         }
         const pending = this.pendingChanges[nodeRef.id];
-        if (pending) {
+        if (pending && pending.type === nodeRef.type) {
             delete this.pendingChanges[nodeRef.id];
             node = await this.applyPendingNodeUpdates(trc, nodeRef, node, pending.changes);
         }
@@ -1934,14 +1949,27 @@ class GraphStorageDB extends GraphStorageBase {
     }
     async configureIndexes(trc, locale, setProgress) {
         var _a, _b, _c, _d, _e;
+        const oldResolverVersions = await this.loadStoredResolverVersions(trc);
+        ;
+        let resolverVersions = SimplyImmutable.cloneImmutable(oldResolverVersions);
+        const mustBeReindexed = {};
         const newIndexes = {};
         const priorities = {};
         for (const typeStr in this.config.indexer.config) {
             const type = typeStr;
             const typeConfig = this.config.indexer.config[type];
+            const resolversLookup = {};
+            for (const field in typeConfig.indexResolvers) {
+                resolversLookup[field] = [];
+            }
+            const oldResolvers = oldResolverVersions[type] || {};
             priorities[type] = (_a = typeConfig.priority) !== null && _a !== void 0 ? _a : GraphIndexTypes_1.IndexPriority.DEFAULT;
             for (const key in typeConfig.indexes) {
                 const indexItem = typeConfig.indexes[key];
+                for (const fieldDef of indexItem.index) {
+                    const field = fieldDef.field;
+                    resolversLookup[field].push(indexItem);
+                }
                 const tableName = tableForIndex(type, indexItem);
                 newIndexes[tableName] = {
                     indexConfigVersion: GraphIndexTypes_1.INDEX_CONFIG_VERSION,
@@ -1951,6 +1979,7 @@ class GraphStorageDB extends GraphStorageBase {
                 };
             }
             for (const lookupField of typeConfig.lookups) {
+                resolversLookup[lookupField].push(lookupField);
                 const tableName = tableForNodeLookup(type, lookupField);
                 newIndexes[tableName] = {
                     indexConfigVersion: GraphIndexTypes_1.INDEX_CONFIG_VERSION,
@@ -1958,6 +1987,30 @@ class GraphStorageDB extends GraphStorageBase {
                     tableName,
                     lookupField,
                 };
+            }
+            // Check for versioned resolvers
+            for (const field in typeConfig.indexResolvers) {
+                const resolverConfig = typeConfig.indexResolvers[field];
+                if (resolverConfig.version) {
+                    const oldVersion = oldResolvers[field] || 0;
+                    if (oldVersion < resolverConfig.version) {
+                        // Update resolver versions
+                        const updatedResolvers = SimplyImmutable.updateImmutable(oldResolvers, [field], resolverConfig.version);
+                        resolverVersions = SimplyImmutable.replaceImmutable(resolverVersions, [type], updatedResolvers);
+                        // Mark affected indexes to reindex
+                        const indexes = resolversLookup[field];
+                        for (const index of indexes) {
+                            let tableName;
+                            if (GraphIndexTypes_1.isLookup(index)) {
+                                tableName = tableForNodeLookup(type, index);
+                            }
+                            else {
+                                tableName = tableForIndex(type, index);
+                            }
+                            mustBeReindexed[tableName] = true;
+                        }
+                    }
+                }
             }
         }
         setProgress && await setProgress(trc, 0.05);
@@ -1971,19 +2024,19 @@ class GraphStorageDB extends GraphStorageBase {
         }
         const indexUpdateResult = await this.transact(trc, 'configureIndexes', async (tx) => {
             this.config.indexer.locale = newLocale;
-            if (!IndexSchemaDiff_1.haveStoredIndexesChanged(oldIndexes, newIndexes) && !localeChanged) {
+            if (!IndexSchemaDiff_1.haveStoredIndexesChanged(oldIndexes, newIndexes) && !localeChanged && conduit_utils_1.isStashEmpty(mustBeReindexed)) {
                 // no change
                 setProgress && await setProgress(trc, 1);
                 return null;
             }
             setProgress && await setProgress(trc, 0.1);
-            return await tx._updateIndexes(trc, oldIndexes, newIndexes, priorities, localeChanged, setProgress);
+            return await tx._updateIndexes(trc, oldIndexes, newIndexes, priorities, localeChanged, mustBeReindexed, setProgress);
         });
         if (!indexUpdateResult) {
             setProgress && await setProgress(trc, 1);
             return 0;
         }
-        const { changeCount, propagatedFieldUpdatesByType } = indexUpdateResult;
+        const { changeCount, changedIndexes, propagatedFieldUpdatesByType } = indexUpdateResult;
         for (const type in propagatedFieldUpdatesByType) {
             const propagatedFieldUpdates = propagatedFieldUpdatesByType[type];
             const chunks = conduit_utils_1.chunkArray(Object.keys(propagatedFieldUpdates), NODES_PER_REINDEX_BATCH);
@@ -2007,7 +2060,7 @@ class GraphStorageDB extends GraphStorageBase {
         // finalize last, to write the newIndex configuration; this is to handle the case where the client crashes or
         // is closed during this logical transaction
         await this.transact(trc, 'configureIndexes', async (tx) => {
-            await tx._finalizeIndexesUpdate(trc, newIndexes);
+            await tx._finalizeIndexesUpdate(trc, newIndexes, changedIndexes, resolverVersions, !conduit_utils_1.isStashEmpty(mustBeReindexed));
         });
         setProgress && await setProgress(trc, 1);
         return changeCount;

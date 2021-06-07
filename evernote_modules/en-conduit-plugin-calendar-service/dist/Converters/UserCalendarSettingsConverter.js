@@ -10,18 +10,13 @@ const en_data_model_1 = require("en-data-model");
 const en_nsync_connector_1 = require("en-nsync-connector");
 const getUserCalendarSettingsNodeAndEdges = async (trc, instance, context) => {
     var _a, _b;
+    const userCalendarSettings = en_nsync_connector_1.convertNsyncEntityToNode(instance, context);
+    if (!userCalendarSettings) {
+        return {};
+    }
     const nodesToUpsert = [];
     const edgesToCreate = [];
     const edgesToDelete = [];
-    const initial = en_nsync_connector_1.createInitialNode(instance);
-    if (!initial) {
-        return {};
-    }
-    const userCalendarSettings = Object.assign(Object.assign({}, initial), { type: en_data_model_1.EntityTypes.UserCalendarSettings, NodeFields: {
-            userCalendarExternalId: instance.userCalendarExternalId,
-            isActive: instance.isActive,
-            data: instance.data,
-        }, inputs: { parent: {} }, outputs: {} });
     nodesToUpsert.push(userCalendarSettings);
     const parentID = (_a = instance.parentEntity) === null || _a === void 0 ? void 0 : _a.id;
     const parentType = en_conduit_sync_types_1.entityTypeAsNodeType(context.eventManager.di, (_b = instance.parentEntity) === null || _b === void 0 ? void 0 : _b.type, en_data_model_1.EntityTypes.CalendarAccount);

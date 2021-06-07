@@ -101,7 +101,7 @@ class ReadWriteIndexingTree extends ReadonlyIndexingTree_1.ReadonlyIndexingTree 
             }
         }
         catch (error) {
-            throw new conduit_utils_1.NotFoundError(key.join(':::'), `Unable to find IndexingTree node, reason: ${error}`);
+            throw new conduit_utils_1.NotFoundError(key.join(':::'), `Unable to find IndexingTree node, reason: ${error.message}` + (error.stack ? `\nStacktrace: ${error.stack}` : ``));
         }
         if (leaf && leaf.data.length < this.order) {
             const siblingToMerge = await this.tryToBorrowFromSiblings(trc, leaf);

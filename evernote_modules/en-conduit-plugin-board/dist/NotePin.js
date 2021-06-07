@@ -28,6 +28,7 @@ const conduit_utils_1 = require("conduit-utils");
 const en_data_model_1 = require("en-data-model");
 const en_home_data_model_1 = require("en-home-data-model");
 const Utilities = __importStar(require("./Utilities"));
+// TODO: Remove this mutation after repackaging.
 const createNotePinDefinition = () => {
     return {
         args: conduit_core_1.schemaToGraphQLArgs({

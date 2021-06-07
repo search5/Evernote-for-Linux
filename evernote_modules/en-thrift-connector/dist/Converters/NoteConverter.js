@@ -1009,7 +1009,7 @@ class NoteConverterClass {
                             catch (e) {
                                 // There was an issue creating the note in the default notebook, fallback to the user notebook.
                                 conduit_utils_1.logger.error(e);
-                                if (user.NodeFields.serviceLevel !== en_core_entity_types_1.ServiceLevel.BUSINESS) {
+                                if (user.NodeFields.serviceLevel !== en_conduit_sync_types_1.ServiceLevel.BUSINESS) {
                                     // It should be unrealistic for a non-business user to loose access to their default notebook.
                                     throw new Error('Personal user has no default notebook!');
                                 }

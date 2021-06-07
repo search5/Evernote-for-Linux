@@ -18,7 +18,6 @@ exports.getCalendarServicePlugin = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_calendar_data_model_1 = require("en-calendar-data-model");
-const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
 const CalendarConstants_1 = require("./CalendarConstants");
 const CalendarServiceType_1 = require("./CalendarServiceType");
@@ -55,29 +54,27 @@ function getCalendarServicePlugin(httpClient) {
             return {
                 useTemplateForNewNotes: true,
                 desktopReminders: { createNoteMinutes: en_calendar_data_model_1.NotificationOptions.FIVE_BEFORE, openNoteMinutes: en_calendar_data_model_1.NotificationOptions.FIVE_BEFORE },
-                mobileReminders: { createNoteMinutes: en_calendar_data_model_1.NotificationOptions.FIVE_BEFORE, openNoteMinutes: en_calendar_data_model_1.NotificationOptions.FIVE_BEFORE },
+                mobileReminders: { createNoteMinutes: en_calendar_data_model_1.NotificationOptions.OFF, openNoteMinutes: en_calendar_data_model_1.NotificationOptions.FIVE_BEFORE },
             };
         }
         context.watcher && context.watcher.triggerAfterTime(CalendarConstants_1.POLL_INTERVAL);
         return settings.NodeFields;
     }
     async function calendarAccountsResolver(parent, args, context) {
-        var _a, _b;
+        var _a, _b, _c;
         conduit_core_1.validateDB(context, 'Must be authenticated to retrieve Google Calendar data.');
         let calendarAccounts;
-        const localCalendarAccountsMap = new Map();
         const localUserCalendarSettingsMap = new Map();
         const userCalendarSettingsByAccount = new Map();
-        const QSCalendarAccounts = await context.makeQueryRequest({
+        const qsCalendarAccounts = await context.makeQueryRequest({
             query: QueryConstants_1.CALENDAR_ACCOUNTS_QUERY,
             args: { activeCalendarOnly: args.activeCalendarOnly ? args.activeCalendarOnly : false },
         }, context);
-        if (QSCalendarAccounts.error) {
-            conduit_utils_1.logger.debug(`Failed to retrieve from Query service with error: ${QSCalendarAccounts.error}`);
+        if (qsCalendarAccounts.error) {
+            conduit_utils_1.logger.debug(`Failed to retrieve from Query service with error: ${qsCalendarAccounts.error}`);
         }
         const calendarAccountNodes = await context.db.getGraphNodesByType(context.trc, null, en_data_model_1.EntityTypes.CalendarAccount);
         for (const calendarAccountNode of calendarAccountNodes) {
-            localCalendarAccountsMap.set(calendarAccountNode.id, calendarAccountNode);
             const calendarNodes = await context.db.traverseGraph(context, { id: calendarAccountNode.id, type: en_data_model_1.EntityTypes.CalendarAccount }, [{ edge: ['outputs', 'calendars'], type: en_data_model_1.EntityTypes.UserCalendarSettings }]);
             if (calendarNodes.length > 0) {
                 const calNodes = await context.db.batchGetNodes(context, en_data_model_1.EntityTypes.UserCalendarSettings, calendarNodes.map(cal => cal.id));
@@ -89,19 +86,19 @@ function getCalendarServicePlugin(httpClient) {
             }
         }
         context.watcher && context.watcher.triggerAfterTime(CalendarConstants_1.POLL_INTERVAL);
-        if ((_b = (_a = QSCalendarAccounts.result) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.calendarAccounts) {
-            calendarAccounts = QSCalendarAccounts.result.data.calendarAccounts;
+        if ((_c = (_b = (_a = qsCalendarAccounts.result) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.calendarAccounts) === null || _c === void 0 ? void 0 : _c.length) {
+            calendarAccounts = qsCalendarAccounts.result.data.calendarAccounts;
             const userID = await context.db.getCurrentUserID(context);
             if (conduit_utils_1.isNullish(userID)) {
                 throw new conduit_utils_1.NotFoundError('userID not found');
             }
             for (const calendarAccount of calendarAccounts) {
-                calendarAccount.calendars = calendarAccount.calendars.map(QScalendar => {
-                    const localSettings = localUserCalendarSettingsMap.get(QScalendar.id);
+                calendarAccount.calendars = calendarAccount.calendars.map(qsCalendar => {
+                    const localSettings = localUserCalendarSettingsMap.get(qsCalendar.id);
                     if (localSettings) {
-                        return Object.assign(Object.assign({}, QScalendar), { isActive: localSettings.NodeFields.isActive });
+                        return Object.assign(Object.assign({}, qsCalendar), { isActive: localSettings.NodeFields.isActive });
                     }
-                    return QScalendar;
+                    return qsCalendar;
                 });
                 await Utilities_1.persistCalendarAccount(context, calendarAccount, userID);
                 for (const calendar of calendarAccount.calendars) {
@@ -111,43 +108,66 @@ function getCalendarServicePlugin(httpClient) {
             if (!calendarAccountNodes.length) {
                 return calendarAccounts;
             }
+            return calendarAccounts.map(account => {
+                const localCalendars = userCalendarSettingsByAccount.get(account.id);
+                if (localCalendars) {
+                    let calendars = Utilities_1.mergeCalendars(account.calendars, localCalendars, localUserCalendarSettingsMap);
+                    calendars = args.activeCalendarOnly ? calendars.filter(cal => cal.isActive) : calendars;
+                    return {
+                        id: account.id,
+                        provider: account.provider,
+                        userIdFromExternalProvider: account.userIdFromExternalProvider,
+                        isConnected: account.isConnected,
+                        calendars,
+                    };
+                }
+                return {
+                    id: account.id,
+                    provider: account.provider,
+                    userIdFromExternalProvider: account.userIdFromExternalProvider,
+                    isConnected: account.isConnected,
+                    calendars: account.calendars,
+                };
+            });
         }
         else if (!calendarAccountNodes.length) {
             return [];
-        } // no response locally nor remote
-        return calendarAccountNodes.map(account => {
-            const localCalendars = userCalendarSettingsByAccount.get(account.id);
-            if (localCalendars) {
-                const calendars = args.activeCalendarOnly ? localCalendars.filter(cal => cal.NodeFields.isActive).map(cal => (Object.assign({ id: cal.id }, cal.NodeFields))) : localCalendars.map(cal => (Object.assign({ id: cal.id }, cal.NodeFields)));
+        }
+        else {
+            return calendarAccountNodes.map(account => {
+                const localCalendars = userCalendarSettingsByAccount.get(account.id);
+                if (localCalendars) {
+                    const calendars = args.activeCalendarOnly ? localCalendars.filter(cal => cal.NodeFields.isActive) : localCalendars;
+                    return {
+                        id: account.id,
+                        provider: account.NodeFields.provider,
+                        userIdFromExternalProvider: account.NodeFields.userIdFromExternalProvider,
+                        isConnected: account.NodeFields.isConnected,
+                        calendars: calendars.map(cal => (Object.assign({ id: cal.id }, cal.NodeFields))),
+                    };
+                }
                 return {
                     id: account.id,
                     provider: account.NodeFields.provider,
                     userIdFromExternalProvider: account.NodeFields.userIdFromExternalProvider,
                     isConnected: account.NodeFields.isConnected,
-                    calendars,
+                    calendars: [],
                 };
-            }
-            return {
-                id: account.id,
-                provider: account.NodeFields.provider,
-                userIdFromExternalProvider: account.NodeFields.userIdFromExternalProvider,
-                isConnected: account.NodeFields.isConnected,
-                calendars: [],
-            };
-        });
+            });
+        }
     }
     async function calendarAccountResolver(parent, args, context) {
         var _a, _b;
         conduit_core_1.validateDB(context, 'Must be authenticated to retrieve Google Calendar data.');
         let calendarAccount;
-        const userCalendarSettings = [];
+        const localUserCalendarSettings = [];
         const localUserCalendarSettingsMap = new Map();
-        const QSCalendarAccounts = await context.makeQueryRequest({
+        const qsCalendarAccounts = await context.makeQueryRequest({
             query: QueryConstants_1.CALENDAR_ACCOUNT_QUERY,
             args,
         }, context);
-        if (QSCalendarAccounts.error) {
-            conduit_utils_1.logger.debug(`Failed to retrieve from Query service with error: ${QSCalendarAccounts.error}`);
+        if (qsCalendarAccounts.error) {
+            conduit_utils_1.logger.debug(`Failed to retrieve from Query service with error: ${qsCalendarAccounts.error}`);
         }
         const calendarAccountNode = await context.db.getNode(context, { id: args.id, type: en_data_model_1.EntityTypes.CalendarAccount });
         if (calendarAccountNode) {
@@ -157,37 +177,40 @@ function getCalendarServicePlugin(httpClient) {
                 userCalendarSettingsNodes.forEach(node => {
                     if (node) {
                         localUserCalendarSettingsMap.set(node.id, node);
-                        userCalendarSettings.push(Object.assign(Object.assign({}, node.NodeFields), { id: node.id }));
+                        localUserCalendarSettings.push(node);
                     }
                 });
             }
         }
         context.watcher && context.watcher.triggerAfterTime(CalendarConstants_1.POLL_INTERVAL);
-        if ((_b = (_a = QSCalendarAccounts.result) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.calendarAccount) {
-            calendarAccount = QSCalendarAccounts.result.data.calendarAccount;
+        if ((_b = (_a = qsCalendarAccounts.result) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.calendarAccount) {
+            calendarAccount = qsCalendarAccounts.result.data.calendarAccount;
             const userID = await context.db.getCurrentUserID(context);
             if (conduit_utils_1.isNullish(userID)) {
                 throw new conduit_utils_1.NotFoundError('userID not found');
             }
-            if (calendarAccountNode) {
-                calendarAccount.calendars = calendarAccount.calendars.map(QScalendar => {
-                    const localSettings = localUserCalendarSettingsMap.get(QScalendar.id);
-                    if (localSettings) {
-                        return Object.assign(Object.assign({}, QScalendar), { isActive: localSettings.NodeFields.isActive });
-                    }
-                    return QScalendar;
-                });
-                const unsavedCalendarsLocally = calendarAccount.calendars.filter(cal => !localUserCalendarSettingsMap.has(cal.id));
-                for (const calendar of unsavedCalendarsLocally) {
-                    await Utilities_1.persistCalendar(context, calendar, calendarAccount.id, userID);
+            calendarAccount.calendars = calendarAccount.calendars.map(qsCalendar => {
+                const localSettings = localUserCalendarSettingsMap.get(qsCalendar.id);
+                if (localSettings) {
+                    return Object.assign(Object.assign({}, qsCalendar), { isActive: localSettings.NodeFields.isActive });
                 }
+                return qsCalendar;
+            });
+            await Utilities_1.persistCalendarAccount(context, calendarAccount, userID);
+            for (const calendar of calendarAccount.calendars) {
+                await Utilities_1.persistCalendar(context, calendar, calendarAccount.id, userID);
             }
-            else if (calendarAccount) {
-                await Utilities_1.persistCalendarAccount(context, calendarAccount, userID);
-                for (const calendar of calendarAccount.calendars) {
-                    await Utilities_1.persistCalendar(context, calendar, calendarAccount.id, userID);
-                }
+            if (localUserCalendarSettings.length > 0) {
+                const calendars = Utilities_1.mergeCalendars(calendarAccount.calendars, localUserCalendarSettings, localUserCalendarSettingsMap);
+                return {
+                    id: calendarAccount.id,
+                    provider: calendarAccount.provider,
+                    userIdFromExternalProvider: calendarAccount.userIdFromExternalProvider,
+                    isConnected: calendarAccount.isConnected,
+                    calendars,
+                };
             }
+            return calendarAccount;
         }
         else {
             if (!calendarAccountNode) {
@@ -198,7 +221,7 @@ function getCalendarServicePlugin(httpClient) {
                 provider: calendarAccountNode.NodeFields.provider,
                 userIdFromExternalProvider: calendarAccountNode.NodeFields.userIdFromExternalProvider,
                 isConnected: calendarAccountNode.NodeFields.isConnected,
-                calendars: userCalendarSettings,
+                calendars: localUserCalendarSettings.map(cal => (Object.assign(Object.assign({}, cal.NodeFields), { id: cal.id }))),
             };
         }
         return calendarAccount;
@@ -207,23 +230,16 @@ function getCalendarServicePlugin(httpClient) {
         var _a, _b, _c, _d;
         conduit_core_1.validateDB(context, 'Must be authenticated to retrieve Google Calendar data.');
         const resultOrError = await context.makeQueryRequest({ query: QueryConstants_1.CALENDAR_EVENTS_QUERY, args }, context);
-        context.watcher && context.watcher.triggerAfterTime(CalendarConstants_1.POLL_INTERVAL);
+        if (context.watcher) {
+            context.watcher.triggerAfterTime(CalendarConstants_1.POLL_INTERVAL);
+            // Watch this row in order to get notified of calendar (de)activations
+            await context.db.getMemoryStorage().getValue(context.trc, context.watcher, CalendarConstants_1.CALENDAR_UPDATES_TABLE_NAME, CalendarConstants_1.CALENDAR_UPDATES_ROW_NAME);
+        }
         if ((_b = (_a = resultOrError.result) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.calendarEvents) {
             const calendarEvents = (_d = (_c = resultOrError.result) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.calendarEvents;
             for (const event of calendarEvents) {
-                const linkedNotes = [];
                 await Utilities_1.cacheEvent(context, event);
-                const localEvent = await context.db.getNode(context, { id: event.id, type: en_data_model_1.EntityTypes.CalendarEvent });
-                if (localEvent) {
-                    const noteNodesRefs = await context.db.traverseGraph(context, { id: localEvent.id, type: en_data_model_1.EntityTypes.CalendarEvent }, [{ edge: ['inputs', 'notes'], type: en_core_entity_types_1.CoreEntityTypes.Note }]);
-                    const noteNodes = await context.db.batchGetNodes(context, en_core_entity_types_1.CoreEntityTypes.Note, noteNodesRefs.map(ref => ref.id));
-                    noteNodes.forEach(note => {
-                        if (note) {
-                            linkedNotes.push({ id: note.id, label: note.label });
-                        }
-                    });
-                }
-                event.linkedNotes = linkedNotes;
+                event.linkedNotes = await Utilities_1.getLinkedNotes(context, event);
             }
             return calendarEvents;
         }
@@ -235,22 +251,15 @@ function getCalendarServicePlugin(httpClient) {
         var _a, _b, _c, _d;
         conduit_core_1.validateDB(context, 'Must be authenticated to retrieve Google Calendar data.');
         const resultOrError = await context.makeQueryRequest({ query: QueryConstants_1.CALENDAR_EVENT_QUERY, args }, context);
-        context.watcher && context.watcher.triggerAfterTime(CalendarConstants_1.POLL_INTERVAL);
+        if (context.watcher) {
+            context.watcher.triggerAfterTime(CalendarConstants_1.POLL_INTERVAL);
+            // Watch this row in order to get notified of calendar (de)activations
+            await context.db.getMemoryStorage().getValue(context.trc, context.watcher, CalendarConstants_1.CALENDAR_UPDATES_TABLE_NAME, CalendarConstants_1.CALENDAR_UPDATES_ROW_NAME);
+        }
         if ((_b = (_a = resultOrError.result) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.calendarEvent) {
             const calendarEvent = (_d = (_c = resultOrError.result) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.calendarEvent;
             await Utilities_1.cacheEvent(context, calendarEvent);
-            const linkedNotes = [];
-            const localEvent = await context.db.getNode(context, { id: calendarEvent.id, type: en_data_model_1.EntityTypes.CalendarEvent });
-            if (localEvent) {
-                const noteNodesRefs = await context.db.traverseGraph(context, { id: localEvent.id, type: en_data_model_1.EntityTypes.CalendarEvent }, [{ edge: ['inputs', 'notes'], type: en_core_entity_types_1.CoreEntityTypes.Note }]);
-                const noteNodes = await context.db.batchGetNodes(context, en_core_entity_types_1.CoreEntityTypes.Note, noteNodesRefs.map(ref => ref.id));
-                noteNodes.forEach(note => {
-                    if (note) {
-                        linkedNotes.push({ id: note.id, label: note.label });
-                    }
-                });
-            }
-            calendarEvent.linkedNotes = linkedNotes;
+            calendarEvent.linkedNotes = await Utilities_1.getLinkedNotes(context, calendarEvent);
             return calendarEvent;
         }
         else {
@@ -280,19 +289,35 @@ function getCalendarServicePlugin(httpClient) {
             await context.db.runMutator(context.trc, 'calendarEventLinkInternal', Object.assign({ noteID: args.noteID, eventID: args.eventID, noteOwnerID: noteOwnerMetadata.userID }, graphDBevent.NodeFields));
             return { success: true, result: graphDBevent.id };
         }
-        const ephemeralEvent = await context.db.getEphemeralObject(context.trc, null, CalendarConstants_1.EPHEMERAL_EVENTS_TABLE_NAME, args.eventID);
+        const ephemeralEvent = await context.db.getMemoryStorage().getValue(context.trc, null, CalendarConstants_1.EPHEMERAL_EVENTS_TABLE_NAME, args.eventID);
         if (ephemeralEvent) {
             const { id } = ephemeralEvent, eventWithoutID = __rest(ephemeralEvent, ["id"]);
             await context.db.runMutator(context.trc, 'calendarEventLinkInternal', Object.assign({ noteID: args.noteID, eventID: args.eventID, noteOwnerID: noteOwnerMetadata.userID }, eventWithoutID));
             return { success: true, result: ephemeralEvent.id };
         }
-        const QsEvent = await context.makeQueryRequest({ query: QueryConstants_1.CALENDAR_EVENT_QUERY, args: { id: args.eventID } }, context);
-        if ((_b = (_a = QsEvent.result) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.calendarEvent) {
-            const _c = QsEvent.result.data.calendarEvent, { id } = _c, eventWithoutID = __rest(_c, ["id"]);
+        const qsEvent = await context.makeQueryRequest({ query: QueryConstants_1.CALENDAR_EVENT_QUERY, args: { id: args.eventID } }, context);
+        if ((_b = (_a = qsEvent.result) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.calendarEvent) {
+            const _c = qsEvent.result.data.calendarEvent, { id } = _c, eventWithoutID = __rest(_c, ["id"]);
             await context.db.runMutator(context.trc, 'calendarEventLinkInternal', Object.assign({ noteID: args.noteID, eventID: args.eventID, noteOwnerID: noteOwnerMetadata.userID }, eventWithoutID));
-            return { success: true, result: QsEvent.id };
+            return { success: true, result: qsEvent.id };
         }
         return { success: false, result: 'Could not fetch event from Ephemeral DB nor Query Service' };
+    }
+    async function userCalendarSettingsUpdateMutationResolver(parent, args, context) {
+        if (!args) {
+            throw new conduit_utils_1.MissingParameterError('Missing parameters for userCalendarSettingsUpdate mutation');
+        }
+        conduit_core_1.validateDB(context);
+        try {
+            await context.db.runMutator(context.trc, 'calendarUserCalendarSettingsUpdate', args);
+            await context.db.getMemoryStorage().transact(context.trc, 'SetUpdatedCalendarTime', async (tx) => {
+                await tx.setValue(context.trc, CalendarConstants_1.CALENDAR_UPDATES_TABLE_NAME, CalendarConstants_1.CALENDAR_UPDATES_ROW_NAME, Date.now());
+            });
+            return { success: true, result: args.userCalendarSettingsId };
+        }
+        catch (error) {
+            return { success: false, result: error };
+        }
     }
     const initCalendarPlugin = async () => {
         conduit_utils_1.logger.info('Calendar plugin initialized');
@@ -361,6 +386,11 @@ function getCalendarServicePlugin(httpClient) {
                     args: CalendarServiceType_1.CalendarEventLinkMutationSchemaArgs,
                     type: conduit_core_1.GenericMutationResultWithData,
                     resolve: calendarEventLinkMutationResolver,
+                },
+                userCalendarSettingsUpdate: {
+                    args: CalendarServiceType_1.UserCalendarSettingsUpdateMutationSchemaArgs,
+                    type: conduit_core_1.GenericMutationResultWithData,
+                    resolve: userCalendarSettingsUpdateMutationResolver,
                 },
             };
             return mutators;

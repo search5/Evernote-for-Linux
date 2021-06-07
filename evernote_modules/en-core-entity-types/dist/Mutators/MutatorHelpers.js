@@ -5,9 +5,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createMembershipOps = exports.createMembershipProfileEdges = exports.validateAndCalculateSizeLimits = exports.validateAccountLimits = exports.validateNoteTagsCount = exports.validateMaxNoteSize = exports.getNoteSize = void 0;
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const AccountLimits_1 = require("../AccountLimits");
 const EntityConstants_1 = require("../EntityConstants");
-const Membership_1 = require("../NodeTypes/Membership");
 async function getNoteSize(trc, context, note) {
     let resourceSize = 0;
     const attachmentIDs = [];
@@ -62,11 +62,12 @@ function validateAccountLimits(currentAccountLimits, diff) {
     throwIfLimitReached(limits.userDeviceLimit, counts.userDeviceCount, diff.userDeviceCountChange, 'Device', 'userDeviceLimit');
     throwIfLimitReached(limits.userWorkspaceCountMax, counts.userWorkspaceCount, diff.userWorkspaceCountChange, 'Workspace', 'userWorkspaceCountMax');
     throwIfLimitReached(limits.uploadLimit, counts.userUploadedAmount, diff.userUploadedAmountChange, 'uploadLimit', 'uploadLimit');
+    throwIfLimitReached(limits.taskAssignmentLimitDaily, counts.taskAssignmentLimitDaily, diff.taskAssignmentLimitDaily, 'taskAssignmentLimitDaily', 'taskAssignmentLimitDaily');
 }
 exports.validateAccountLimits = validateAccountLimits;
 function throwIfLimitReached(limit, currentValue, diff, errorKey, limitName) {
     if (conduit_utils_1.isNotNullish(diff) && currentValue + diff > limit) {
-        throw new conduit_utils_1.ServiceError('LIMIT_REACHED', errorKey, `type=LIMIT_REACHED thriftExceptionParameter=${errorKey} limit=${limitName}`);
+        throw new conduit_utils_1.ServiceError('LIMIT_REACHED', errorKey, `type=LIMIT_REACHED thriftExceptionParameter=${errorKey} limitName=${limitName} limit=${limit}`);
     }
 }
 function throwIfAccountLimitsNull(accountLimits) {
@@ -116,7 +117,7 @@ async function createMembershipOps(trc, ctx, owner, params) {
     const membershipID = membershipGenID[1];
     const membership = ctx.createEntity({ id: membershipID, type: EntityConstants_1.CoreEntityTypes.Membership }, {
         privilege: params.privilege,
-        recipientType: Membership_1.MembershipRecipientType.USER,
+        recipientType: en_conduit_sync_types_1.MembershipRecipientType.USER,
         recipientIsMe: params.recipientIsMe,
     });
     const membershipProfileEdges = await createMembershipProfileEdges(membershipID, params.profileEdgeMap);

@@ -26,6 +26,7 @@ exports.accountLimitsTypeDef = {
             userDeviceLimit: 'int',
             userAdvertisedDeviceLimit: 'int',
             userWorkspaceCountMax: 'int',
+            taskAssignmentLimitDaily: 'int',
         }),
         Counts: conduit_utils_1.Struct({
             userNoteCount: 'int',
@@ -37,6 +38,7 @@ exports.accountLimitsTypeDef = {
             userWorkspaceCount: 'int',
             userUploadedAmount: 'number',
             userNoteAndNotebookSharesSentCount: 'int',
+            taskAssignmentLimitDaily: 'int',
         }),
     },
     cache: {

@@ -100,7 +100,8 @@ function fieldsForVars(parsedFields, vars) {
         const varName = parsedFields.vars[i];
         const varValue = vars.hasOwnProperty(varName) ? vars[varName] : parsedFields.defaultVarValues[varName];
         if (varValue) {
-            idx = idx | (1 << i); // tslint:disable-line:no-bitwise
+            // eslint-disable-next-line no-bitwise
+            idx = idx | (1 << i);
         }
     }
     return parsedFields.selections[idx];
@@ -145,7 +146,8 @@ function parseFieldsSelection(doc, ignoreFragmentSpreadErrors = false) {
     for (let index = 0; index < combinations; ++index) {
         const selectedVars = {};
         for (let i = 0; i < vars.length; ++i) {
-            if (index & (1 << i)) { // tslint:disable-line:no-bitwise
+            // eslint-disable-next-line no-bitwise
+            if (index & (1 << i)) {
                 selectedVars[vars[i]] = true;
             }
         }

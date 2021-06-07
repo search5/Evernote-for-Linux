@@ -3,7 +3,7 @@
  * Copyright 2021-present Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WidgetFormFactorSchema = exports.WidgetTypeSchema = exports.WidgetType = exports.WidgetSelectedTabsSchema = exports.WidgetSelectedTab = exports.WidgetSearchQuerySchema = exports.MutableWidgetTypeSchema = exports.MutableWidgetType = exports.DeviceFormFactorSchema = exports.DeviceFormFactor = exports.BoardColorSchemeSchema = exports.BoardTypeSchema = exports.BoardType = exports.BoardMobileLayoutSchema = exports.BoardMobileLayout = exports.BoardMimeTypeSchema = exports.BoardMimeType = exports.BoardFeatureSchema = exports.BoardFeature = exports.BoardDesktopLayoutSchema = exports.BoardDesktopLayout = exports.BoardBackgroundModeSchema = exports.BoardBackgroundMode = exports.BoardServiceLevelSchema = void 0;
+exports.WidgetFormFactorSchema = exports.WidgetTypeSchema = exports.WidgetType = exports.WidgetSelectedTabsSchema = exports.WidgetSelectedTab = exports.WidgetSearchQuerySchema = exports.WidgetSearchResultSpecSchema = exports.WidgetSearchTextFieldSchema = exports.WidgetSearchTextField = exports.WidgetSearchTypeSchema = exports.WidgetSearchType = exports.WidgetSortFieldSchema = exports.WidgetSortField = exports.MutableWidgetTypeSchema = exports.MutableWidgetType = exports.DeviceFormFactorSchema = exports.DeviceFormFactor = exports.BoardColorSchemeSchema = exports.BoardTypeSchema = exports.BoardType = exports.BoardMobileLayoutSchema = exports.BoardMobileLayout = exports.BoardMimeTypeSchema = exports.BoardMimeType = exports.BoardFeatureSchema = exports.BoardFeature = exports.BoardDesktopLayoutSchema = exports.BoardDesktopLayout = exports.BoardBackgroundModeSchema = exports.BoardBackgroundMode = exports.BoardServiceLevelSchema = void 0;
 const en_data_model_1 = require("en-data-model");
 const en_ts_utils_1 = require("en-ts-utils");
 exports.BoardServiceLevelSchema = en_ts_utils_1.Enum({
@@ -65,8 +65,48 @@ var MutableWidgetType;
     MutableWidgetType["FilteredNotes"] = "FilteredNotes";
 })(MutableWidgetType = exports.MutableWidgetType || (exports.MutableWidgetType = {}));
 exports.MutableWidgetTypeSchema = en_ts_utils_1.Enum(MutableWidgetType, 'BoardMutableWidgetTypes');
+var WidgetSortField;
+(function (WidgetSortField) {
+    WidgetSortField["TITLE"] = "TITLE";
+    WidgetSortField["CREATED"] = "CREATED";
+    WidgetSortField["UPDATED"] = "UPDATED";
+    WidgetSortField["RELEVANCE"] = "RELEVANCE";
+    WidgetSortField["REMINDER_ORDER"] = "REMINDER_ORDER";
+    WidgetSortField["REMINDER_TIME"] = "REMINDER_TIME";
+    WidgetSortField["REMINDER_DONE_TIME"] = "REMINDER_DONE_TIME";
+})(WidgetSortField = exports.WidgetSortField || (exports.WidgetSortField = {}));
+exports.WidgetSortFieldSchema = en_ts_utils_1.Enum(WidgetSortField, 'WidgetSortFields');
+var WidgetSearchType;
+(function (WidgetSearchType) {
+    WidgetSearchType["HISTORY"] = "HISTORY";
+    WidgetSearchType["TEXT"] = "TEXT";
+    WidgetSearchType["NOTE"] = "NOTE";
+    WidgetSearchType["NOTEBOOK"] = "NOTEBOOK";
+    WidgetSearchType["WORKSPACE"] = "WORKSPACE";
+    WidgetSearchType["TAG"] = "TAG";
+    WidgetSearchType["AUTHOR"] = "AUTHOR";
+    WidgetSearchType["CONTAINS"] = "CONTAINS";
+    WidgetSearchType["MESSAGE"] = "MESSAGE";
+    WidgetSearchType["STACK"] = "STACK";
+})(WidgetSearchType = exports.WidgetSearchType || (exports.WidgetSearchType = {}));
+exports.WidgetSearchTypeSchema = en_ts_utils_1.Enum(WidgetSearchType, 'WidgetSearchTypes');
+var WidgetSearchTextField;
+(function (WidgetSearchTextField) {
+    WidgetSearchTextField["ALL"] = "ALL";
+    WidgetSearchTextField["NAME"] = "NAME";
+})(WidgetSearchTextField = exports.WidgetSearchTextField || (exports.WidgetSearchTextField = {}));
+exports.WidgetSearchTextFieldSchema = en_ts_utils_1.Enum(WidgetSearchTextField, 'WidgetSearchTextFields');
+exports.WidgetSearchResultSpecSchema = en_ts_utils_1.Struct({
+    type: exports.WidgetSearchTypeSchema,
+    textSearchField: en_ts_utils_1.Nullable(exports.WidgetSearchTextFieldSchema),
+    sort: en_ts_utils_1.Nullable(exports.WidgetSortFieldSchema),
+    ascending: en_ts_utils_1.NullableBoolean,
+    startIndex: en_ts_utils_1.NullableInt,
+    maxResults: en_ts_utils_1.NullableInt,
+}, 'WidgetSearchResultSpec');
 exports.WidgetSearchQuerySchema = en_ts_utils_1.Struct({
     query: 'string',
+    resultSpec: exports.WidgetSearchResultSpecSchema,
 }, 'WidgetSearchQuery');
 var WidgetSelectedTab;
 (function (WidgetSelectedTab) {

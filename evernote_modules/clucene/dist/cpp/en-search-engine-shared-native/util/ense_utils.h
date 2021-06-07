@@ -6,6 +6,9 @@
 #include <string>
 #include <utility>
 
+#include "json.hpp"
+using json = nlohmann::json;
+
 namespace util {
     template<typename T>
     using cst_del_unique_ptr = std::unique_ptr<T,std::function<void(T*)>>;
@@ -23,5 +26,10 @@ namespace util {
 
     float sigmoid(float input);
     float sigmoid_inverse(float sigmoid_input);
+
+    json encode_error(const std::string& func_name, const std::string& reason);
+    json encode_error(const std::string& cls_name, const std::string& func_name, const std::string& reason);
+
+    int get_unicode_code_point(const std::string& utf8);
 
 }

@@ -3,7 +3,7 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.genTasksDataCreateOps = exports.taskGroupUpsertPlanFor = exports.taskGroupUpsertPlan = exports.getNoteContentInfoIDByNoteID = exports.getNoteContentInfoID = void 0;
+exports.updateDeletedOnTaskByNote = exports.genTasksDataCreateOps = exports.taskGroupUpsertPlanFor = exports.taskGroupUpsertPlan = exports.getNoteContentInfoIDByNoteID = exports.getNoteContentInfoID = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
@@ -22,6 +22,7 @@ function getNoteContentInfoIDByNoteID(noteID) {
 }
 exports.getNoteContentInfoIDByNoteID = getNoteContentInfoIDByNoteID;
 async function taskGroupUpsertPlan(trc, ctx, params, copyOwnerRef) {
+    const taskGroupNoteLevelIDs = params.taskGroupNoteLevelIDs.slice();
     const containerRef = { id: params.noteID, type: en_core_entity_types_1.CoreEntityTypes.Note };
     // Only check if working on an existing note, not for a soon to be created copy
     if (!copyOwnerRef) {
@@ -47,8 +48,8 @@ async function taskGroupUpsertPlan(trc, ctx, params, copyOwnerRef) {
                     if (!task) {
                         continue;
                     }
-                    if (!params.taskGroupNoteLevelIDs.includes(task.NodeFields.taskGroupNoteLevelID)) {
-                        params.taskGroupNoteLevelIDs.push(task.NodeFields.taskGroupNoteLevelID);
+                    if (!taskGroupNoteLevelIDs.includes(task.NodeFields.taskGroupNoteLevelID)) {
+                        taskGroupNoteLevelIDs.push(task.NodeFields.taskGroupNoteLevelID);
                     }
                 }
             }
@@ -61,7 +62,7 @@ async function taskGroupUpsertPlan(trc, ctx, params, copyOwnerRef) {
                     changeType: 'Node:UPDATE',
                     nodeRef: noteContentInfoRef,
                     node: ctx.assignFields(en_data_model_1.EntityTypes.NoteContentInfo, {
-                        taskGroupNoteLevelIDs: params.taskGroupNoteLevelIDs,
+                        taskGroupNoteLevelIDs,
                         updated: ctx.timestamp,
                         sourceOfChange: params.sourceOfChange,
                     }),
@@ -70,7 +71,7 @@ async function taskGroupUpsertPlan(trc, ctx, params, copyOwnerRef) {
     }
     else {
         const noteContentInfoEntity = ctx.createEntity(noteContentInfoRef, {
-            taskGroupNoteLevelIDs: params.taskGroupNoteLevelIDs,
+            taskGroupNoteLevelIDs,
             created: ctx.timestamp,
             updated: ctx.timestamp,
             sourceOfChange: params.sourceOfChange,
@@ -182,4 +183,21 @@ async function genTasksDataCreateOps(trc, ctx, tasksExportData, noteID, plan, co
     });
 }
 exports.genTasksDataCreateOps = genTasksDataCreateOps;
+async function updateDeletedOnTaskByNote(ctx, trc, noteID, ops, markAsDeleted) {
+    const note = await ctx.fetchEntity(trc, { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note });
+    if (!note) {
+        throw new conduit_utils_1.NotFoundError(noteID, `Note not found in taskNoteMoveToTrash ${noteID}`);
+    }
+    const taskRefs = await ctx.traverseGraph(trc, { type: note.type, id: note.id }, [{ edge: ['outputs', 'tasks'], type: en_data_model_1.EntityTypes.Task }]);
+    for (const taskRef of taskRefs) {
+        ops.push({
+            changeType: 'Node:UPDATE',
+            nodeRef: taskRef,
+            node: ctx.assignFields(en_data_model_1.EntityTypes.Task, {
+                deleted: markAsDeleted ? ctx.timestamp : null,
+            }),
+        });
+    }
+}
+exports.updateDeletedOnTaskByNote = updateDeletedOnTaskByNote;
 //# sourceMappingURL=NoteContentInfo.js.map

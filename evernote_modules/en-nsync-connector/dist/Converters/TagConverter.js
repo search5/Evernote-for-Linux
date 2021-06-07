@@ -9,20 +9,13 @@ const en_core_entity_types_1 = require("en-core-entity-types");
 const BaseConverter_1 = require("./BaseConverter");
 const getTagNodesAndEdges = async (trc, instance, context) => {
     var _a;
+    const tag = BaseConverter_1.convertNsyncEntityToNode(instance, context);
+    if (!tag) {
+        return null;
+    }
     const nodesToUpsert = [];
     const edgesToCreate = [];
     const edgesToDelete = [];
-    const initial = BaseConverter_1.createInitialNode(instance);
-    if (!initial) {
-        return null;
-    }
-    const tag = Object.assign(Object.assign({}, initial), { type: en_core_entity_types_1.CoreEntityTypes.Tag, NodeFields: {}, inputs: {
-            refs: {},
-            parent: {},
-        }, outputs: {
-            children: {},
-            shortcut: {},
-        } });
     nodesToUpsert.push(tag);
     const currentTag = await context.tx.getNode(trc, null, { type: en_core_entity_types_1.CoreEntityTypes.Tag, id: tag.id });
     const parentEdge = conduit_utils_1.firstStashEntry(currentTag === null || currentTag === void 0 ? void 0 : currentTag.inputs.parent);

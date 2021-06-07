@@ -37,6 +37,7 @@ const EMPTY_RESOURCE_COUNTS = SimplyImmutable.deepFreeze({
     userWorkspaceCount: 0,
     userUploadedAmount: 0,
     userNoteAndNotebookSharesSentCount: 0,
+    taskAssignmentLimitDaily: 0,
 });
 // this should never actually get used, so initialize to 0s just to satisfy the compiler
 const DEFAULT_ACCOUNT_LIMITS = {
@@ -54,6 +55,7 @@ const DEFAULT_ACCOUNT_LIMITS = {
     userDeviceLimit: 0,
     userAdvertisedDeviceLimit: 0,
     userWorkspaceCountMax: 0,
+    taskAssignmentLimitDaily: 0,
 };
 const TYPE_TO_COUNT_MAP = {
     Note: 'userNoteCount',

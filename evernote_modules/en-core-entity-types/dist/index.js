@@ -38,6 +38,5 @@ Object.defineProperty(exports, "shortcutSourceTypes", { enumerable: true, get: f
 __exportStar(require("./CommandPolicyRules"), exports);
 __exportStar(require("./EvernoteDataModel"), exports);
 __exportStar(require("./MaestroProps"), exports);
-__exportStar(require("./MembershipPrivilege"), exports);
 __exportStar(require("./ShareUtils"), exports);
 //# sourceMappingURL=index.js.map

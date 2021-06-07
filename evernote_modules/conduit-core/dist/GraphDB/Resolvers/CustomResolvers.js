@@ -27,6 +27,7 @@ const AuxResolver = __importStar(require("./Custom/AuxResolver"));
 const ErrorResolver = __importStar(require("./Custom/ErrorResolver"));
 const LocalSettings = __importStar(require("./Custom/LocalSettingsResolver"));
 const MultiUserResolver = __importStar(require("./Custom/MultiUserResolver"));
+const MutationStatus = __importStar(require("./Custom/MutationStatusResolver"));
 const SyncContextNodesResolver = __importStar(require("./Custom/SyncContextNodesResolver"));
 function buildCustomResolvers() {
     const out = {};
@@ -34,6 +35,7 @@ function buildCustomResolvers() {
     ErrorResolver.addQueries(out);
     LocalSettings.addQueries(out);
     MultiUserResolver.addQueries(out);
+    MutationStatus.addQueries(out);
     SyncContextNodesResolver.addQueries(out);
     return out;
 }

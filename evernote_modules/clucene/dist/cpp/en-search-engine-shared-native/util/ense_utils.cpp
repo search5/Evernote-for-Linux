@@ -61,6 +61,19 @@ namespace util {
     bool ucs2_to_utf8(const wchar_t &unicSym, unsigned char *utfSq)
     {
         int pos = 0;
+        // checks if character belongs to the Private Use Areas range
+        // if it's true replaces it by REPLACEMENT CHARACTER
+        if ((static_cast<int>(unicSym) >= 0xE000) && (static_cast<int>(unicSym) < (0xE000 + 6400))) {
+          const wchar_t replacement_char = 0xFFFD;
+
+          utfSq[pos++] = 0xe0 | (replacement_char >> 12);
+          utfSq[pos++] = 0x80 | ((replacement_char >> 6) & 0x3f);
+          utfSq[pos++] = 0x80 | (replacement_char & 0x3f);
+          utfSq[pos] = 0;
+
+          return true;
+        }
+
         if (unicSym <= 0x80)
         {
             utfSq[pos++] = 0xff & unicSym;
@@ -83,6 +96,42 @@ namespace util {
 
         utfSq[pos] = 0;
         return true;
+    }
+
+    int get_unicode_code_point(const std::string& utf8) {
+      int code_point = 0;
+      int tmp = 0;
+
+      if (utf8.size() == 4) {
+
+        code_point = static_cast<unsigned char>(utf8[3]) & 0x3F;
+        tmp = (static_cast<unsigned char>(utf8[2]) & 0x3F) << 6;
+        code_point |= tmp;
+        tmp = (static_cast<unsigned char>(utf8[1]) & 0x3F) << 12;
+        code_point |= tmp;
+        tmp = (static_cast<unsigned char>(utf8[0]) & 0x07) << 18;
+        code_point |= tmp;
+      }
+
+      if (utf8.size() == 3) {
+        code_point = static_cast<unsigned char>(utf8[2]) & 0x3F;
+        tmp = (static_cast<unsigned char>(utf8[1]) & 0x3F) << 6;
+        code_point |= tmp;
+        tmp = (static_cast<unsigned char>(utf8[0]) & 0x0F) << 12;
+        code_point |= tmp;
+      }
+
+      if (utf8.size() == 2) {
+        code_point = static_cast<unsigned char>(utf8[1]) & 0x3F;
+        tmp = (static_cast<unsigned char>(utf8[0]) & 0x1F) << 6;
+        code_point |= tmp;
+      }
+
+      if (utf8.size() == 1) {
+        code_point = static_cast<unsigned char>(utf8[0]) & 0x7F;
+      }
+
+      return code_point;
     }
 
     // convert utf-8 bytes to wstring
@@ -116,14 +165,33 @@ namespace util {
             bUtfNotFinished = true;
             if (utf_to_unic2((unsigned char*)utf, wchCrr))
             {
+              if (pos <= 3) {
                 strUni.push_back(wchCrr);
 
                 if (pArUtfEndPos)
                     pArUtfEndPos->push_back(i);
+              // if character is outside of BMP (65536 range) it will map it to the Private Use Areas range
+              // see https://en.wikipedia.org/wiki/Private_Use_Areas
+              // this isn't great, because it works only for search.
+              // for suggest it will result a garbage output
+              // todo:: fix this properly
+              } else {
+                // wchar_t offset = L'\uE000';
+                wchar_t replacement_pua = 0xE000;
 
-                wchCrr = 0;
-                pos = 0;
-                bUtfNotFinished = false;
+                std::string utf_buffer(reinterpret_cast<const char*>(utf), pos);
+                auto unicode_code_point = get_unicode_code_point(utf_buffer);
+
+                replacement_pua += unicode_code_point % 6400;
+
+                strUni.push_back(replacement_pua);
+                if (pArUtfEndPos)
+                    pArUtfEndPos->push_back(i);
+              }
+
+              wchCrr = 0;
+              pos = 0;
+              bUtfNotFinished = false;
             }
 
             if (wchCrr > 0) // never happens?!
@@ -390,6 +458,23 @@ float sigmoid(float input)
 float sigmoid_inverse(float sigmoid_input)
 {
   return std::log(sigmoid_input / (1.0 - sigmoid_input));
+}
+
+json encode_error(const std::string& func_name, const std::string& reason)
+{
+  json js;
+  js["error"] = {};
+  js["error"]["function_name"] = func_name;
+  js["error"]["reason"] = reason;
+  return js;
+}
+
+json encode_error(const std::string& cls_name, const std::string& func_name, const std::string& reason)
+{
+  auto js = encode_error(func_name, reason);
+  js["error"]["cls_name"] = cls_name;
+  
+  return js;
 }
 
 

@@ -17,8 +17,8 @@ const SQL_MAX_VARIABLES = 998;
 const SQL_MAX_ROWS = SQL_MAX_VARIABLES / 2;
 const SQL_MAX_BATCH_FETCH = 200;
 class SqlStorage extends _1.KeyValCachedStorage {
-    constructor(dbName, cachePolicy) {
-        super(dbName, cachePolicy, 15000);
+    constructor(dbName, cachePolicy, useMapForLargeObjects) {
+        super(dbName, cachePolicy, 15000, useMapForLargeObjects);
         this.batchGetValuesRaw = async (trc, tableName, keys) => {
             return this.batchGetValuesRawInternal(trc, tableName, keys);
         };

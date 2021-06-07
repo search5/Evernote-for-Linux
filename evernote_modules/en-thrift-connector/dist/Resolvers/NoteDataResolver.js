@@ -51,8 +51,16 @@ function needsFullData(fieldSelection) {
 function needsContent(fieldSelection) {
     return Boolean(fieldSelection.content && fieldSelection.content.content);
 }
+function isNoteQueryUnbounded(context, info) {
+    var _a;
+    const path = info ? conduit_core_1.responsePathToSelectionPath(info.path) : undefined;
+    if (path && ((_a = path[0]) === null || _a === void 0 ? void 0 : _a.includes('List')) && path[0] !== 'ShortcutList' && path[1] && path[1] === 'list') {
+        return true;
+    }
+    return false;
+}
 function getNoteDataResolver(getSearchShareAcceptMetadata) {
-    async function NoteDataResolver(context, nodeOrRef, fieldSelection) {
+    async function NoteDataResolver(context, nodeOrRef, fieldSelection, info) {
         if (!nodeOrRef || !fieldSelection) {
             return conduit_storage_1.isGraphNode(nodeOrRef) ? nodeOrRef : null;
         }
@@ -69,6 +77,10 @@ function getNoteDataResolver(getSearchShareAcceptMetadata) {
         else {
             // attempting to fetch note on demand from service.
             keyRequiringFetch = 'FullNode';
+        }
+        if (isNoteQueryUnbounded(context, info)) {
+            conduit_utils_1.logger.warn(`Demand fetch not supported for list queries. Skipping ${nodeOrRef.id}`);
+            return null;
         }
         // TODO move all this to a SyncActivity and dedupe/sequence requests there
         conduit_utils_1.logger.debug('Fetching note for field', keyRequiringFetch, nodeOrRef.id);

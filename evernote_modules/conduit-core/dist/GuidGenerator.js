@@ -22,7 +22,7 @@ function uuidToChars(tag, id) {
     }
     return ret;
 }
-// tslint:disable: no-bitwise
+/* eslint-disable no-bitwise */
 function parse(uuid) {
     let v;
     const arr = new Uint8Array(16);

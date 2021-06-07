@@ -34,7 +34,7 @@ function runForMutation(name) {
             throw new Error('Not logged in');
         }
         const mutation = await context.db.runMutator(context.trc, name, args);
-        return Object.assign(Object.assign({ result: null }, mutation.results), { success: true });
+        return Object.assign(Object.assign({ result: null }, mutation.results), { success: true, mutationID: mutation.mutationID });
     };
 }
 function buildMutatorResultType(autoResolverData, name, schema) {
@@ -43,6 +43,7 @@ function buildMutatorResultType(autoResolverData, name, schema) {
         AutoResolvers_1.schemaFieldToGraphQL(autoResolverData, fields, key, schema[key], '', undefined);
     }
     fields.success = { type: DataSchemaGQL_1.schemaToGraphQLType('boolean') };
+    fields.mutationID = { type: DataSchemaGQL_1.schemaToGraphQLType('string') };
     return new graphql_1.GraphQLObjectType({
         name: conduit_utils_1.toPascalCase([name, 'MutatorRes']),
         fields,

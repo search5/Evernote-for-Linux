@@ -10,37 +10,15 @@ const en_core_entity_types_1 = require("en-core-entity-types");
 const BaseConverter_1 = require("./BaseConverter");
 const StackConverter_1 = require("./StackConverter");
 const getNotebookNodesAndEdges = async (trc, instance, context) => {
-    const initial = BaseConverter_1.createInitialNode(instance);
-    if (!initial) {
+    const notebook = BaseConverter_1.convertNsyncEntityToNode(instance, context);
+    if (!notebook) {
         conduit_utils_1.logger.error('Missing initial values');
         return null;
     }
     // const settings = context.eventManager.getProcessingEntity<ClientNSyncTypes.RecipientSettings>(initial.id, 'RecipientSettings');
-    const isExternal = context.currentUserID !== instance.ownerId;
-    const notebook = Object.assign(Object.assign({}, initial), { type: en_core_entity_types_1.CoreEntityTypes.Notebook, NodeFields: {
-            created: instance.created,
-            updated: instance.updated,
-            isPartialNotebook: false,
-            isPublished: instance.published === true,
-            inWorkspace: instance.inWorkspace === true,
-            isExternal,
-            internal_shareCountProfiles: {},
-            internal_linkedNotebookParams: {},
-            markedForOffline: false,
-            reminderNotifyEmail: false,
-            reminderNotifyInApp: false,
-        }, inputs: {
-            parent: {},
-            stack: {},
-            userForDefaultNotebook: {},
-            userForUserNotebook: {},
-        }, outputs: {
-            children: {},
-            childrenInTrash: {},
-            creator: {},
-            memberships: {},
-            shortcut: {},
-        }, CacheFields: undefined, CacheState: undefined });
+    notebook.NodeFields.isPublished = instance.published;
+    notebook.NodeFields.inWorkspace = instance.inWorkspace === true; // TODO: change once boolean, not string
+    notebook.NodeFields.isExternal = context.currentUserID !== instance.ownerId;
     const edgesToCreate = [];
     const edgesToDelete = [];
     const isDefault = instance.isDefault === true;

@@ -46,22 +46,22 @@ exports.PINNED_CONTENTS_FIELD_NAME = 'pinnedContents';
 function toWorkspaceType(t) {
     switch (t) {
         case en_conduit_sync_types_1.TWorkspaceType.INVITE_ONLY:
-            return en_core_entity_types_1.WorkspaceType.INVITE_ONLY;
+            return en_conduit_sync_types_1.WorkspaceType.INVITE_ONLY;
         case en_conduit_sync_types_1.TWorkspaceType.DISCOVERABLE:
-            return en_core_entity_types_1.WorkspaceType.DISCOVERABLE;
+            return en_conduit_sync_types_1.WorkspaceType.DISCOVERABLE;
         case en_conduit_sync_types_1.TWorkspaceType.OPEN:
-            return en_core_entity_types_1.WorkspaceType.OPEN;
+            return en_conduit_sync_types_1.WorkspaceType.OPEN;
         default:
             throw conduit_utils_1.absurd(t, 'Unknown service workspace type');
     }
 }
 function toServiceWorkspaceType(t) {
     switch (t) {
-        case en_core_entity_types_1.WorkspaceType.INVITE_ONLY:
+        case en_conduit_sync_types_1.WorkspaceType.INVITE_ONLY:
             return en_conduit_sync_types_1.TWorkspaceType.INVITE_ONLY;
-        case en_core_entity_types_1.WorkspaceType.DISCOVERABLE:
+        case en_conduit_sync_types_1.WorkspaceType.DISCOVERABLE:
             return en_conduit_sync_types_1.TWorkspaceType.DISCOVERABLE;
-        case en_core_entity_types_1.WorkspaceType.OPEN:
+        case en_conduit_sync_types_1.WorkspaceType.OPEN:
             return en_conduit_sync_types_1.TWorkspaceType.OPEN;
         default:
             throw conduit_utils_1.absurd(t, 'Unknown internal workspace type');
@@ -70,22 +70,22 @@ function toServiceWorkspaceType(t) {
 function toMembershipPrivilege(t) {
     switch (t) {
         case en_conduit_sync_types_1.TWorkspacePrivilegeLevel.READ:
-            return en_core_entity_types_1.MembershipPrivilege.READ;
+            return en_conduit_sync_types_1.MembershipPrivilege.READ;
         case en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT:
-            return en_core_entity_types_1.MembershipPrivilege.EDIT;
+            return en_conduit_sync_types_1.MembershipPrivilege.EDIT;
         case en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT_AND_MANAGE:
-            return en_core_entity_types_1.MembershipPrivilege.MANAGE;
+            return en_conduit_sync_types_1.MembershipPrivilege.MANAGE;
         default:
             return null;
     }
 }
 function toServicePrivilegeLevel(t) {
     switch (t) {
-        case en_core_entity_types_1.MembershipPrivilege.READ:
+        case en_conduit_sync_types_1.MembershipPrivilege.READ:
             return en_conduit_sync_types_1.TWorkspacePrivilegeLevel.READ;
-        case en_core_entity_types_1.MembershipPrivilege.EDIT:
+        case en_conduit_sync_types_1.MembershipPrivilege.EDIT:
             return en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT;
-        case en_core_entity_types_1.MembershipPrivilege.MANAGE:
+        case en_conduit_sync_types_1.MembershipPrivilege.MANAGE:
             return en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT_AND_MANAGE;
         default:
             return null;
@@ -96,7 +96,7 @@ function getAccessStatus(isMember, accessInfo, wsType) {
     if (isMember) {
         return en_core_entity_types_1.WorkspaceAccessStatus.MEMBER;
     }
-    if (wsType === en_core_entity_types_1.WorkspaceType.OPEN) {
+    if (wsType === en_conduit_sync_types_1.WorkspaceType.OPEN) {
         return en_core_entity_types_1.WorkspaceAccessStatus.OPEN;
     }
     const accessRequestedTime = (_a = accessInfo === null || accessInfo === void 0 ? void 0 : accessInfo.accessRequestedTimestamp) !== null && _a !== void 0 ? _a : null;

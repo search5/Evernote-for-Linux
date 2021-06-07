@@ -64,7 +64,7 @@ function setupElectronPlugins(thriftConduitConfig, servicesConfig, customHeaders
         // Plug-ins hidden behind feature flags...
         if ((_a = servicesConfig.featureFlags) === null || _a === void 0 ? void 0 : _a.isOfflineSearchEnabled) {
             isSearchPluginConfigured = true;
-            plugins.push(en_conduit_plugin_search_1.getENSearchPlugin(clucene_1.provideSearchEngine, thriftConduitConfig.di));
+            plugins.push(en_conduit_plugin_search_1.getENSearchPlugin(clucene_1.provideSearchIndexManager, thriftConduitConfig.di));
         }
         if ((_b = servicesConfig.featureFlags) === null || _b === void 0 ? void 0 : _b.isMonetizationServiceEnabled) {
             plugins.push(en_conduit_plugin_monetization_1.getENMonetizationPlugin());

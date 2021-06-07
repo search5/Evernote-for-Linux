@@ -7,15 +7,12 @@ exports.createBoardCustomizeDefinition = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_home_data_model_1 = require("en-home-data-model");
-const BoardMutators_1 = require("./Mutators/BoardMutators");
+const types_1 = require("./Schema/types");
+// TODO: Remove from Conduit after both clients are migrated to the V2 definition.
 const createBoardCustomizeDefinition = () => {
     return {
         args: conduit_core_1.schemaToGraphQLArgs({
-            boardMutations: conduit_utils_1.NullableStruct({
-                board: 'ID',
-                isCustomized: conduit_utils_1.NullableBoolean,
-                headerFields: BoardMutators_1.BoardHeaderFieldsSchema,
-            }, 'BoardCustomizeParams'),
+            boardMutations: types_1.BoardCustomizeParams,
             widgetMutations: conduit_utils_1.Nullable(conduit_utils_1.ListOfStructs({
                 widget: 'ID',
                 desktopSortWeight: conduit_utils_1.NullableString,
@@ -34,7 +31,7 @@ const createBoardCustomizeDefinition = () => {
         type: conduit_core_1.GenericMutationResult,
         resolve: async function resolver(parent, args, context) {
             // Validate arguments...
-            if ((!args) || (!args.widgetMutations)) {
+            if (!args || (!args.widgetMutations && !args.boardMutations)) {
                 throw new conduit_utils_1.MissingParameterError('Missing mutations for boardCustomize');
             }
             // Validate database...

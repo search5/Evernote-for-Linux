@@ -8,5 +8,6 @@ exports.NotificationActionNames = {
     NavigateToNote: 'NAVIGATE_TO_NOTE',
     CalendarNavigateToNote: 'CALENDAR_NAVIGATE_TO_NOTE',
     CalendarCreateNote: 'CALENDAR_CREATE_NOTE',
+    NavigateToTask: 'NAVIGATE_TO_TASK',
 };
 //# sourceMappingURL=ScheduledNotificationConstants.js.map

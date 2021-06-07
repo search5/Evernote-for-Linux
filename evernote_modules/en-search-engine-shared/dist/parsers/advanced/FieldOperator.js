@@ -112,7 +112,7 @@ QSPFieldOperatorContext.TOKENIZATION_REQUIRED_OPERATORS = new Set([QSPFieldOpera
 QSPFieldOperatorContext.strlwr2enum = QSPFieldOperatorContext.initializeStrlwr2enum();
 QSPFieldOperatorContext.ALL = QSPFieldOperatorContext.initializeAllSet();
 // List of note fields that are synced in Conduit by default.
-// TODO restore notebook, stack, tag, space when their renaming will be processed
+// TODO replace keyword analyzer for the (notebook, stack, tag, space) fields and restore the fields 
 QSPFieldOperatorContext.METADATA_OPERATORS = new Set([
     // QSPFieldOperator.notebook, 
     QSPFieldOperator.nbGuid,

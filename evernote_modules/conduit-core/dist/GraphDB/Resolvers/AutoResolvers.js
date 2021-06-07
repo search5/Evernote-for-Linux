@@ -60,7 +60,7 @@ async function resolveNode(nodeRef, context, info) {
     }
     let node = await context.db.getNode(context, nodeRef);
     if (context.autoResolverData.NodeDataResolvers[nodeRef.type]) {
-        node = await context.autoResolverData.NodeDataResolvers[nodeRef.type](context, node || nodeRef, fieldSelection);
+        node = await context.autoResolverData.NodeDataResolvers[nodeRef.type](context, node || nodeRef, fieldSelection, info);
     }
     if (!node) {
         throw new conduit_utils_1.NotFoundError(nodeRef.id, `Unable to find ${nodeRef.type} with id ${nodeRef.id}`);
@@ -113,8 +113,7 @@ async function meResolver(parent, args, context, info) {
         throw new conduit_utils_1.NoUserError('no current user');
     }
     try {
-        const updatedUser = await context.meUpdater(context, user);
-        return await resolveNode(updatedUser, context, info);
+        return await resolveNode(user, context, info);
     }
     catch (err) {
         if (err instanceof conduit_utils_1.NotFoundError) {

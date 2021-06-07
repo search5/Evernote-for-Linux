@@ -42,6 +42,8 @@ const createBoardBootstrapDefinition = (di) => {
                 parent: conduit_utils_1.NullableEntityRef,
                 resetLayout: conduit_utils_1.NullableBoolean,
                 platform: conduit_utils_1.Nullable(en_home_data_model_1.DeviceFormFactorSchema),
+                clientLayoutVersion: conduit_utils_1.NullableInt,
+                clearContentOnReset: conduit_utils_1.NullableBoolean,
                 features: conduit_utils_1.NullableStruct({
                     calendar: conduit_utils_1.NullableInt,
                     tasks: conduit_utils_1.NullableInt,
@@ -75,7 +77,7 @@ const createBoardBootstrapDefinition = (di) => {
                     leadingSegments: en_home_data_model_1.BoardSchema.formDeterministicBoardIdParts(userNode.NodeFields.internal_userID),
                 });
                 conduit_core_1.validateDB(context);
-                const { features: featuresParam, resetLayout, platform, } = args;
+                const { features: featuresParam, resetLayout, platform, clientLayoutVersion, clearContentOnReset, } = args;
                 const boardNodeRef = { id: boardID, type: en_data_model_1.EntityTypes.Board };
                 const board = await context.db.getNode(context, boardNodeRef);
                 const schemaFeatures = Utilities.getBoardPluginFeatures(di).schema;
@@ -98,7 +100,7 @@ const createBoardBootstrapDefinition = (di) => {
                 }
                 const serviceLevel = (_a = userNode.NodeFields.serviceLevelV2) !== null && _a !== void 0 ? _a : userNode.NodeFields.serviceLevel;
                 if (!board) {
-                    await context.db.runMutator(context.trc, 'boardCreateHome', { serviceLevel, features, featureVersions });
+                    await context.db.runMutator(context.trc, 'boardCreateHome', { serviceLevel, features, featureVersions, clientLayoutVersion, clearContentOnReset });
                 }
                 else {
                     let upgradeDetected = false;
@@ -113,7 +115,15 @@ const createBoardBootstrapDefinition = (di) => {
                     }
                     // Can't do falsey for board.NodeFields.isCustomized, as we need to ensure we have upgraded the core data model first
                     if (upgradeDetected || resetLayout || (board.NodeFields.isCustomized === false && board.NodeFields.serviceLevel !== serviceLevel)) {
-                        await context.db.runMutator(context.trc, 'boardCreateHome', { serviceLevel, features, featureVersions, resetLayout, platform });
+                        await context.db.runMutator(context.trc, 'boardCreateHome', {
+                            serviceLevel,
+                            features,
+                            featureVersions,
+                            resetLayout,
+                            platform,
+                            clientLayoutVersion,
+                            clearContentOnReset,
+                        });
                     }
                 }
                 // Return the Board ID...

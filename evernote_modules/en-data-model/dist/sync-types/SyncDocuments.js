@@ -13,5 +13,6 @@ var SyncOperation;
     SyncOperation[SyncOperation["EXPUNGE"] = 4] = "EXPUNGE";
     SyncOperation[SyncOperation["MIGRATE"] = 5] = "MIGRATE";
     SyncOperation[SyncOperation["WITH_ENTITY_CREATE"] = 6] = "WITH_ENTITY_CREATE";
+    SyncOperation[SyncOperation["FORCE_FANOUT"] = 7] = "FORCE_FANOUT";
 })(SyncOperation = exports.SyncOperation || (exports.SyncOperation = {}));
 //# sourceMappingURL=SyncDocuments.js.map

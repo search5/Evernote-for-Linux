@@ -3,8 +3,9 @@
  * Copyright 2021 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkNoteEditPermissionByNoteId = exports.checkNoteEditPermissionByTask = exports.checkTaskEditPermission = void 0;
+exports.getNoteEditPermissionByNoteId = exports.checkNoteEditPermissionByNoteId = exports.checkNoteEditPermissionByTask = exports.checkTaskEditPermission = void 0;
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
 async function checkTaskEditPermission(trc, ctx, task) {
     const edge = conduit_utils_1.firstStashEntry(task.inputs.parent);
@@ -17,7 +18,7 @@ async function checkTaskEditPermission(trc, ctx, task) {
     }
     const permContext = new en_core_entity_types_1.MutationPermissionContext(trc, ctx);
     const permission = await en_core_entity_types_1.computePermission(task, permContext);
-    if (permission === en_core_entity_types_1.MembershipPrivilege.COMPLETE) {
+    if (permission === en_conduit_sync_types_1.MembershipPrivilege.COMPLETE) {
         return;
     }
     else {
@@ -45,4 +46,5 @@ async function getNoteEditPermissionByNoteId(trc, ctx, noteId) {
     const policy = await en_core_entity_types_1.commandPolicyOfNote(noteId, permContext);
     return !!policy.canEditContent;
 }
+exports.getNoteEditPermissionByNoteId = getNoteEditPermissionByNoteId;
 //# sourceMappingURL=Permission.js.map

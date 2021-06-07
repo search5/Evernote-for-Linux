@@ -28,6 +28,7 @@ function tagFromService(serviceData) {
         NodeFields: {},
         inputs: {
             refs: {},
+            refsInTrash: {},
             parent: {},
         },
         outputs: {
@@ -89,10 +90,19 @@ class TagConverterClass {
     async handleErrorToService(trc, err, params, change) {
         switch (change.changeType) {
             case 'Node:CREATE': {
-                if (err instanceof conduit_utils_1.ServiceError && err.errorCode === en_conduit_sync_types_1.EDAMErrorCode.DATA_CONFLICT) {
+                if (err instanceof conduit_utils_1.ServiceError && err.errorKey === 'Tag.name' && err.errorCode === en_conduit_sync_types_1.EDAMErrorCode.DATA_CONFLICT) {
                     // Duplicate label, rename it, and try again!
-                    const newLabel = `${change.node.label}_${Date.now().toString().slice(-6)}`;
-                    conduit_utils_1.logger.info(`Encountered conflict with tag label ${change.node.label}. Retrying again with new label ${newLabel}`);
+                    const newLabel = `${change.node.label}_copy_${Date.now().toString().slice(-6)}`;
+                    conduit_utils_1.logger.info(`TagCreate: Encountered conflict with tag label ${change.node.label}. Retrying again with new label ${newLabel}`);
+                    return simply_immutable_1.replaceImmutable(change, ['node', 'label'], newLabel);
+                }
+                break;
+            }
+            case 'Node:UPDATE': {
+                if (err instanceof conduit_utils_1.ServiceError && err.errorKey === 'Tag.name' && err.errorCode === en_conduit_sync_types_1.EDAMErrorCode.DATA_CONFLICT) {
+                    // Duplicate label, rename it, and try again!
+                    const newLabel = `${change.node.label}_copy_${Date.now().toString().slice(-6)}`;
+                    conduit_utils_1.logger.info(`TagRename: Encountered conflict with tag label ${change.node.label}. Retrying again with new label ${newLabel}`);
                     return simply_immutable_1.replaceImmutable(change, ['node', 'label'], newLabel);
                 }
                 break;

@@ -30,7 +30,7 @@ async function processEntityAndEdges(trc, entityAndEdges, tx) {
         await tx.replaceEdges(trc, edges.edgesToDelete, edges.edgesToCreate);
     }
 }
-async function upsertSyncInstance(trc, instance, currentUserID, eventManager, tx, dataHelpers) {
+async function upsertSyncInstance(trc, instance, currentUserID, eventManager, tx) {
     switch (instance.type) {
         case null:
         case undefined:
@@ -61,7 +61,7 @@ async function upsertSyncInstance(trc, instance, currentUserID, eventManager, tx
             if (depKey && !conduit_utils_1.isNullish(instance.version)) {
                 await eventManager.di.markDependencySynced(trc, depKey, instance.version);
             }
-            const entityAndEdges = await NSyncEntityConverter_1.getEntityAndEdges(trc, instance, currentUserID, eventManager, tx, dataHelpers);
+            const entityAndEdges = await NSyncEntityConverter_1.getEntityAndEdges(trc, instance, currentUserID, eventManager, tx);
             if (!entityAndEdges) {
                 break;
             }
@@ -101,7 +101,7 @@ async function removeMembership(trc, eventManager, tx, membership) {
         conduit_utils_1.logger.warn(`Node (id: ${membershipRef.id}, type: ${membershipRef.type}) could not be expunged. Possibly missing.`);
     }
 }
-async function deleteSyncInstance(trc, instance, currentUserID, eventManager, tx, dataHelpers) {
+async function deleteSyncInstance(trc, instance, currentUserID, eventManager, tx) {
     var _a;
     switch (instance.type) {
         case null:
@@ -136,7 +136,7 @@ async function deleteSyncInstance(trc, instance, currentUserID, eventManager, tx
             if (depKey) {
                 await eventManager.di.markDependencySynced(trc, depKey, Infinity);
             }
-            const entityAndEdges = await NSyncEntityConverter_1.getEntityAndEdges(trc, instance, currentUserID, eventManager, tx, dataHelpers);
+            const entityAndEdges = await NSyncEntityConverter_1.getEntityAndEdges(trc, instance, currentUserID, eventManager, tx);
             if (!entityAndEdges) {
                 break;
             }
@@ -204,7 +204,7 @@ async function expungeSyncInstance(trc, instance, eventManager, tx) {
             conduit_utils_1.logger.warn('expungeSyncInstance', conduit_utils_1.absurd(instance, 'Unknown sync instance type'));
     }
 }
-async function processNSyncDoc(trc, doc, eventManager, tx, dataHelpers) {
+async function processNSyncDoc(trc, doc, eventManager, tx) {
     if (doc.updated === null || doc.updated === undefined || !doc.instance || doc.instance.type === null || doc.instance.type === undefined) {
         conduit_utils_1.logger.warn('Unknown sync info', doc);
         return;
@@ -221,10 +221,10 @@ async function processNSyncDoc(trc, doc, eventManager, tx, dataHelpers) {
         case en_data_model_1.ClientNSyncTypes.SyncOperation.CREATE:
         case en_data_model_1.ClientNSyncTypes.SyncOperation.UPDATE:
         case en_data_model_1.ClientNSyncTypes.SyncOperation.WITH_ENTITY_CREATE: // may want to handle this one separately in the future (batched for after create?)
-            await upsertSyncInstance(trc, instance, eventManager.getUserID(), eventManager, tx, dataHelpers);
+            await upsertSyncInstance(trc, instance, eventManager.getUserID(), eventManager, tx);
             break;
         case en_data_model_1.ClientNSyncTypes.SyncOperation.DELETE:
-            await deleteSyncInstance(trc, instance, eventManager.getUserID(), eventManager, tx, dataHelpers);
+            await deleteSyncInstance(trc, instance, eventManager.getUserID(), eventManager, tx);
             break;
         case en_data_model_1.ClientNSyncTypes.SyncOperation.EXPUNGE:
             await expungeSyncInstance(trc, instance, eventManager, tx);

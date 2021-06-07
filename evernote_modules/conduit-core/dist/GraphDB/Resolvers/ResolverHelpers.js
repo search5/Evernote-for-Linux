@@ -16,7 +16,7 @@ class AutoResolverData {
 }
 exports.AutoResolverData = AutoResolverData;
 exports.GenericMutationResult = DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.Struct({ success: 'boolean' }, 'GenericMutationResult'));
-exports.GenericMutationResultWithData = DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.Struct({ success: 'boolean', result: conduit_utils_1.NullableString }, 'AutoMutatorRes'));
+exports.GenericMutationResultWithData = DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.Struct({ success: 'boolean', result: conduit_utils_1.NullableString, mutationID: 'string' }, 'AutoMutatorRes'));
 function validateDB(context, msg) {
     if (!context || !context.db) {
         throw new Error(msg !== null && msg !== void 0 ? msg : 'Unable to run resolver without valid GraphDB');

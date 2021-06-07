@@ -201,6 +201,18 @@ namespace token {
     return alternative_tokens;
   }
 
+  std::wstring token_to_lowercase_token(const std::wstring& input)
+  {
+    std::wstring out;
+    out.reserve(input.size());
+
+    for (const auto& wch : input) {
+      out.push_back(CSymbTypes::toLower(wch));
+    }
+
+    return out;
+  }
+
 }
 }
 }

@@ -537,7 +537,7 @@ class ReadonlyIndexingTree {
             }
         }
         catch (error) {
-            throw new conduit_utils_1.NotFoundError(key.join(':::'), `Unable to find IndexingTree node, reason: ${error}`);
+            throw new conduit_utils_1.NotFoundError(key.join(':::'), `Unable to find IndexingTree node, reason: ${error.message}` + (error.stack ? `\nStacktrace: ${error.stack}` : ``));
         }
         if (!leaf || !leaf.data.length) {
             return null;
@@ -560,7 +560,7 @@ class ReadonlyIndexingTree {
             }
         }
         catch (error) {
-            throw new conduit_utils_1.NotFoundError(key.join(':::'), `Unable to find IndexingTree node, reason: ${error}`);
+            throw new conduit_utils_1.NotFoundError(key.join(':::'), `Unable to find IndexingTree node, reason: ${error.message}` + (error.stack ? `\nStacktrace: ${error.stack}` : ``));
         }
         if (!leaf || !leaf.data.length) {
             return null;

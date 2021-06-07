@@ -9,25 +9,13 @@ const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
 const en_nsync_connector_1 = require("en-nsync-connector");
 const getTaskUserSettingsNodeAndEdges = async (trc, instance, context) => {
-    var _a;
+    const taskUserSettings = en_nsync_connector_1.convertNsyncEntityToNode(instance, context);
+    if (!taskUserSettings) {
+        return null;
+    }
     const nodesToUpsert = [];
     const edgesToCreate = [];
     const edgesToDelete = [];
-    const initial = en_nsync_connector_1.createInitialNode(instance);
-    if (!initial) {
-        return null;
-    }
-    const taskUserSettings = Object.assign(Object.assign({}, initial), { type: en_data_model_1.EntityTypes.TaskUserSettings, NodeFields: {
-            created: instance.created,
-            updated: instance.updated,
-            defaultReminder: instance.defaultReminder || false,
-            defaultRemindersOffsets: (_a = instance.defaultRemindersOffsets) !== null && _a !== void 0 ? _a : [],
-            pinDefaultTaskNote: Boolean(instance.pinDefaultTaskNote),
-            taskAssignCount: instance.taskAssignCount,
-            taskAssignDate: instance.taskAssignDate,
-        }, inputs: {}, outputs: {
-            defaultTaskNote: {},
-        } });
     nodesToUpsert.push(taskUserSettings);
     const existingTaskUserSettings = await context.tx.getNode(trc, null, { type: en_data_model_1.EntityTypes.TaskUserSettings, id: taskUserSettings.id });
     const existingDefaultTaskNoteEdge = conduit_utils_1.firstStashEntry(existingTaskUserSettings === null || existingTaskUserSettings === void 0 ? void 0 : existingTaskUserSettings.outputs.defaultTaskNote);

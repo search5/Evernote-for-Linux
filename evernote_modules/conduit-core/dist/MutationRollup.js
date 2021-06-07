@@ -95,9 +95,12 @@ function rollupMutationPair(prevM, nextM, mutatorDef) {
     return true;
 }
 function rollupPendingMutations(pendingMutations, mutatorDefs) {
-    var _a;
+    var _a, _b;
+    var _c;
     const changes = {};
     const errors = [];
+    // tracks for each mutationID, which mutationIDs were rolled up into it
+    const rolledUpMap = {};
     // rollup mutations where possible
     const rolledUp = [];
     for (const mImmutable of pendingMutations) {
@@ -115,6 +118,8 @@ function rollupPendingMutations(pendingMutations, mutatorDefs) {
                     }
                 }
                 rolledUp.pop();
+                rolledUpMap[m.mutationID] = (rolledUpMap[prevM.mutationID] || []).concat(prevM.mutationID);
+                delete rolledUpMap[prevM.mutationID];
                 changes[prevM.mutationID] = null;
                 changes[m.mutationID] = m;
             }
@@ -137,11 +142,13 @@ function rollupPendingMutations(pendingMutations, mutatorDefs) {
             // adjust bufferUntil so it isn't blocking any subsequent mutations
             m.bufferUntil = minBufferUntil;
             changes[m.mutationID] = m;
+            (_b = rolledUpMap[_c = m.mutationID]) !== null && _b !== void 0 ? _b : (rolledUpMap[_c] = []);
         }
     }
     return {
         changes,
         mutations: rolledUp,
+        rolledUpMap,
         errors,
     };
 }

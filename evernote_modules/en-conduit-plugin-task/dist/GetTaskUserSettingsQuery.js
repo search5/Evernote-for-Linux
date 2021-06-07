@@ -37,6 +37,8 @@ async function getTaskUserSettings(parent, args, context) {
         defaultReminder: existingTaskUserSettings.NodeFields.defaultReminder || false,
         defaultRemindersOffsets: existingTaskUserSettings.NodeFields.defaultRemindersOffsets,
         pinDefaultTaskNote: existingTaskUserSettings.NodeFields.pinDefaultTaskNote || false,
+        taskAssignDate: existingTaskUserSettings.NodeFields.taskAssignDate || null,
+        taskAssignCount: existingTaskUserSettings.NodeFields.taskAssignCount || null,
     };
 }
 exports.getTaskUserSettings = getTaskUserSettings;

@@ -3,7 +3,7 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SearchTypeConversions = exports.SearchStorageEventType = void 0;
+exports.SearchRenamingEventsUtils = exports.SearchTypeConversions = exports.SearchStorageEventType = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_search_engine_shared_1 = require("en-search-engine-shared");
@@ -22,6 +22,10 @@ class SearchTypeConversions {
         documentTypeToNodeType.set(en_search_engine_shared_1.ENDocumentType.NOTE, en_core_entity_types_1.CoreEntityTypes.Note);
         documentTypeToNodeType.set(en_search_engine_shared_1.ENDocumentType.MESSAGE, en_core_entity_types_1.CoreEntityTypes.Message);
         documentTypeToNodeType.set(en_search_engine_shared_1.ENDocumentType.ATTACHMENT, en_core_entity_types_1.CoreEntityTypes.Attachment);
+        documentTypeToNodeType.set(en_search_engine_shared_1.ENDocumentType.TAG, en_core_entity_types_1.CoreEntityTypes.Tag);
+        documentTypeToNodeType.set(en_search_engine_shared_1.ENDocumentType.NOTEBOOK, en_core_entity_types_1.CoreEntityTypes.Notebook);
+        documentTypeToNodeType.set(en_search_engine_shared_1.ENDocumentType.STACK, en_core_entity_types_1.CoreEntityTypes.Stack);
+        documentTypeToNodeType.set(en_search_engine_shared_1.ENDocumentType.WORKSPACE, en_core_entity_types_1.CoreEntityTypes.Workspace);
         return documentTypeToNodeType;
     }
     static initializNodeTypeToDocumentType() {
@@ -29,6 +33,10 @@ class SearchTypeConversions {
         nodeTypeToDocumentType.set(en_core_entity_types_1.CoreEntityTypes.Note, en_search_engine_shared_1.ENDocumentType.NOTE);
         nodeTypeToDocumentType.set(en_core_entity_types_1.CoreEntityTypes.Message, en_search_engine_shared_1.ENDocumentType.MESSAGE);
         nodeTypeToDocumentType.set(en_core_entity_types_1.CoreEntityTypes.Attachment, en_search_engine_shared_1.ENDocumentType.ATTACHMENT);
+        nodeTypeToDocumentType.set(en_core_entity_types_1.CoreEntityTypes.Tag, en_search_engine_shared_1.ENDocumentType.TAG);
+        nodeTypeToDocumentType.set(en_core_entity_types_1.CoreEntityTypes.Notebook, en_search_engine_shared_1.ENDocumentType.NOTEBOOK);
+        nodeTypeToDocumentType.set(en_core_entity_types_1.CoreEntityTypes.Stack, en_search_engine_shared_1.ENDocumentType.STACK);
+        nodeTypeToDocumentType.set(en_core_entity_types_1.CoreEntityTypes.Workspace, en_search_engine_shared_1.ENDocumentType.WORKSPACE);
         return nodeTypeToDocumentType;
     }
     static initializeSearchExResultTypeToDocumentType() {
@@ -86,4 +94,11 @@ SearchTypeConversions.SUGGEST_TYPE_TO_SEARCH_EX_RESULT_TYPE = SearchTypeConversi
 SearchTypeConversions.SEARCH_STORAGE_EVENT_TYPE_TO_STORAGE_CHANGE_TYPE = SearchTypeConversions.initializeSearchStorageEventTypeToStorageChangeType();
 SearchTypeConversions.STORAGE_CHANGE_TYPE_TO_SEARCH_STORAGE_EVENT_TYPE = SearchTypeConversions.initializeStorageChangeTypToSearchStorageEventType();
 SearchTypeConversions.SEARCH_EX_SORT_ORDER_TO_SORT_TYPE = SearchTypeConversions.initializeSearchExSortOrderToSortType();
+class SearchRenamingEventsUtils {
+    static createNoteEvent(noteID, indexationType) {
+        return { nodeRef: { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note }, localTimestamp: Date.now(), eventType: conduit_storage_1.StorageChangeType.Replace, indexationType };
+    }
+}
+exports.SearchRenamingEventsUtils = SearchRenamingEventsUtils;
+SearchRenamingEventsUtils.RENAMING_EVENT_NODE_TYPES = new Set([en_core_entity_types_1.CoreEntityTypes.Tag, en_core_entity_types_1.CoreEntityTypes.Notebook, en_core_entity_types_1.CoreEntityTypes.Stack, en_core_entity_types_1.CoreEntityTypes.Workspace]);
 //# sourceMappingURL=SearchUtils.js.map

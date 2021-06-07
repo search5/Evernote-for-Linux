@@ -9,19 +9,19 @@ const DEFAULT_POLLING_TIME = 5 * conduit_utils_1.MILLIS_IN_ONE_MINUTE;
 const JITTER_RATIO = 0.2;
 const AVAILABILITY_URL = 'https://update.evernote.com/enclients/northstarServiceAvailability.json';
 class ServiceAvailability {
-    constructor(di) {
+    constructor(config) {
         this.currentTimeout = null;
         this.inFlight = null;
         this.isPolling = false;
         this.isAvailable = true; // default to true;
         this.currentPoll = null;
-        this.httpProvider = di.httpProvider;
-        this.onChange = di.onChange;
-        this.serviceHost = di.host;
-        this.pollingTime = di.time || DEFAULT_POLLING_TIME;
-        this.updateUrl = di.url || AVAILABILITY_URL;
-        this.saveLastAvailability = di.saveLastAvailability;
-        this.getLastAvailability = di.getLastAvailability;
+        this.httpProvider = config.httpProvider;
+        this.onChange = config.onChange;
+        this.serviceHost = config.host;
+        this.pollingTime = config.time || DEFAULT_POLLING_TIME;
+        this.updateUrl = config.url || AVAILABILITY_URL;
+        this.saveLastAvailability = config.saveLastAvailability;
+        this.getLastAvailability = config.getLastAvailability;
     }
     destructor() {
         this.stopPolling();
@@ -32,11 +32,11 @@ class ServiceAvailability {
         if (this.inFlight) {
             return this.inFlight;
         }
+        if (!this.httpProvider) {
+            conduit_utils_1.logger.warn('Missing HTTP Provider in ServiceAvailability');
+            return null;
+        }
         this.inFlight = new Promise(async (resolve, reject) => {
-            if (!this.httpProvider) {
-                reject(new Error('Missing HTTP Provider in ServiceAvailability'));
-                return;
-            }
             const result = await this.httpProvider().request(trc, {
                 method: 'GET',
                 url: this.updateUrl,

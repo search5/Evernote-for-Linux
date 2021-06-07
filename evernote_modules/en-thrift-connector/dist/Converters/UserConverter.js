@@ -3,59 +3,16 @@
  * Copyright 2018 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserConverter = exports.convertUserFromService = exports.toServiceLevelV2 = void 0;
+exports.UserConverter = exports.convertUserFromService = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const en_data_model_1 = require("en-data-model");
 const Converters_1 = require("./Converters");
 const Helpers_1 = require("./Helpers");
 const NotebookConverter_1 = require("./NotebookConverter");
 const ProfileConverter_1 = require("./ProfileConverter");
-function toPrivilegeLevel(t) {
-    switch (t) {
-        case en_conduit_sync_types_1.TPrivilegeLevel.NORMAL:
-            return en_core_entity_types_1.PrivilegeLevel.NORMAL;
-        case en_conduit_sync_types_1.TPrivilegeLevel.PREMIUM:
-            return en_core_entity_types_1.PrivilegeLevel.PREMIUM;
-        case en_conduit_sync_types_1.TPrivilegeLevel.VIP:
-            return en_core_entity_types_1.PrivilegeLevel.VIP;
-        case en_conduit_sync_types_1.TPrivilegeLevel.MANAGER:
-            return en_core_entity_types_1.PrivilegeLevel.MANAGER;
-        case en_conduit_sync_types_1.TPrivilegeLevel.SUPPORT:
-            return en_core_entity_types_1.PrivilegeLevel.SUPPORT;
-        case en_conduit_sync_types_1.TPrivilegeLevel.ADMIN:
-            return en_core_entity_types_1.PrivilegeLevel.ADMIN;
-        default:
-            throw conduit_utils_1.absurd(t, 'Unknown service privilege level');
-    }
-}
-function toServiceLevelV1(t) {
-    switch (t) {
-        case en_conduit_sync_types_1.TServiceLevel.BASIC:
-            return en_core_entity_types_1.ServiceLevel.BASIC;
-        case en_conduit_sync_types_1.TServiceLevel.PLUS:
-            return en_core_entity_types_1.ServiceLevel.PLUS;
-        case en_conduit_sync_types_1.TServiceLevel.PREMIUM:
-            return en_core_entity_types_1.ServiceLevel.PREMIUM;
-        case en_conduit_sync_types_1.TServiceLevel.BUSINESS:
-            return en_core_entity_types_1.ServiceLevel.BUSINESS;
-        default:
-            throw new Error('Looking at possible v2 serviceLevel field');
-    }
-}
-function toServiceLevelV2(t) {
-    // TODO: Change en-data-model to give a better type and get rid of this hackish cast
-    const supportedLevel = t;
-    const ret = en_data_model_1.getServiceLevelV2Summary(supportedLevel);
-    return ret.serviceLevel;
-}
-exports.toServiceLevelV2 = toServiceLevelV2;
-function toServiceLevelArray(t) {
-    return t.map(serviceLevel => toServiceLevelV1(serviceLevel));
-}
 function toPremiumServiceStatus(t) {
     switch (t) {
         case null:
@@ -77,13 +34,13 @@ function toPremiumServiceStatus(t) {
 }
 function toBusinessUserRole(t) {
     if (!t) {
-        return en_core_entity_types_1.BusinessUserRole.NORMAL;
+        return en_conduit_sync_types_1.BusinessUserRole.NORMAL;
     }
     switch (t) {
         case en_conduit_sync_types_1.TBusinessUserRole.ADMIN:
-            return en_core_entity_types_1.BusinessUserRole.ADMIN;
+            return en_conduit_sync_types_1.BusinessUserRole.ADMIN;
         case en_conduit_sync_types_1.TBusinessUserRole.NORMAL:
-            return en_core_entity_types_1.BusinessUserRole.NORMAL;
+            return en_conduit_sync_types_1.BusinessUserRole.NORMAL;
         default:
             throw new Error('Unknown business user role');
     }
@@ -99,8 +56,8 @@ function convertReminderEmailConfig(reminderEmailConfig) {
 async function convertUserFromService(trc, params, syncContext, user, isVaultUser) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41;
     const serviceLevelV2Enum = user.serviceLevelV2;
-    const serviceLevelV1String = toServiceLevelV1(user.serviceLevel || en_conduit_sync_types_1.TServiceLevel.BASIC);
-    const serviceLevelV2String = toServiceLevelV2(serviceLevelV2Enum !== null && serviceLevelV2Enum !== void 0 ? serviceLevelV2Enum : serviceLevelV1String);
+    const serviceLevelV1String = en_conduit_sync_types_1.toServiceLevelV1(user.serviceLevel || en_conduit_sync_types_1.TServiceLevel.BASIC);
+    const serviceLevelV2String = en_conduit_sync_types_1.toServiceLevelV2(serviceLevelV2Enum !== null && serviceLevelV2Enum !== void 0 ? serviceLevelV2Enum : serviceLevelV1String);
     const userOut = {
         id: isVaultUser ? conduit_core_1.VAULT_USER_ID : conduit_core_1.PERSONAL_USER_ID,
         type: en_core_entity_types_1.CoreEntityTypes.User,
@@ -115,7 +72,7 @@ async function convertUserFromService(trc, params, syncContext, user, isVaultUse
             email: user.email || '',
             name: user.name || null,
             timezone: user.timezone || null,
-            privilege: toPrivilegeLevel(user.privilege || en_conduit_sync_types_1.TPrivilegeLevel.NORMAL),
+            privilege: en_conduit_sync_types_1.toPrivilegeLevel(user.privilege || en_conduit_sync_types_1.TPrivilegeLevel.NORMAL),
             serviceLevel: serviceLevelV1String,
             serviceLevelV2: serviceLevelV2String,
             created: user.created || 0,
@@ -174,7 +131,7 @@ async function convertUserFromService(trc, params, syncContext, user, isVaultUse
                 subscriptionExpirationDate: user.subscriptionInfo && user.subscriptionInfo.subscriptionExpirationDate || null,
                 subscriptionPending: user.subscriptionInfo && user.subscriptionInfo.subscriptionPending || false,
                 subscriptionCancellationPending: user.subscriptionInfo && user.subscriptionInfo.subscriptionCancellationPending || false,
-                serviceLevelsEligibleForPurchase: user.subscriptionInfo && toServiceLevelArray(user.subscriptionInfo.serviceLevelsEligibleForPurchase) || [],
+                serviceLevelsEligibleForPurchase: user.subscriptionInfo && en_conduit_sync_types_1.toServiceLevelArray(user.subscriptionInfo.serviceLevelsEligibleForPurchase) || [],
                 currentSku: user.subscriptionInfo && user.subscriptionInfo.currentSku || null,
                 validUntil: user.subscriptionInfo && user.subscriptionInfo.validUntil || null,
                 itunesReceiptRequested: user.subscriptionInfo && user.subscriptionInfo.itunesReceiptRequested || false,

@@ -58,11 +58,10 @@ exports.coreFeatureVersionOne = {
         if (widgets) {
             // It is possible due to release schedules we catch the Board Service Level ahead of this upgrade, so lets use it if it exists.
             const userAdjustedServiceLevelV2 = en_home_data_model_1.BoardSchema.calculateUserAdjustedServiceLevel((_a = board === null || board === void 0 ? void 0 : board.NodeFields.serviceLevel) !== null && _a !== void 0 ? _a : params.serviceLevel);
-            const v1Factory = new WidgetDefaultsFactory_1.WidgetDefaultsFactory(false);
-            const v2Factory = new WidgetDefaultsFactory_1.WidgetDefaultsFactory(true);
+            const factory = new WidgetDefaultsFactory_1.WidgetDefaultsFactory();
             const widgetTypes = [...Object.values(en_home_data_model_1.WidgetType), ...new Array(en_home_data_model_1.BoardSchema.MaxExtraWidgets - 1).fill(en_home_data_model_1.WidgetType.Extra)];
-            const v1Config = await v1Factory.create(params.trc, params.ctx, userAdjustedServiceLevelV2, params.boardType, widgetTypes);
-            const v2Config = await v2Factory.create(params.trc, params.ctx, userAdjustedServiceLevelV2, params.boardType, widgetTypes);
+            const v0Config = await factory.create(params.trc, params.ctx, userAdjustedServiceLevelV2, 0, params.boardType, widgetTypes);
+            const v1Config = await factory.create(params.trc, params.ctx, userAdjustedServiceLevelV2, 1, params.boardType, widgetTypes);
             // We must do an order check, as LexoRankHandler will generate new sort weights as the length of default widgets changes.
             const expectedV1FlattenedLayout = [];
             const expectedV2FlattenedLayout = [];
@@ -72,8 +71,8 @@ exports.coreFeatureVersionOne = {
                 if (!widget) {
                     continue;
                 }
-                const expectedV1Config = v1Config.widgetDefaultsById.get(widget.id);
-                const expectedV2Config = v2Config.widgetDefaultsById.get(widget.id);
+                const expectedV1Config = v0Config.widgetDefaultsById.get(widget.id);
+                const expectedV2Config = v1Config.widgetDefaultsById.get(widget.id);
                 /*
                  * Technically not possible to be missing from one config and not the other unless there is a programming error.
                  *  Protected through unit tests.
@@ -106,7 +105,7 @@ exports.coreFeatureVersionOne = {
                     internalID: 0,
                     mutableWidgetType: widget.NodeFields.mutableWidgetType,
                     selectedTab: null,
-                    serviceLevelV1Upgrade: null,
+                    autoPosition: null,
                 });
             }
             for (const [id, mutation] of widgetMutations.entries()) {
@@ -129,8 +128,8 @@ exports.coreFeatureVersionOne = {
                     }
                 }
                 else {
-                    const expectedV1Config = v1Config.widgetDefaultsById.get(id);
-                    const expectedV2Config = v2Config.widgetDefaultsById.get(id);
+                    const expectedV1Config = v0Config.widgetDefaultsById.get(id);
+                    const expectedV2Config = v1Config.widgetDefaultsById.get(id);
                     /*
                      * Technically not possible to be missing from one config and not the other unless there is a programming error.
                      * Protected through unit tests.
@@ -155,7 +154,7 @@ exports.coreFeatureVersionOne = {
                         internalID: 0,
                         mutableWidgetType: mutation.mutableWidgetType,
                         selectedTab: null,
-                        serviceLevelV1Upgrade: null,
+                        autoPosition: null,
                     });
                 }
             }
@@ -172,7 +171,7 @@ exports.coreFeatureVersionOne = {
                     mutableWidgetType: actual.mutableWidgetType,
                     widgetType: actual.widgetType,
                     id: actual.id,
-                    serviceLevelV1Upgrade: actual.serviceLevelV1Upgrade,
+                    autoPosition: actual.autoPosition,
                 });
             }
             actualValuesArray.sort((a, b) => {
@@ -187,7 +186,7 @@ exports.coreFeatureVersionOne = {
                     mutableWidgetType: actual.mutableWidgetType,
                     widgetType: actual.widgetType,
                     id: actual.id,
-                    serviceLevelV1Upgrade: actual.serviceLevelV1Upgrade,
+                    autoPosition: actual.autoPosition,
                 });
             }
             expectedV1FlattenedLayout.sort((a, b) => {

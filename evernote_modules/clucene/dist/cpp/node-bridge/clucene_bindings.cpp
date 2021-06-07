@@ -2,7 +2,8 @@
 
 #include "CLucene.h"
 #include "Misc.h"
-#include "search_engine_context.h"
+
+#include "ense_scheduler.h"
 #include "search_document_context.h"
 #include "ense_reco_resource_parser.h"
 #include "enml_parser.h"
@@ -14,6 +15,9 @@
 #include "search_engine_import_worker.h"
 #include "search_engine_recognition_worker.h"
 #include "search_engine_enml_parser_worker.h"
+#include "search_engine_execute_worker.h"
+
+
 
 
 using namespace lucene::util;
@@ -208,7 +212,7 @@ public:
             auto size = info[1].As<Napi::Number>().Uint32Value();
 
             std::string base64_buffer(info[0].As<Napi::Buffer<char> >().Data(), size);
-            search_engine_context_->import_index(base64_buffer);
+            scheduler_->import_index(base64_buffer);
 
         } catch (CLuceneError& exception) {
             if (exception.number() == CL_ERR_OutOfMemory) {
@@ -251,7 +255,7 @@ public:
         auto callback = info[2].As<Napi::Function>();
 
         std::string base64_buffer(info[0].As<Napi::Buffer<char> >().Data(), size);
-        auto search_engine_import_worker = new en_search::SearchEngineImportWorker(callback, search_engine_context_, base64_buffer);
+        auto search_engine_import_worker = new en_search::SearchEngineImportWorker(callback, scheduler_, base64_buffer);
         search_engine_import_worker->Queue();
 
         return info.Env().Undefined();
@@ -283,7 +287,7 @@ public:
 
             auto start = Misc::currentTimeMillis();
 
-            std::string buffer = search_engine_context_->export_index();
+            std::string buffer = scheduler_->export_index();
 
             auto elapsedMs = (Misc::currentTimeMillis() - start);
 
@@ -327,7 +331,7 @@ public:
 
         auto callback = info[0].As<Napi::Function>();
         
-        auto search_engine_export_worker = new en_search::SearchEngineExportWorker(callback, search_engine_context_);
+        auto search_engine_export_worker = new en_search::SearchEngineExportWorker(callback, scheduler_);
         search_engine_export_worker->Queue();
         return info.Env().Undefined();
     }
@@ -362,7 +366,7 @@ public:
         try {
     
             auto start_index_time = Misc::currentTimeMillis();
-            search_engine_context_->add_document(guid, document->get_document());
+            scheduler_->add_document(guid, document->get_document());
             auto index_time = Misc::currentTimeMillis() - start_index_time;
 
             rv_obj.Set(Napi::String::New(env, "indexTime"), (uint32_t)index_time);
@@ -412,13 +416,13 @@ public:
         // }
         auto callback = info[3].As<Napi::Function>();
 
-        auto search_engine_indexation_worker = new en_search::SearchEngineIndexationWorker(callback, search_engine_context_, guid, document->get_document());
+        auto search_engine_indexation_worker = new en_search::SearchEngineIndexationWorker(callback, scheduler_, guid, document->get_document());
         search_engine_indexation_worker->Queue();
         return info.Env().Undefined();
     }
 
     /**
-     * JS API. Synchronous. Deletes document. Internally calls search_engine_context_.delete_document(guid) function, which does actual work.
+     * JS API. Synchronous. Deletes document. Internally calls scheduler_.delete_document(guid) function, which does actual work.
      * 
      * @param String* docID - document id
      * @param String* indexPath - index path
@@ -442,7 +446,7 @@ public:
         try {
 
             auto start_delete_time = Misc::currentTimeMillis();
-            search_engine_context_->delete_document(guid);
+            scheduler_->delete_document(guid);
             auto delete_time = Misc::currentTimeMillis() - start_delete_time;
             
             rv_obj.Set(Napi::String::New(env, "deleteTime"), (uint32_t)delete_time);
@@ -482,7 +486,7 @@ public:
         std::string guid = info[0].As<Napi::String>();
         auto callback = info[2].As<Napi::Function>();
 
-        auto search_engine_delete_worker = new en_search::SearchEngineDeleteWorker(callback, search_engine_context_, guid);
+        auto search_engine_delete_worker = new en_search::SearchEngineDeleteWorker(callback, scheduler_, guid);
         search_engine_delete_worker->Queue();
         return info.Env().Undefined();
     }
@@ -591,7 +595,7 @@ public:
         rv_obj.Set(Napi::String::New(env, "searchTime"), (uint32_t)0);
 
         auto start_search_time = Misc::currentTimeMillis();
-        auto result = search_engine_context_->search(queryWithParams);
+        auto result = scheduler_->search_str(queryWithParams);
         auto error = result.first;
         auto search_results = result.second;
         auto search_time = Misc::currentTimeMillis() - start_search_time;
@@ -622,13 +626,57 @@ public:
 
         std::string queryWithParams = info[1].As<Napi::String>();
         auto callback = info[2].As<Napi::Function>();
-        auto search_engine_search_worker = new en_search::SearchEngineSearchWorker(callback, search_engine_context_, queryWithParams);
+        auto search_engine_search_worker = new en_search::SearchEngineSearchWorker(callback, scheduler_, queryWithParams);
         search_engine_search_worker->Queue();
         return info.Env().Undefined();
     }
 
+    /**
+     * JS API. Synchronous. Executes native search engine operation.
+     * 
+     * @param String* - input command in the serialized json format 
+    */  
+    Napi::Value Execute(const Napi::CallbackInfo& info)
+    {
+        auto env = info.Env();
+
+         if (!info[0].IsString()) {
+            Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+        }
+
+        std::string request = info[0].As<Napi::String>();
+        auto result = scheduler_->execute_str(request);
+
+        auto rv_obj = Napi::Object::New(env);
+        rv_obj.Set(Napi::String::New(env, "result"), result);
+
+        return rv_obj;
+    }
+
+    /**
+     * JS API. Asynchronous. Executes native search engine operation.
+     * 
+     * @param String* - input command in the serialized json format 
+     */  
+    Napi::Value ExecuteAsync(const Napi::CallbackInfo& info) {
+
+        auto env = info.Env();
+
+        //mandatory argument check
+        if (!info[0].IsString() || !info[1].IsFunction()) {
+            Napi::TypeError::New(env, "Wrong arguments").ThrowAsJavaScriptException();
+        }
+        
+        std::string request = info[0].As<Napi::String>();
+        auto callback = info[1].As<Napi::Function>();
+
+        auto search_engine_execution_worker = new evernote::cosm::bridge::SearchEngineExecutionWorker(callback, scheduler_, request);
+        search_engine_execution_worker->Queue();
+        return info.Env().Undefined();
+    }
+
 private:
-    std::shared_ptr<en_search::SearchEngineContext> search_engine_context_;
+    std::shared_ptr<evernote::cosm::core::ENScheduler> scheduler_;
 
 //node-addon-api boilerplate
 public:
@@ -651,7 +699,9 @@ public:
             InstanceMethod("parseENML", &Lucene::ParseENML),
             InstanceMethod("parseENMLAsync", &Lucene::ParseENMLAsync),
             InstanceMethod("search", &Lucene::Search),
-            InstanceMethod("searchAsync", &Lucene::SearchAsync)
+            InstanceMethod("searchAsync", &Lucene::SearchAsync),
+            InstanceMethod("execute", &Lucene::Execute),
+            InstanceMethod("executeAsync", &Lucene::ExecuteAsync)
         });
         // Create a peristent reference to the class constructor. This will allow
         // a function called on a class prototype and a function
@@ -666,7 +716,7 @@ public:
     }
 
     Lucene(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Lucene>(info) {
-        search_engine_context_ = std::make_shared<en_search::SearchEngineContext>();
+        scheduler_ = std::make_shared<evernote::cosm::core::ENScheduler>();
     }
 
     ~Lucene() {

@@ -32,6 +32,7 @@ type AccountLimitsCounts {
   userWorkspaceCount: Int!
   userUploadedAmount: Float!
   userNoteAndNotebookSharesSentCount: Int!
+  taskAssignmentLimitDaily: Int!
 }
 
 type AccountLimitsLimits {
@@ -49,6 +50,7 @@ type AccountLimitsLimits {
   userDeviceLimit: Int!
   userAdvertisedDeviceLimit: Int!
   userWorkspaceCountMax: Int!
+  taskAssignmentLimitDaily: Int!
 }
 
 enum AdaptiveDownsyncTypeEnum {
@@ -242,6 +244,7 @@ enum AuthStateEnum {
 type AutoMutatorRes {
   success: Boolean!
   result: String
+  mutationID: String!
 }
 
 type AuxSchema {
@@ -954,6 +957,11 @@ enum FeatureRolloutClientType {
   desktop
 }
 
+input FilteredNotesQueryInput {
+  query: String!
+  resultSpec: WidgetSearchResultSpecInput!
+}
+
 type FolderCommandPolicy {
   canCreateFolder: Boolean!
   canCreateNote: Boolean!
@@ -996,6 +1004,8 @@ type GetTaskUserSettingsResult {
   defaultReminder: Boolean
   defaultRemindersOffsets: [Float!]
   pinDefaultTaskNote: Boolean
+  taskAssignDate: Float
+  taskAssignCount: Float
 }
 
 type GoogleAuthCredential {
@@ -1269,13 +1279,13 @@ input MembershipFilter {
 enum MembershipFilterField {
   created
   label
+  invitedTime
   recipientIsMe
   parent
   id
   privilege
   recipientType
   updated
-  invitedTime
 }
 
 type MembershipListResults {
@@ -1325,6 +1335,7 @@ type MembershipsForMeInParentResults {
 }
 
 enum MembershipsForMeOrderBy {
+  invitedTime
   created
   label
 }
@@ -1375,13 +1386,13 @@ input MembershipSort {
 enum MembershipSortField {
   created
   label
+  invitedTime
   recipientIsMe
   parent
   id
   privilege
   recipientType
   updated
-  invitedTime
 }
 
 type Message {
@@ -1476,6 +1487,12 @@ type MultiplyByTwoResult {
   result: Int!
 }
 
+type MutationStatusResult {
+  isUpsynced: Boolean!
+  isRoundtripped: Boolean!
+  error: Error
+}
+
 enum NapMigrationStateType {
   UNKNOWN
   LEGACY
@@ -1541,7 +1558,7 @@ type Note {
   workspace: String
   stack: String
   inBusinessAccount: Boolean!
-  hasTask: Boolean!
+  hasTaskGroup: Boolean!
   childAttachments(isActive: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): NoteChildAttachmentsResults!
   allMemberships(orderBy: NoteAllMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NoteAllMembershipsResults!
   ownMemberships(orderBy: NoteOwnMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NoteOwnMembershipsResults!
@@ -2066,6 +2083,7 @@ type NoteContentInfo {
   created: Float!
   updated: Float!
   parent: Note
+  hasTaskGroup: Boolean!
 }
 
 type NoteContentInfoAllResultFields {
@@ -2073,6 +2091,7 @@ type NoteContentInfoAllResultFields {
   type: String!
   unindexed: NoteContentInfo!
   parent: Note!
+  hasTaskGroup: Boolean!
 }
 
 type NoteContentInfoAllResults {
@@ -2095,6 +2114,7 @@ input NoteContentInfoFilter {
 
 enum NoteContentInfoFilterField {
   parent
+  hasTaskGroup
   id
   taskGroupNoteLevelIDs
   sourceOfChange
@@ -2120,6 +2140,7 @@ input NoteContentInfoSort {
 
 enum NoteContentInfoSortField {
   parent
+  hasTaskGroup
   id
   taskGroupNoteLevelIDs
   sourceOfChange
@@ -2169,7 +2190,7 @@ enum NoteFilterField {
   workspace
   stack
   inBusinessAccount
-  hasTask
+  hasTaskGroup
   id
   isMetadata
   isUntitled
@@ -2285,6 +2306,7 @@ type NoteSetContentMutatorRes {
   result: String!
   editSequenceNumber: Int
   success: Boolean!
+  mutationID: String!
 }
 
 enum NotesInParentOrderBy {
@@ -2434,7 +2456,7 @@ enum NoteSortField {
   workspace
   stack
   inBusinessAccount
-  hasTask
+  hasTaskGroup
   id
   isMetadata
   isUntitled
@@ -2546,8 +2568,11 @@ type NsvcAuthzToken {
 type NSyncStatusResult {
   enabled: Boolean!
   offline: Boolean!
+  paused: Boolean!
+  completed: Boolean!
   nextAttempt: Float!
   lastConnection: Float!
+  lastNSyncProcessTime: Float!
 }
 
 input PageInfo {
@@ -2602,7 +2627,7 @@ type Profile {
   relatedIdentitiesCount: Int!
   parent: Profile
   isRootProfile: Boolean!
-  TasksByAssignee(reverseOrder: Boolean, pageInfo: PageInfo): ProfileTasksByAssigneeResults!
+  TasksByAssignee(inTrash: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): ProfileTasksByAssigneeResults!
 }
 
 input ProfileFilter {
@@ -2947,9 +2972,10 @@ type RootMutationType {
   SyncMessages(guid: String, knownMessages: [String!], locale: String, commEngineJsVersion: Int, nativeClientVersion: Int, uiLanguage: String, supportedPlacements: [SupportedPlacement!], events: [CommEvent!], clientType: CommEngineClientType): CommEngineResponseSchema!
   attachmentSetApplicationDataEntry(id: String!, key: String!, value: String): AutoMutatorRes!
   attachmentSetFileName(attachmentID: String!, fileName: String!): AutoMutatorRes!
-  boardBootstrap(parent: EntityRef, resetLayout: Boolean, platform: BoardFormFactor, features: BoardBootstrapFeatureArgs): BoardBootstrapResult
-  boardCreateHome(serviceLevel: BoardServiceLevels!, resetLayout: Boolean, platform: BoardFormFactor, features: [String!], featureVersions: [Float!]): AutoMutatorRes!
+  boardBootstrap(parent: EntityRef, resetLayout: Boolean, platform: BoardFormFactor, clientLayoutVersion: Int, clearContentOnReset: Boolean, features: BoardBootstrapFeatureArgs): BoardBootstrapResult
+  boardCreateHome(serviceLevel: BoardServiceLevels!, resetLayout: Boolean, platform: BoardFormFactor, features: [String!], featureVersions: [Float!], clientLayoutVersion: Int, clearContentOnReset: Boolean): AutoMutatorRes!
   boardCustomize(boardMutations: BoardCustomizeParams, widgetMutations: [WidgetCustomizeParams!]): GenericMutationResult!
+  boardCustomizeVerII(boardMutations: BoardCustomizeParams, widgetMutations: [WidgetCustomizeVerIIParams!]): GenericMutationResult!
   boardDeleteHeaderBG(board: String!): AutoMutatorRes!
   boardDeletePreviousHeaderBG(board: String!): AutoMutatorRes!
   boardHeaderCustomize(board: String!, fields: BoardHeaderFields): AutoMutatorRes!
@@ -2958,7 +2984,6 @@ type RootMutationType {
   calendarEventLink(noteID: String!, eventID: String!): AutoMutatorRes!
   calendarEventUnlink(eventID: String!, noteID: String!): AutoMutatorRes!
   calendarSettingsUpsert(useTemplateForNewNotes: Boolean!, mobileOpenNoteMinutes: CalendarNotificationOptions!, mobileCreateNoteMinutes: CalendarNotificationOptions!, desktopOpenNoteMinutes: CalendarNotificationOptions!, desktopCreateNoteMinutes: CalendarNotificationOptions!): AutoMutatorRes!
-  calendarUserCalendarSettingsUpdate(userCalendarSettingsId: String!, isActive: Boolean!): AutoMutatorRes!
   clearNSyncBackoff: Boolean!
   clientLogin(serviceHost: String!, externalServiceHost: String, email: String!, password: String, allowFacadeAsPersonal: Boolean): LoginResult!
   clientLoginWithCookies(serviceHost: String!, userSlot: Int): LoginResult!
@@ -3095,6 +3120,7 @@ type RootMutationType {
   threadValidateRecipients(participants: [String!], emails: [String!]): AutoMutatorRes!
   twoFactorAuthSendCode(serviceHost: String!, token: String!, sendToBackupPhone: Boolean!, textMsgTemplate: String!, useVoice: Boolean!): String!
   userAssociateWithOpenID(provider: ServiceProvider!, tokenPayload: String!): GenericMutationResult!
+  userCalendarSettingsUpdate(userCalendarSettingsId: String!, isActive: Boolean!): AutoMutatorRes!
   userSetReminderSetting(setting: UserReminderEmailConfig!): AutoMutatorRes!
   userSettingsClear(userID: String): GenericMutationResult!
   userSettingsRemove(key: String!, userID: String): GenericMutationResult!
@@ -3105,7 +3131,9 @@ type RootMutationType {
   verifyAndroidPostPurchase(developerPayload: String!, offer: String!, sku: String!, signedData: String!, signature: String!): String
   verifyApplePostPurchase(currency: String!, offer: String!, price: String!, productId: String!, receiptData: String!, transactionId: String!, layout: String, extend: Boolean, receiptOnly: String, transactionState: String, verifyReceiptOnly: String, version: Int): String
   widgetCustomize(widget: String!, isEnabled: Boolean, desktopSortWeight: String, desktopWidth: Float, mobileSortWeight: String, noteToUnpin: String, noteToPin: String, mutableWidgetType: BoardMutableWidgetTypes, filteredNotesQueryString: String, label: String, lightBGColor: String, darkBGColor: String): AutoMutatorRes!
+  widgetCustomizeVerII(widget: String!, associations: WidgetCustomizeAssociationsInput, fields: WidgetCustomizeFieldsInput): AutoMutatorRes!
   widgetDelete(widget: String!): AutoMutatorRes!
+  widgetFeatureTrialEnable(widget: String!): AutoMutatorRes!
   widgetResolveConflict(conflict: String!, conflictHash: String!): AutoMutatorRes!
   widgetRestore(widget: String!): AutoMutatorRes!
   widgetScratchPadSetContent(widget: String!, scratchPadContent: String!, previousContentHash: String): AutoMutatorRes!
@@ -3155,6 +3183,7 @@ type RootQueryType {
   MembershipsInParent(parent: EntityRef!, orderBy: MembershipsInParentOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): MembershipsInParentResults!
   Message(id: String!): Message
   MessagesInThread(thread: String!, reverseOrder: Boolean, pageInfo: PageInfo): MessagesInThreadResults!
+  MutationStatus(mutationID: String!): MutationStatusResult!
   Note(id: String!): Note
   NoteConflicts(note: String!, inTrash: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): NoteConflictsResults!
   NoteContentInfo(id: String!): NoteContentInfo
@@ -3191,7 +3220,7 @@ type RootQueryType {
   ScheduledNotifications(reverseOrder: Boolean, pageInfo: PageInfo): ScheduledNotificationsResults!
   Search(searchStr: String, offset: Int, maxNotes: Int, order: Int): SearchSchema
   SearchEx(query: SearchExQuery, queryContext: SearchExQueryContext, param: SearchExParam!, custom: SearchExCustom): SearchExSchema
-  SharedWithMe(sort: SharedWithMeSort): SharedWithMeResult
+  SharedWithMe(membershipSort: SharedWithMeMembershipSort, invitationsSort: SharedWithMeInvitationsSort): SharedWithMeResult
   Shortcut(id: String!): Shortcut
   Shortcuts(reverseOrder: Boolean, pageInfo: PageInfo): ShortcutsResults!
 
@@ -3208,7 +3237,7 @@ type RootQueryType {
   Task(id: String!): Task
   TaskNotesNotInTrash(orderBy: TaskNotesNotInTrashOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TaskNotesNotInTrashResults!
   TaskUserSettings(id: String!): TaskUserSettings
-  TasksByAssignee(assignee: String!, reverseOrder: Boolean, pageInfo: PageInfo): TasksByAssigneeResults!
+  TasksByAssignee(assignee: String!, inTrash: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): TasksByAssigneeResults!
   TasksInNote(parent: String!, status: TaskStatus, reverseOrder: Boolean, pageInfo: PageInfo): TasksInNoteResults!
   Thread(id: String!): Thread
   Threads(reverseOrder: Boolean, pageInfo: PageInfo): ThreadsResults!
@@ -3241,7 +3270,6 @@ type RootQueryType {
   currentUserID: String
   debugNode(id: String!, type: String!): DebugNodeSchema
   debugSyncContext(syncContext: String!): DebugSyncContextSchema
-  errorGet(id: String!): Error
   errorGetList(markedValue: Boolean): [Error!]!
   evernoteNoteLink(note: String!): String!
   getBillableProducts(clientPlatform: ClientPlatform!, forceFetch: Boolean): String
@@ -3403,7 +3431,7 @@ type ScheduledNotificationPayload {
   calendarEventId: String!
   notificationTime: Float!
   clientType: String!
-  title: String!
+  title: String
   startTime: Float!
   endTime: Float!
   location: String
@@ -3618,19 +3646,30 @@ enum ServiceProvider {
   FACEBOOK
 }
 
-enum SharedWithMeField {
+enum SharedWithMeInvitationsField {
   created
   label
+}
+
+input SharedWithMeInvitationsSort {
+  field: SharedWithMeInvitationsField!
+  order: IndexOrderType!
+}
+
+enum SharedWithMeMembershipField {
+  invitedTime
+  created
+  label
+}
+
+input SharedWithMeMembershipSort {
+  field: SharedWithMeMembershipField!
+  order: IndexOrderType!
 }
 
 type SharedWithMeResult {
   memberships: [Membership!]
   invitations: [Invitation!]
-}
-
-input SharedWithMeSort {
-  field: SharedWithMeField
-  order: IndexOrderType
 }
 
 type Shortcut {
@@ -4067,6 +4106,7 @@ type Task {
   assigneeEmail: String
   created: Float!
   updated: Float!
+  deleted: Float
   memberships: [Membership!]!
   membershipsCount: Int!
   reminders: [Reminder!]!
@@ -4076,6 +4116,7 @@ type Task {
   assignee: Profile
   assignedBy: Profile
   parent: Note
+  inTrash: Boolean!
   allMemberships(orderBy: TaskAllMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TaskAllMembershipsResults!
   ownMemberships(orderBy: TaskOwnMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TaskOwnMembershipsResults!
 }
@@ -4119,6 +4160,7 @@ enum TaskFilterField {
   sortWeight
   status
   taskGroupNoteLevelID
+  inTrash
   id
   dueDate
   dueDateUIOption
@@ -4131,6 +4173,7 @@ enum TaskFilterField {
   assigneeEmail
   created
   updated
+  deleted
 }
 
 type TaskGroupCreateDefaultTaskNoteUpsertResult {
@@ -4168,6 +4211,8 @@ input TaskInput {
   sortWeight: String!
   inNote: Boolean
   reminders: [ReminderInput!]!
+  assigneeID: String
+  assigneeEmail: String
 }
 
 type TaskListResults {
@@ -4288,6 +4333,7 @@ enum TaskSortField {
   sortWeight
   status
   taskGroupNoteLevelID
+  inTrash
   id
   dueDate
   dueDateUIOption
@@ -4300,6 +4346,7 @@ enum TaskSortField {
   assigneeEmail
   created
   updated
+  deleted
 }
 
 enum TaskStatus {
@@ -4774,6 +4821,30 @@ type WidgetContentConflictsResults {
   list: [WidgetContentConflictsResultFields!]!
 }
 
+input WidgetCustomizeAssociationsInput {
+  noteToUnpin: String
+  noteToPin: String
+}
+
+input WidgetCustomizeFieldsInput {
+  label: String
+  isEnabled: Boolean
+  mutableWidgetType: BoardMutableWidgetTypes
+  filteredNotesQuery: FilteredNotesQueryInput
+  backgroundColor: BoardColorSchemeInput
+  desktop: WidgetCustomizeFieldsInputDesktop
+  mobile: WidgetCustomizeFieldsInputMobile
+}
+
+input WidgetCustomizeFieldsInputDesktop {
+  width: Float
+  sortWeight: String
+}
+
+input WidgetCustomizeFieldsInputMobile {
+  sortWeight: String
+}
+
 input WidgetCustomizeParams {
   widget: String!
   desktopSortWeight: String
@@ -4787,6 +4858,12 @@ input WidgetCustomizeParams {
   label: String
   lightBGColor: String
   darkBGColor: String
+}
+
+input WidgetCustomizeVerIIParams {
+  widget: String!
+  associations: WidgetCustomizeAssociationsInput
+  fields: WidgetCustomizeFieldsInput
 }
 
 input WidgetFilter {
@@ -4831,6 +4908,12 @@ enum WidgetFilterField {
   backgroundColor_light
   backgroundColor_dark
   filteredNotesQuery_query
+  filteredNotesQuery_resultSpec_type
+  filteredNotesQuery_resultSpec_textSearchField
+  filteredNotesQuery_resultSpec_sort
+  filteredNotesQuery_resultSpec_ascending
+  filteredNotesQuery_resultSpec_startIndex
+  filteredNotesQuery_resultSpec_maxResults
   updated
   label
 }
@@ -4854,6 +4937,43 @@ type WidgetListResults {
 
 type WidgetSearchQuery {
   query: String!
+  resultSpec: WidgetSearchResultSpec!
+}
+
+type WidgetSearchResultSpec {
+  type: WidgetSearchTypes!
+  textSearchField: WidgetSearchTextFields
+  sort: WidgetSortFields
+  ascending: Boolean
+  startIndex: Int
+  maxResults: Int
+}
+
+input WidgetSearchResultSpecInput {
+  type: WidgetSearchTypes!
+  textSearchField: WidgetSearchTextFields
+  sort: WidgetSortFields
+  ascending: Boolean
+  startIndex: Int
+  maxResults: Int
+}
+
+enum WidgetSearchTextFields {
+  ALL
+  NAME
+}
+
+enum WidgetSearchTypes {
+  HISTORY
+  TEXT
+  NOTE
+  NOTEBOOK
+  WORKSPACE
+  TAG
+  AUTHOR
+  CONTAINS
+  MESSAGE
+  STACK
 }
 
 enum WidgetsInBoardPlatform {
@@ -4922,8 +5042,24 @@ enum WidgetSortField {
   backgroundColor_light
   backgroundColor_dark
   filteredNotesQuery_query
+  filteredNotesQuery_resultSpec_type
+  filteredNotesQuery_resultSpec_textSearchField
+  filteredNotesQuery_resultSpec_sort
+  filteredNotesQuery_resultSpec_ascending
+  filteredNotesQuery_resultSpec_startIndex
+  filteredNotesQuery_resultSpec_maxResults
   updated
   label
+}
+
+enum WidgetSortFields {
+  TITLE
+  CREATED
+  UPDATED
+  RELEVANCE
+  REMINDER_ORDER
+  REMINDER_TIME
+  REMINDER_DONE_TIME
 }
 
 enum WidgetTabs {

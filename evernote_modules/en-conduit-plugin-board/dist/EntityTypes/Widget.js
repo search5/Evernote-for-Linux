@@ -66,7 +66,15 @@ const createWidgetIndexConfig = (di) => {
             created: conduit_storage_1.getIndexByResolverForPrimitives(exports.widgetTypeDef, ['NodeFields', 'created']),
             widgetType: conduit_storage_1.getIndexByResolverForPrimitives(exports.widgetTypeDef, ['NodeFields', 'widgetType']),
             isEnabled: conduit_storage_1.getIndexByResolverForPrimitives(exports.widgetTypeDef, ['NodeFields', 'isEnabled']),
-            selectedTab: conduit_storage_1.getIndexByResolverForPrimitives(exports.widgetTypeDef, ['NodeFields', 'selectedTab']),
+            selectedTab: {
+                schemaType: conduit_utils_1.Nullable(en_home_data_model_1.WidgetSelectedTabsSchema),
+                resolver: async (trc, node, _) => {
+                    const { widgetType, selectedTab, } = node.NodeFields;
+                    return [Utilities.safeSelectedTab(selectedTab, widgetType)];
+                },
+                graphqlPath: ['selectedTab'],
+                isUnSyncedField: true,
+            },
             mutableWidgetType: {
                 schemaType: conduit_utils_1.Nullable(en_home_data_model_1.MutableWidgetTypeSchema),
                 resolver: async (trc, node, _) => {

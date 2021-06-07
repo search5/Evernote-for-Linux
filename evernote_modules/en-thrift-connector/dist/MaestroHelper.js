@@ -5,6 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.toUserClientInfo = void 0;
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
 var ConvertedBool;
@@ -79,7 +80,7 @@ function toUserClientInfo({ clientType, host, platform, user, }) {
         is_account_created_before_2020_06_01: isAccountCreatedBefore(created, '2020-06-01'),
         is_basic_account: serviceLevelV2 === en_data_model_1.ServiceLevelV2.FREE,
         is_business_only_account: serviceLevelV2 === en_data_model_1.ServiceLevelV2.TEAMS,
-        is_business_admin: businessUserRole === en_core_entity_types_1.BusinessUserRole.ADMIN,
+        is_business_admin: businessUserRole === en_conduit_sync_types_1.BusinessUserRole.ADMIN,
         language: getLanguage(languageCode),
         language_code: getLanguageCode(languageCode),
         platform,

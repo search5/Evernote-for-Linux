@@ -6,13 +6,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.membershipDelete = exports.membershipUpdatePrivilege = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const EntityConstants_1 = require("../EntityConstants");
-const MembershipPrivilege_1 = require("../MembershipPrivilege");
 exports.membershipUpdatePrivilege = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
     params: {
         membership: 'ID',
-        privilege: MembershipPrivilege_1.MembershipPrivilegeSchema,
+        privilege: en_conduit_sync_types_1.MembershipPrivilegeSchema,
     },
     execute: async (trc, ctx, params) => {
         const membershipRef = { id: params.membership, type: EntityConstants_1.CoreEntityTypes.Membership };

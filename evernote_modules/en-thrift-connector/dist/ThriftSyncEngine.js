@@ -112,12 +112,6 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
         this.vaultUserId = conduit_utils_1.NullUserID;
         this.businessId = null;
         this.isDestroyed = false;
-        this.addError = async (trc, error, mutation, nodeRef) => {
-            if (!this.di) {
-                throw new Error('no addError function');
-            }
-            await this.di.addError(trc, error, mutation, nodeRef);
-        };
         this.syncManager = new SyncManager_1.SyncManager(di, thriftComm, this);
     }
     async destructor(trc) {

@@ -51,7 +51,7 @@ exports.profileTypeDef = {
 exports.profileIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.profileTypeDef, {
     indexResolvers: {
         label: conduit_storage_1.getIndexByResolverForPrimitives(exports.profileTypeDef, ['label']),
-        username: conduit_storage_1.getIndexByResolverForPrimitives(exports.profileTypeDef, ['NodeFields', 'username'], true),
+        username: conduit_storage_1.getIndexByResolverForPrimitives(exports.profileTypeDef, ['NodeFields', 'username'], { useLocaleCompare: true }),
         isSameBusiness: conduit_storage_1.getIndexByResolverForPrimitives(exports.profileTypeDef, ['NodeFields', 'isSameBusiness']),
         isRootProfile: {
             schemaType: 'boolean',

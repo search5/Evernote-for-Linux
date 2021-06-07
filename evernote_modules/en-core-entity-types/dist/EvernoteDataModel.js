@@ -25,10 +25,11 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getNSyncEntityFilter = exports.CoreMutationRules = exports.CoreMutatorDefs = exports.CoreEntityTypeDefs = exports.NoteConflictLogger = exports.WorkspaceTypeSchema = exports.WorkspaceType = exports.WorkspaceLayoutStyleSchema = exports.WorkspaceLayoutStyle = exports.WorkspaceAccessStatusSchema = exports.WorkspaceAccessStatus = exports.PinnedContentTypeEnum = exports.pinnedContentDef = exports.isWorkspace = exports.UserReminderEmailConfig = exports.ServiceLevelSchema = exports.ServiceLevel = exports.PrivilegeLevel = exports.PremiumOrderStatus = exports.BusinessUserRole = exports.ProfileStatusEnum = exports.PROFILE_SOURCE = exports.isNotebook = exports.isNote = exports.DEFAULT_NOTE_CONTENT = exports.MembershipRecipientType = exports.InvitationType = void 0;
+exports.getNSyncEntityFilter = exports.CoreMutationRules = exports.CoreMutatorDefs = exports.CoreEntityTypeDefs = exports.NoteConflictLogger = exports.WorkspaceLayoutStyleSchema = exports.WorkspaceLayoutStyle = exports.WorkspaceAccessStatusSchema = exports.WorkspaceAccessStatus = exports.PinnedContentTypeEnum = exports.pinnedContentDef = exports.isWorkspace = exports.UserReminderEmailConfig = exports.PremiumOrderStatus = exports.ProfileStatusEnum = exports.PROFILE_SOURCE = exports.isNotebook = exports.isNote = exports.DEFAULT_NOTE_CONTENT = exports.InvitationType = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const ProfileDataResolver_1 = require("./DataResolvers/ProfileDataResolver");
+const UserDataResolver_1 = require("./DataResolvers/UserDataResolver");
 const EntityConstants_1 = require("./EntityConstants");
 const AttachmentMutators = __importStar(require("./Mutators/AttachmentMutators"));
 const FileUploadMutators = __importStar(require("./Mutators/FileUploadMutators"));
@@ -70,8 +71,6 @@ __exportStar(require("./EntityConstants"), exports);
 __exportStar(require("./NodeTypes/Blob"), exports);
 var Invitation_2 = require("./NodeTypes/Invitation");
 Object.defineProperty(exports, "InvitationType", { enumerable: true, get: function () { return Invitation_2.InvitationType; } });
-var Membership_2 = require("./NodeTypes/Membership");
-Object.defineProperty(exports, "MembershipRecipientType", { enumerable: true, get: function () { return Membership_2.MembershipRecipientType; } });
 var Note_2 = require("./NodeTypes/Note");
 Object.defineProperty(exports, "DEFAULT_NOTE_CONTENT", { enumerable: true, get: function () { return Note_2.DEFAULT_NOTE_CONTENT; } });
 Object.defineProperty(exports, "isNote", { enumerable: true, get: function () { return Note_2.isNote; } });
@@ -81,11 +80,7 @@ var Profile_2 = require("./NodeTypes/Profile");
 Object.defineProperty(exports, "PROFILE_SOURCE", { enumerable: true, get: function () { return Profile_2.PROFILE_SOURCE; } });
 Object.defineProperty(exports, "ProfileStatusEnum", { enumerable: true, get: function () { return Profile_2.ProfileStatusEnum; } });
 var User_2 = require("./NodeTypes/User");
-Object.defineProperty(exports, "BusinessUserRole", { enumerable: true, get: function () { return User_2.BusinessUserRole; } });
 Object.defineProperty(exports, "PremiumOrderStatus", { enumerable: true, get: function () { return User_2.PremiumOrderStatus; } });
-Object.defineProperty(exports, "PrivilegeLevel", { enumerable: true, get: function () { return User_2.PrivilegeLevel; } });
-Object.defineProperty(exports, "ServiceLevel", { enumerable: true, get: function () { return User_2.ServiceLevel; } });
-Object.defineProperty(exports, "ServiceLevelSchema", { enumerable: true, get: function () { return User_2.ServiceLevelSchema; } });
 Object.defineProperty(exports, "UserReminderEmailConfig", { enumerable: true, get: function () { return User_2.UserReminderEmailConfig; } });
 var Workspace_2 = require("./NodeTypes/Workspace");
 Object.defineProperty(exports, "isWorkspace", { enumerable: true, get: function () { return Workspace_2.isWorkspace; } });
@@ -95,8 +90,6 @@ Object.defineProperty(exports, "WorkspaceAccessStatus", { enumerable: true, get:
 Object.defineProperty(exports, "WorkspaceAccessStatusSchema", { enumerable: true, get: function () { return Workspace_2.WorkspaceAccessStatusSchema; } });
 Object.defineProperty(exports, "WorkspaceLayoutStyle", { enumerable: true, get: function () { return Workspace_2.WorkspaceLayoutStyle; } });
 Object.defineProperty(exports, "WorkspaceLayoutStyleSchema", { enumerable: true, get: function () { return Workspace_2.WorkspaceLayoutStyleSchema; } });
-Object.defineProperty(exports, "WorkspaceType", { enumerable: true, get: function () { return Workspace_2.WorkspaceType; } });
-Object.defineProperty(exports, "WorkspaceTypeSchema", { enumerable: true, get: function () { return Workspace_2.WorkspaceTypeSchema; } });
 exports.NoteConflictLogger = new conduit_utils_1.MemLogger(10, 100);
 exports.CoreEntityTypeDefs = {
     [EntityConstants_1.CoreEntityTypes.AccountLimits]: {
@@ -164,6 +157,7 @@ exports.CoreEntityTypeDefs = {
     },
     [EntityConstants_1.CoreEntityTypes.User]: {
         typeDef: User_1.userTypeDef,
+        dataResolver: UserDataResolver_1.UserDataResolver,
     },
     [EntityConstants_1.CoreEntityTypes.Workspace]: {
         typeDef: Workspace_1.workspaceTypeDef,

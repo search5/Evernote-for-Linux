@@ -3,38 +3,11 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userTypeDef = exports.UserReminderEmailConfigSchema = exports.UserReminderEmailConfig = exports.PremiumOrderStatusSchema = exports.PremiumOrderStatus = exports.BusinessUserRole = exports.ServiceLevelV2Schema = exports.ServiceLevelV2 = exports.ServiceLevelSchema = exports.ServiceLevel = exports.PrivilegeLevelSchema = exports.PrivilegeLevel = void 0;
+exports.userTypeDef = exports.UserReminderEmailConfigSchema = exports.UserReminderEmailConfig = exports.PremiumOrderStatusSchema = exports.PremiumOrderStatus = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
-const en_data_model_1 = require("en-data-model");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const EntityConstants_1 = require("../EntityConstants");
-var PrivilegeLevel;
-(function (PrivilegeLevel) {
-    PrivilegeLevel["NORMAL"] = "NORMAL";
-    PrivilegeLevel["PREMIUM"] = "PREMIUM";
-    PrivilegeLevel["VIP"] = "VIP";
-    PrivilegeLevel["MANAGER"] = "MANAGER";
-    PrivilegeLevel["SUPPORT"] = "SUPPORT";
-    PrivilegeLevel["ADMIN"] = "ADMIN";
-})(PrivilegeLevel = exports.PrivilegeLevel || (exports.PrivilegeLevel = {}));
-exports.PrivilegeLevelSchema = conduit_utils_1.Enum(PrivilegeLevel, 'UserPrivilegeLevel');
-var ServiceLevel;
-(function (ServiceLevel) {
-    ServiceLevel["BASIC"] = "BASIC";
-    ServiceLevel["PLUS"] = "PLUS";
-    ServiceLevel["PREMIUM"] = "PREMIUM";
-    ServiceLevel["BUSINESS"] = "BUSINESS";
-})(ServiceLevel = exports.ServiceLevel || (exports.ServiceLevel = {}));
-exports.ServiceLevelSchema = conduit_utils_1.Enum(ServiceLevel, 'UserServiceLevel');
-var en_data_model_2 = require("en-data-model");
-Object.defineProperty(exports, "ServiceLevelV2", { enumerable: true, get: function () { return en_data_model_2.ServiceLevelV2; } });
-exports.ServiceLevelV2Schema = conduit_utils_1.Enum(en_data_model_1.ServiceLevelV2, 'UserServiceLevelV2');
-var BusinessUserRole;
-(function (BusinessUserRole) {
-    BusinessUserRole["ADMIN"] = "ADMIN";
-    BusinessUserRole["NORMAL"] = "NORMAL";
-})(BusinessUserRole = exports.BusinessUserRole || (exports.BusinessUserRole = {}));
-const BusinessUserRoleSchema = conduit_utils_1.Enum(BusinessUserRole, 'BusinessUserRole');
 var PremiumOrderStatus;
 (function (PremiumOrderStatus) {
     PremiumOrderStatus["NONE"] = "NONE";
@@ -61,16 +34,16 @@ exports.userTypeDef = {
         email: 'string',
         name: conduit_utils_1.NullableString,
         timezone: conduit_utils_1.NullableString,
-        privilege: exports.PrivilegeLevelSchema,
-        serviceLevel: exports.ServiceLevelSchema,
-        serviceLevelV2: exports.ServiceLevelV2Schema,
+        privilege: en_conduit_sync_types_1.PrivilegeLevelSchema,
+        serviceLevel: en_conduit_sync_types_1.ServiceLevelSchema,
+        serviceLevelV2: en_conduit_sync_types_1.ServiceLevelV2Schema,
         created: 'timestamp',
         updated: 'timestamp',
         deleted: conduit_utils_1.NullableTimestamp,
         active: 'boolean',
         photoUrl: 'url',
         photoLastUpdated: conduit_utils_1.NullableTimestamp,
-        businessUserRole: BusinessUserRoleSchema,
+        businessUserRole: en_conduit_sync_types_1.BusinessUserRoleSchema,
         businessName: conduit_utils_1.NullableString,
         Accounting: conduit_utils_1.Struct({
             uploadLimit: conduit_utils_1.NullableNumber,
@@ -93,7 +66,7 @@ exports.userTypeDef = {
             unitPrice: conduit_utils_1.NullableNumber,
             businessId: conduit_utils_1.NullableNumber,
             businessName: conduit_utils_1.NullableString,
-            businessRole: conduit_utils_1.Nullable(BusinessUserRoleSchema),
+            businessRole: conduit_utils_1.Nullable(en_conduit_sync_types_1.BusinessUserRoleSchema),
             unitDiscount: conduit_utils_1.NullableNumber,
             nextChargeDate: conduit_utils_1.NullableNumber,
             availablePoints: conduit_utils_1.NullableNumber,

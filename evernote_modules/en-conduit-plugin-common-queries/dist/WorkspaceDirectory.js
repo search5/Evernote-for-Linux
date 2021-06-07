@@ -11,8 +11,7 @@ const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_thrift_connector_1 = require("en-thrift-connector");
 const graphql_1 = require("graphql");
-const gWorkspaceListFetch = {};
-const gWorkspaceListResult = {};
+const gWorkspaceListData = {};
 const WORKSPACE_DIRECTORY_FETCH_INTERVAL = 15000;
 function convertSortToService(sort) {
     if (!sort) {
@@ -54,7 +53,7 @@ async function getAuthDataForSyncContext(context, syncContext) {
     }
     return en_thrift_connector_1.decodeAuthData(metadata.authToken);
 }
-async function fetchAndCacheWorkspaceDirectory(thriftComm, context, userID, params) {
+async function fetchWorkspaceDirectory(thriftComm, context, userID, params) {
     var _a, _b;
     conduit_core_1.validateDB(context);
     const personalAuth = await getAuthDataForSyncContext(context, conduit_core_1.PERSONAL_USER_CONTEXT);
@@ -97,25 +96,19 @@ async function fetchAndCacheWorkspaceDirectory(thriftComm, context, userID, para
         }
         return workspace;
     });
-    const resolvedWorkspaces = await conduit_utils_1.allSettled(workspaces.map(e => conduit_core_1.resolveNode(e, context)));
-    gWorkspaceListResult[userID] = {
-        serviceParams: params,
-        workspaces: resolvedWorkspaces,
-    };
+    return await conduit_utils_1.allSettled(workspaces.map(e => conduit_core_1.resolveNode(e, context)));
 }
-function filterWorkspaces(workspaces, filters) {
+function filterWorkspaces(workspaces, filters, limit) {
     if (!filters.length) {
-        return workspaces;
+        return workspaces; // without slice because workspaces already limited by including limit in thrift call.
     }
     const labelFilterIdx = filters.findIndex(e => e.field === 'label');
     const descriptionFilterIdx = filters.findIndex(e => e.field === 'description');
-    return workspaces.filter(e => {
+    const filteredWorkspaces = workspaces.filter(e => {
         return labelFilterIdx >= 0 && (filters[labelFilterIdx].search === '' || e.label.search(new RegExp(filters[labelFilterIdx].search, 'i')) !== -1) ||
             descriptionFilterIdx >= 0 && (filters[descriptionFilterIdx].search === '' || e.description.search(new RegExp(filters[descriptionFilterIdx].search, 'i')) !== -1);
     });
-}
-function checkIfParamsChanged(userID, params) {
-    return !gWorkspaceListResult[userID] || !conduit_utils_1.isEqual(gWorkspaceListResult[userID].serviceParams, params);
+    return limit ? filteredWorkspaces.slice(0, limit) : filteredWorkspaces;
 }
 async function getList(thriftComm, context, filters, params) {
     const limit = params.limit;
@@ -129,30 +122,47 @@ async function getList(thriftComm, context, filters, params) {
     if (conduit_utils_1.isNullish(userID)) {
         throw new Error(`Not authorized`);
     }
-    if (gWorkspaceListFetch.hasOwnProperty(userID) &&
-        (gWorkspaceListFetch[userID].promise || gWorkspaceListFetch[userID].lastFetch < Date.now() - WORKSPACE_DIRECTORY_FETCH_INTERVAL)) {
-        if (!gWorkspaceListFetch[userID].promise || checkIfParamsChanged(userID, serviceParams)) {
-            gWorkspaceListFetch[userID].promise = fetchAndCacheWorkspaceDirectory(thriftComm, context, userID, serviceParams);
+    try {
+        const sameParams = gWorkspaceListData.hasOwnProperty(userID) && conduit_utils_1.isEqual(gWorkspaceListData[userID].serviceParams, params);
+        const cacheStale = !gWorkspaceListData.hasOwnProperty(userID) // first request - no cache
+            || gWorkspaceListData[userID].expiration < Date.now() // cache expired
+            || !sameParams; // params changed
+        const fetchInProgress = gWorkspaceListData.hasOwnProperty(userID) && gWorkspaceListData[userID].pendingPromise;
+        if (!cacheStale && !fetchInProgress) {
+            conduit_utils_1.traceTestCounts(context.trc, { 'WorkspaceDirectory.CacheHit': 1 });
+            return filterWorkspaces(gWorkspaceListData[userID].workspaces, filters, limit);
         }
-        await gWorkspaceListFetch[userID].promise;
-        gWorkspaceListFetch[userID].lastFetch = Date.now();
-        gWorkspaceListFetch[userID].promise = null;
-    }
-    else {
-        const fetch = {
-            lastFetch: -1,
-            promise: fetchAndCacheWorkspaceDirectory(thriftComm, context, userID, serviceParams),
+        if (fetchInProgress && sameParams) {
+            // correct fetch is in progress
+            const workspacesList = await gWorkspaceListData[userID].pendingPromise;
+            conduit_utils_1.traceTestCounts(context.trc, { 'WorkspaceDirectory.CacheHit': 1 });
+            return filterWorkspaces(workspacesList, filters, limit);
+        }
+        conduit_utils_1.traceTestCounts(context.trc, { 'WorkspaceDirectory.CacheMiss': 1 });
+        const pendingPromise = fetchWorkspaceDirectory(thriftComm, context, userID, serviceParams);
+        gWorkspaceListData[userID] = {
+            pendingPromise,
+            workspaces: [],
+            serviceParams,
+            expiration: Date.now() + WORKSPACE_DIRECTORY_FETCH_INTERVAL,
         };
-        gWorkspaceListFetch[userID] = fetch;
-        await gWorkspaceListFetch[userID].promise;
-        gWorkspaceListFetch[userID].lastFetch = Date.now();
-        gWorkspaceListFetch[userID].promise = null;
+        const workspaces = await pendingPromise;
+        if (conduit_utils_1.isEqual(gWorkspaceListData[userID].serviceParams, params)) { // no other requests come after we've started await
+            gWorkspaceListData[userID].workspaces = workspaces;
+            gWorkspaceListData[userID].pendingPromise = null;
+            gWorkspaceListData[userID].expiration = Date.now() + WORKSPACE_DIRECTORY_FETCH_INTERVAL;
+        }
+        return filterWorkspaces(workspaces, filters, limit);
     }
-    if (!gWorkspaceListResult.hasOwnProperty(userID)) {
-        throw new Error(`Unable to fetch workspace list`);
+    catch (error) {
+        if (gWorkspaceListData.hasOwnProperty(userID)) {
+            if (conduit_utils_1.isEqual(gWorkspaceListData[userID].serviceParams, params)) { // no other requests come after we've started
+                gWorkspaceListData[userID].pendingPromise = null;
+                gWorkspaceListData[userID].expiration = -1; // to indicate that we need to refetch for sure
+            }
+        }
+        throw error;
     }
-    const filteredWorkspaces = filterWorkspaces(gWorkspaceListResult[userID].workspaces, filters);
-    return limit && filters.length ? filteredWorkspaces.slice(0, limit) : filteredWorkspaces;
 }
 async function resolveWorkspaceDirectory(parent, args, context) {
     conduit_core_1.validateDB(context);

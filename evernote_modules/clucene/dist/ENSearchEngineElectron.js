@@ -3,7 +3,7 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-const ENElectronClucene_1 = require("./ENElectronClucene");
+// import { ENSearchEngineLogger } from 'en-search-engine-shared';
 const en_search_engine_shared_1 = require("en-search-engine-shared");
 exports.defaultQueryWithParams = {
     filterString: '',
@@ -14,8 +14,8 @@ exports.defaultQueryWithParams = {
     size: -1
 };
 class ENSearchEngineElectron {
-    constructor(logger) {
-        this.clucene = new ENElectronClucene_1.CLuceneWrapper(logger);
+    constructor(clucene) {
+        this.clucene = clucene;
     }
     async init() {
     }
@@ -107,6 +107,7 @@ class ENSearchEngineElectron {
                 const queryWithParams = Object.assign({}, exports.defaultQueryWithParams);
                 queryWithParams.filterString = en_search_engine_shared_1.ENCLuceneHelper.createLuceneQuery(suggestFilterString, true, documentType);
                 queryWithParams.queryString = suggestQueryString;
+                queryWithParams.size = 128;
                 suggestResult = suggestResult.concat(await this.clucene.suggest(queryWithParams, searchTokens, suggestType));
             }
         }
@@ -175,14 +176,7 @@ class ENSearchEngineElectron {
 exports.ENSearchEngineElectron = ENSearchEngineElectron;
 // indicates major version of index. should be updated when the new index version is incompatible
 // with the previous one
-ENSearchEngineElectron.version = '12';
+ENSearchEngineElectron.version = '14';
 ENSearchEngineElectron.type = 'electron';
 ENSearchEngineElectron.defaultSuggestOptimization = en_search_engine_shared_1.ENSuggestOptimization.O3;
-/**
- * Base factory function.
- */
-function provideSearchEngine(logger) {
-    return new ENSearchEngineElectron(logger);
-}
-exports.provideSearchEngine = provideSearchEngine;
 //# sourceMappingURL=ENSearchEngineElectron.js.map

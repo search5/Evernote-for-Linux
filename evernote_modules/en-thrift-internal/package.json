@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
-  "version": "2.7.15",
+  "version": "2.7.18",
   "description": "Evernote internal generated JavaScript files",
   "main": "index.js",
   "types": "index.d.ts",

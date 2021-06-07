@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getCurrentUserNode = void 0;
+exports.getDay = exports.sameDay = exports.getCurrentUserNode = void 0;
 /*
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
@@ -15,4 +15,12 @@ const getCurrentUserNode = async (context) => {
     return userNode;
 };
 exports.getCurrentUserNode = getCurrentUserNode;
+function sameDay(first, second) {
+    return getDay(first).getTime() === getDay(second).getTime();
+}
+exports.sameDay = sameDay;
+function getDay(date) {
+    return new Date(date.toISOString().slice(0, 10));
+}
+exports.getDay = getDay;
 //# sourceMappingURL=Utilities.js.map

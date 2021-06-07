@@ -176,7 +176,7 @@ class QuasarConnectorAndExecutor extends conduit_core_1.RemoteMutationExecutor {
         if (!this.di.getHttpTransport) {
             return false;
         }
-        if (!this.nSyncEventManager.isEnabled()) {
+        if (!this.nSyncEventManager.isAvailable()) {
             return false;
         }
         return true;

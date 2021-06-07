@@ -9,7 +9,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.setupElectronPrebuiltIPC = exports.cleanupTempFile = exports.fetchPrebuiltDatabase = exports.setDefaultPrebuiltDownloadPath = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const electron_1 = require("electron");
-const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
 const zlib_1 = __importDefault(require("zlib"));
 const MessageTypes_1 = require("./MessageTypes");
@@ -18,18 +17,18 @@ function setDefaultPrebuiltDownloadPath(downloadPath) {
     gDefaultPrebuiltPath = downloadPath;
 }
 exports.setDefaultPrebuiltDownloadPath = setDefaultPrebuiltDownloadPath;
-async function fetchPrebuiltDatabase(trc, request, cookieStr, url, fetchProgressCB) {
+async function fetchPrebuiltDatabase(trc, request, cookieStr, url, fetchProgressCB, fs) {
     const downloadPath = (electron_1.app === null || electron_1.app === void 0 ? void 0 : electron_1.app.getPath('userData')) || gDefaultPrebuiltPath;
     if (!downloadPath) {
         throw new Error('Could not find a download path for prebuilt binary');
     }
     const filePath = path_1.default.join(downloadPath, conduit_utils_1.generateRandomString('temp_'));
-    await fs_extra_1.default.ensureFile(filePath);
+    await fs.ensureFile(filePath);
     return new Promise((resolve, reject) => {
         request.setHeader('cookie', cookieStr);
         request.on('response', response => {
             var _a;
-            response.on('error', err => {
+            response.on('error', (err) => {
                 conduit_utils_1.logger.info(`failed to fetch prebuilt binary: ${err}`);
                 reject(err);
             });
@@ -47,7 +46,7 @@ async function fetchPrebuiltDatabase(trc, request, cookieStr, url, fetchProgress
                 fetchProgressCB(receivedBytes, totalBytes);
             });
             let inStream = response; // Node response objects ARE readable streams.
-            const outStream = fs_extra_1.default.createWriteStream(filePath);
+            const outStream = fs.createWriteStream(filePath);
             if (((_a = response.headers['content-encoding']) === null || _a === void 0 ? void 0 : _a.includes('gzip')) && process.type !== 'browser') {
                 // electron automatically decompresses zipped content
                 inStream = inStream.pipe(zlib_1.default.createGunzip());
@@ -70,16 +69,16 @@ async function fetchPrebuiltDatabase(trc, request, cookieStr, url, fetchProgress
     });
 }
 exports.fetchPrebuiltDatabase = fetchPrebuiltDatabase;
-async function cleanupTempFile(trc, filename) {
-    await conduit_utils_1.withError(fs_extra_1.default.unlink(filename));
+async function cleanupTempFile(trc, filename, fs) {
+    await conduit_utils_1.withError(fs.unlink(filename));
 }
 exports.cleanupTempFile = cleanupTempFile;
 const prebuiltTrc = conduit_utils_1.createTraceContext('ElectronFetchPrebuiltDB');
-function setupElectronPrebuiltIPC() {
+function setupElectronPrebuiltIPC(fs) {
     const isMain = process.type === 'browser';
     if (!isMain) {
         // only need to register this in main process.
-        return;
+        throw new Error('setupElectronPrebuiltIPC should only be called in the main process');
     }
     electron_1.ipcMain.handle(MessageTypes_1.ElectronPrebuiltDBChannel, async ({ sender }, message) => {
         const progressCB = (receivedBytes, totalBytes) => {
@@ -87,7 +86,7 @@ function setupElectronPrebuiltIPC() {
             sender.send(MessageTypes_1.ElectronPrebuiltDBChannel, updateMessage);
         };
         const request = electron_1.net.request({ url: message.url });
-        return await fetchPrebuiltDatabase(prebuiltTrc, request, message.cookieStr, message.url, progressCB);
+        return await fetchPrebuiltDatabase(prebuiltTrc, request, message.cookieStr, message.url, progressCB, fs);
     });
 }
 exports.setupElectronPrebuiltIPC = setupElectronPrebuiltIPC;

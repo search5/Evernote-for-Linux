@@ -305,12 +305,6 @@ class ConduitCore {
         }
         return this.userCore.handleAuthError(trc, err, tx);
     }
-    async addError(trc, err, mutation, nodeRef) {
-        if (!this.errorManager) {
-            throw new Error('Conduit not initialized');
-        }
-        await this.errorManager.addError(trc, err, mutation, nodeRef);
-    }
     async setUserInfo(trc, userInfo) {
         if (!this.multiUserManager) {
             throw new Error('Conduit not initialized');
@@ -406,7 +400,7 @@ class ConduitCore {
         }
         this.graph = new GraphDB_1.GraphDB(Object.assign(Object.assign({}, this.di), { getMutatorDefs: () => {
                 return this.getMutatorDefs();
-            }, addError: this.errorManager.addError, GraphStorageDB: async (trc, name, version) => {
+            }, addError: this.errorManager.addError, getErrorByMutationID: this.errorManager.getErrorByMutationID, GraphStorageDB: async (trc, name, version) => {
                 const fullName = this.multiUserManager.getFullDBName(name);
                 const storage = new conduit_storage_1.GraphStorageDB(await this.di.KeyValStorage(trc, fullName), this.di.KeyValStorageMem(trc, `ephemeral-${fullName}`), {
                     nodeTypes: this.userCore.nodeTypes,
@@ -489,10 +483,6 @@ class ConduitCore {
 exports.ConduitCore = ConduitCore;
 function conduitDIProxy(getConduit, eventCallback) {
     return {
-        addError: async (trc, error, mutation, nodeRef) => {
-            const conduit = getConduit();
-            conduit && await conduit.addError(trc, error, mutation, nodeRef);
-        },
         emitEvent: (event, data) => {
             const conduit = getConduit();
             conduit && conduit.emitEvent(event, data);

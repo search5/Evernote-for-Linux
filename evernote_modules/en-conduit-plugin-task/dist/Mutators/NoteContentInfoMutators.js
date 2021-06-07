@@ -25,7 +25,7 @@ exports.taskGroupUpsertInNoteContentInfo = {
         if (!conduit_utils_1.isNullish(paramsOut.noteID)) {
             return;
         }
-        const taskUserSettings = await ctx.fetchEntity(trc, { id: TaskUtils_1.getTaskUserSettingsByMutationContext(ctx), type: en_data_model_1.EntityTypes.TaskUserSettings });
+        const taskUserSettings = await ctx.fetchEntity(trc, { id: TaskUtils_1.getTaskUserSettingsIdByMutationContext(ctx), type: en_data_model_1.EntityTypes.TaskUserSettings });
         if (!taskUserSettings) {
             throw new conduit_utils_1.NotFoundError(conduit_core_1.PERSONAL_USER_ID, 'TaskUserSettings does not exist');
         }

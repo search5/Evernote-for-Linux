@@ -1,6 +1,6 @@
 {
   "name": "en-calendar-data-model",
-  "version": "3.4.3",
+  "version": "3.6.0",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -9,7 +9,7 @@
   ],
   "main": "dist/index",
   "dependencies": {
-    "en-data-model": "3.4.3",
+    "en-data-model": "3.6.0",
     "en-ts-utils": "^5.1.0"
   },
   "devDependencies": {

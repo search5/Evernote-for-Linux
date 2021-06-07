@@ -32,22 +32,6 @@ using namespace lucene::queryParser;
 
 const double kRelevanceFactor = -4.313191834428174e-8; // from elastic relevance function
 
-enum class SortType 
-{
-    CREATED = 1,
-    UPDATED = 2,
-    RELEVANCE = 3,
-    TITLE = 5,
-};
-
-struct SearchParams
-{
-    SortType sortType;
-    bool reverseOrder;
-    int from;
-    int size;
-};
-
 struct SInterimResults {
     size_t index;
     float score;
@@ -149,11 +133,6 @@ class SearchEngineContext {
 
         const std::wstring kExists;
     };
-
-    std::string getFilterStringFromJson(const json &jQueryWithParams);
-    std::string getQueryStringFromJson(const json &jQueryWithParams);
-    SearchParams getSearchParamsFromJson(const json &jQueryWithParams);
-    std::vector<std::string> getStoredFieldsFromJson(const json &jQueryWithParams);
 
     std::string getStringFromField(const Document &document, const TCHAR *fieldName);
     std::vector<std::string> getArrayOfStringFromField(const Document &document, const TCHAR *fieldName);

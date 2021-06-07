@@ -23,6 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.contentFetchSyncActivityHydrator = exports.ContentFetchSyncActivity = void 0;
+const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
@@ -34,6 +35,7 @@ const Converters_1 = require("../Converters/Converters");
 const NotebookConverter_1 = require("../Converters/NotebookConverter");
 const ResourceConverter_1 = require("../Converters/ResourceConverter");
 const SyncActivity_1 = require("./SyncActivity");
+;
 // Queue of resources currently being downloaded
 const resourcesQueue = [];
 function getEmptyResourceSlot(maxResources) {
@@ -120,43 +122,57 @@ async function updateOfflineSyncState(trc, params, noteID, syncContext, resource
 async function fetchNoteContent(trc, params, note, syncContext) {
     const graphStorage = params.syncEngine.graphStorage;
     const noteID = note.id;
-    const metadata = await graphStorage.getSyncContextMetadata(trc, null, syncContext);
-    if (!metadata || !metadata.authToken) {
-        conduit_utils_1.logger.warn(`ContentFetchSyncActivity: syncContextMetadata not found. Skipping note ${noteID}`);
-        return;
-    }
-    conduit_utils_1.logger.debug(`Fetching note content for note ${note.id} ${note.label}`);
-    const authData = Auth.decodeAuthData(metadata.authToken);
-    const noteStore = params.syncEngine.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
-    const serviceGuid = Converters_1.convertGuidToService(noteID, en_core_entity_types_1.CoreEntityTypes.Note);
-    const specs = new en_conduit_sync_types_1.TNoteResultSpec({
-        includeContent: true,
-        includeResourcesRecognition: true,
-        includeResourcesAlternateData: true,
-    });
-    const serviceData = await noteStore.getNoteWithResultSpec(trc, authData.token, serviceGuid, specs);
-    await graphStorage.transact(trc, 'noteContentToGraph', async (graphTransaction) => {
-        const contentBlobData = {
-            bodyHash: serviceData.contentHash,
-            size: serviceData.contentLength,
-            body: serviceData.content,
-        };
-        await BlobConverter_1.updateBlobToGraph(trc, graphTransaction, contentBlobData, { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note }, 'content', syncContext);
-        for (const resource of (serviceData.resources || [])) {
-            const resourceRef = { id: Converters_1.convertGuidFromService(resource.guid, en_core_entity_types_1.CoreEntityTypes.Attachment), type: en_core_entity_types_1.CoreEntityTypes.Attachment };
-            if (resource.data) {
-                const resourceUrl = ResourceConverter_1.generateResourceUrl(metadata, 'res', resource.guid);
-                const resourceBlobData = Object.assign(Object.assign({}, resource.data), { url: resourceUrl });
-                await BlobConverter_1.updateBlobToGraph(trc, graphTransaction, resourceBlobData, resourceRef, 'data', syncContext);
-            }
-            if (resource.recognition) {
-                await BlobConverter_1.updateBlobToGraph(trc, graphTransaction, resource.recognition, resourceRef, 'recognition', syncContext);
-            }
-            if (resource.alternateData) {
-                await BlobConverter_1.updateBlobToGraph(trc, graphTransaction, resource.alternateData, resourceRef, 'alternateData', syncContext);
-            }
+    try {
+        const metadata = await graphStorage.getSyncContextMetadata(trc, null, syncContext);
+        if (!metadata || !metadata.authToken) {
+            conduit_utils_1.logger.warn(`ContentFetchSyncActivity: syncContextMetadata not found. Skipping note ${noteID}`);
+            return;
         }
-    });
+        conduit_utils_1.logger.debug(`Fetching note content for note ${note.id} ${note.label}`);
+        const authData = Auth.decodeAuthData(metadata.authToken);
+        const noteStore = params.syncEngine.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
+        const serviceGuid = Converters_1.convertGuidToService(noteID, en_core_entity_types_1.CoreEntityTypes.Note);
+        const specs = new en_conduit_sync_types_1.TNoteResultSpec({
+            includeContent: true,
+            includeResourcesRecognition: true,
+            includeResourcesAlternateData: true,
+        });
+        const serviceData = await noteStore.getNoteWithResultSpec(trc, authData.token, serviceGuid, specs);
+        await graphStorage.transact(trc, 'noteContentToGraph', async (graphTransaction) => {
+            const contentBlobData = {
+                bodyHash: serviceData.contentHash,
+                size: serviceData.contentLength,
+                body: serviceData.content,
+            };
+            await BlobConverter_1.updateBlobToGraph(trc, graphTransaction, contentBlobData, { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note }, 'content', syncContext);
+            for (const resource of (serviceData.resources || [])) {
+                const resourceRef = { id: Converters_1.convertGuidFromService(resource.guid, en_core_entity_types_1.CoreEntityTypes.Attachment), type: en_core_entity_types_1.CoreEntityTypes.Attachment };
+                if (resource.data) {
+                    const resourceUrl = ResourceConverter_1.generateResourceUrl(metadata, 'res', resource.guid);
+                    const resourceBlobData = Object.assign(Object.assign({}, resource.data), { url: resourceUrl });
+                    await BlobConverter_1.updateBlobToGraph(trc, graphTransaction, resourceBlobData, resourceRef, 'data', syncContext);
+                }
+                if (resource.recognition) {
+                    await BlobConverter_1.updateBlobToGraph(trc, graphTransaction, resource.recognition, resourceRef, 'recognition', syncContext);
+                }
+                if (resource.alternateData) {
+                    await BlobConverter_1.updateBlobToGraph(trc, graphTransaction, resource.alternateData, resourceRef, 'alternateData', syncContext);
+                }
+            }
+        });
+        await updateOfflineSyncState(trc, params, noteID, syncContext, null, UpdateSyncStateOperation.FECTHED_CONTENT);
+    }
+    catch (err) {
+        if (err instanceof conduit_utils_1.AuthError) {
+            err = await params.di.handleAuthError(trc, err);
+        }
+        if (err instanceof conduit_utils_1.RetryError) {
+            // offline or auth updated. Throw error so we keep retrying.
+            throw err;
+        }
+        conduit_utils_1.logger.warn(`ContentFetchSyncActivity: Failed to fetch content for offline availability for note ${noteID}. Skipping note.`, err);
+        await updateOfflineSyncState(trc, params, noteID, syncContext, null, UpdateSyncStateOperation.DELETE_NOTE);
+    }
 }
 async function fetchNoteResources(trc, params, noteID, syncContext, maxResources) {
     const graphStorage = params.syncEngine.graphStorage;
@@ -172,6 +188,10 @@ async function fetchNoteResources(trc, params, noteID, syncContext, maxResources
         return await updateOfflineSyncState(trc, params, noteID, syncContext, null, UpdateSyncStateOperation.DELETE_RESOURCES);
     }
     let isDeleted = false;
+    const metadata = await graphStorage.getSyncContextMetadata(trc, null, syncContext);
+    const authData = metadata && Auth.decodeAuthData(metadata.authToken);
+    const userNode = await params.syncEngine.graphStorage.getNode(trc, null, { id: conduit_core_1.PERSONAL_USER_ID, type: en_core_entity_types_1.CoreEntityTypes.User });
+    const searchTextAllowed = ResourceConverter_1.isSearchTextAllowed(userNode);
     for (const iterResourceID in noteSyncState.resources) {
         const resourceID = iterResourceID;
         if (noteSyncState.resources[resourceID] === NotebookConverter_1.OfflineEntityDownloadState.NEEDS_DOWNLOAD) {
@@ -192,18 +212,29 @@ async function fetchNoteResources(trc, params, noteID, syncContext, maxResources
                     hash: dataBlob.hash,
                     remoteUrl: dataBlob.url,
                 };
+                const searchTextResult = await conduit_utils_1.withError(searchTextAllowed
+                    ? fetchAndUpdateSearchText(trc, params, attachment, authData)
+                    : removeSearchText(trc, params, attachment));
                 conduit_utils_1.logger.debug(`Downloading attachment ${attachment.label} for note ${noteID}`);
                 isDeleted = await updateOfflineSyncState(trc, params, noteID, syncContext, attachment.id, UpdateSyncStateOperation.RESOURCE_IN_PROGRESS);
                 setResourceSlot(attachment.id, resIndex);
+                let resultErrorMessage = `Failed to download attachment ${attachment.id} for note ${noteID} `;
                 resourceManager.fetchResource(trc, resourceRef, false)
                     .then(async () => {
                     conduit_utils_1.logger.debug(`Finished downloading attachment ${attachment.label} for note ${noteID}`);
+                    if (searchTextResult.err) {
+                        resultErrorMessage = `Failed to get resource search text for attachment ${attachment.id} for note ${noteID} `;
+                        throw searchTextResult.err;
+                    }
                     markResourceSlotEmpty(attachment.id);
                     isDeleted = await updateOfflineSyncState(trc, params, noteID, syncContext, attachment.id, UpdateSyncStateOperation.RESOURCE_DONE);
                 })
                     .catch(async (err) => {
-                    conduit_utils_1.logger.warn(`Failed to download attachment ${attachment.id} for note ${noteID} `, err);
+                    conduit_utils_1.logger.warn(resultErrorMessage, err);
                     markResourceSlotEmpty(attachment.id);
+                    if (err instanceof conduit_utils_1.AuthError) {
+                        err = await params.di.handleAuthError(trc, err);
+                    }
                     if (err instanceof conduit_utils_1.RetryError) {
                         isDeleted = await updateOfflineSyncState(trc, params, noteID, syncContext, attachment.id, UpdateSyncStateOperation.RESOURCE_NEEDS_DOWNLOAD);
                     }
@@ -254,7 +285,6 @@ async function downsyncNote(trc, params, noteID, maxResources) {
     }
     if (noteSyncState.fetchContent) {
         await fetchNoteContent(trc, params, note, syncContext);
-        await updateOfflineSyncState(trc, params, noteID, syncContext, null, UpdateSyncStateOperation.FECTHED_CONTENT);
     }
     return await fetchNoteResources(trc, params, note.id, syncContext, maxResources);
 }
@@ -302,6 +332,29 @@ function isContentFetchSyncProgress(obj) {
     }
     return false;
 }
+async function fetchAndUpdateSearchText(trc, params, attachment, authData) {
+    if (!authData || !authData.token) {
+        conduit_utils_1.logger.warn(`ContentFetchSyncActivity: authData token not found. Skipping fetching search text for attachment ${attachment.id}`);
+        return;
+    }
+    conduit_utils_1.logger.debug(`Fetching search text for attachment ${attachment.id}`);
+    conduit_utils_1.traceTestCounts(trc, { fetchResourceSearchText: 1 });
+    const noteStore = params.syncEngine.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
+    const serviceGuid = Converters_1.convertGuidToService(attachment.id, en_core_entity_types_1.CoreEntityTypes.Attachment);
+    const searchText = await noteStore.getResourceSearchText(trc, authData.token, serviceGuid);
+    // Set cached field
+    await params.syncEngine.graphStorage.transact(trc, 'updateSearchText', async (tx) => {
+        await tx.setNodeCachedField(trc, attachment, 'internal_searchText', searchText, {});
+    });
+    conduit_utils_1.traceTestCounts(trc, { [`${searchText ? 'filled' : 'empty'}ResourceSearchText`]: 1 });
+}
+async function removeSearchText(trc, params, attachment) {
+    conduit_utils_1.logger.debug(`Removing search text from cache for attachment ${attachment.id}`);
+    await params.syncEngine.graphStorage.transact(trc, 'removeSearchText', async (tx) => {
+        await tx.removeNodeCachedFields(trc, attachment, ['internal_searchText']);
+    });
+    conduit_utils_1.traceTestCounts(trc, { emptyResourceSearchText: 1 });
+}
 class ContentFetchSyncActivity extends SyncActivity_1.SyncActivity {
     constructor(di, context, args, subpriority = 0, timeout = 0) {
         super(di, context, {
@@ -344,7 +397,8 @@ class ContentFetchSyncActivity extends SyncActivity_1.SyncActivity {
         const pollTime = (_b = this.di.backgroundNoteContentSyncConfig.pollingIntervalMilliseconds) !== null && _b !== void 0 ? _b : 10000;
         const maxResources = (_c = (args ? args.maxResources : this.di.backgroundNoteContentSyncConfig.maxAttachmentFetchParallelization)) !== null && _c !== void 0 ? _c : 6;
         const idlePollTime = (_d = this.di.backgroundNoteContentSyncConfig.idlePollingIntervalMilliseconds) !== null && _d !== void 0 ? _d : 30000;
-        const syncParams = this.initParams('best', 'offlineNbs', maxTime);
+        const params = this.initParams('best', 'offlineNbs', maxTime);
+        const syncParams = Object.assign(Object.assign({}, params), { di: this.di });
         if (syncParams.offlineContentStrategy === conduit_view_types_1.OfflineContentStrategy.NONE) {
             conduit_utils_1.logger.info('ContentFetchSyncActivity finished as offlineContentStrategy is None');
             return;

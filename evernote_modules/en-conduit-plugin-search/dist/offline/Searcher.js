@@ -32,12 +32,7 @@ class Searcher {
         const startTime = new Date().getTime();
         let guids = new Array();
         // search api by design does not support entry types except note
-        if (query.length === 0) {
-            guids = (await this.searchEngine.getAllIds(en_search_engine_shared_1.ENDocumentType.NOTE)).results.map(entry => entry.guid);
-        }
-        else {
-            guids = (await this.searchEngine.search(query, en_search_engine_shared_1.ENDocumentType.NOTE)).results.map(entry => entry.guid);
-        }
+        guids = (await this.searchEngine.search(query, en_search_engine_shared_1.ENDocumentType.NOTE)).results.map(entry => entry.guid);
         const results = [];
         for (const guid of guids) {
             results.push({

@@ -2,37 +2,19 @@
 /*
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createBoardMutators = exports.BoardHeaderFieldsSchema = void 0;
+exports.createBoardMutators = exports.BoardHeaderFieldsSchema = exports.BoardColorSchemaInput = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_data_model_1 = require("en-data-model");
 const en_home_data_model_1 = require("en-home-data-model");
+const BoardWidgetBuilder_1 = require("../BoardWidgetBuilder");
 const BoardFeatureSchemaManager_1 = require("../Schema/BoardFeatureSchemaManager");
-const Utilities = __importStar(require("../Utilities"));
 const emptyContentHash = conduit_utils_1.md5('');
+exports.BoardColorSchemaInput = conduit_utils_1.Nullable(conduit_utils_1.ExtendStruct(en_home_data_model_1.BoardColorSchemeSchema, {}, 'BoardColorSchemeInput'));
 exports.BoardHeaderFieldsSchema = conduit_utils_1.NullableStruct({
     headerBGMode: conduit_utils_1.Nullable(en_home_data_model_1.BoardBackgroundModeSchema),
-    headerBGColor: conduit_utils_1.Nullable(conduit_utils_1.ExtendStruct(en_home_data_model_1.BoardColorSchemeSchema, {}, 'BoardColorSchemeInput')),
+    headerBGColor: exports.BoardColorSchemaInput,
     greetingText: conduit_utils_1.NullableString,
 }, 'BoardHeaderFields');
 const createBoardCreateHomeMutator = (di) => {
@@ -44,6 +26,8 @@ const createBoardCreateHomeMutator = (di) => {
             platform: conduit_utils_1.Nullable(en_home_data_model_1.DeviceFormFactorSchema),
             features: conduit_utils_1.NullableListOf('string'),
             featureVersions: conduit_utils_1.NullableListOf('number'),
+            clientLayoutVersion: conduit_utils_1.NullableInt,
+            clearContentOnReset: conduit_utils_1.NullableBoolean,
         },
         derivedParams: {
             features: conduit_utils_1.ListOf('string'),
@@ -62,7 +46,7 @@ const createBoardCreateHomeMutator = (di) => {
             paramsOut.features = features;
         },
         execute: async (trc, ctx, params) => {
-            const { serviceLevel, resetLayout, platform, features: featuresParam, featureVersions: featureVersionsParam, } = params;
+            const { clientLayoutVersion, serviceLevel, resetLayout, platform, features: featuresParam, featureVersions: featureVersionsParam, clearContentOnReset, } = params;
             if (featuresParam.length !== featureVersionsParam.length) {
                 throw new conduit_utils_1.InvalidParameterError('Feature versions length must equal features length');
             }
@@ -84,6 +68,8 @@ const createBoardCreateHomeMutator = (di) => {
                 },
                 widgets: [],
                 edgesToCreate: [],
+                edgesToDelete: [],
+                entitiesToDelete: [],
             };
             const requiredBoardUpdateFields = {
                 internalID: 0,
@@ -124,9 +110,8 @@ const createBoardCreateHomeMutator = (di) => {
                 }
                 boardCreateHomeStash.board.mutation = Object.assign(Object.assign({}, requiredBoardUpdateFields), layout);
             }
-            const boardPluginFeatures = Utilities.getBoardPluginFeatures(di);
             const widgetEdges = (await ctx.traverseGraph(trc, boardRef, [{ edge: ['outputs', 'children'], type: en_data_model_1.EntityTypes.Widget }])).filter(e => Boolean(e.edge));
-            const boardLayoutSummary = await boardFeatureSchemaManager.generateDefaultLayout(trc, ctx, userFeatureLevel, features, featureVersions, en_home_data_model_1.BoardType.Home, 0, Boolean(boardPluginFeatures.useServiceLevelV2Layouts));
+            const boardLayoutSummary = await boardFeatureSchemaManager.generateDefaultLayout(trc, ctx, userFeatureLevel, features, featureVersions, en_home_data_model_1.BoardType.Home, 0, clientLayoutVersion);
             const widgetsFound = new Set();
             let existingWidgets;
             if (widgetEdges.length > 0) {
@@ -139,11 +124,16 @@ const createBoardCreateHomeMutator = (di) => {
                         if (!resetLayout) { // No default values to apply for a reset
                             // When we are not resetting, we need to adjust the summary values for new widgets appended to the end of the list.
                             boardFeatureSchemaManager.adjustBoardLayoutSummary(boardLayoutSummary, widget);
+                            const defaultsAndID = boardLayoutSummary.widgetDefaultsById.get(widget.id);
+                            const mutation = {
+                                updated: ctx.timestamp,
+                            };
+                            if (defaultsAndID && conduit_utils_1.isNotNullish(defaultsAndID.defaults.internalID)) {
+                                mutation.internalID = defaultsAndID.defaults.internalID;
+                            }
                             boardCreateHomeStash.widgets.push({
                                 original: widget,
-                                mutation: {
-                                    updated: ctx.timestamp,
-                                },
+                                mutation,
                                 operation: 'UPDATE',
                                 nodeRef: {
                                     type: widget.type,
@@ -153,11 +143,45 @@ const createBoardCreateHomeMutator = (di) => {
                         }
                         else { // Must apply default values for a reset.
                             const defaultsAndID = boardLayoutSummary.widgetDefaultsById.get(widget.id);
-                            if (defaultsAndID) {
-                                const mutation = {
-                                    updated: ctx.timestamp,
+                            const contentClearOps = clearContentOnReset
+                                ? await BoardWidgetBuilder_1.createDisabledWidgetCustomizeV2Mutations(trc, ctx, widget)
+                                : {
+                                    associationsToCreate: [],
+                                    associationsToDelete: [],
+                                    mutationAndRef: {
+                                        ref: { id: widget.id, type: widget.type },
+                                        mutation: {},
+                                    },
+                                    entitiesToDelete: [],
                                 };
+                            if (contentClearOps.associationsToCreate.length > 0) {
+                                boardCreateHomeStash.edgesToCreate.push(...contentClearOps.associationsToCreate);
+                            }
+                            if (contentClearOps.associationsToDelete.length > 0) {
+                                boardCreateHomeStash.edgesToCreate.push(...contentClearOps.associationsToDelete);
+                            }
+                            if (contentClearOps.entitiesToDelete.length > 0) {
+                                boardCreateHomeStash.entitiesToDelete.push(...contentClearOps.entitiesToDelete);
+                            }
+                            const mutation = Object.assign({ updated: ctx.timestamp }, contentClearOps.mutationAndRef.mutation);
+                            if (defaultsAndID) {
                                 boardFeatureSchemaManager.applyWidgetDefaults(mutation, defaultsAndID.defaults, platform);
+                                boardCreateHomeStash.widgets.push({
+                                    original: widget,
+                                    mutation,
+                                    operation: 'UPDATE',
+                                    nodeRef: {
+                                        type: widget.type,
+                                        id: widget.id,
+                                    },
+                                });
+                            }
+                            else {
+                                /*
+                                * If the layout version doesn't include the widget, disable it for more predictable client-server interaction.
+                                *  This would typically be an unsupported widget, occasionally a new "Extra" widget.
+                                */
+                                mutation.isEnabled = false;
                                 boardCreateHomeStash.widgets.push({
                                     original: widget,
                                     mutation,
@@ -176,7 +200,7 @@ const createBoardCreateHomeMutator = (di) => {
                 const widgetID = requiredWidget.idGen[1];
                 // If the deterministric Widget Id does not exist, create it using the generated template
                 if (!widgetsFound.has(widgetID)) {
-                    const { widget, edge, } = await boardFeatureSchemaManager.createWidgetAndEdge(ctx, boardID, boardLayoutSummary, requiredWidget.idGen, requiredWidget.defaults, board === null || board === void 0 ? void 0 : board.NodeFields.isCustomized);
+                    const { widget, edge, } = await boardFeatureSchemaManager.createWidgetAndEdge(ctx, boardID, boardLayoutSummary, requiredWidget.idGen, requiredWidget.defaults, Boolean(board));
                     boardCreateHomeStash.widgets.push({
                         original: null,
                         mutation: widget,
@@ -252,9 +276,16 @@ const createBoardCreateHomeMutator = (di) => {
                     node: ctx.createEntity(boardCreateHomeStash.board.nodeRef, boardCreateHomeStash.board.mutation, ctx.userID),
                 });
             }
+            if (boardCreateHomeStash.entitiesToDelete.length > 0) {
+                plan.ops.push({
+                    changeType: 'Node:DELETE_MULTI',
+                    nodes: boardCreateHomeStash.entitiesToDelete,
+                });
+            }
             plan.ops.push({
                 changeType: 'Edge:MODIFY',
                 edgesToCreate: boardCreateHomeStash.edgesToCreate,
+                edgesToDelete: boardCreateHomeStash.edgesToDelete,
             });
             return plan;
         },

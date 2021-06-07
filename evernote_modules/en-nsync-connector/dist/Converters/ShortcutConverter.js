@@ -46,28 +46,12 @@ async function getCurrentShortcuts<SyncContextMetadata>(
 }
 
 function nodeFromShortcut(instance: ShortcutSyncEntity, parent: GraphNodeRef, sortOrder: string): Shortcut {
-  const initial = createInitialNode(instance);
-  if (!initial) {
+  const shortcut = convertNsyncEntityToNode<Shortcut>(instance, context);
+  if (!shortcut) {
     logger.error('Missing initial values');
     throw new Error('Missing initial values for Shortcut');
   }
-  const node: Shortcut = {
-    ...initial,
-    version: 0,
-    syncContexts: [],
-    localChangeTimestamp: 0,
-
-    id: convertGuidFromService(parent.id),
-    type: CoreEntityTypes.Shortcut,
-    label: `Shortcut for ${parent.id}`,
-    NodeFields: {
-      sortOrder,
-    },
-    inputs: {
-      source: {},
-    },
-    outputs: {},
-  };
+  shortcut.label = `Shortcut for ${parent.id}`;
 
   return node;
 }

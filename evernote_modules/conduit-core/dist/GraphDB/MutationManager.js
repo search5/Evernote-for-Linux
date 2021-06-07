@@ -34,11 +34,18 @@ const FAIL_SAFE_TABLE = 'FailedMutations';
 const OPTIMISTIC_MUTATIONS_TABLE = 'OptimisticMutations';
 const REMOTE_MUTATIONS_TABLE = 'RemoteMutations';
 const MUTATION_RESULTS_TABLE = 'MutationUpsyncResults';
+const MUTATION_ROLLUP_TABLE = 'MutationRollupIDs';
 // change to 'info' if you want to see the detailed roundtrip logging
 const VERBOSE_LEVEL = 'trace';
+const validationOpts = {
+    objectStrictCheck: false,
+    deepObjectStrictCheck: false,
+    fillDefaults: false,
+    allowUnknownEnumValues: false,
+};
 function validateMutation(m, def) {
     try {
-        conduit_utils_1.validateSchemaType(conduit_utils_1.Struct(def.params), 'root', m.params, false);
+        conduit_utils_1.validateSchemaType(conduit_utils_1.Struct(def.params), 'root', m.params, validationOpts);
         return conduit_utils_1.getTypeOf(m.timestamp) === 'number' && conduit_utils_1.getTypeOf(m.guids) === 'object';
     }
     catch (e) {
@@ -46,11 +53,24 @@ function validateMutation(m, def) {
         return false;
     }
 }
+function validateIsMutationIDArray(val) {
+    if (!Array.isArray(val)) {
+        return undefined;
+    }
+    for (const v of val) {
+        if (typeof v !== 'string') {
+            return undefined;
+        }
+    }
+    return val;
+}
 class MutationManager {
-    constructor(storage) {
+    constructor(di, storage) {
+        this.di = di;
         this.storage = storage;
         this.optimisticMutations = [];
         this.depToMutationIDs = {};
+        this.rolledUpToMutationID = {};
     }
     async loadMutationsFromTable(trc, mutatorDefs, optimistic) {
         const tableName = optimistic ? OPTIMISTIC_MUTATIONS_TABLE : REMOTE_MUTATIONS_TABLE;
@@ -69,6 +89,7 @@ class MutationManager {
                 await this.storage.transact(trc, 'MutationManager.moveCorruptMutations', async (db) => {
                     // remove the corrupt data
                     await db.removeValue(trc, tableName, mutationID);
+                    await this.removeMutationRollupMap(trc, db, mutationID);
                     if (mutation) {
                         // if we loaded it but it failed validation, back it up
                         await db.setValue(trc, CORRUPT_MUTATIONS_TABLE, mutationID, mutation);
@@ -161,6 +182,26 @@ class MutationManager {
         const remoteMutationKeys = await this.storage.getKeys(trc, watcher, REMOTE_MUTATIONS_TABLE);
         return Boolean(remoteMutationKeys.length);
     }
+    async getMutationStatus(trc, watcher, mutationID) {
+        while (this.rolledUpToMutationID[mutationID]) {
+            mutationID = this.rolledUpToMutationID[mutationID];
+        }
+        const isPendingUpsync = await this.storage.hasKey(trc, watcher, REMOTE_MUTATIONS_TABLE, mutationID);
+        const isWaitingForRoundtrip = await this.storage.hasKey(trc, watcher, OPTIMISTIC_MUTATIONS_TABLE, mutationID);
+        if (isPendingUpsync || isWaitingForRoundtrip) {
+            return {
+                isUpsynced: !isPendingUpsync,
+                isRoundtripped: !isWaitingForRoundtrip,
+                error: null,
+            };
+        }
+        const error = await this.di.getErrorByMutationID(trc, watcher, mutationID);
+        return {
+            isUpsynced: true,
+            isRoundtripped: true,
+            error,
+        };
+    }
     async addMutation(trc, mutation) {
         await this.storage.transact(trc, 'MutationManager.addMutation', async (db) => {
             await db.setValue(trc, OPTIMISTIC_MUTATIONS_TABLE, mutation.mutationID, mutation);
@@ -178,12 +219,12 @@ class MutationManager {
         this.optimisticMutations.push(...mutations);
     }
     async rollupForUpsync(trc, mutatorDefs, remoteMutations) {
-        const { changes, mutations, errors } = MutationRollup_1.rollupPendingMutations(remoteMutations, mutatorDefs);
+        const { changes, mutations, rolledUpMap, errors } = MutationRollup_1.rollupPendingMutations(remoteMutations, mutatorDefs);
         if (errors.length) {
             conduit_utils_1.logger.error('MutationManager.rollupForUpsync errors: ', errors);
         }
         if (!Object.keys(changes).length) {
-            // early out if nothing deps
+            // early out if nothing changed
             return mutations;
         }
         // apply changes
@@ -197,12 +238,19 @@ class MutationManager {
                         await db.setValue(trc, OPTIMISTIC_MUTATIONS_TABLE, mutationID, m);
                         this.optimisticMutations[oIdx] = m;
                     }
+                    await db.setValue(trc, MUTATION_ROLLUP_TABLE, mutationID, rolledUpMap[mutationID]);
+                    for (const id of rolledUpMap[mutationID] || []) {
+                        // store reverse lookup in memory; we don't need to load it at startup though as it is just for clients to watch for mutation results
+                        this.rolledUpToMutationID[id] = mutationID;
+                    }
                 }
                 else {
+                    // mutation was rolled up
                     await db.removeValue(trc, REMOTE_MUTATIONS_TABLE, mutationID);
+                    await db.removeValue(trc, OPTIMISTIC_MUTATIONS_TABLE, mutationID);
+                    await db.removeValue(trc, MUTATION_RESULTS_TABLE, mutationID);
+                    await this.removeMutationRollupMap(trc, db, mutationID);
                     if (oIdx >= 0) {
-                        await db.removeValue(trc, OPTIMISTIC_MUTATIONS_TABLE, mutationID);
-                        await db.removeValue(trc, MUTATION_RESULTS_TABLE, mutationID);
                         this.optimisticMutations.splice(oIdx, 1);
                     }
                 }
@@ -251,6 +299,11 @@ class MutationManager {
                 }
             }
             for (const m of (failedMutations || [])) {
+                const rolledUpIDs = await this.removeMutationRollupMap(trc, db, m.mutationID);
+                const e = GraphMutationTypes_1.mutationUpsyncError(mutationResults[m.mutationID]);
+                if (e) {
+                    await this.di.addError(trc, e, m, rolledUpIDs);
+                }
                 await db.removeValue(trc, REMOTE_MUTATIONS_TABLE, m.mutationID);
                 await db.removeValue(trc, OPTIMISTIC_MUTATIONS_TABLE, m.mutationID);
                 await db.removeValue(trc, MUTATION_RESULTS_TABLE, m.mutationID);
@@ -272,6 +325,14 @@ class MutationManager {
             successMutations,
         };
     }
+    async removeMutationRollupMap(trc, tx, mutationID) {
+        const rolledUpIDs = await tx.getValidatedValue(trc, null, MUTATION_ROLLUP_TABLE, mutationID, validateIsMutationIDArray) || [];
+        for (const id of rolledUpIDs) {
+            delete this.rolledUpToMutationID[id];
+        }
+        await tx.removeValue(trc, MUTATION_ROLLUP_TABLE, mutationID);
+        return rolledUpIDs;
+    }
     async clearRoundTrippedOptimisticMutations(trc, remoteGraph, lastDownsyncTimestamp) {
         if (!this.optimisticMutations.length) {
             return;
@@ -289,6 +350,7 @@ class MutationManager {
                 }
                 await db.removeValue(trc, OPTIMISTIC_MUTATIONS_TABLE, m.mutationID);
                 await db.removeValue(trc, MUTATION_RESULTS_TABLE, m.mutationID);
+                await this.removeMutationRollupMap(trc, db, m.mutationID);
             }
             return this.optimisticMutations.length;
         });
@@ -335,8 +397,14 @@ class MutationManager {
         if (!depCount) {
             return true;
         }
+        const lastProcessingTime = await this.di.getMutationServiceLastProcessingTime(trc, remoteGraph);
         // check if it has been an extended amount of time between upsync and downsync and we still don't have the dependencies
         if (timeSinceUpsync >= ROUNDTRIP_AGEOUT_THRESHOLD) {
+            // if nsync is telling us it hasn't processed it yet because it's backed up, try again
+            if (lastProcessingTime < results.timestamp) {
+                conduit_utils_1.logger.warn('NSync likely has not processed mutations since upsync.');
+                return false;
+            }
             // if so, just mark it as roundtripped; likely the mutation returned bad results
             conduit_utils_1.logger.warn('Timed out waiting for mutation to roundtrip', {
                 mutation: m.name,

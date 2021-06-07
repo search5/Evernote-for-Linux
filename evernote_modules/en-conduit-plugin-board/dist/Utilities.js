@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateMutableWidgetTypes = exports.compare = exports.safeMutableWidgetType = exports.isWidgetSupported = exports.getBoardPluginFeatures = exports.getCurrentUserNode = void 0;
+exports.safeSelectedTab = exports.getDefaultSelectedTabByWidgetType = exports.validateMutableWidgetTypes = exports.widgetSortComparerFactory = exports.compare = exports.safeMutableWidgetType = exports.isWidgetSupported = exports.getBoardPluginFeatures = exports.getCurrentUserNode = void 0;
 /*
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
@@ -54,6 +54,33 @@ function compare(a, b) {
     return 0;
 }
 exports.compare = compare;
+function widgetSortComparerFactory(formFactor) {
+    const formFactorLower = formFactor.toLowerCase();
+    return (a, b) => {
+        const platformA = a.NodeFields[formFactorLower];
+        const platformB = b.NodeFields[formFactorLower];
+        if (platformA.sortWeight < platformB.sortWeight) {
+            return -1;
+        }
+        if (platformA.sortWeight > platformB.sortWeight) {
+            return 1;
+        }
+        if (a.NodeFields.created < b.NodeFields.created) {
+            return -1;
+        }
+        if (a.NodeFields.created > b.NodeFields.created) {
+            return 1;
+        }
+        if (a.id < b.id) {
+            return -1;
+        }
+        if (a.id > b.id) {
+            return 1;
+        }
+        return 0;
+    };
+}
+exports.widgetSortComparerFactory = widgetSortComparerFactory;
 function validateMutableWidgetTypes(property, expectedWidgetType, expectedMutableWidgetType, widget, changeToWidgetType) {
     const { NodeFields: { widgetType, }, } = widget;
     const mutableWidgetType = changeToWidgetType !== null && changeToWidgetType !== void 0 ? changeToWidgetType : widget.NodeFields.mutableWidgetType;
@@ -66,4 +93,31 @@ function validateMutableWidgetTypes(property, expectedWidgetType, expectedMutabl
     }
 }
 exports.validateMutableWidgetTypes = validateMutableWidgetTypes;
+function getDefaultSelectedTabByWidgetType(widgetType) {
+    if (widgetType === en_home_data_model_1.WidgetType.Notebooks || widgetType === en_home_data_model_1.WidgetType.Notes) {
+        return en_home_data_model_1.WidgetSelectedTab.Recent;
+    }
+    else if (widgetType === en_home_data_model_1.WidgetType.Clipped) {
+        return en_home_data_model_1.WidgetSelectedTab.WebClips;
+    }
+    return null;
+}
+exports.getDefaultSelectedTabByWidgetType = getDefaultSelectedTabByWidgetType;
+function safeSelectedTab(selectedTab, widgetType) {
+    let result = selectedTab;
+    if (widgetType === en_home_data_model_1.WidgetType.Clipped) {
+        // Fall back to a supported tab for forwards compatibility.
+        result = !conduit_utils_1.isNullish(selectedTab) && en_home_data_model_1.BoardSchema.ClippedTabsSet.has(selectedTab)
+            ? selectedTab
+            : getDefaultSelectedTabByWidgetType(widgetType);
+    }
+    else if (widgetType === en_home_data_model_1.WidgetType.Notebooks || widgetType === en_home_data_model_1.WidgetType.Notes) {
+        // Fall back to a supported tab for forwards compatibility.
+        result = !conduit_utils_1.isNullish(selectedTab) && en_home_data_model_1.BoardSchema.CommonTabsSet.has(selectedTab)
+            ? selectedTab
+            : getDefaultSelectedTabByWidgetType(widgetType);
+    }
+    return result;
+}
+exports.safeSelectedTab = safeSelectedTab;
 //# sourceMappingURL=Utilities.js.map

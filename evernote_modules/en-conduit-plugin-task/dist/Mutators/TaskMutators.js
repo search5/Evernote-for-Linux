@@ -6,13 +6,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.taskMove = exports.taskAssign = exports.taskUpdate = exports.taskDelete = exports.taskCreate = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
 const en_tasks_data_model_1 = require("en-tasks-data-model");
-const ReminderStatusContainmentRules_1 = require("../Rules/ReminderStatusContainmentRules");
+const TaskUtils_1 = require("../TaskUtils");
+const Utilities_1 = require("../Utilities");
 const NoteContentInfo_1 = require("./Helpers/NoteContentInfo");
 const Permission_1 = require("./Helpers/Permission");
+const Reminder_1 = require("./Helpers/Reminder");
 const Task_1 = require("./Helpers/Task");
+const TaskUserSettings_1 = require("./Helpers/TaskUserSettings");
 async function genericUpdateExecutionPlan(trc, ctx, taskID, fields) {
     const nodeRef = { id: taskID, type: en_data_model_1.EntityTypes.Task };
     const task = await ctx.fetchEntity(trc, nodeRef);
@@ -252,7 +256,7 @@ exports.taskUpdate = {
         }
         if (params.status) {
             const reminderStatus = params.status === en_tasks_data_model_1.TaskStatus.completed ? en_tasks_data_model_1.ReminderStatus.muted : en_tasks_data_model_1.ReminderStatus.active;
-            await ReminderStatusContainmentRules_1.updateReminderStatus(ctx, trc, taskRef.id, ops, reminderStatus, reminders.filter(r => r && !deletedReminders[r.id]));
+            await Reminder_1.updateReminderStatus(ctx, trc, taskRef.id, ops, reminderStatus, reminders.filter(r => r && !deletedReminders[r.id]));
         }
         // let's remove the associations
         ops.forEach(op => {
@@ -290,7 +294,6 @@ exports.taskAssign = {
         if (params.assigneeID && params.assigneeEmail) {
             throw new conduit_utils_1.InvalidOperationError('either assigneeID or assigneeEmail should have value');
         }
-        const noteID = await Task_1.getParentNoteId(trc, ctx, params.task);
         const taskRef = { id: params.task, type: en_data_model_1.EntityTypes.Task };
         const existingTask = await ctx.fetchEntity(trc, taskRef);
         if (!existingTask) {
@@ -321,13 +324,10 @@ exports.taskAssign = {
         };
         plan.ops.push(edgeModifyOps);
         const profile = await en_core_entity_types_1.getAccountProfileRef(trc, ctx);
-        let assigned = false;
         if (params.assigneeEmail) {
-            assigned = true;
             fields.assigneeEmail = params.assigneeEmail;
         }
         if (params.assigneeID) {
-            assigned = true;
             edgeModifyOps.edgesToCreate.push({
                 srcID: params.task,
                 srcType: en_data_model_1.EntityTypes.Task,
@@ -337,37 +337,81 @@ exports.taskAssign = {
                 dstPort: null,
             });
         }
-        if (assigned) {
-            if (profile) {
-                edgeModifyOps.edgesToCreate.push({
-                    srcID: taskRef.id, srcType: taskRef.type, srcPort: 'assignedBy',
-                    dstID: profile.id, dstType: profile.type, dstPort: null,
-                }, {
-                    srcID: taskRef.id, srcType: taskRef.type, srcPort: 'lastEditor',
-                    dstID: profile.id, dstType: profile.type, dstPort: null,
-                });
-                // create membership
-                if (params.assigneeID) {
-                    const owner = { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note } || ctx.vaultUserID || ctx.userID;
-                    const membershipOps = await en_core_entity_types_1.createMembershipOps(trc, ctx, owner, {
-                        privilege: en_core_entity_types_1.MembershipPrivilege.COMPLETE,
-                        recipientIsMe: profile.id === params.assigneeID,
-                        parentRef: { id: taskRef.id, type: taskRef.type },
-                        profileEdgeMap: {
-                            recipient: params.assigneeID,
-                            sharer: profile.id,
-                            owner: profile.id,
-                        },
-                    });
-                    plan.ops.push(...membershipOps);
+        if (params.assigneeID || params.assigneeEmail) {
+            const taskUserSettingsID = TaskUtils_1.getTaskUserSettingsIdByMutationContext(ctx);
+            const taskUserSettingsRef = { id: taskUserSettingsID, type: en_data_model_1.EntityTypes.TaskUserSettings };
+            const taskUserSettings = await ctx.fetchEntity(trc, taskUserSettingsRef);
+            if (!taskUserSettings) {
+                plan.ops.push(await TaskUserSettings_1.getNewTaskUserSettingsOps(trc, ctx, taskUserSettingsID, taskUserSettingsRef, undefined, Utilities_1.getDay(new Date(ctx.timestamp)).getTime(), 1));
+            }
+            else {
+                const isSameDay = Boolean(taskUserSettings.NodeFields.taskAssignDate) && Utilities_1.sameDay(new Date(taskUserSettings.NodeFields.taskAssignDate), new Date(ctx.timestamp));
+                if (isSameDay) {
+                    const accountLimits = await ctx.fetchEntity(trc, en_core_entity_types_1.ACCOUNT_LIMITS_REF);
+                    en_core_entity_types_1.validateAccountLimits(accountLimits, { taskAssignmentLimitDaily: taskUserSettings.NodeFields.taskAssignCount + 1 });
                 }
+                const taskUserSettingsFields = {
+                    taskAssignCount: undefined,
+                    taskAssignDate: undefined,
+                };
+                if (taskUserSettings.NodeFields.taskAssignDate && isSameDay) {
+                    taskUserSettingsFields.taskAssignCount = taskUserSettings.NodeFields.taskAssignCount + 1;
+                }
+                else {
+                    taskUserSettingsFields.taskAssignDate = Utilities_1.getDay(new Date(ctx.timestamp)).getTime();
+                    taskUserSettingsFields.taskAssignCount = 1;
+                }
+                plan.ops.push({
+                    changeType: 'Node:UPDATE',
+                    nodeRef: taskUserSettingsRef,
+                    node: ctx.assignFields(en_data_model_1.EntityTypes.TaskUserSettings, taskUserSettingsFields),
+                });
             }
         }
-        plan.ops.push({
-            changeType: 'Node:UPDATE',
-            nodeRef: taskRef,
-            node: ctx.assignFields(en_data_model_1.EntityTypes.Task, fields),
-        });
+        if (profile) {
+            edgeModifyOps.edgesToCreate.push({
+                srcID: taskRef.id, srcType: taskRef.type, srcPort: 'assignedBy',
+                dstID: profile.id, dstType: profile.type, dstPort: null,
+            }, {
+                srcID: taskRef.id, srcType: taskRef.type, srcPort: 'lastEditor',
+                dstID: profile.id, dstType: profile.type, dstPort: null,
+            });
+            // create membership
+            if (params.assigneeID) {
+                const owner = taskRef || ctx.vaultUserID || ctx.userID;
+                const membershipOps = await en_core_entity_types_1.createMembershipOps(trc, ctx, owner, {
+                    privilege: en_conduit_sync_types_1.MembershipPrivilege.COMPLETE,
+                    recipientIsMe: profile.id === params.assigneeID,
+                    parentRef: { id: taskRef.id, type: taskRef.type },
+                    profileEdgeMap: {
+                        recipient: params.assigneeID,
+                        sharer: profile.id,
+                        owner: profile.id,
+                    },
+                });
+                plan.ops.push(...membershipOps);
+            }
+        }
+        let taskDeleted = false;
+        // this means the existing user was the assignee
+        if (profile && existingAssigneeId === profile.id) {
+            const noteID = await Task_1.getParentNoteId(trc, ctx, params.task);
+            const noteEditPermission = await Permission_1.getNoteEditPermissionByNoteId(trc, ctx, noteID);
+            if (!noteEditPermission) {
+                plan.ops.push({
+                    changeType: 'Node:DELETE',
+                    nodeRef: taskRef,
+                });
+                taskDeleted = true;
+            }
+        }
+        if (!taskDeleted) {
+            plan.ops.push({
+                changeType: 'Node:UPDATE',
+                nodeRef: taskRef,
+                node: ctx.assignFields(en_data_model_1.EntityTypes.Task, fields),
+            });
+        }
         return plan;
     },
 };

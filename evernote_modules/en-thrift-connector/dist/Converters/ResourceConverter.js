@@ -28,12 +28,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ResourceConverter = exports.generateResourceUrl = exports.fetchAndCacheAttachmentData = void 0;
+exports.ResourceConverter = exports.isSearchTextAllowed = exports.generateResourceUrl = exports.fetchAndCacheAttachmentData = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
+const en_data_model_1 = require("en-data-model");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const Auth = __importStar(require("../Auth"));
 const BlobConverter_1 = require("./BlobConverter");
@@ -165,6 +167,19 @@ function resourceFromService(serviceData) {
     }
     return resourceOut;
 }
+/**
+ * The function returns true if the user has the required service level for offline search
+ * @param userNode the user whose access level we are checking
+ */
+function isSearchTextAllowed(userNode) {
+    if (!userNode) {
+        return false;
+    }
+    // TODO: change this once v2 is running (even though this will still work)
+    const serviceLevelV2 = en_conduit_sync_types_1.toServiceLevelV2(userNode.NodeFields.serviceLevel);
+    return serviceLevelV2 !== en_data_model_1.ServiceLevelV2.FREE;
+}
+exports.isSearchTextAllowed = isSearchTextAllowed;
 class ResourceConverterClass {
     constructor() {
         this.nodeType = en_core_entity_types_1.CoreEntityTypes.Attachment;
@@ -201,7 +216,9 @@ class ResourceConverterClass {
                 // resources recognition and alternateData are fetched along with note content.
                 noteOfflineSyncState.fetchContent = true;
             }
-            if (!prevNode || BlobConverter_1.hasBlobChanged(prevNode.NodeFields.data, resourceOut.NodeFields.data)) {
+            if (!prevNode ||
+                BlobConverter_1.hasBlobChanged(prevNode.NodeFields.data, resourceOut.NodeFields.data) ||
+                await this.needUpdateSearchText(trc, params, prevNode)) {
                 noteOfflineSyncState.resources = noteOfflineSyncState.resources || {};
                 noteOfflineSyncState.resources[resourceOut.id] = NotebookConverter_1.OfflineEntityDownloadState.NEEDS_DOWNLOAD;
             }
@@ -276,6 +293,20 @@ class ResourceConverterClass {
     }
     async applyEdgeChangesToService() {
         return false;
+    }
+    /**
+     * We need to update the search text field for resource in two cases:
+     * 1. if search text is needed but is not in the cache
+     * 2. if search text in the cache but not allowed for the current user
+     */
+    async needUpdateSearchText(trc, params, node) {
+        const userNode = await params.graphTransaction.getNode(trc, null, { id: conduit_core_1.PERSONAL_USER_ID, type: en_core_entity_types_1.CoreEntityTypes.User });
+        const isAllowed = isSearchTextAllowed(userNode);
+        const cachedValue = await params.graphTransaction.getNodeCachedField(trc, null, node, 'internal_searchText');
+        if (cachedValue && !cachedValue.isStale) {
+            return !isAllowed;
+        }
+        return isAllowed;
     }
 }
 __decorate([

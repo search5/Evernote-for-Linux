@@ -15,6 +15,7 @@ const en_data_model_1 = require("en-data-model");
 const Types_1 = require("./Types");
 async function applyTaskComparisonChanges(context, comparisonResult, sourceOfChange) {
     var e_1, _a;
+    var _b, _c, _d, _e;
     try {
         for (var comparisonResult_1 = __asyncValues(comparisonResult), comparisonResult_1_1; comparisonResult_1_1 = await comparisonResult_1.next(), !comparisonResult_1_1.done;) {
             const result = comparisonResult_1_1.value;
@@ -24,7 +25,7 @@ async function applyTaskComparisonChanges(context, comparisonResult, sourceOfCha
                     break;
                 }
                 case Types_1.ComparisonStatus.added: {
-                    const { label, dueDate, timeZone, dueDateUIOption, flag, sortWeight, noteLevelID, status, taskGroupNoteLevelID, } = result.inputNode;
+                    const { label, dueDate, timeZone, dueDateUIOption, flag, sortWeight, noteLevelID, status, taskGroupNoteLevelID, assigneeID, assigneeEmail, } = result.inputNode;
                     const mutation = await context.db.runMutator(context.trc, 'taskCreate', {
                         container: result.parent.id,
                         taskGroupNoteLevelID,
@@ -38,24 +39,50 @@ async function applyTaskComparisonChanges(context, comparisonResult, sourceOfCha
                         status,
                         sourceOfChange,
                     });
+                    const taskID = mutation.results.result.toString();
+                    if (assigneeID || assigneeEmail) {
+                        await context.db.runMutator(context.trc, 'taskAssign', {
+                            task: taskID,
+                            assigneeID,
+                            assigneeEmail,
+                            sourceOfChange,
+                        });
+                    }
                     const newTask = await context.db.getNode(context, { id: mutation.results.result.toString(), type: en_data_model_1.EntityTypes.Task });
                     result.graphDbNode = newTask;
                     break;
                 }
                 case Types_1.ComparisonStatus.modified: {
-                    const { label, dueDate, timeZone, dueDateUIOption, flag, sortWeight, status, } = result.inputNode;
-                    await context.db.runMutator(context.trc, 'taskUpdate', {
-                        task: result.graphDbNode.id,
-                        label,
-                        dueDate,
-                        timeZone,
-                        dueDateUIOption,
-                        flag,
-                        sortWeight,
-                        status,
-                        sourceOfChange,
-                        taskGroupNoteLevelID: result.inputNode.taskGroupNoteLevelID,
-                    });
+                    const { label, dueDate, timeZone, dueDateUIOption, flag, sortWeight, status, assigneeID, assigneeEmail, } = result.inputNode;
+                    const taskID = result.graphDbNode.id;
+                    if ((_b = result.modificationType) === null || _b === void 0 ? void 0 : _b.props) {
+                        await context.db.runMutator(context.trc, 'taskUpdate', {
+                            task: taskID,
+                            label,
+                            dueDate,
+                            timeZone,
+                            dueDateUIOption,
+                            flag,
+                            sortWeight,
+                            status,
+                            sourceOfChange,
+                            taskGroupNoteLevelID: result.inputNode.taskGroupNoteLevelID,
+                        });
+                    }
+                    if ((_c = result.modificationType) === null || _c === void 0 ? void 0 : _c.assignee) {
+                        const assigneeIdChanged = ((_d = result.loadedNode) === null || _d === void 0 ? void 0 : _d.assigneeID) !== assigneeID;
+                        const assigneeEmailChanges = ((_e = result.loadedNode) === null || _e === void 0 ? void 0 : _e.assigneeEmail) !== assigneeEmail;
+                        if (!result.loadedNode ||
+                            (result.loadedNode && assigneeIdChanged) ||
+                            (result.loadedNode && assigneeEmailChanges)) {
+                            await context.db.runMutator(context.trc, 'taskAssign', {
+                                task: taskID,
+                                assigneeID: assigneeIdChanged ? assigneeID : null,
+                                assigneeEmail: assigneeEmailChanges ? assigneeEmail : null,
+                                sourceOfChange,
+                            });
+                        }
+                    }
                 }
             }
         }

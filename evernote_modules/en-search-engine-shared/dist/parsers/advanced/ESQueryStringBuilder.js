@@ -247,9 +247,10 @@ class ESQueryStringBuilder {
             const ch = query.charAt(i);
             // Both > and < cannot be reserved according to ES docs, so we just drop them
             // (this can cause troubles if original string consisted of this two chars only).
-            if (ch === '>' || ch === '<') {
-                continue;
-            }
+            // NB: Lucene can handle this, so commented it out
+            // if (ch === '>' || ch === '<') {
+            // continue;
+            // }
             if (ESQueryStringBuilder.RESERVED_CHARACTERS.has(ch)) {
                 const escapedQuote = (i < query.length - 1) && ch == '\\' && query.charAt(i + 1) == '\"';
                 if (escapedQuote) // do not escape already escaped quote (P6)

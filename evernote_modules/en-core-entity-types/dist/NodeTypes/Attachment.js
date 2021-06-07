@@ -3,11 +3,12 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.attachmentIndexConfig = exports.attachmentTypeDef = void 0;
+exports.attachmentIndexConfig = exports.attachmentTypeDef = exports.SEARCH_TEXT_LOOKASIDE_THRESHOLD = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const EntityConstants_1 = require("../EntityConstants");
 const Blob_1 = require("./Blob");
+exports.SEARCH_TEXT_LOOKASIDE_THRESHOLD = 256;
 exports.attachmentTypeDef = {
     name: EntityConstants_1.CoreEntityTypes.Attachment,
     syncSource: conduit_storage_1.SyncSource.THRIFT,
@@ -34,7 +35,12 @@ exports.attachmentTypeDef = {
             clientWillIndex: 'boolean',
         }),
     },
-    cache: Object.assign(Object.assign({}, Blob_1.BlobCache('recognition', 256)), Blob_1.BlobCache('alternateData', 256)),
+    cache: Object.assign(Object.assign(Object.assign({}, Blob_1.BlobCache('recognition', 256)), Blob_1.BlobCache('alternateData', 256)), { internal_searchText: {
+            type: conduit_utils_1.NullableString,
+            allowStale: true,
+            defaultValue: null,
+            lookasideThreshold: exports.SEARCH_TEXT_LOOKASIDE_THRESHOLD,
+        } }),
     edges: {
         parent: {
             constraint: conduit_storage_1.EdgeConstraint.REQUIRED,

@@ -14,7 +14,7 @@ exports.taskTypeDef = {
     syncSource: conduit_storage_1.SyncSource.NSYNC,
     nsyncFeatureGroup: 'Tasks',
     fieldValidation: {},
-    schema: Object.assign(Object.assign({}, conduit_utils_1.shallowCloneExcluding(en_tasks_data_model_1.TaskEntitySchema.fields, ['assigneeIdentityID', 'assigneeUserID', 'assignedByUserID'])), { created: 'timestamp', updated: 'timestamp' }),
+    schema: Object.assign(Object.assign({}, conduit_utils_1.shallowCloneExcluding(en_tasks_data_model_1.TaskEntitySchema.fields, ['assigneeIdentityID', 'assigneeUserID', 'assignedByUserID'])), { created: 'timestamp', updated: 'timestamp', deleted: conduit_utils_1.NullableTimestamp }),
     hasMemberships: {
         constraint: conduit_storage_1.EdgeConstraint.MANY,
         type: conduit_storage_1.EdgeType.MEMBERSHIP,
@@ -60,6 +60,14 @@ exports.taskIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
         sortWeight: conduit_storage_1.getIndexByResolverForPrimitives(exports.taskTypeDef, ['NodeFields', 'sortWeight']),
         status: conduit_storage_1.getIndexByResolverForPrimitives(exports.taskTypeDef, ['NodeFields', 'status']),
         taskGroupNoteLevelID: conduit_storage_1.getIndexByResolverForPrimitives(exports.taskTypeDef, ['NodeFields', 'taskGroupNoteLevelID']),
+        inTrash: {
+            schemaType: 'boolean',
+            resolver: async (trc, node, _) => {
+                return [!!node.NodeFields.deleted];
+            },
+            graphqlPath: ['inTrash'],
+            isUnSyncedField: true,
+        },
     },
     indexes: {
         label: {
@@ -99,6 +107,10 @@ exports.taskIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
             params: {
                 assignee: {
                     match: { field: 'assignee' },
+                },
+                inTrash: {
+                    optional: true,
+                    match: { field: 'inTrash' },
                 },
             },
         },

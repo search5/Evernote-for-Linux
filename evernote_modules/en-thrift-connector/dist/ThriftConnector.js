@@ -33,7 +33,6 @@ const en_nsync_connector_1 = require("en-nsync-connector");
 const Auth = __importStar(require("./Auth"));
 const AccountLimitsConverter_1 = require("./Converters/AccountLimitsConverter");
 const NotebookConverter_1 = require("./Converters/NotebookConverter");
-const UserConverter_1 = require("./Converters/UserConverter");
 const WorkspaceConverter_1 = require("./Converters/WorkspaceConverter");
 const Helpers_1 = require("./Helpers");
 const ApplicationDataPlugin_1 = require("./Plugins/ApplicationDataPlugin");
@@ -110,25 +109,8 @@ function init(di, configs) {
     // X is an arbitrary number that is most likely smaller than any realistic auth token lifetime.
     const [refreshNAPAuthToken] = conduit_utils_1.memoize('refreshAuthToken', refreshAuthToken, (_, oldAuth) => `${oldAuth.token}:${oldAuth.userID}`, gAuthTokenCacheLifetime);
     const quasarConnector = new QuasarConnector_1.QuasarConnectorAndExecutor(di, hostResolver, nSyncEventManager);
-    const initSyncEventManager = async (trc, host, token, jwt, clientID, storage, fromPrebuilt, toggleEventSync) => {
-        const abilityDI = {
-            httpProvider: di.getHttpTransport,
-            onChange: async (newTrc, isNowAvailable) => {
-                await toggleEventSync(trc, !isNowAvailable).catch(err => conduit_utils_1.logger.error(err));
-            },
-            getLastAvailability: async (newTrc) => {
-                return await storage.getSyncState(trc, null, ['SyncManager', 'EventSyncAvailable']);
-            },
-            saveLastAvailability: async (newTrc, available) => {
-                await storage.transact(newTrc, 'saveLastAvailability', async (tx) => {
-                    await tx.updateSyncState(newTrc, ['SyncManager', 'EventSyncAvailable'], available);
-                });
-            },
-            host,
-            url: di.serviceAvailabilityOverrideUrl,
-        };
-        const availability = new en_nsync_connector_1.ServiceAvailability(abilityDI);
-        await nSyncEventManager.init(trc, host, token, jwt, storage, clientID, resourceManager, fromPrebuilt, toggleEventSync, availability);
+    const initSyncEventManager = async (trc, host, token, jwt, clientID, storage, fromPrebuilt) => {
+        await nSyncEventManager.init(trc, host, token, jwt, storage, clientID, resourceManager, fromPrebuilt);
         return nSyncEventManager;
     };
     const pluginTokenRefreshManager = new PluginHelpers_1.PluginTokenRefreshManager({ refreshAuthToken: refreshNAPAuthToken }, (_b = configs.maxBackoffTimeout) !== null && _b !== void 0 ? _b : 16000);
@@ -171,32 +153,6 @@ function init(di, configs) {
             vaultRef: { id: conduit_core_1.VAULT_USER_ID, type: en_core_entity_types_1.CoreEntityTypes.User },
         });
     }
-    // TODO: remove this once no longer needed for migrating a field in a noWait query ( Today is: 04/21/2021 )
-    const meUpdater = async (context, node) => {
-        var _a, _b;
-        conduit_core_1.validateDB(context);
-        if (node.type !== 'User') {
-            throw new Error('meUpdater requires a user node');
-        }
-        if (!((_a = node.NodeFields) === null || _a === void 0 ? void 0 : _a.serviceLevel)) {
-            throw new Error('meUpdater requires a serviceLevel');
-        }
-        if (!node.syncContexts || !node.syncContexts.length) {
-            throw new Error('meUpdater requires syncContext');
-        }
-        const serviceLevelV1 = node.NodeFields.serviceLevel;
-        let ret = node;
-        if (conduit_utils_1.isNullish((_b = node.NodeFields) === null || _b === void 0 ? void 0 : _b.serviceLevelV2)) {
-            const serviceLevelV2 = UserConverter_1.toServiceLevelV2(serviceLevelV1);
-            ret = await context.db.transactSyncedStorage(context.trc, 'meUpdater', async (graphTransaction) => {
-                return await graphTransaction.updateNode(context.trc, node.syncContexts[0], node, { NodeFields: { serviceLevelV2 } });
-            });
-            if (ret === null) {
-                throw new Error('update of me node during temp migration failed');
-            }
-        }
-        return ret;
-    };
     return {
         di: {
             // persisted personal/vault sync context metadata do not have auth tokens because the tokens can only be stored inside secure storage.
@@ -250,7 +206,13 @@ function init(di, configs) {
                 };
             },
             getHttpTransport: di.getHttpTransport,
-            meUpdater,
+            getMutationServiceLastProcessingTime: async (newTrc, graphStorage) => {
+                const timeReturn = await graphStorage.getSyncState(newTrc, null, ['LastNSyncProcessingTime']) || 0;
+                if (typeof (timeReturn) !== 'number') {
+                    return 0;
+                }
+                return timeReturn;
+            },
         },
         plugins: [
             ApplicationDataPlugin_1.getApplicationDataPlugin(),

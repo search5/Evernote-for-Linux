@@ -30,8 +30,9 @@ exports.parseAndValidateAttachmentCreateData = parseAndValidateAttachmentCreateD
 function processApplicationData(applicationDataString) {
     let applicationData;
     let applicationDataKeys;
-    if (applicationDataString) {
-        applicationData = conduit_utils_1.safeParse(applicationDataString);
+    const parsedApplicationData = conduit_utils_1.safeParse(applicationDataString);
+    if (parsedApplicationData) {
+        applicationData = parsedApplicationData;
         conduit_utils_1.verifyStash(applicationData, 'ApplicationData');
         applicationDataKeys = Object.keys(applicationData || {});
     }

@@ -132,7 +132,7 @@ class BoardFeatureSchemaManager {
             featureVersions: featureVersionsRequestedResult,
         };
     }
-    async generateDefaultLayout(trc, ctx, userAdjustedServiceLevelV2, features, featureVersions, boardType = en_home_data_model_1.BoardType.Home, boardInternalID = 0, useServiceLevelV2Layouts = false) {
+    async generateDefaultLayout(trc, ctx, userAdjustedServiceLevelV2, features, featureVersions, boardType, boardInternalID, clientLayoutVersion = 0) {
         // This is the original list of widgets determined at Home Feature launch and is part of the Core Board Schema Definition.
         const widgetTypes = BoardFeatureSchemaManager.createHomeGAWidgetTypes();
         for (let i = 0; i < features.length; i++) {
@@ -151,8 +151,8 @@ class BoardFeatureSchemaManager {
                 }
             }
         }
-        const widgetDefaultsFactory = new WidgetDefaultsFactory_1.WidgetDefaultsFactory(useServiceLevelV2Layouts);
-        return await widgetDefaultsFactory.create(trc, ctx, userAdjustedServiceLevelV2, boardType, widgetTypes, boardInternalID);
+        const widgetDefaultsFactory = new WidgetDefaultsFactory_1.WidgetDefaultsFactory();
+        return await widgetDefaultsFactory.create(trc, ctx, userAdjustedServiceLevelV2, clientLayoutVersion, boardType, widgetTypes, boardInternalID);
     }
     applyWidgetDefaults(widget, defaults, platform) {
         widget.widgetType = defaults.widgetType;
@@ -208,7 +208,7 @@ class BoardFeatureSchemaManager {
             mobileSortWeight: defaults.mobileSortWeight,
             desktopSortWeight: defaults.desktopSortWeight,
         };
-        if (defaults.serviceLevelV1Upgrade) {
+        if (defaults.autoPosition) {
             if (defaultRankingsToUse.mobileSortWeight <= boardLayoutSummary.maxMobileSortWeight) {
                 try {
                     defaultRankingsToUse.mobileSortWeight = boardLayoutSummary.lexoRankHandler.between(boardLayoutSummary.maxMobileSortWeight, conduit_utils_1.LexoRankEndWeight);
@@ -230,7 +230,7 @@ class BoardFeatureSchemaManager {
             boardLayoutSummary.maxDesktopSortWeight = defaultRankingsToUse.desktopSortWeight;
             boardLayoutSummary.maxMobileSortWeight = defaultRankingsToUse.mobileSortWeight;
         }
-        this.applyWidgetDefaults(widgetStash, Object.assign(Object.assign(Object.assign({}, defaults), defaultRankingsToUse), { isEnabled: !isCustomized || defaults.serviceLevelV1Upgrade ? defaults.isEnabled : false }));
+        this.applyWidgetDefaults(widgetStash, Object.assign(Object.assign(Object.assign({}, defaults), defaultRankingsToUse), { isEnabled: !isCustomized || defaults.autoPosition ? defaults.isEnabled : false }));
         return {
             widget: widgetStash,
             edge: {

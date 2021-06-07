@@ -22,12 +22,12 @@ const NotebookConverter_1 = require("./NotebookConverter");
 const ProfileConverter_1 = require("./ProfileConverter");
 function membershipPrivilegeToShareRelationship(privilege) {
     switch (privilege) {
-        case en_core_entity_types_1.MembershipPrivilege.READ:
-        case en_core_entity_types_1.MembershipPrivilege.COMPLETE:
+        case en_conduit_sync_types_1.MembershipPrivilege.READ:
+        case en_conduit_sync_types_1.MembershipPrivilege.COMPLETE:
             return en_conduit_sync_types_1.TShareRelationshipPrivilegeLevel.READ_NOTEBOOK_PLUS_ACTIVITY;
-        case en_core_entity_types_1.MembershipPrivilege.EDIT:
+        case en_conduit_sync_types_1.MembershipPrivilege.EDIT:
             return en_conduit_sync_types_1.TShareRelationshipPrivilegeLevel.MODIFY_NOTEBOOK_PLUS_ACTIVITY;
-        case en_core_entity_types_1.MembershipPrivilege.MANAGE:
+        case en_conduit_sync_types_1.MembershipPrivilege.MANAGE:
             return en_conduit_sync_types_1.TShareRelationshipPrivilegeLevel.FULL_ACCESS;
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
@@ -35,12 +35,12 @@ function membershipPrivilegeToShareRelationship(privilege) {
 }
 function membershipPrivilegeToSharedNotebookPrivilege(privilege) {
     switch (privilege) {
-        case en_core_entity_types_1.MembershipPrivilege.READ:
-        case en_core_entity_types_1.MembershipPrivilege.COMPLETE:
+        case en_conduit_sync_types_1.MembershipPrivilege.READ:
+        case en_conduit_sync_types_1.MembershipPrivilege.COMPLETE:
             return en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.READ_NOTEBOOK_PLUS_ACTIVITY;
-        case en_core_entity_types_1.MembershipPrivilege.EDIT:
+        case en_conduit_sync_types_1.MembershipPrivilege.EDIT:
             return en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.MODIFY_NOTEBOOK_PLUS_ACTIVITY;
-        case en_core_entity_types_1.MembershipPrivilege.MANAGE:
+        case en_conduit_sync_types_1.MembershipPrivilege.MANAGE:
             return en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.FULL_ACCESS;
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
@@ -51,25 +51,25 @@ function membershipPrivilegeFromSharedNotebookPrivilege(privilege) {
     switch (privilege) {
         case en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.READ_NOTEBOOK:
         case en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.READ_NOTEBOOK_PLUS_ACTIVITY:
-            return en_core_entity_types_1.MembershipPrivilege.READ;
+            return en_conduit_sync_types_1.MembershipPrivilege.READ;
         case en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.MODIFY_NOTEBOOK_PLUS_ACTIVITY:
         case en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.GROUP:
-            return en_core_entity_types_1.MembershipPrivilege.EDIT;
+            return en_conduit_sync_types_1.MembershipPrivilege.EDIT;
         case en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.FULL_ACCESS:
         case en_conduit_sync_types_1.TSharedNotebookPrivilegeLevel.BUSINESS_FULL_ACCESS:
-            return en_core_entity_types_1.MembershipPrivilege.MANAGE;
+            return en_conduit_sync_types_1.MembershipPrivilege.MANAGE;
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
     }
 }
 function membershipPrivilegeToWorkspacePrivilege(privilege) {
     switch (privilege) {
-        case en_core_entity_types_1.MembershipPrivilege.READ:
-        case en_core_entity_types_1.MembershipPrivilege.COMPLETE:
+        case en_conduit_sync_types_1.MembershipPrivilege.READ:
+        case en_conduit_sync_types_1.MembershipPrivilege.COMPLETE:
             return en_conduit_sync_types_1.TWorkspacePrivilegeLevel.READ;
-        case en_core_entity_types_1.MembershipPrivilege.EDIT:
+        case en_conduit_sync_types_1.MembershipPrivilege.EDIT:
             return en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT;
-        case en_core_entity_types_1.MembershipPrivilege.MANAGE:
+        case en_conduit_sync_types_1.MembershipPrivilege.MANAGE:
             return en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT_AND_MANAGE;
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
@@ -79,23 +79,23 @@ exports.membershipPrivilegeToWorkspacePrivilege = membershipPrivilegeToWorkspace
 function membershipPrivilegeFromWorkspacePrivilege(privilege) {
     switch (privilege) {
         case en_conduit_sync_types_1.TWorkspacePrivilegeLevel.READ:
-            return en_core_entity_types_1.MembershipPrivilege.READ;
+            return en_conduit_sync_types_1.MembershipPrivilege.READ;
         case en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT:
-            return en_core_entity_types_1.MembershipPrivilege.EDIT;
+            return en_conduit_sync_types_1.MembershipPrivilege.EDIT;
         case en_conduit_sync_types_1.TWorkspacePrivilegeLevel.EDIT_AND_MANAGE:
-            return en_core_entity_types_1.MembershipPrivilege.MANAGE;
+            return en_conduit_sync_types_1.MembershipPrivilege.MANAGE;
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
     }
 }
 function membershipPrivilegeToSharedNotePrivilegeLevel(privilege) {
     switch (privilege) {
-        case en_core_entity_types_1.MembershipPrivilege.READ:
-        case en_core_entity_types_1.MembershipPrivilege.COMPLETE:
+        case en_conduit_sync_types_1.MembershipPrivilege.READ:
+        case en_conduit_sync_types_1.MembershipPrivilege.COMPLETE:
             return en_conduit_sync_types_1.TSharedNotePrivilegeLevel.READ_NOTE;
-        case en_core_entity_types_1.MembershipPrivilege.EDIT:
+        case en_conduit_sync_types_1.MembershipPrivilege.EDIT:
             return en_conduit_sync_types_1.TSharedNotePrivilegeLevel.MODIFY_NOTE;
-        case en_core_entity_types_1.MembershipPrivilege.MANAGE:
+        case en_conduit_sync_types_1.MembershipPrivilege.MANAGE:
             return en_conduit_sync_types_1.TSharedNotePrivilegeLevel.FULL_ACCESS;
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
@@ -107,7 +107,7 @@ function membershipFromWorkspace(serviceData, parentNode, personalUserID, vaultU
     if (!serviceData.common) {
         throw new Error('Unable to create membership node without a common structure in service data');
     }
-    const recipientType = serviceData.common.recipientType === en_conduit_sync_types_1.TRecipientType.BUSINESS ? en_core_entity_types_1.MembershipRecipientType.BUSINESS : en_core_entity_types_1.MembershipRecipientType.USER;
+    const recipientType = serviceData.common.recipientType === en_conduit_sync_types_1.TRecipientType.BUSINESS ? en_conduit_sync_types_1.MembershipRecipientType.BUSINESS : en_conduit_sync_types_1.MembershipRecipientType.USER;
     const node = {
         type: en_core_entity_types_1.CoreEntityTypes.Membership,
         id: Converters_1.convertGuidFromService(serviceData.common.guid, en_core_entity_types_1.CoreEntityTypes.Membership),
@@ -118,7 +118,7 @@ function membershipFromWorkspace(serviceData, parentNode, personalUserID, vaultU
         NodeFields: {
             privilege: membershipPrivilegeFromWorkspacePrivilege(serviceData.privilege || 1),
             recipientType,
-            recipientIsMe: recipientType === en_core_entity_types_1.MembershipRecipientType.USER && serviceData.common.recipientId === personalUserID,
+            recipientIsMe: recipientType === en_conduit_sync_types_1.MembershipRecipientType.USER && serviceData.common.recipientId === personalUserID,
             created: serviceData.common.serviceCreated || 0,
             updated: serviceData.common.serviceUpdated || 0,
             invitedTime: null,
@@ -181,26 +181,26 @@ async function removeMembershipFromWorkspace(trc, params, auth, workspaceID, mem
 function membershipPrivilegeFromSharedNotePrivilege(privilege) {
     switch (privilege) {
         case en_conduit_sync_types_1.TSharedNotePrivilegeLevel.READ_NOTE:
-            return en_core_entity_types_1.MembershipPrivilege.READ;
+            return en_conduit_sync_types_1.MembershipPrivilege.READ;
         case en_conduit_sync_types_1.TSharedNotePrivilegeLevel.MODIFY_NOTE:
-            return en_core_entity_types_1.MembershipPrivilege.EDIT;
+            return en_conduit_sync_types_1.MembershipPrivilege.EDIT;
         case en_conduit_sync_types_1.TSharedNotePrivilegeLevel.FULL_ACCESS:
-            return en_core_entity_types_1.MembershipPrivilege.MANAGE;
+            return en_conduit_sync_types_1.MembershipPrivilege.MANAGE;
         default:
             throw conduit_utils_1.absurd(privilege, `Unknown privilege ${privilege}`);
     }
 }
 function convertSharedNoteMembershipGuidFromService(noteID, identity) {
     let id = '';
-    let type = en_core_entity_types_1.MembershipRecipientType.USER;
+    let type = en_conduit_sync_types_1.MembershipRecipientType.USER;
     if (identity) {
         if (identity.userId) {
             id = conduit_utils_1.keyStringForUserID(identity.userId);
-            type = en_core_entity_types_1.MembershipRecipientType.USER;
+            type = en_conduit_sync_types_1.MembershipRecipientType.USER;
         }
         else if (identity.id) {
             id = MessageAttachmentConverter_1.convertIdentityGuidFromService(identity.id);
-            type = en_core_entity_types_1.MembershipRecipientType.IDENTITY;
+            type = en_conduit_sync_types_1.MembershipRecipientType.IDENTITY;
         }
         else {
             throw new Error('Shared note with no supported recipient found');
@@ -287,10 +287,10 @@ async function membershipFromSharedNote(trc, params, noteID, serviceData, parent
         });
     }
     let recipientProfileID = null;
-    if (recipientType === en_core_entity_types_1.MembershipRecipientType.USER && recipientId !== '') {
+    if (recipientType === en_conduit_sync_types_1.MembershipRecipientType.USER && recipientId !== '') {
         recipientProfileID = Converters_1.convertGuidFromService(serviceData.recipientIdentity.userId.toString(), en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.User);
     }
-    else if (recipientType === en_core_entity_types_1.MembershipRecipientType.IDENTITY) {
+    else if (recipientType === en_conduit_sync_types_1.MembershipRecipientType.IDENTITY) {
         recipientProfileID = Converters_1.convertGuidFromService(serviceData.recipientIdentity.id, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.Identity);
     }
     if (recipientProfileID) {
@@ -333,17 +333,17 @@ function profileFromSharedNotebook(serviceData) {
 }
 async function membershipFromSharedNotebook(trc, params, serviceData, parentNode) {
     var _a;
-    let recipientType = en_core_entity_types_1.MembershipRecipientType.USER;
+    let recipientType = en_conduit_sync_types_1.MembershipRecipientType.USER;
     let recipientIsMe = false;
     if (serviceData.recipientUserId) {
-        recipientType = en_core_entity_types_1.MembershipRecipientType.USER;
+        recipientType = en_conduit_sync_types_1.MembershipRecipientType.USER;
         recipientIsMe = serviceData.recipientUserId === params.personalUserId;
     }
     else if (serviceData.recipientIdentityId) {
-        recipientType = en_core_entity_types_1.MembershipRecipientType.IDENTITY;
+        recipientType = en_conduit_sync_types_1.MembershipRecipientType.IDENTITY;
     }
     else if (serviceData.email) {
-        recipientType = en_core_entity_types_1.MembershipRecipientType.EMAIL;
+        recipientType = en_conduit_sync_types_1.MembershipRecipientType.EMAIL;
     }
     else {
         throw new Error('Shared notebook with no supported recipient found');
@@ -407,7 +407,7 @@ async function membershipFromSharedNotebook(trc, params, serviceData, parentNode
     else if (serviceData.recipientIdentityId) {
         recipientID = Converters_1.convertGuidFromService(serviceData.recipientIdentityId, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.Identity);
     }
-    else if (recipientType === en_core_entity_types_1.MembershipRecipientType.EMAIL && serviceData.email) {
+    else if (recipientType === en_conduit_sync_types_1.MembershipRecipientType.EMAIL && serviceData.email) {
         recipientID = Converters_1.convertGuidFromService(serviceData.email, en_core_entity_types_1.CoreEntityTypes.Profile, en_core_entity_types_1.PROFILE_SOURCE.Identity);
     }
     if (recipientID) {
@@ -421,9 +421,9 @@ async function membershipFromSharedNotebook(trc, params, serviceData, parentNode
     return node;
 }
 async function updateSharedNotebookMembershipPrivilege(trc, params, auth, notebookID, privilege, membership) {
-    const isRecipientUser = membership.NodeFields.recipientType === en_core_entity_types_1.MembershipRecipientType.USER;
-    const isRecipientBusiness = membership.NodeFields.recipientType === en_core_entity_types_1.MembershipRecipientType.BUSINESS;
-    const isRecipientIdentity = membership.NodeFields.recipientType === en_core_entity_types_1.MembershipRecipientType.IDENTITY;
+    const isRecipientUser = membership.NodeFields.recipientType === en_conduit_sync_types_1.MembershipRecipientType.USER;
+    const isRecipientBusiness = membership.NodeFields.recipientType === en_conduit_sync_types_1.MembershipRecipientType.BUSINESS;
+    const isRecipientIdentity = membership.NodeFields.recipientType === en_conduit_sync_types_1.MembershipRecipientType.IDENTITY;
     if (!isRecipientUser && !isRecipientBusiness && !isRecipientIdentity) {
         throw new Error('Cannot update share to email');
     }
@@ -456,29 +456,29 @@ async function updateSharedNotebookMembershipPrivilege(trc, params, auth, notebo
     }
 }
 async function updateSharedNoteMembershipPrivilege(trc, params, auth, noteID, privilege, membership) {
-    if (membership.NodeFields.recipientType !== en_core_entity_types_1.MembershipRecipientType.USER && membership.NodeFields.recipientType !== en_core_entity_types_1.MembershipRecipientType.IDENTITY) {
+    if (membership.NodeFields.recipientType !== en_conduit_sync_types_1.MembershipRecipientType.USER && membership.NodeFields.recipientType !== en_conduit_sync_types_1.MembershipRecipientType.IDENTITY) {
         throw new Error('Only updates to users and identity privileges are allowed');
     }
     const recipientId = Number(Converters_1.convertGuidToService(conduit_utils_1.firstStashEntry(membership.outputs.recipient).dstID, en_core_entity_types_1.CoreEntityTypes.Profile));
     let privilegeOut;
     switch (privilege) {
-        case en_core_entity_types_1.MembershipPrivilege.MANAGE:
+        case en_conduit_sync_types_1.MembershipPrivilege.MANAGE:
             privilegeOut = en_conduit_sync_types_1.TSharedNotePrivilegeLevel.FULL_ACCESS;
             break;
-        case en_core_entity_types_1.MembershipPrivilege.EDIT:
+        case en_conduit_sync_types_1.MembershipPrivilege.EDIT:
             privilegeOut = en_conduit_sync_types_1.TSharedNotePrivilegeLevel.MODIFY_NOTE;
             break;
-        case en_core_entity_types_1.MembershipPrivilege.READ:
+        case en_conduit_sync_types_1.MembershipPrivilege.READ:
         default:
             privilegeOut = en_conduit_sync_types_1.TSharedNotePrivilegeLevel.READ_NOTE;
             break;
     }
     const managedShares = {
         noteGuid: noteID,
-        membershipsToUpdate: membership.NodeFields.recipientType === en_core_entity_types_1.MembershipRecipientType.USER ? [
+        membershipsToUpdate: membership.NodeFields.recipientType === en_conduit_sync_types_1.MembershipRecipientType.USER ? [
             { recipientUserId: recipientId, privilege: privilegeOut }
         ] : undefined,
-        invitationsToUpdate: membership.NodeFields.recipientType === en_core_entity_types_1.MembershipRecipientType.IDENTITY ? [
+        invitationsToUpdate: membership.NodeFields.recipientType === en_conduit_sync_types_1.MembershipRecipientType.IDENTITY ? [
             { recipientIdentityId: recipientId, privilege: privilegeOut }
         ] : undefined,
     };
@@ -496,20 +496,20 @@ async function removeMembershipFromNotebook(trc, params, auth, notebookID, membe
         throw new Error('No recipient edge found');
     }
     switch (membership.NodeFields.recipientType) {
-        case en_core_entity_types_1.MembershipRecipientType.USER:
-        case en_core_entity_types_1.MembershipRecipientType.BUSINESS:
+        case en_conduit_sync_types_1.MembershipRecipientType.USER:
+        case en_conduit_sync_types_1.MembershipRecipientType.BUSINESS:
             unshare = {
                 type: en_conduit_sync_types_1.TUserIdentityType.EVERNOTE_USERID,
                 longIdentifier: Number(Converters_1.convertGuidToService(recipientEdge.dstID, en_core_entity_types_1.CoreEntityTypes.Profile)),
             };
             break;
-        case en_core_entity_types_1.MembershipRecipientType.IDENTITY:
+        case en_conduit_sync_types_1.MembershipRecipientType.IDENTITY:
             unshare = {
                 type: en_conduit_sync_types_1.TUserIdentityType.IDENTITYID,
                 longIdentifier: Number(Converters_1.convertGuidToService(recipientEdge.dstID, en_core_entity_types_1.CoreEntityTypes.Profile)),
             };
             break;
-        case en_core_entity_types_1.MembershipRecipientType.EMAIL:
+        case en_conduit_sync_types_1.MembershipRecipientType.EMAIL:
             unshare = {
                 type: en_conduit_sync_types_1.TUserIdentityType.EMAIL,
                 stringIdentifier: Converters_1.convertGuidToService(recipientEdge.dstID, en_core_entity_types_1.CoreEntityTypes.Profile),
@@ -535,14 +535,14 @@ async function removeMembershipFromSharedNote(trc, params, auth, noteID, members
     const unshareEmails = [];
     const recipientId = conduit_utils_1.firstStashEntry(membership.outputs.recipient).dstID;
     switch (membership.NodeFields.recipientType) {
-        case en_core_entity_types_1.MembershipRecipientType.USER:
+        case en_conduit_sync_types_1.MembershipRecipientType.USER:
             unshareUsers.push(Number(Converters_1.convertGuidToService(recipientId, en_core_entity_types_1.CoreEntityTypes.Profile)));
             break;
-        case en_core_entity_types_1.MembershipRecipientType.IDENTITY:
+        case en_conduit_sync_types_1.MembershipRecipientType.IDENTITY:
             unshareEmails.push(Number(Converters_1.convertGuidToService(recipientId, en_core_entity_types_1.CoreEntityTypes.Profile)));
             break;
-        case en_core_entity_types_1.MembershipRecipientType.BUSINESS:
-        case en_core_entity_types_1.MembershipRecipientType.EMAIL:
+        case en_conduit_sync_types_1.MembershipRecipientType.BUSINESS:
+        case en_conduit_sync_types_1.MembershipRecipientType.EMAIL:
         default:
             throw new Error(`Unknown recipient type ${membership.NodeFields.recipientType}`);
     }

@@ -11,6 +11,7 @@ const ConduitHttpRequestor_1 = require("./ConduitHttpRequestor");
 const NAPAuthnRequest_1 = require("./NAPAuthnRequest");
 const NAPAuthTrcPool = new conduit_utils_1.AsyncTracePool('NAPAuth');
 const AUTH_SCOPE = 'openid profile mono_authn_token email offline_access';
+const serverErrorRegex = /^5\d\d$/;
 const utils = new en_node_appauth_js_1.BasicQueryStringUtils();
 var NAPOAuthProvider;
 (function (NAPOAuthProvider) {
@@ -47,9 +48,9 @@ function wrapTokenRequestResponseError(e) {
         if (e.message === '404') {
             return new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.CLIENT_NOT_SUPPORTED, '');
         }
-        // Retry for 500
-        if (e.message === '500') {
-            return new conduit_utils_1.ServiceError('Auth', '500', 'Retry with Legacy');
+        // Retry for 5xx
+        if (serverErrorRegex.test(e.message)) {
+            return new conduit_utils_1.RetryError(e.message, 5 * conduit_utils_1.MILLIS_IN_ONE_SECOND);
         }
     }
     return new conduit_utils_1.ServiceError('Auth', e.message, 'Retry with Legacy');

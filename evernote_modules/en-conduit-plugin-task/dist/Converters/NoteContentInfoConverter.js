@@ -10,21 +10,13 @@ const en_data_model_1 = require("en-data-model");
 const en_nsync_connector_1 = require("en-nsync-connector");
 const getNoteContentInfoNodeAndEdges = async (trc, instance, context) => {
     var _a, _b;
+    const noteContentInfo = en_nsync_connector_1.convertNsyncEntityToNode(instance, context);
+    if (!noteContentInfo) {
+        return null;
+    }
     const nodesToUpsert = [];
     const edgesToCreate = [];
     const edgesToDelete = [];
-    const initial = en_nsync_connector_1.createInitialNode(instance);
-    if (!initial) {
-        return null;
-    }
-    const noteContentInfo = Object.assign(Object.assign({}, initial), { type: en_data_model_1.EntityTypes.NoteContentInfo, NodeFields: {
-            created: instance.created,
-            updated: instance.updated,
-            taskGroupNoteLevelIDs: instance.taskGroupNoteLevelIDs,
-            sourceOfChange: instance.sourceOfChange || null,
-        }, inputs: {
-            parent: {},
-        }, outputs: {} });
     nodesToUpsert.push(noteContentInfo);
     if (instance.parentEntity) {
         const parentID = (_a = instance.parentEntity) === null || _a === void 0 ? void 0 : _a.id;

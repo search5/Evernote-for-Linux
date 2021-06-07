@@ -329,25 +329,25 @@ class MutationEngine {
         let ret = [];
         for (const rule of this.config.mutationRules) {
             if (ctx.isOptimistic) {
-                // tslint:disable-next-line:no-bitwise
+                // eslint-disable-next-line no-bitwise
                 if (!(rule.when & GraphMutationTypes_1.GraphMutationRuleWhen.Optimistic)) {
                     continue;
                 }
             }
             else if (mutatorDef.type === GraphMutationTypes_1.MutatorRemoteExecutorType.Thrift) {
-                // tslint:disable-next-line:no-bitwise
+                // eslint-disable-next-line no-bitwise
                 if (!(rule.when & GraphMutationTypes_1.GraphMutationRuleWhen.Thrift)) {
                     continue;
                 }
             }
             else if (mutatorDef.type === GraphMutationTypes_1.MutatorRemoteExecutorType.CommandService) {
-                // tslint:disable-next-line:no-bitwise
+                // eslint-disable-next-line no-bitwise
                 if (!(rule.when & GraphMutationTypes_1.GraphMutationRuleWhen.CommandService)) {
                     continue;
                 }
             }
             else if (mutatorDef.type === GraphMutationTypes_1.MutatorRemoteExecutorType.Local) {
-                // tslint:disable-next-line:no-bitwise
+                // eslint-disable-next-line no-bitwise
                 if (!(rule.when & GraphMutationTypes_1.GraphMutationRuleWhen.Local)) {
                     continue;
                 }

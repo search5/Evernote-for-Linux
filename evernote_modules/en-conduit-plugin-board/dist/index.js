@@ -29,6 +29,7 @@ const en_data_model_1 = require("en-data-model");
 const en_home_data_model_1 = require("en-home-data-model");
 const BoardBootstrap_1 = require("./BoardBootstrap");
 const BoardCustomize_1 = require("./BoardCustomize");
+const BoardCustomizeVerII_1 = require("./BoardCustomizeVerII");
 const BoardConverter_1 = require("./Converters/BoardConverter");
 const WidgetContentConflictConverter_1 = require("./Converters/WidgetContentConflictConverter");
 const WidgetConverter_1 = require("./Converters/WidgetConverter");
@@ -46,9 +47,11 @@ function getENBoardPlugin() {
         name: 'ENBoard',
         defineMutators: di => {
             const mutators = {
+                // TODO: Remove this mutation after repackaging.
                 notePin: NotePin_1.createNotePinDefinition(),
                 boardBootstrap: BoardBootstrap_1.createBoardBootstrapDefinition(di),
                 boardCustomize: BoardCustomize_1.createBoardCustomizeDefinition(),
+                boardCustomizeVerII: BoardCustomizeVerII_1.createBoardCustomizeVerIIDefinition(),
             };
             return mutators;
         },
@@ -62,6 +65,13 @@ function getENBoardPlugin() {
                     resolve: async (widget, _, context) => {
                         const { boardType, mutableWidgetType, } = widget;
                         return Utilities.safeMutableWidgetType(boardFeatureSchema, boardType, mutableWidgetType);
+                    },
+                },
+                ['Widget.selectedTab']: {
+                    type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Nullable(en_home_data_model_1.WidgetSelectedTabsSchema)),
+                    resolve: async (widget, _, context) => {
+                        const { widgetType, selectedTab, } = widget;
+                        return Utilities.safeSelectedTab(selectedTab, widgetType);
                     },
                 },
             };

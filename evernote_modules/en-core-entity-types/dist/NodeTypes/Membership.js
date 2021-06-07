@@ -3,24 +3,17 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.membershipIndexConfig = exports.membershipTypeDef = exports.MembershipRecipientType = void 0;
+exports.membershipIndexConfig = exports.membershipTypeDef = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const EntityConstants_1 = require("../EntityConstants");
-const MembershipPrivilege_1 = require("../MembershipPrivilege");
-var MembershipRecipientType;
-(function (MembershipRecipientType) {
-    MembershipRecipientType["USER"] = "USER";
-    MembershipRecipientType["IDENTITY"] = "IDENTITY";
-    MembershipRecipientType["EMAIL"] = "EMAIL";
-    MembershipRecipientType["BUSINESS"] = "BUSINESS";
-})(MembershipRecipientType = exports.MembershipRecipientType || (exports.MembershipRecipientType = {}));
 exports.membershipTypeDef = {
     name: EntityConstants_1.CoreEntityTypes.Membership,
     syncSource: conduit_storage_1.SyncSource.THRIFT,
     schema: {
-        privilege: MembershipPrivilege_1.MembershipPrivilegeSchema,
-        recipientType: conduit_utils_1.Enum(MembershipRecipientType, 'MembershipRecipientType'),
+        privilege: en_conduit_sync_types_1.MembershipPrivilegeSchema,
+        recipientType: conduit_utils_1.Enum(en_conduit_sync_types_1.MembershipRecipientType, 'MembershipRecipientType'),
         recipientIsMe: 'boolean',
         created: 'timestamp',
         updated: 'timestamp',
@@ -59,6 +52,7 @@ exports.membershipIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(ex
     indexResolvers: {
         created: conduit_storage_1.getIndexByResolverForPrimitives(exports.membershipTypeDef, ['NodeFields', 'created']),
         label: conduit_storage_1.getIndexByResolverForPrimitives(exports.membershipTypeDef, ['label']),
+        invitedTime: conduit_storage_1.getIndexByResolverForPrimitives(exports.membershipTypeDef, ['NodeFields', 'invitedTime']),
         recipientIsMe: conduit_storage_1.getIndexByResolverForPrimitives(exports.membershipTypeDef, ['NodeFields', 'recipientIsMe']),
         parent: conduit_storage_1.getIndexByResolverForEdge(exports.membershipTypeDef, ['edges', 'parent']),
     },
@@ -90,6 +84,7 @@ exports.membershipIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(ex
             params: {
                 orderBy: {
                     sort: {
+                        invitedTime: [{ field: 'invitedTime', order: 'DESC' }],
                         created: [{ field: 'created', order: 'DESC' }],
                         label: [{ field: 'label', order: 'ASC' }],
                     },

@@ -14,8 +14,9 @@ const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const DataHelpers_1 = require("./DataHelpers");
+const en_data_model_1 = require("en-data-model");
 const NSyncProcessor_1 = require("./NSyncProcessor");
+const ServiceAvailability_1 = require("./ServiceAvailability");
 const gTracePool = new conduit_utils_1.AsyncTracePool('NSyncEventManager');
 const LAST_CONNECTION_BUFFER_TIME = 60000;
 const BACKOFF_RECONNECT = 5 * conduit_utils_1.MILLIS_IN_ONE_SECOND;
@@ -42,7 +43,6 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         this.hostResolver = hostResolver;
         this.isDestroyed = false;
         this.eventSrc = null;
-        this.dataHelpers = null;
         this.storage = null;
         this.clientID = '';
         this.monolithHost = '';
@@ -59,20 +59,15 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         this.isPaused = false;
         this.disconnectOnPause = null;
         this.isDisabled = false;
-        this.toggleEventSync = null;
-        this.enabledBeforeOverride = true; // Default is on
-        this.testOverride = async (trc, args) => {
+        this.disableWithOverride = false;
+        this.firstMessagePromise = null;
+        this.firstMessageResolve = null;
+        this.testOverride = async (trc, args, context) => {
+            conduit_core_1.validateDB(context);
             let disable = args.disable;
-            if (!this.toggleEventSync) {
-                throw new Error('NSyncEventManager not initialized');
-            }
-            if (disable === true) {
-                this.enabledBeforeOverride = this.isAvailable();
-            }
-            else {
-                disable = !this.enabledBeforeOverride;
-            }
-            await this.toggleEventSync(trc, disable);
+            this.disableWithOverride = disable;
+            const nsyncDisabled = await context.db.getEphemeralFlag(context.trc, context.watcher, 'SyncManager', 'nsyncDisabled');
+            await this.onSyncStateChange(trc, nsyncDisabled, this.isPaused);
             return true;
         };
         this.resolvePlugin = async (parent, args, context) => {
@@ -82,11 +77,17 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             }
             const connInfo = await context.db.getSyncState(context.trc, context.watcher, ['NSyncEventManager']);
             const nsyncDisabled = await context.db.getEphemeralFlag(context.trc, context.watcher, 'SyncManager', 'nsyncDisabled');
+            const lastNSyncProcessTime = await context.db.getSyncState(context.trc, context.watcher, ['LastNSyncProcessTime']);
+            const paused = await context.db.getEphemeralFlag(context.trc, context.watcher, 'SyncManager', 'syncPaused');
+            const completed = await context.db.getEphemeralFlag(context.trc, context.watcher, 'SyncManager', 'nsyncCompleted');
             return {
-                enabled: !nsyncDisabled,
+                enabled: !this.isDisabled && !nsyncDisabled,
+                paused: this.isPaused || paused,
                 offline: (connInfo === null || connInfo === void 0 ? void 0 : connInfo.lastAttempt) !== 200,
+                completed,
                 nextAttempt: (connInfo === null || connInfo === void 0 ? void 0 : connInfo.backoff) || 0,
                 lastConnection: (connInfo === null || connInfo === void 0 ? void 0 : connInfo.lastConnection) || 0,
+                lastNSyncProcessTime: lastNSyncProcessTime || 0,
             };
         };
         /* *** WARNING ***
@@ -103,24 +104,55 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         }
         this.expungeSet = new Set();
     }
-    async init(trc, host, monolithToken, jwtToken, storage, clientID, resourceManager, usedPrebuilt, toggleEventSync, availability) {
+    async init(trc, host, monolithToken, jwtToken, storage, clientID, resourceManager, usedPrebuilt) {
         this.isDestroyed = false;
-        this.dataHelpers = DataHelpers_1.createDataHelpers(host, resourceManager);
         this.monolithHost = host;
         this.storage = storage;
         this.clientID = clientID;
         this.monolithToken = monolithToken;
         this.jwt = jwtToken;
-        this.toggleEventSync = toggleEventSync;
-        this.availability = availability;
-        this.availability.startPolling(trc);
+        this.firstMessagePromise = null;
+        this.firstMessageResolve = null;
         this.connectionInfo = null;
         const connInfo = await (usedPrebuilt ? this.updateConnectionInformation(trc, { connectionID: conduit_utils_1.uuid() }) : this.getConnectionInformation(trc));
         this.nodeFilter = en_core_entity_types_1.getNSyncEntityFilter(this.di.getNodeTypeDefs(), this.di.nSyncEntityFilter);
         if (connInfo.lastFilter.length) {
             this.catchupFilter = buildCatchupFilter(this.nodeFilter, connInfo.lastFilter);
         }
+        const availabilityConfig = {
+            httpProvider: this.di.getHttpTransport,
+            getLastAvailability: async (newTrc) => {
+                if (!this.storage) {
+                    return;
+                }
+                return await this.storage.getSyncState(trc, null, ['SyncManager', 'EventSyncAvailable']);
+            },
+            saveLastAvailability: async (newTrc, available) => {
+                if (!this.storage) {
+                    return;
+                }
+                await this.storage.transact(newTrc, 'saveLastAvailability', async (tx) => {
+                    await tx.updateSyncState(newTrc, ['SyncManager', 'EventSyncAvailable'], available);
+                });
+            },
+            host,
+            onChange: async (trc) => {
+                if (this.isDestroyed || !this.storage) {
+                    return;
+                }
+                const disabled = await this.storage.getEphemeralFlag(trc, 'SyncManager', 'syncDisabled');
+                const paused = await this.storage.getEphemeralFlag(trc, 'SyncManager', 'syncPaused');
+                await this.onSyncStateChange(trc, disabled, paused);
+            },
+            url: this.di.serviceAvailabilityOverrideUrl,
+        };
+        this.availability = new ServiceAvailability_1.ServiceAvailability(availabilityConfig);
+        this.availability.startPolling(trc);
         this.isDisabled = !this.isAvailable();
+        await this.storage.transactEphemeral(trc, 'InitNSyncDisabled', async (tx) => {
+            await tx.setValue(trc, 'SyncManager', 'nsyncDisabled', this.isDisabled);
+            await tx.setValue(trc, 'SyncManager', 'nsyncCompleted', false);
+        });
         if (this.isDisabled) {
             await this.updateConnectionInformation(trc, {
                 lastAttempt: 0,
@@ -133,6 +165,9 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
     }
     isAvailable() {
         var _a;
+        if (this.disableWithOverride) {
+            return false;
+        }
         return Boolean(this.di.isNSyncEnabled && ((_a = this.availability) === null || _a === void 0 ? void 0 : _a.isServiceAvailable()) && this.di.nSyncEntityFilter.length);
     }
     isEnabled() {
@@ -237,6 +272,7 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
                 break;
             }
             await this.getStorage().transact(trc, 'processNSyncData', async (tx) => {
+                var _a;
                 const startTime = Date.now();
                 for (idx; idx < eventData.length; ++idx) {
                     yieldCheckRes = context.yieldCheck && await conduit_utils_1.withError(context.yieldCheck);
@@ -244,7 +280,7 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
                         conduit_utils_1.logger.debug(`processNSyncData yield and break inner loop. idx ${idx} docs ${eventData.length}`);
                         break;
                     }
-                    if (this.isDestroyed || !this.dataHelpers) {
+                    if (this.isDestroyed) {
                         break;
                     }
                     const elapsedTime = Date.now() - startTime;
@@ -255,23 +291,26 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
                     const doc = eventData[idx].doc;
                     if (doc) {
                         try {
-                            await NSyncProcessor_1.processNSyncDoc(trc, doc, this, tx, this.dataHelpers);
+                            await NSyncProcessor_1.processNSyncDoc(trc, doc, this, tx);
                         }
                         catch (e) {
                             conduit_utils_1.logger.error('Unable to process document', e);
                         }
                     }
                     const eventType = eventData[idx].event;
-                    if (!this.catchupFilter && (eventType === 'complete' || eventData[idx].eventTime && eventData[idx].eventTime > latestConnectionTime)) {
+                    if (!this.catchupFilter && (eventType === en_data_model_1.NSyncEvents.COMPLETE_EVENT || eventData[idx].eventTime && eventData[idx].eventTime > latestConnectionTime)) {
                         latestConnectionTime = eventData[idx].eventTime;
                         await this.updateConnectionInformation(trc, { lastConnection: eventData[idx].eventTime, lastFilter: this.nodeFilter }, tx);
                     }
                     switch (eventType) {
-                        case 'complete': {
+                        case en_data_model_1.NSyncEvents.COMPLETE_EVENT: {
+                            await ((_a = this.storage) === null || _a === void 0 ? void 0 : _a.transactEphemeral(trc, 'Update nsync Completed flag', async (tx) => {
+                                await tx.setValue(trc, 'SyncManager', 'nsyncCompleted', true);
+                            }));
                             this.onSyncMessage({ type: 'Complete', message: 'Sync Completed' });
                             break;
                         }
-                        case 'connection': {
+                        case en_data_model_1.NSyncEvents.CONNECTION_EVENT: {
                             this.onSyncMessage({ type: 'Connection', message: 'Connected!' });
                             break;
                         }
@@ -334,8 +373,9 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         }
     }
     async onSyncStateChange(trc, disabled, paused) {
-        // set values
-        this.isDisabled = disabled || !this.isAvailable();
+        var _a;
+        const nsyncDisabled = await ((_a = this.storage) === null || _a === void 0 ? void 0 : _a.getEphemeralFlag(trc, 'SyncManager', 'nsyncDisabled'));
+        this.isDisabled = nsyncDisabled || disabled || !this.isAvailable();
         this.isPaused = paused;
         if (!this.isPaused && this.disconnectOnPause) {
             clearTimeout(this.disconnectOnPause);
@@ -433,8 +473,9 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         const entityFilterParam = en_conduit_sync_types_1.nodeTypeArrayToEntityFilterParam(this, (_a = this.catchupFilter) !== null && _a !== void 0 ? _a : this.nodeFilter);
         const lastConnection = this.catchupFilter ? 0 : Math.max(0, connInfo.lastConnection - LAST_CONNECTION_BUFFER_TIME);
         const connectionID = this.catchupFilter ? this.di.uuid('NSyncEventManager') : connInfo.connectionID;
+        const connectionEndpoint = this.di.realtimeMode ? 'connect' : 'download';
         const nsyncHost = await this.hostResolver.getServiceHost(trc, this.monolithHost, 'Sync');
-        this.eventSrc = this.di.newEventSource(`${nsyncHost}/v1/connect?lastConnection=${lastConnection}&connectionId=${connectionID}&encode=${false}${entityFilterParam}${mockExpirationParam}`, {
+        this.eventSrc = this.di.newEventSource(`${nsyncHost}/v1/${connectionEndpoint}?lastConnection=${lastConnection}&connectionId=${connectionID}&encode=${false}${entityFilterParam}${mockExpirationParam}`, {
             ['x-mono-authn-token']: `auth=${this.monolithToken}`,
             Authorization: `Bearer ${this.jwt}`,
             ['x-conduit-version']: conduit_core_1.CONDUIT_VERSION,
@@ -443,7 +484,15 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         if (!this.eventSrc) {
             throw new Error('EventSource failed to connect');
         }
-        this.eventSrc.addEventListener('connection', (event) => {
+        const { resolve, promise } = conduit_utils_1.allocPromise();
+        this.firstMessagePromise = promise;
+        this.firstMessageResolve = () => {
+            this.firstMessagePromise = null;
+            this.firstMessageResolve = null;
+            resolve();
+        };
+        this.eventSrc.addEventListener(en_data_model_1.NSyncEvents.CONNECTION_EVENT, (event) => {
+            this.firstMessageResolve && this.firstMessageResolve();
             conduit_utils_1.logger.debug('Successful connection!', event.lastEventId);
             gTracePool.runTraced(this.di.getTestEventTracker(), async (trc2) => {
                 return this.updateConnectionInformation(trc2, {
@@ -455,20 +504,48 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             this.enqueueEvent(event);
         });
         this.eventSrc.onerror = (event) => {
+            this.firstMessageResolve && this.firstMessageResolve();
             this.handleErrorEvent(event);
         };
-        this.eventSrc.addEventListener('sync', (event) => {
+        this.eventSrc.addEventListener(en_data_model_1.NSyncEvents.CHUNK_EVENT, (event) => {
+            this.firstMessageResolve && this.firstMessageResolve();
             conduit_utils_1.logger.debug('Sync event', event.lastEventId);
             this.enqueueEvent(event);
         });
-        this.eventSrc.addEventListener('event', (event) => {
+        this.eventSrc.addEventListener(en_data_model_1.NSyncEvents.REALTIME_EVENT, (event) => {
+            this.firstMessageResolve && this.firstMessageResolve();
             conduit_utils_1.logger.debug('Event event', event.lastEventId);
             this.enqueueEvent(event);
         });
-        this.eventSrc.addEventListener('ping', (msg) => {
+        this.eventSrc.addEventListener(en_data_model_1.NSyncEvents.PING_EVENT, async (msg) => {
+            this.firstMessageResolve && this.firstMessageResolve();
             conduit_utils_1.logger.debug('Ping from service', msg);
+            const pingData = JSON.parse(msg.data);
+            let lastNSyncProcessingTime = null;
+            if (pingData && typeof pingData === 'object') {
+                lastNSyncProcessingTime = pingData.globalLastMessageTime;
+            }
+            else if (pingData !== null && typeof pingData === 'number') {
+                // TODO: remove this section after nsync switches over to ping object
+                lastNSyncProcessingTime = pingData;
+            }
+            if (!conduit_utils_1.isNullish(lastNSyncProcessingTime) && !isNaN(lastNSyncProcessingTime)) {
+                if (!this.storage) {
+                    conduit_utils_1.logger.error('Missing storage. Using unitialized NSyncEventManager');
+                    return;
+                }
+                try {
+                    await this.storage.transact(trc, 'UpdateLastNSyncProcessingTime', async (transaction) => {
+                        await transaction.replaceSyncState(trc, ['LastNSyncProcessingTime'], lastNSyncProcessingTime);
+                    });
+                }
+                catch (err) {
+                    conduit_utils_1.logger.error('Cannot save LastNSyncProcessingTime. Error: ', err);
+                }
+            }
         });
-        this.eventSrc.addEventListener('exception', (msg) => {
+        this.eventSrc.addEventListener(en_data_model_1.NSyncEvents.EXCEPTION_EVENT, (msg) => {
+            this.firstMessageResolve && this.firstMessageResolve();
             if (!msg.data) {
                 conduit_utils_1.logger.warn('Received exception with empty data', msg);
                 return;
@@ -489,7 +566,8 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             }
             this.handleErrorEvent(err);
         });
-        this.eventSrc.addEventListener('complete', (event) => {
+        this.eventSrc.addEventListener(en_data_model_1.NSyncEvents.COMPLETE_EVENT, (event) => {
+            this.firstMessageResolve && this.firstMessageResolve();
             // Clear backoff information after completing the connection
             gTracePool.runTraced(this.di.getTestEventTracker(), async (trc2) => {
                 return this.updateConnectionInformation(trc2, {
@@ -515,7 +593,7 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         }
         const attempts = this.connectionInfo ? this.connectionInfo.attempts : 0;
         // First attempt is jitter, use backoff for subsequent
-        // tslint:disable-next-line: no-bitwise
+        // eslint-disable-next-line no-bitwise
         const backoff = Math.min(60000, BACKOFF_RECONNECT * (1 << attempts) - BACKOFF_RECONNECT);
         const jitterMax = Math.max(BACKOFF_RECONNECT, backoff * RECONNECT_JITTER_RATIO);
         const jitter = jitterMax * Math.random();
@@ -565,6 +643,9 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         }
     }
     async flush(trc, context) {
+        if (this.firstMessagePromise) {
+            await this.firstMessagePromise;
+        }
         if (this.isPaused) {
             conduit_utils_1.logger.warn('Attempting to flush nsync event data while paused');
             return;
@@ -609,7 +690,6 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         this.isDestroyed = true;
         this.destroySync();
         (_a = this.backoffSleep) === null || _a === void 0 ? void 0 : _a.cancel();
-        this.dataHelpers = null;
         this.connectionInfo = null;
         this.messageQueue = [];
         this.messageConsumer = null;
@@ -623,7 +703,6 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         this.clientID = '';
         this.monolithHost = '';
         this.monolithToken = '';
-        this.toggleEventSync = null;
     }
     addProcessingEntity(id, type, entity) {
         if (!this.processingEntities.hasOwnProperty(type)) {
@@ -646,8 +725,11 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
                         type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({
                             enabled: 'boolean',
                             offline: 'boolean',
+                            paused: 'boolean',
+                            completed: 'boolean',
                             nextAttempt: 'timestamp',
                             lastConnection: 'timestamp',
+                            lastNSyncProcessTime: 'timestamp',
                         }, 'NSyncStatusResult')),
                         resolve: this.resolvePlugin,
                     },

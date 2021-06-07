@@ -62,6 +62,9 @@ class NSyncInitActivity extends SyncActivity_1.SyncActivity {
             getEphemeralFlag: (newTrc, table, key) => {
                 return this.context.syncEngine.getEphemeralFlag(newTrc, table, key);
             },
+            transactEphemeral: (newTrc, name, func) => {
+                return this.context.syncEngine.transactEphemeral(newTrc, name, func);
+            },
             getUserID: () => {
                 const authInner = this.context.syncManager.getAuth();
                 if (!authInner) {
@@ -72,15 +75,7 @@ class NSyncInitActivity extends SyncActivity_1.SyncActivity {
         };
         const napAuthInfo = Auth.hasNapAuthInfo(auth) ? auth.napAuthInfo : null;
         if (this.di.initSyncEventManager) {
-            this.context.syncEventManager = await this.di.initSyncEventManager(trc, auth.urlHost, auth.token, (napAuthInfo === null || napAuthInfo === void 0 ? void 0 : napAuthInfo.jwt) || '', (napAuthInfo === null || napAuthInfo === void 0 ? void 0 : napAuthInfo.clientID) || '', storage, this.context.usedPrebuilt, async (newTrc, disable) => {
-                await this.context.syncManager.toggleNSync(newTrc, disable);
-            });
-            await this.context.syncEngine.transactEphemeral(trc, 'InitNSyncDisabled', async (tx) => {
-                if (!this.context.syncEventManager) {
-                    return;
-                }
-                await tx.setValue(trc, 'SyncManager', 'nsyncDisabled', !this.context.syncEventManager.isAvailable());
-            });
+            this.context.syncEventManager = await this.di.initSyncEventManager(trc, auth.urlHost, auth.token, (napAuthInfo === null || napAuthInfo === void 0 ? void 0 : napAuthInfo.jwt) || '', (napAuthInfo === null || napAuthInfo === void 0 ? void 0 : napAuthInfo.clientID) || '', storage, this.context.usedPrebuilt);
         }
     }
 }

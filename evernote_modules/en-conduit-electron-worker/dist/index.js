@@ -21,6 +21,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
@@ -36,6 +39,7 @@ const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const ENThriftConnector = __importStar(require("en-thrift-connector"));
 const event_source_polyfill_1 = require("event-source-polyfill");
 const evernote_thrift_1 = require("evernote-thrift");
+const fs_extra_1 = __importDefault(require("fs-extra"));
 const ElectronNotificationManager_1 = require("./conduit-electron-notifications/ElectronNotificationManager");
 const ElectronWorkerSecureStorage_1 = require("./ElectronWorkerSecureStorage");
 const setupElectronPlugins_1 = require("./setupElectronPlugins");
@@ -96,7 +100,7 @@ async function init(config) {
             });
         }, getSystemLocale: () => {
             return en_conduit_electron_shared_1.getLocale();
-        }, getTestEventTracker: () => null, fetchPrebuiltDatabase: (downsyncConfig === null || downsyncConfig === void 0 ? void 0 : downsyncConfig.noPrebuiltDB) ? null : fetchPrebuiltDBElectron, cleanupTempFile: en_conduit_electron_shared_1.cleanupTempFile, getSearchShareAcceptMetadata: en_conduit_plugin_search_1.getShareAcceptMetadataForNote, uuid: generateUUID, backgroundNoteContentSyncConfig: backgroundNoteContentSyncConfig || {}, backgroundNoteMetadataSyncConfig: backgroundNoteMetadataSyncConfig || {}, downsyncConfig: downsyncConfig || { downsyncMode: conduit_view_types_1.DownsyncMode.HYBRID }, loadingScreenConfig: loadingScreenConfig || {}, offlineSearchIndexingConfig: offlineSearchIndexingConfig || {}, clientCredentials, isNSyncEnabled: true, nSyncEntityFilter: config.params.nSyncEntityFilter, hostDefaults: config.params.hostDefaults, hostResolverUrl: config.params.overrideHostResolverUrl, overrideFileServiceUrl: config.params.overrideFileServiceUrl, customHeaders, serviceAvailabilityOverrideUrl: config.params.serviceAvailabilityOverrideUrl }), { maxBackoffTimeout: servicesConfig === null || servicesConfig === void 0 ? void 0 : servicesConfig.maxBackoffTimeout });
+        }, getTestEventTracker: () => null, fetchPrebuiltDatabase: (downsyncConfig === null || downsyncConfig === void 0 ? void 0 : downsyncConfig.noPrebuiltDB) ? null : fetchPrebuiltDBElectron, cleanupTempFile: (trc, filename) => en_conduit_electron_shared_1.cleanupTempFile(trc, filename, fs_extra_1.default), getSearchShareAcceptMetadata: en_conduit_plugin_search_1.getShareAcceptMetadataForNote, uuid: generateUUID, backgroundNoteContentSyncConfig: backgroundNoteContentSyncConfig || {}, backgroundNoteMetadataSyncConfig: backgroundNoteMetadataSyncConfig || {}, downsyncConfig: downsyncConfig || { downsyncMode: conduit_view_types_1.DownsyncMode.HYBRID }, loadingScreenConfig: loadingScreenConfig || {}, offlineSearchIndexingConfig: offlineSearchIndexingConfig || {}, clientCredentials, isNSyncEnabled: true, realtimeMode: true, nSyncEntityFilter: config.params.nSyncEntityFilter, hostDefaults: config.params.hostDefaults, hostResolverUrl: config.params.overrideHostResolverUrl, overrideFileServiceUrl: config.params.overrideFileServiceUrl, customHeaders, serviceAvailabilityOverrideUrl: config.params.serviceAvailabilityOverrideUrl }), { maxBackoffTimeout: servicesConfig === null || servicesConfig === void 0 ? void 0 : servicesConfig.maxBackoffTimeout });
     const di = Object.assign(Object.assign({}, thriftConduitConfig.di), { featureFlags: servicesConfig === null || servicesConfig === void 0 ? void 0 : servicesConfig.featureFlags, SecureStorage: () => ElectronWorkerSecureStorage_1.workerSecureStorage, KeyValStorage: async (trc, name) => {
             const db = new conduit_storage_better_sqlite3_1.ConduitSQLiteStorage(dbPath, name, cachePolicy, () => {
                 emitEvent(conduit_view_types_1.ConduitEvent.FATAL_ERROR);

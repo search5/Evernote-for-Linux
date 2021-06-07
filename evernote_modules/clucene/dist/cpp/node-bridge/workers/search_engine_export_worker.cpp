@@ -7,15 +7,15 @@ namespace en_search
     using namespace lucene::util;
 
     SearchEngineExportWorker::SearchEngineExportWorker(
-        Napi::Function& callback, std::shared_ptr<SearchEngineContext> search_engine_context):
-        Napi::AsyncWorker(callback), search_engine_context_(search_engine_context), export_time_(0)
+        Napi::Function& callback,std::shared_ptr<evernote::cosm::core::ENScheduler> scheduler):
+        Napi::AsyncWorker(callback), scheduler_(scheduler), export_time_(0)
     {}
 
     void SearchEngineExportWorker::Execute()
     {
         try {
             auto start_time = Misc::currentTimeMillis();
-            buffer_ = search_engine_context_->export_index();
+            buffer_ = scheduler_->export_index();
             export_time_ = static_cast<uint32_t>(Misc::currentTimeMillis() - start_time);
         } catch(CLuceneError& exception) {
             if (exception.number() == CL_ERR_OutOfMemory) {

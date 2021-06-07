@@ -7,4 +7,6 @@ function __export(m) {
 }
 Object.defineProperty(exports, "__esModule", { value: true });
 __export(require("./ENSearchEngineElectron"));
+// cosm v2
+__export(require("./ENSearchIndexManagerElectron"));
 //# sourceMappingURL=index.js.map

@@ -6,7 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SearchEventBootstrapper = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const en_thrift_connector_1 = require("en-thrift-connector");
+const SearchProcessor_1 = require("../SearchProcessor");
 const SearchUtils_1 = require("../SearchUtils");
 /**
  * Responsible for the initial batch event export.
@@ -43,8 +45,19 @@ class SearchEventBootstrapper {
                 this.searchIndexIds.set(en_thrift_connector_1.convertGuidFromService(key, value), value);
             }
         });
+        // first export container types
+        const nodeTypes = Array.from(source.idsByType.keys());
+        const containerTypes = nodeTypes.filter(type => SearchUtils_1.SearchRenamingEventsUtils.RENAMING_EVENT_NODE_TYPES.has(type));
+        this.diff(source, containerTypes, timestamp);
+        // then non-container ones
+        const nonContainerTypes = nodeTypes.filter(type => !SearchUtils_1.SearchRenamingEventsUtils.RENAMING_EVENT_NODE_TYPES.has(type));
+        this.diff(source, nonContainerTypes, timestamp);
+        this.events.push({ nodeRef: { id: 'NA', type: en_core_entity_types_1.CoreEntityTypes.Note }, localTimestamp: Date.now(), eventType: conduit_storage_1.StorageChangeType.Replace, indexationType: SearchProcessor_1.SearchStorageIndexationType.LAST_INITIAL_INDEXATION_EVENT });
+        conduit_utils_1.logger.debug(`SearchEventBootstrapper: total bootstrap events ${this.events.length}`);
+    }
+    diff(source, nodeTypes, timestamp) {
         // iterate over every supported type in the graphDB
-        for (const sourceType of source.idsByType.keys()) {
+        for (const sourceType of nodeTypes) {
             // get keys for the corresponding types in graphDB and search index
             const sourceIdsByType = source.idsByType.get(sourceType);
             for (const sourceID of sourceIdsByType) {
@@ -61,7 +74,6 @@ class SearchEventBootstrapper {
                 }
             }
         }
-        conduit_utils_1.logger.debug(`SearchEventBootstrapper: bootstrap events ${this.events.length}`);
     }
     /**
      * Provides event batch in order to export it in the event journal
@@ -81,6 +93,7 @@ class SearchEventBootstrapper {
                 await db.setValue(trc, this.bootstrapTableName, key, value);
             }
         }
+        conduit_utils_1.logger.debug(`SearchEventBootstrapper: bootstrap batch length ${batch.length}}`);
         return batch;
     }
     /**
@@ -90,7 +103,8 @@ class SearchEventBootstrapper {
      * @param timestamp
      */
     generateEvent(sourceID, sourceType, timestamp) {
-        return { nodeRef: { id: sourceID, type: sourceType }, localTimestamp: timestamp, eventType: conduit_storage_1.StorageChangeType.Replace };
+        return { nodeRef: { id: sourceID, type: sourceType }, localTimestamp: timestamp,
+            eventType: conduit_storage_1.StorageChangeType.Replace, indexationType: SearchProcessor_1.SearchStorageIndexationType.INITIAL_INDEXATION_EVENT };
     }
     /**
      * Cleans local and persisted states. Performed in the external transaction.

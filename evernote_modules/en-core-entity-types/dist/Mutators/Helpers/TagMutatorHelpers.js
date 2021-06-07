@@ -8,20 +8,21 @@ const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const EntityConstants_1 = require("../../EntityConstants");
 async function resolveTagLabelConflict(trc, ctx, tagName) {
-    const [existingTag] = await ctx.queryGraph(trc, EntityConstants_1.CoreEntityTypes.Tag, 'TagsInSyncContext', { syncContext: ctx.vaultUserID ? conduit_core_1.VAULT_USER_CONTEXT : conduit_core_1.PERSONAL_USER_CONTEXT, label: tagName, orderBy: 'label' });
+    const [existingTag] = await ctx.queryGraph(trc, EntityConstants_1.CoreEntityTypes.Tag, 'TagsInSyncContext', { syncContext: ctx.vaultUserID ? conduit_core_1.VAULT_USER_CONTEXT : conduit_core_1.PERSONAL_USER_CONTEXT, label: tagName, orderBy: 'label', pageInfo: { pageSize: 1 } });
     if (conduit_utils_1.isNullish(existingTag)) {
         return tagName;
     }
     // Follow legacy mac client behavior: adding suffix with number(start from 1)
+    const existingName = existingTag.label;
     let suffix = 1;
-    let label = `${tagName}_${suffix}`;
+    let label = `${existingName}_${suffix}`;
     while (true) {
         const [conflictNode] = await ctx.queryGraph(trc, EntityConstants_1.CoreEntityTypes.Tag, 'TagsInSyncContext', { syncContext: ctx.vaultUserID ? conduit_core_1.VAULT_USER_CONTEXT : conduit_core_1.PERSONAL_USER_CONTEXT, label, orderBy: 'label' });
         if (conduit_utils_1.isNullish(conflictNode)) {
             return label;
         }
         suffix++;
-        label = `${tagName}_${suffix}`;
+        label = `${existingName}_${suffix}`;
     }
 }
 async function genTagCreate(trc, ctx, params, plan, note = null, key) {

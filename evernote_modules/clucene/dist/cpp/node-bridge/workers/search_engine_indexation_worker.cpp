@@ -7,9 +7,9 @@ namespace en_search
     using namespace lucene::util;
 
     SearchEngineIndexationWorker::SearchEngineIndexationWorker(
-        Napi::Function& callback, std::shared_ptr<SearchEngineContext> search_engine_context,
+        Napi::Function& callback, std::shared_ptr<evernote::cosm::core::ENScheduler> scheduler,
         const std::string& guid, std::unique_ptr<SearchDocumentContext> search_document_context):
-        Napi::AsyncWorker(callback), search_engine_context_(search_engine_context),
+        Napi::AsyncWorker(callback), scheduler_(scheduler),
         guid_(guid), search_document_context_(std::move(search_document_context)), 
         documents_indexed_(0), indexation_time_(0)
     {}
@@ -19,7 +19,7 @@ namespace en_search
         try {
             auto start_time = Misc::currentTimeMillis();
             // std::cerr << "guid: " << guid_ << std::endl;
-            search_engine_context_->add_document(guid_, std::move(search_document_context_));
+            scheduler_->add_document(guid_, std::move(search_document_context_));
             indexation_time_ = static_cast<uint32_t>(Misc::currentTimeMillis() - start_time);
             documents_indexed_ = 1;
         } catch(CLuceneError& exception) {

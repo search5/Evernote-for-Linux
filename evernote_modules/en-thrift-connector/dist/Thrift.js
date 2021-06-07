@@ -2,7 +2,7 @@
 /*
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
-// tslint:disable:import-blacklist
+/* eslint-disable no-restricted-imports */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ThriftComm = exports.AsyncMaestroService = exports.AsyncCommunicationEngine = exports.AsyncUtilityStore = exports.AsyncUserStore = exports.AsyncNoteStore = exports.AsyncMessageStore = void 0;
 const CommunicationEngine_1 = require("en-thrift-internal/lib/CommunicationEngine");
@@ -12,7 +12,7 @@ const NoteStore_1 = require("en-thrift-internal/lib/NoteStore");
 const UserStore_1 = require("en-thrift-internal/lib/UserStore");
 const Utility_1 = require("en-thrift-internal/lib/Utility");
 const ThriftRpc_1 = require("./ThriftRpc");
-// tslint:disable:max-line-length
+/* eslint-disable max-len */
 class AsyncMessageStore {
     constructor(messageStore) {
         this.messageStore = messageStore;
@@ -177,6 +177,9 @@ class AsyncNoteStore {
         };
         this.getResource = (trc, authenticationToken, guid, withData, withRecognition, withAttributes, withAlternateData) => {
             return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'getResource', this.noteStore, this.noteStore.getResource, authenticationToken, guid, withData, withRecognition, withAttributes, withAlternateData);
+        };
+        this.getResourceSearchText = (trc, authenticationToken, guid) => {
+            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'getResourceSearchText', this.noteStore, this.noteStore.getResourceSearchText, authenticationToken, guid);
         };
         this.updateResource = (trc, authenticationToken, resource) => {
             return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'updateResource', this.noteStore, this.noteStore.updateResource, authenticationToken, resource);

@@ -3,7 +3,7 @@
  * Copyright 2021 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CalendarEventLinkMutationSchemaArgs = exports.CalendarEventByIdSchemaArgs = exports.CalendarEventsSchemaArgs = exports.CalendarAccountSchemaArgs = exports.CalendarAccountsSchemaArgs = exports.CalendarEventUriInputSchema = exports.CalendarEventAttendeeInputSchema = exports.CalendarEventStatusInputSchema = exports.CalendarContactInputSchema = exports.CalendarEventResponseSchema = exports.CalendarEventLinkedNotesSchema = exports.CalendarAccountResponseSchema = exports.UserCalendarSettingsResponseSchema = exports.CalendarSettingsSchema = void 0;
+exports.UserCalendarSettingsUpdateMutationSchemaArgs = exports.CalendarEventLinkMutationSchemaArgs = exports.CalendarEventByIdSchemaArgs = exports.CalendarEventsSchemaArgs = exports.CalendarAccountSchemaArgs = exports.CalendarAccountsSchemaArgs = exports.CalendarEventUriInputSchema = exports.CalendarEventAttendeeInputSchema = exports.CalendarEventStatusInputSchema = exports.CalendarContactInputSchema = exports.CalendarEventResponseSchema = exports.CalendarEventLinkedNotesSchema = exports.CalendarAccountResponseSchema = exports.UserCalendarSettingsResponseSchema = exports.CalendarSettingsSchema = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_calendar_data_model_1 = require("en-calendar-data-model");
@@ -42,5 +42,9 @@ exports.CalendarEventByIdSchemaArgs = conduit_core_1.schemaToGraphQLArgs({
 exports.CalendarEventLinkMutationSchemaArgs = conduit_core_1.schemaToGraphQLArgs({
     noteID: 'ID',
     eventID: 'ID',
+});
+exports.UserCalendarSettingsUpdateMutationSchemaArgs = conduit_core_1.schemaToGraphQLArgs({
+    userCalendarSettingsId: 'ID',
+    isActive: 'boolean',
 });
 //# sourceMappingURL=CalendarServiceType.js.map

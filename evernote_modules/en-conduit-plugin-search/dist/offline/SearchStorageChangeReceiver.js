@@ -9,6 +9,7 @@ const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
+const SearchProcessor_1 = require("./SearchProcessor");
 const trc = conduit_utils_1.createTraceContext('SearchStorageChangeReceiver');
 /**
  * Receives database events and adds them to the SearchProcessor main processing queue.
@@ -25,15 +26,10 @@ class SearchStorageChangeReceiver {
     isSupportedNodeEvent(event) {
         const tableName = event.path[conduit_storage_1.StorageChangePath.TableName];
         if (tableName && this.nodeTables.has(tableName)) {
-            // there's no need to process attachment delete events since the corresponding note change event
+            // there's no need to process attachment / task delete events since the corresponding note change event
             // should be triggered
             const nodeType = this.nodeTables.get(tableName);
-            if (nodeType === en_core_entity_types_1.CoreEntityTypes.Attachment && event.type === conduit_storage_1.StorageChangeType.Delete) {
-                return false;
-            }
-            // Task creation / update events are required in order
-            // to update the corresponding note if the existing tasks are updated
-            if (nodeType === en_data_model_1.EntityTypes.Task) {
+            if (nodeType === en_core_entity_types_1.CoreEntityTypes.Attachment || nodeType === en_data_model_1.EntityTypes.Task) {
                 if (this.supportedStorageChangeTypes.has(event.type)) {
                     return true;
                 }
@@ -70,7 +66,8 @@ class SearchStorageChangeReceiver {
         if ((edge === null || edge === void 0 ? void 0 : edge.srcType) === en_core_entity_types_1.CoreEntityTypes.Note) {
             const noteID = edge.srcID;
             conduit_utils_1.logger.trace(`SearchStorageChangeReceiver: transformed attachment: ${attachmentNode.id} event to note event: ${noteID}`);
-            return { nodeRef: { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note }, localTimestamp: Date.now(), eventType: conduit_storage_1.StorageChangeType.Replace };
+            return { nodeRef: { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note }, localTimestamp: Date.now(),
+                eventType: conduit_storage_1.StorageChangeType.Replace, indexationType: SearchProcessor_1.SearchStorageIndexationType.LIVE_INDEXATION_EVENT };
         }
         return null;
     }
@@ -81,7 +78,8 @@ class SearchStorageChangeReceiver {
         if ((edge === null || edge === void 0 ? void 0 : edge.srcType) === en_core_entity_types_1.CoreEntityTypes.Note) {
             const noteID = edge.srcID;
             conduit_utils_1.logger.trace(`SearchStorageChangeReceiver: transformed task: ${taskNode.id} event to note event: ${noteID}`);
-            return { nodeRef: { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note }, localTimestamp: Date.now(), eventType: conduit_storage_1.StorageChangeType.Replace };
+            return { nodeRef: { id: noteID, type: en_core_entity_types_1.CoreEntityTypes.Note }, localTimestamp: Date.now(),
+                eventType: conduit_storage_1.StorageChangeType.Replace, indexationType: SearchProcessor_1.SearchStorageIndexationType.LIVE_INDEXATION_EVENT };
         }
         return null;
     }
@@ -132,6 +130,7 @@ class SearchStorageChangeReceiver {
                     nodeRef: { id: event.path[conduit_storage_1.StorageChangePath.Key], type: this.nodeTables.get(event.path[conduit_storage_1.StorageChangePath.TableName]) },
                     localTimestamp: receiveDate,
                     eventType: event.type,
+                    indexationType: SearchProcessor_1.SearchStorageIndexationType.LIVE_INDEXATION_EVENT,
                 });
             }
         }

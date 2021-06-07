@@ -7,6 +7,7 @@ exports.isNote = exports.noteIndexConfig = exports.noteTypeDef = exports.DEFAULT
 const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
+const en_data_model_1 = require("en-data-model");
 const EntityConstants_1 = require("../EntityConstants");
 const Blob_1 = require("./Blob");
 const DEFAULT_CACHE_TIMEOUT = 30 * conduit_utils_1.MILLIS_IN_ONE_SECOND;
@@ -14,7 +15,7 @@ exports.NOTE_CONTENT_LOOKASIDE_THRESHOLD = 256;
 exports.DEFAULT_NOTE_CONTENT = '<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd"><en-note><div><br /></div></en-note>';
 /* The following regexes are created using https://mothereff.in/regexpu#input=/%5Cp%7BLetter%7D/u&unicodePropertyEscape=1
  * and use the regexs defined in the thrift calls to transpile to a ES2015 format */
-// tslint:disable: max-line-length
+// eslint-disable-next-line max-len
 const NOTE_LABEL_REGEX = /^[!-~\xA1-\u167F\u1681-\u1FFF\u200B-\u2027\u202A-\u202E\u2030-\u205E\u2060-\u2FFF\u3001-\u{10FFFF}]([ -~\xA0-\u2027\u202A-\u{10FFFF}]{0,253}[!-~\xA1-\u167F\u1681-\u1FFF\u200B-\u2027\u202A-\u202E\u2030-\u205E\u2060-\u2FFF\u3001-\u{10FFFF}])?$/u;
 exports.noteTypeDef = {
     name: EntityConstants_1.CoreEntityTypes.Note,
@@ -237,13 +238,23 @@ exports.noteIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
             graphqlPath: ['inBusinessAccount'],
             isUnSyncedField: true,
         },
-        hasTask: {
+        hasTaskGroup: {
             schemaType: 'boolean',
-            resolver: async (trc, node, _) => {
-                return [conduit_utils_1.firstStashEntry(node.outputs.tasks) !== null];
+            resolver: async (trc, node, nodeFieldLookup) => {
+                const noteContentInfoEdge = conduit_utils_1.firstStashEntry(node.outputs.noteContentInfo);
+                if (!noteContentInfoEdge) {
+                    return [false];
+                }
+                const hasTaskGroup = await nodeFieldLookup(trc, { id: noteContentInfoEdge.dstID, type: noteContentInfoEdge.dstType }, 'hasTaskGroup');
+                return [Boolean(hasTaskGroup)];
             },
-            graphqlPath: ['hasTask'],
+            graphqlPath: ['hasTaskGroup'],
             isUnSyncedField: true,
+            propagatedFrom: {
+                srcType: en_data_model_1.EntityTypes.NoteContentInfo,
+                srcField: 'hasTaskGroup',
+                traversalToDst: [{ edge: ['inputs', 'parent'], type: EntityConstants_1.CoreEntityTypes.Note }],
+            },
         },
     },
     indexes: {
@@ -452,7 +463,7 @@ exports.noteIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
                     field: 'inTrash',
                     value: false,
                 }, {
-                    field: 'hasTask',
+                    field: 'hasTaskGroup',
                     value: true,
                 }],
             params: {

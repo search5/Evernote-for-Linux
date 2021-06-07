@@ -3,7 +3,7 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SearchExporter = exports.ReindexationState = void 0;
+exports.SearchExporter = exports.InitialEventsProcessingState = exports.ReindexationState = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const SearchEventBootstrapper_1 = require("./SearchEventBootstrapper");
 const SearchEventExporter_1 = require("./SearchEventExporter");
@@ -15,12 +15,18 @@ var ReindexationState;
     ReindexationState["IN_PROGRESS"] = "In_Progress";
     ReindexationState["FINISHED"] = "Finished";
 })(ReindexationState = exports.ReindexationState || (exports.ReindexationState = {}));
+var InitialEventsProcessingState;
+(function (InitialEventsProcessingState) {
+    InitialEventsProcessingState["REQUIRED"] = "Required";
+    InitialEventsProcessingState["FINISHED"] = "Finished";
+})(InitialEventsProcessingState = exports.InitialEventsProcessingState || (exports.InitialEventsProcessingState = {}));
 /**
  * Orchestates import / export of the internal search engine structures from/to the external database.
  */
 class SearchExporter {
     constructor(searchEngine, localStorageProvider) {
         this.reindexationState = ReindexationState.REQUIRED;
+        this.initialEventProcessingState = InitialEventsProcessingState.REQUIRED;
         this.localStorageProvider = localStorageProvider;
         this.searchIndexExporter = new SearchIndexExporter_1.SearchIndexExporter(searchEngine, this.localStorageProvider);
         this.searchEventJournal = new SearchEventJournal_1.SearchEventJournal(this.localStorageProvider);
@@ -32,6 +38,9 @@ class SearchExporter {
     }
     getReindexationStateKey() {
         return 'reindexation_state';
+    }
+    getInitialEventsProcessingStateKey() {
+        return 'initial_events_processing_state';
     }
     setUserID(userID) {
         this.userID = userID;
@@ -58,6 +67,7 @@ class SearchExporter {
     }
     async init(trc) {
         await this.searchEventJournal.init(trc);
+        this.initialEventProcessingState = await this.getInitialEventsProcessingState(trc);
     }
     async setupReindexation(trc, source) {
         await this.searchEventBootstrapper.init(trc, source);
@@ -92,6 +102,27 @@ class SearchExporter {
         this.reindexationState = state;
         await db.setValue(trc, this.getMetaTableName(), this.getReindexationStateKey(), this.reindexationState);
     }
+    async setInitialEventsProcessingStateLocal(initialEventsProcessingState) {
+        this.initialEventProcessingState = initialEventsProcessingState;
+    }
+    async saveInitialEventsProcessingStatePersistent(trc) {
+        await this.localStorageProvider().transact(trc, `GraphDB.${SearchExporter.name}`, async (db) => {
+            await db.setValue(trc, this.getMetaTableName(), this.getInitialEventsProcessingStateKey(), this.initialEventProcessingState);
+        });
+    }
+    async setInitialIndexationStateLocalAndPersistent(trc, db, initialEventsProcessingState) {
+        this.initialEventProcessingState = initialEventsProcessingState;
+        await db.setValue(trc, this.getMetaTableName(), this.getInitialEventsProcessingStateKey(), this.initialEventProcessingState);
+    }
+    async getInitialEventsProcessingState(trc) {
+        return await this.localStorageProvider().transact(trc, `GraphDB.${SearchExporter.name}`, async (db) => {
+            var _a;
+            return (_a = await db.getValue(trc, null, this.getMetaTableName(), this.getInitialEventsProcessingStateKey())) !== null && _a !== void 0 ? _a : InitialEventsProcessingState.REQUIRED;
+        });
+    }
+    isInitialIndexationFinished() {
+        return this.initialEventProcessingState === InitialEventsProcessingState.FINISHED;
+    }
     /**
      * Checks if reindexation is required
      * @param entryTypes
@@ -110,6 +141,7 @@ class SearchExporter {
             }
             if (indexationRequired) {
                 await this.setReindexationState(trc, db, ReindexationState.REQUIRED);
+                await this.setInitialIndexationStateLocalAndPersistent(trc, db, InitialEventsProcessingState.REQUIRED);
                 await this.cleanInternal(trc, db);
             }
         });
@@ -119,12 +151,14 @@ class SearchExporter {
      * Imports persisted state for the current user.
      */
     async import(trc) {
-        const index = await this.localStorageProvider().transact(trc, `GraphDB.${SearchExporter.name}`, async (db) => {
+        const indices = await this.localStorageProvider().transact(trc, `GraphDB.${SearchExporter.name}`, async (db) => {
             return await this.searchIndexExporter.import(trc, db);
         });
-        if (index && index.length !== 0) {
-            conduit_utils_1.logger.info(`SearchExporter: import index size: ${index.length};`);
-            await this.searchIndexExporter.setIndex(index);
+        if (indices.size !== 0) {
+            for (const index of indices) {
+                conduit_utils_1.logger.info(`SearchExporter: import index; name: ${index[0]}; size: ${index[1].index.length};`);
+            }
+            await this.searchIndexExporter.setIndex(indices);
         }
         else {
             conduit_utils_1.logger.info(`SearchExporter: no index to import;`);
@@ -147,6 +181,7 @@ class SearchExporter {
      * Acknowledges the processed events by moving consumer offset forward.
      */
     async acknowledge(trc, processedEvents) {
+        await this.saveInitialEventsProcessingStatePersistent(trc);
         await this.searchEventJournal.acknowledge(trc, processedEvents);
     }
     async truncate(trc) {

@@ -14,11 +14,14 @@ function extractTaskReminderBody(task, locale = const_1.DEFAULT_LOCALE) {
     if (!task || !task.NodeFields || !task.NodeFields.dueDate) {
         return '';
     }
+    const addDueCopyIfNeeded = (dueDateString, locale) => {
+        return locale === 'en' ? `Due ${dueDateString}` : dueDateString;
+    };
     switch (task.NodeFields.dueDateUIOption) {
         case en_tasks_data_model_1.DueDateUIOption.date_only:
-            return locale_1.getLocalizedYearMonth(task.NodeFields.dueDate, locale);
+            return addDueCopyIfNeeded(locale_1.getLocalizedYearMonth(task.NodeFields.dueDate, locale), locale);
         case en_tasks_data_model_1.DueDateUIOption.date_time:
-            return locale_1.getLocalizedYearMonthHour(task.NodeFields.dueDate, locale);
+            return addDueCopyIfNeeded(locale_1.getLocalizedYearMonthHour(task.NodeFields.dueDate, locale), locale);
         case null:
         default:
             return '';
@@ -26,18 +29,20 @@ function extractTaskReminderBody(task, locale = const_1.DEFAULT_LOCALE) {
 }
 exports.extractTaskReminderBody = extractTaskReminderBody;
 const extractTaskReminderData = (id, updated, reminder, task, locale = const_1.DEFAULT_LOCALE) => {
-    var _a;
     const title = task ? (task.label || 'Untitled Task') : ''; // TODO(droth) is this for all falsy task labels?
-    const noteID = task && ((_a = conduit_utils_1.firstStashEntry(task.inputs.parent)) === null || _a === void 0 ? void 0 : _a.srcID) || '';
+    const taskID = task ? task.id : '';
     const sendAt = (reminder === null || reminder === void 0 ? void 0 : reminder.NodeFields.reminderDate) || 0;
     const body = extractTaskReminderBody(task, locale);
+    if (!task) {
+        conduit_utils_1.logger.info(`taskID is not set for reminder ${reminder === null || reminder === void 0 ? void 0 : reminder.id}`);
+    }
     return {
         notification: {
             id,
             title,
             body,
-            clickNotificationActionTarget: noteID,
-            clickNotificationActionName: ScheduledNotificationConstants_1.NotificationActionNames.NavigateToNote,
+            clickNotificationActionTarget: taskID,
+            clickNotificationActionName: ScheduledNotificationConstants_1.NotificationActionNames.NavigateToTask,
         },
         sendAt,
         updated,

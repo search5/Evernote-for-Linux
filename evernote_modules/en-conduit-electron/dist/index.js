@@ -12,6 +12,9 @@ var __createBinding = (this && this.__createBinding) || (Object.create ? (functi
 var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getWorkerWindow = exports.deinit = exports.init = exports.electronLogger = void 0;
 const conduit_utils_1 = require("conduit-utils");
@@ -19,6 +22,7 @@ const conduit_view_1 = require("conduit-view");
 const conduit_view_types_1 = require("conduit-view-types");
 const electron_1 = require("electron");
 const en_conduit_electron_shared_1 = require("en-conduit-electron-shared");
+const fs_extra_1 = __importDefault(require("fs-extra"));
 const ElectronMainSecureStorage_1 = require("./ElectronMainSecureStorage");
 const MainResourceProxy_1 = require("./MainResourceProxy");
 const MiscMainIPC_1 = require("./MiscMainIPC");
@@ -34,6 +38,7 @@ let retries = 0;
  * Starts Conduit in a hidden window
  */
 async function init(config) {
+    en_conduit_electron_shared_1.setupElectronPrebuiltIPC(fs_extra_1.default);
     ElectronMainSecureStorage_1.setupSecureStorageIPC();
     MainResourceProxy_1.setupContentFetchingIPC();
     MainResourceProxy_1.setupExternalUrlFetchingIPC();

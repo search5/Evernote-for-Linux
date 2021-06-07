@@ -89,14 +89,14 @@ async function updateSyncContextPrivilege(trc, params, nodeRef, isValidMembershi
 exports.updateSyncContextPrivilege = updateSyncContextPrivilege;
 async function updateSyncContextPrivilegeImpl(trc, nodeRef, syncContext, membershipsProvider, transactionProvider, isValidMembership) {
     const memberships = await membershipsProvider();
-    let privilege = en_core_entity_types_1.MembershipPrivilege.READ;
+    let privilege = en_conduit_sync_types_1.MembershipPrivilege.READ;
     for (const membership of memberships) {
         if (!membership) {
             continue;
         }
         if (isValidMembership(membership)) {
-            privilege = en_core_entity_types_1.highestPrivilege(privilege, membership.NodeFields.privilege);
-            if (privilege === en_core_entity_types_1.MembershipPrivilege.MANAGE) {
+            privilege = en_conduit_sync_types_1.highestPrivilege(privilege, membership.NodeFields.privilege);
+            if (privilege === en_conduit_sync_types_1.MembershipPrivilege.MANAGE) {
                 break;
             }
         }

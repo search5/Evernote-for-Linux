@@ -41,6 +41,8 @@ std::vector<SToken> tokenize(const std::wstring& input, const STokenizerParam& p
 std::vector<std::wstring> suffix_tokenize(const std::wstring& input, int max_token_length);
 std::vector<std::wstring> alternative_tokenize(const std::wstring& input, int max_token_length);
 
+std::wstring token_to_lowercase_token(const std::wstring& input);
+
 }
 }
 }

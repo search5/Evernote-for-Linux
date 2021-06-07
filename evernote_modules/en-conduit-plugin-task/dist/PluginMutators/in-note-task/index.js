@@ -50,6 +50,8 @@ const TaskInputSchema = conduit_utils_1.Struct({
     sortWeight: 'string',
     inNote: conduit_utils_1.NullableBoolean,
     reminders: conduit_utils_1.ListOf(ReminderInputSchema),
+    assigneeID: conduit_utils_1.NullableString,
+    assigneeEmail: conduit_utils_1.NullableString,
 }, 'TaskInput');
 const TaskGroupInputSchema = conduit_utils_1.Struct({
     noteLevelID: 'string',

@@ -13,7 +13,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ThriftComm = exports.OfflineSearchIndexActivity = exports.ThriftRemoteMutationExecutor = exports.getLastUpdatedNoteFilters = exports.containerLastUpdated = exports.resolveContent = exports.toUserClientInfo = exports.workspaceFromService = exports.generateResourceUrl = exports.profileFromContact = exports.ProfileConverter = exports.notebookObjectFromService = exports.getOfflineNbsFromLocalSettings = exports.membershipFromWorkspace = exports.makeConverterParams = exports.convertGuidToService = exports.convertGuidFromService = exports.hasNapAuthInfo = exports.getScopedGoogleOAuthCredential = exports.encodeAuthData = exports.decodeAuthData = exports.AuthServiceLevel = void 0;
+exports.ThriftComm = exports.OfflineSearchIndexActivity = exports.ThriftRemoteMutationExecutor = exports.getLastUpdatedNoteFilters = exports.containerLastUpdated = exports.resolveContent = exports.toUserClientInfo = exports.workspaceFromService = exports.isSearchTextAllowed = exports.generateResourceUrl = exports.profileFromContact = exports.ProfileConverter = exports.notebookObjectFromService = exports.getOfflineNbsFromLocalSettings = exports.membershipFromWorkspace = exports.makeConverterParams = exports.convertGuidToService = exports.convertGuidFromService = exports.hasNapAuthInfo = exports.getScopedGoogleOAuthCredential = exports.encodeAuthData = exports.decodeAuthData = exports.AuthServiceLevel = void 0;
 var Auth_1 = require("./Auth");
 Object.defineProperty(exports, "AuthServiceLevel", { enumerable: true, get: function () { return Auth_1.AuthServiceLevel; } });
 Object.defineProperty(exports, "decodeAuthData", { enumerable: true, get: function () { return Auth_1.decodeAuthData; } });
@@ -35,6 +35,7 @@ Object.defineProperty(exports, "ProfileConverter", { enumerable: true, get: func
 Object.defineProperty(exports, "profileFromContact", { enumerable: true, get: function () { return ProfileConverter_1.profileFromContact; } });
 var ResourceConverter_1 = require("./Converters/ResourceConverter");
 Object.defineProperty(exports, "generateResourceUrl", { enumerable: true, get: function () { return ResourceConverter_1.generateResourceUrl; } });
+Object.defineProperty(exports, "isSearchTextAllowed", { enumerable: true, get: function () { return ResourceConverter_1.isSearchTextAllowed; } });
 var WorkspaceConverter_1 = require("./Converters/WorkspaceConverter");
 Object.defineProperty(exports, "workspaceFromService", { enumerable: true, get: function () { return WorkspaceConverter_1.workspaceFromService; } });
 var MaestroHelper_1 = require("./MaestroHelper");

@@ -86,6 +86,26 @@ class ENCLuceneHelper {
         resultGroup.totalResultCount = searchResultGroup.totalResultCount;
         return resultGroup;
     }
+    static createSearchResultsForOtherIndices(searchResultGroup, documentType, fieldName) {
+        const resultGroup = this.emptySearchResultGroup();
+        if (!this.validateJsonV2(searchResultGroup)) {
+            return resultGroup;
+        }
+        for (const document of searchResultGroup.documents) {
+            const result = {
+                guid: document.guid,
+                type: documentType,
+                // todo:: remove version from old index
+                version: 0,
+                score: document.score,
+                label: document[fieldName]
+            };
+            resultGroup.results.push(result);
+        }
+        resultGroup.startIndex = searchResultGroup.startIndex;
+        resultGroup.totalResultCount = searchResultGroup.totalResultCount;
+        return resultGroup;
+    }
     static createSuggestResults(searchResultGroup, searchWords, suggestType) {
         const results = new Array();
         if (!this.validateJson(searchResultGroup)) {
@@ -188,40 +208,68 @@ class ENCLuceneHelper {
         }
         return true;
     }
+    static validateJsonV2(searchResults) {
+        if (!searchResults.hasOwnProperty('documents') || !Array.isArray(searchResults.documents)) {
+            return false;
+        }
+        if (!searchResults.hasOwnProperty('startIndex') || !(typeof searchResults.startIndex === 'number')) {
+            return false;
+        }
+        if (!searchResults.hasOwnProperty('totalResultCount') || !(typeof searchResults.totalResultCount === 'number')) {
+            return false;
+        }
+        const storedStringFields = ['nbGuid', 'notebook', 'spaceGuid', 'space', 'creatorId', 'author', 'title', 'tagGuid', 'tag'];
+        for (const document of searchResults.documents) {
+            // required fields
+            if (!document.hasOwnProperty('guid') || !(typeof document.guid === 'string')) {
+                return false;
+            }
+            // these fields are optional, check the types if they exist
+            for (const field of storedStringFields) {
+                if (document.hasOwnProperty(field) && !(typeof document[field] === 'string')) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
     static validateSuggest(results, searchWords, suggest) {
         if (suggest.guid === '' || suggest.value === '') {
             return false;
         }
-        if (suggest.type === ENSearchTypes_1.ENSuggestResultType.TAG || searchWords.length > 1) {
-            // note can contain tags which are not relevant to query, need to check each
-            // in case of notebook, space, author, title one word query defenetly match, check only multiterm query
-            let tokens = suggest.value.split(' ');
-            let foundAllWords = true;
-            for (const searchWord of searchWords) {
-                let matchIndex = -1;
-                for (let i = 0; i < tokens.length; ++i) {
-                    if (tokens[i].indexOf(searchWord) !== -1) {
-                        // if (tokens[i].startsWith(searchWord)) {
-                        matchIndex = i;
-                        break;
-                    }
-                }
-                if (matchIndex < 0) {
-                    foundAllWords = false;
+        // note can contain tags which are not relevant to query, need to check each
+        // in case of notebook, space, author, title one word query defenetly match, check only multiterm query
+        let tokens = suggest.value.split(' ');
+        let foundAllWords = true;
+        for (const searchWord of searchWords) {
+            let matchIndex = -1;
+            for (let i = 0; i < tokens.length; ++i) {
+                if (tokens[i].toLowerCase().indexOf(searchWord.toLowerCase()) !== -1) {
+                    matchIndex = i;
                     break;
                 }
-                else {
-                    tokens.splice(matchIndex, 1);
-                }
             }
-            if (!foundAllWords) {
-                return false;
+            if (matchIndex < 0) {
+                foundAllWords = false;
+                break;
             }
+            else {
+                tokens.splice(matchIndex, 1);
+            }
+        }
+        if (!foundAllWords) {
+            return false;
         }
         if (results.find(result => (result.type === suggest.type && result.guid === suggest.guid))) {
             return false;
         }
         return true;
+    }
+    static getError(engineOutput) {
+        if (typeof engineOutput === 'object' && engineOutput.hasOwnProperty('error')) {
+            return JSON.stringify(engineOutput['error']);
+        }
+        return undefined;
     }
 }
 exports.ENCLuceneHelper = ENCLuceneHelper;

@@ -18,13 +18,13 @@ class StorageChangeEventFilter {
         this.isValidCustomCheck = isValidCustomCheck;
         this.nodeTables = new Map();
         this.supportedStorageChangeTypeMask = supportedEventTypes.reduce((mask, eventType) => 
-        // tslint:disable-next-line:no-bitwise
+        // eslint-disable-next-line no-bitwise
         mask | eventType, 0);
         this.supportedStreamingEventTypes = new Set(supportedNodeTypes);
         supportedNodeTypes.forEach(supportedType => this.nodeTables.set(GraphStorageDB_1.tableForNodeType(supportedType), supportedType));
     }
     isSupportedChangeType(eventType) {
-        // tslint:disable-next-line:no-bitwise
+        // eslint-disable-next-line no-bitwise
         return (this.supportedStorageChangeTypeMask & eventType) !== 0;
     }
     /**

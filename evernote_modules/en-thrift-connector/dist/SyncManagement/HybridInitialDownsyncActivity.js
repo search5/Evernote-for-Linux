@@ -28,6 +28,7 @@ const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
+const en_data_model_1 = require("en-data-model");
 const Auth = __importStar(require("../Auth"));
 const NotebookConverter_1 = require("../Converters/NotebookConverter");
 const BetaFeatureSync_1 = require("../SyncFunctions/BetaFeatureSync");
@@ -132,7 +133,7 @@ class FetchPrebuiltDatabaseActivity extends SyncActivity_1.SyncActivity {
             if (importRes.err instanceof conduit_storage_1.CorruptDBError) {
                 conduit_utils_1.recordEvent({
                     category: 'account',
-                    action: 'sync',
+                    action: en_data_model_1.NSyncEvents.CHUNK_EVENT,
                     label: 'corrupted-db',
                 });
             }

@@ -448,6 +448,28 @@ class CLuceneWrapper {
         }
         return en_search_engine_shared_1.ENCLuceneHelper.createSuggestResults(JSON.parse(result), searchTokens, suggestType);
     }
+    execute(request) {
+        if (!CLuceneWrapper.isValid()) {
+            throw new Error('CLucene: unsupported on this platform');
+        }
+        const out = this.cl.execute(JSON.stringify(request));
+        const result = JSON.parse(out['result']);
+        return result;
+    }
+    executeAsync(request) {
+        if (!CLuceneWrapper.isValid()) {
+            throw new Error('CLucene: unsupported on this platform');
+        }
+        return new Promise((resolve, _) => {
+            this.cl.executeAsync(JSON.stringify(request), (result) => {
+                const out = JSON.parse(result);
+                if (out['error']) {
+                    this.logger.error('Clucene: ' + JSON.stringify(out['error']));
+                }
+                return resolve(out);
+            });
+        });
+    }
 }
 exports.CLuceneWrapper = CLuceneWrapper;
 //clucene fields

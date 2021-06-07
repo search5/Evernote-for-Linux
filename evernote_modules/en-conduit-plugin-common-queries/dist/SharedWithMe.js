@@ -2,13 +2,6 @@
 /*!
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
-var __asyncValues = (this && this.__asyncValues) || function (o) {
-    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-    var m = o[Symbol.asyncIterator], i;
-    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
-    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
-    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sharedWithMePlugin = void 0;
 const conduit_core_1 = require("conduit-core");
@@ -25,13 +18,12 @@ async function resolveSharedWithMe(_, args, context, info) {
     const memberships = [];
     const invitations = [];
     conduit_core_1.validateDB(context);
-    const sort = args.sort || { field: 'created', order: 'DESC' };
-    const [membershipIterator, invitationIterator] = await conduit_utils_1.allSettled([
-        getIndexedIterator(en_core_entity_types_1.CoreEntityTypes.Membership, sort, context, info),
-        getIndexedIterator(en_core_entity_types_1.CoreEntityTypes.Invitation, sort, context, info),
-    ]);
-    const membershipIds = await getNodeIDsFromIterator(context.indexer, en_core_entity_types_1.CoreEntityTypes.Membership, membershipIterator);
-    const invitationIds = await getNodeIDsFromIterator(context.indexer, en_core_entity_types_1.CoreEntityTypes.Invitation, invitationIterator);
+    const membershipSort = args.membershipSort || { field: 'invitedTime', order: 'DESC' };
+    const invitationsSort = args.invitationsSort || { field: 'created', order: 'DESC' };
+    const userMemberships = await context.db.queryGraph(context, en_core_entity_types_1.CoreEntityTypes.Membership, 'MembershipsForMe', { orderBy: membershipSort.field, reverseOrder: membershipSort.order === 'ASC' });
+    const userInvitations = await context.db.queryGraph(context, en_core_entity_types_1.CoreEntityTypes.Invitation, 'InvitationsForMe', { orderBy: invitationsSort.field, reverseOrder: invitationsSort.order === 'ASC' });
+    const membershipIds = userMemberships.map(membership => membership.id);
+    const invitationIds = userInvitations.map(invitaion => invitaion.id);
     const membershipNodes = await context.db.batchGetNodes(context, en_core_entity_types_1.CoreEntityTypes.Membership, membershipIds);
     const invitationNodes = await context.db.batchGetNodes(context, en_core_entity_types_1.CoreEntityTypes.Invitation, invitationIds);
     const acceptedSharedObjects = new Set();
@@ -49,19 +41,17 @@ async function resolveSharedWithMe(_, args, context, info) {
         if (!recipient || !sharer) {
             continue;
         }
-        if (node.NodeFields.recipientIsMe) {
-            const ref = { id: node.id, type: node.type };
-            acceptedSharedObjects.add(en_thrift_connector_1.convertGuidToService(parentRef.srcID, parentRef.srcType));
-            if (parentRef.srcType === en_core_entity_types_1.CoreEntityTypes.Notebook) {
-                acceptedSharedObjects.add(en_thrift_connector_1.convertGuidToService(node.id, node.type));
-            }
-            if (recipient.dstID !== sharer.dstID) {
-                memberships.push(ref);
-            }
-            for (const syncContext of node.syncContexts) {
-                if (syncContext.startsWith('SharedNote:')) {
-                    syncContexts.add(syncContext);
-                }
+        const ref = { id: node.id, type: node.type };
+        acceptedSharedObjects.add(en_thrift_connector_1.convertGuidToService(parentRef.srcID, parentRef.srcType));
+        if (parentRef.srcType === en_core_entity_types_1.CoreEntityTypes.Notebook) {
+            acceptedSharedObjects.add(en_thrift_connector_1.convertGuidToService(node.id, node.type));
+        }
+        if (recipient.dstID !== sharer.dstID) {
+            memberships.push(ref);
+        }
+        for (const syncContext of node.syncContexts) {
+            if (syncContext.startsWith('SharedNote:')) {
+                syncContexts.add(syncContext);
             }
         }
     }
@@ -100,39 +90,6 @@ async function resolveSharedWithMe(_, args, context, info) {
     }
     return { memberships, invitations };
 }
-async function getNodeIDsFromIterator(indexer, nodeType, iterator) {
-    var e_1, _a;
-    const ids = [];
-    if (!iterator.iterator) {
-        throw new Error(`Could not create ${nodeType} iterator`);
-    }
-    const fieldStripper = indexer.indexedValuesFromKeyFactory(nodeType, iterator.indexUsed, true);
-    try {
-        for (var _b = __asyncValues(iterator.iterator), _c; _c = await _b.next(), !_c.done;) {
-            const key = _c.value;
-            if (key) {
-                ids.push(fieldStripper(key).id);
-            }
-        }
-    }
-    catch (e_1_1) { e_1 = { error: e_1_1 }; }
-    finally {
-        try {
-            if (_c && !_c.done && (_a = _b.return)) await _a.call(_b);
-        }
-        finally { if (e_1) throw e_1.error; }
-    }
-    return ids;
-}
-async function getIndexedIterator(nodeType, sort, context, info) {
-    const { indexedSorts, indexUsed, } = conduit_core_1.getListResolverParams(nodeType, { sorts: [sort] }, context, info);
-    conduit_core_1.validateDB(context);
-    const tree = await context.db.readonlyIndexingTreeForTypeAndIndex(context.trc, nodeType, indexUsed);
-    return {
-        iterator: await context.indexer.getIterator(context.trc, context.watcher, tree, nodeType, indexUsed, [], indexedSorts, false, undefined),
-        indexUsed,
-    };
-}
 async function listResolver(parent, args, context, info) {
     if (!info || !info.fieldName) {
         throw new Error('Invalid info block');
@@ -145,10 +102,14 @@ async function listResolver(parent, args, context, info) {
 const sharedWithMePlugin = (autoResolverData) => {
     return {
         args: conduit_core_1.schemaToGraphQLArgs({
-            sort: conduit_utils_1.NullableStruct({
-                field: conduit_utils_1.NullableEnum(['created', 'label'], 'SharedWithMeField'),
-                order: conduit_utils_1.Nullable(conduit_core_1.IndexOrderTypeSchema),
-            }, 'SharedWithMeSort'),
+            membershipSort: conduit_utils_1.NullableStruct({
+                field: conduit_utils_1.Enum(['invitedTime', 'created', 'label'], 'SharedWithMeMembershipField'),
+                order: conduit_core_1.IndexOrderTypeSchema,
+            }, 'SharedWithMeMembershipSort'),
+            invitationsSort: conduit_utils_1.NullableStruct({
+                field: conduit_utils_1.Enum(['created', 'label'], 'SharedWithMeInvitationsField'),
+                order: conduit_core_1.IndexOrderTypeSchema,
+            }, 'SharedWithMeInvitationsSort'),
         }),
         type: new graphql_1.GraphQLObjectType({
             name: 'SharedWithMeResult',

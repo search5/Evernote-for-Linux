@@ -6,9 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.workspaceChangePinnedContentPosition = exports.workspacePinnedContentsUpdate = exports.workspaceSetViewed = exports.workspaceSetNotebookDisplayOrder = exports.workspaceSetNoteDisplayOrder = exports.workspaceSetLayoutStyle = exports.workspaceInvite = exports.workspaceRequestAccess = exports.workspaceLeave = exports.workspaceJoin = exports.workspaceUpdate = exports.workspaceCreate = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const AccountLimits_1 = require("../AccountLimits");
 const EntityConstants_1 = require("../EntityConstants");
-const MembershipPrivilege_1 = require("../MembershipPrivilege");
 const Workspace_1 = require("../NodeTypes/Workspace");
 const MiscHelpers_1 = require("./Helpers/MiscHelpers");
 const Profile_1 = require("./Helpers/Profile");
@@ -49,19 +49,19 @@ exports.workspaceCreate = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
     params: {
         label: 'string',
-        type: Workspace_1.WorkspaceTypeSchema,
+        type: en_conduit_sync_types_1.WorkspaceTypeSchema,
         description: conduit_utils_1.NullableString,
-        defaultRole: conduit_utils_1.Nullable(MembershipPrivilege_1.MembershipPrivilegeSchema),
+        defaultRole: conduit_utils_1.Nullable(en_conduit_sync_types_1.MembershipPrivilegeSchema),
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     execute: async (trc, ctx, params) => {
         if (!ctx.vaultUserID) {
             throw new conduit_utils_1.PermissionError('Must be in a business to create a Workspace');
         }
-        if ((params.type === Workspace_1.WorkspaceType.DISCOVERABLE || params.type === Workspace_1.WorkspaceType.INVITE_ONLY) && params.defaultRole) {
+        if ((params.type === en_conduit_sync_types_1.WorkspaceType.DISCOVERABLE || params.type === en_conduit_sync_types_1.WorkspaceType.INVITE_ONLY) && params.defaultRole) {
             throw new conduit_utils_1.ServiceError('DATA_CONFLICT', EntityConstants_1.CoreEntityTypes.Workspace, 'Workspace.defaultRole');
         }
-        if (params.type === Workspace_1.WorkspaceType.OPEN && !params.defaultRole) {
+        if (params.type === en_conduit_sync_types_1.WorkspaceType.OPEN && !params.defaultRole) {
             throw new conduit_utils_1.ServiceError('DATA_REQUIRED', EntityConstants_1.CoreEntityTypes.Workspace, 'Workspace.defaultRole');
         }
         const accountLimits = await ctx.fetchEntity(trc, AccountLimits_1.ACCOUNT_LIMITS_REF);
@@ -92,7 +92,7 @@ exports.workspaceCreate = {
         };
         if (ctx.isOptimistic && profile) {
             const membershipOps = await MutatorHelpers_1.createMembershipOps(trc, ctx, owner, {
-                privilege: MembershipPrivilege_1.MembershipPrivilege.MANAGE,
+                privilege: en_conduit_sync_types_1.MembershipPrivilege.MANAGE,
                 recipientIsMe: true,
                 parentRef: { id: workspaceID, type: EntityConstants_1.CoreEntityTypes.Workspace },
                 profileEdgeMap: {
@@ -111,8 +111,8 @@ exports.workspaceUpdate = {
         workspace: 'ID',
         label: conduit_utils_1.NullableString,
         description: conduit_utils_1.NullableString,
-        type: conduit_utils_1.Nullable(Workspace_1.WorkspaceTypeSchema),
-        defaultRole: conduit_utils_1.Nullable(MembershipPrivilege_1.MembershipPrivilegeSchema),
+        type: conduit_utils_1.Nullable(en_conduit_sync_types_1.WorkspaceTypeSchema),
+        defaultRole: conduit_utils_1.Nullable(en_conduit_sync_types_1.MembershipPrivilegeSchema),
     },
     execute: async (trc, ctx, params) => {
         const nodeRef = getNodeRef(params.workspace);
@@ -120,15 +120,15 @@ exports.workspaceUpdate = {
         if (!workspaceEntity) {
             throw new conduit_utils_1.NotFoundError(params.workspace, 'Not found Workspace node in update');
         }
-        const isTypeOpen = params.type && params.type === Workspace_1.WorkspaceType.OPEN;
-        const isNotTypeOpen = params.type && params.type !== Workspace_1.WorkspaceType.OPEN;
+        const isTypeOpen = params.type && params.type === en_conduit_sync_types_1.WorkspaceType.OPEN;
+        const isNotTypeOpen = params.type && params.type !== en_conduit_sync_types_1.WorkspaceType.OPEN;
         if (isNotTypeOpen && params.defaultRole) {
             throw new conduit_utils_1.ServiceError('DATA_CONFLICT', EntityConstants_1.CoreEntityTypes.Workspace, 'Workspace.defaultRole');
         }
         if (isTypeOpen && !params.defaultRole) {
             throw new conduit_utils_1.ServiceError('DATA_REQUIRED', EntityConstants_1.CoreEntityTypes.Workspace, 'Workspace.defaultRole');
         }
-        if (!params.type && params.defaultRole && workspaceEntity.NodeFields.workspaceType !== Workspace_1.WorkspaceType.OPEN) {
+        if (!params.type && params.defaultRole && workspaceEntity.NodeFields.workspaceType !== en_conduit_sync_types_1.WorkspaceType.OPEN) {
             throw new conduit_utils_1.ServiceError('DATA_CONFLICT', EntityConstants_1.CoreEntityTypes.Workspace, 'Workspace.defaultRole');
         }
         const defaultRole = isNotTypeOpen ? null : params.defaultRole;
@@ -212,7 +212,7 @@ exports.workspaceInvite = {
     params: {
         workspace: 'ID',
         users: conduit_utils_1.ListOf('ID'),
-        privilege: MembershipPrivilege_1.MembershipPrivilegeSchema,
+        privilege: en_conduit_sync_types_1.MembershipPrivilegeSchema,
     },
     execute: null,
     executeOnService: async (trc, ctx, params) => {

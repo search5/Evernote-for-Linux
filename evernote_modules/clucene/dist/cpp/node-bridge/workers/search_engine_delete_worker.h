@@ -12,7 +12,7 @@
 #include "Misc.h"
 #include "repl_tchar.h"
 
-#include "search_engine_context.h"
+#include "ense_scheduler.h"
 
 namespace en_search 
 {
@@ -20,7 +20,7 @@ namespace en_search
     public:
         SearchEngineDeleteWorker(
             Napi::Function& callback, 
-            std::shared_ptr<SearchEngineContext> search_engine_context,
+            std::shared_ptr<evernote::cosm::core::ENScheduler> scheduler,
             const std::string& guid);
 
     // Executed inside the worker-thread.
@@ -36,7 +36,7 @@ namespace en_search
     void OnOK() override;
 
     private:
-        std::shared_ptr<SearchEngineContext> search_engine_context_;
+        std::shared_ptr<evernote::cosm::core::ENScheduler> scheduler_;
         std::string guid_;
         
     private:

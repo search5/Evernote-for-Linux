@@ -2,7 +2,7 @@
 /*!
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
-// tslint:disable:no-bitwise
+/* eslint-disable no-bitwise */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StorageWatcher = exports.StorageWatchTree = void 0;
 const conduit_utils_1 = require("conduit-utils");

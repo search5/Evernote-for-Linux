@@ -27,10 +27,23 @@ const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
 const Auth = __importStar(require("../Auth"));
 function validateDBAndKeys(context) {
-    if (context && context.db && context.clientCredentials && context.multiUserProvider) {
-        return true;
+    if (!context) {
+        throw new Error('Missing context');
     }
-    throw new Error('Context not correctly setup: db or credentials missing');
+    const errorMsgs = [];
+    if (!context.db) {
+        errorMsgs.push('Missing db (no user found)');
+    }
+    if (!context.clientCredentials) {
+        errorMsgs.push('Missing client credentials');
+    }
+    if (!context.multiUserProvider) {
+        errorMsgs.push('Missing MUP');
+    }
+    if (errorMsgs.length) {
+        throw new Error(errorMsgs.join(' + '));
+    }
+    return true;
 }
 class PluginTokenRefreshManager {
     constructor(di, maxBackoffTimeout = 16000) {

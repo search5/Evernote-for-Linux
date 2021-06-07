@@ -7,7 +7,7 @@ exports.ElectronRendererLogger = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const electron_1 = require("electron");
 const _1 = require("./");
-/* tslint:disable:no-console */
+/* eslint-disable no-console */
 class ElectronRendererLogger {
     constructor(name, sendToConsole, parentArgs = []) {
         this.name = name;

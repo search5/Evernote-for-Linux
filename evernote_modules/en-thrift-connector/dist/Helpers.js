@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.shouldBufferMutation = exports.getBestSyncContextForNode = exports.EXTERNAL_CONTEXT_REGEX = exports.SHARED_NOTE_CONTEXT_REGEX = exports.LINKED_CONTEXT_REGEX = void 0;
 const conduit_core_1 = require("conduit-core");
-const en_core_entity_types_1 = require("en-core-entity-types");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 exports.LINKED_CONTEXT_REGEX = /^LinkedNotebook:/;
 exports.SHARED_NOTE_CONTEXT_REGEX = /^SharedNote:/;
 exports.EXTERNAL_CONTEXT_REGEX = /(^LinkedNotebook:|^SharedNote:)/;
@@ -31,7 +31,7 @@ async function getBestSyncContextForNode(trc, node, syncContextMetadataProvider,
     // loop through sync context metadata and return sync context with best privilege
     // prefer VAULT_USER_CONTEXT if present over shared context with READ privilege.
     let bestSyncContext = hasVaultContext ? conduit_core_1.VAULT_USER_CONTEXT : node.syncContexts[0];
-    let privilege = en_core_entity_types_1.MembershipPrivilege.READ;
+    let privilege = en_conduit_sync_types_1.MembershipPrivilege.READ;
     for (const syncContext of node.syncContexts) {
         if (syncContext === conduit_core_1.PERSONAL_USER_CONTEXT || syncContext === conduit_core_1.VAULT_USER_CONTEXT) {
             continue;
@@ -40,8 +40,8 @@ async function getBestSyncContextForNode(trc, node, syncContextMetadataProvider,
         if (!metadata || !metadata.privilege) {
             continue;
         }
-        const newPrivilege = en_core_entity_types_1.highestPrivilege(metadata.privilege, privilege);
-        if (newPrivilege === en_core_entity_types_1.MembershipPrivilege.MANAGE) {
+        const newPrivilege = en_conduit_sync_types_1.highestPrivilege(metadata.privilege, privilege);
+        if (newPrivilege === en_conduit_sync_types_1.MembershipPrivilege.MANAGE) {
             return syncContext;
         }
         if (newPrivilege !== privilege) {

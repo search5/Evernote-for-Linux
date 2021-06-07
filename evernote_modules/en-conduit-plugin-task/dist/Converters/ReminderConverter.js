@@ -11,33 +11,18 @@ const en_data_model_1 = require("en-data-model");
 const en_nsync_connector_1 = require("en-nsync-connector");
 const ScheduledNotificationConverter_1 = require("./ScheduledNotificationConverter");
 const getReminderNodeAndEdges = async (trc, instance, context) => {
-    var _a, _b, _c;
+    var _a, _b;
+    const reminder = en_nsync_connector_1.convertNsyncEntityToNode(instance, context);
+    if (!reminder) {
+        return null;
+    }
     const nodesToUpsert = [];
     const edgesToCreate = [];
     const edgesToDelete = [];
     const reminderNodesAndEdges = { nodes: { nodesToUpsert, nodesToDelete: [] }, edges: { edgesToDelete, edgesToCreate } };
-    const initial = en_nsync_connector_1.createInitialNode(instance);
-    if (!initial) {
-        return null;
-    }
-    const reminder = Object.assign(Object.assign({}, initial), { type: en_data_model_1.EntityTypes.Reminder, NodeFields: {
-            created: instance.created,
-            updated: instance.updated,
-            reminderDate: instance.reminderDate || null,
-            reminderDateUIOption: instance.reminderDateUIOption || null,
-            timeZone: instance.timeZone || null,
-            dueDateOffset: instance.dueDateOffset || null,
-            noteLevelID: instance.noteLevelID || '',
-            sourceOfChange: (_a = instance.sourceOfChange) !== null && _a !== void 0 ? _a : null,
-            status: instance.status || null,
-        }, inputs: {
-            source: {},
-        }, outputs: {
-            scheduledNotification: {},
-        } });
     nodesToUpsert.push(reminder);
-    const parentID = (_b = instance.parentEntity) === null || _b === void 0 ? void 0 : _b.id;
-    const parentType = en_conduit_sync_types_1.entityTypeAsNodeType(context.eventManager.di, (_c = instance.parentEntity) === null || _c === void 0 ? void 0 : _c.type, en_core_entity_types_1.CoreEntityTypes.Note);
+    const parentID = (_a = instance.parentEntity) === null || _a === void 0 ? void 0 : _a.id;
+    const parentType = en_conduit_sync_types_1.entityTypeAsNodeType(context.eventManager.di, (_b = instance.parentEntity) === null || _b === void 0 ? void 0 : _b.type, en_core_entity_types_1.CoreEntityTypes.Note);
     if (parentID && parentType) {
         const currentReminder = await context.tx.getNode(trc, null, { type: en_data_model_1.EntityTypes.Reminder, id: reminder.id });
         const currentParentEdge = conduit_utils_1.firstStashEntry(currentReminder === null || currentReminder === void 0 ? void 0 : currentReminder.inputs.source);

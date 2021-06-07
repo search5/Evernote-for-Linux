@@ -2,27 +2,214 @@
 /*
  * Copyright 2021 Evernote Corporation. All rights reserved.
  */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WidgetDefaultsFactory = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_data_model_1 = require("en-data-model");
 const en_home_data_model_1 = require("en-home-data-model");
-class WidgetDefaultsFactory {
-    constructor(useServiceLevelV2Layouts = false) {
-        this.useServiceLevelV2Layouts = useServiceLevelV2Layouts;
+const Utilities = __importStar(require("../Utilities"));
+const professionalZero = () => {
+    return new Map([
+        // Not on desktop
+        [en_home_data_model_1.WidgetType.OnboardingChecklist, [{ numericRanking: 0, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop Row 1
+        [en_home_data_model_1.WidgetType.Notes, [{ numericRanking: 1, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Tasks, [{ numericRanking: 2, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop Row 2
+        [en_home_data_model_1.WidgetType.ScratchPad, [{ numericRanking: 3, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Calendar, [{ numericRanking: 4, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Pinned, [{ numericRanking: 5, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop Row 3
+        [en_home_data_model_1.WidgetType.Extra, [...new Array(en_home_data_model_1.BoardSchema.MaxExtraWidgets).keys()].map(idx => {
+                if (idx > 1) { // Most of these start disabled by default
+                    return { numericRanking: 6 + idx, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null };
+                }
+                else if (idx === 1) { // ScratchPad in the second position for the row
+                    return { numericRanking: 6 + idx, isEnabled: true, desktopWidth: 1, mutableWidgetType: en_home_data_model_1.MutableWidgetType.ScratchPad, autoPosition: null };
+                }
+                // Pinned in first position for the row
+                return { numericRanking: 6 + idx, isEnabled: true, desktopWidth: 1, mutableWidgetType: en_home_data_model_1.MutableWidgetType.Pinned, autoPosition: null };
+            })],
+        [en_home_data_model_1.WidgetType.FilteredNotes, [{ numericRanking: en_home_data_model_1.BoardSchema.MaxExtraWidgets + 6, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop Row 4
+        [en_home_data_model_1.WidgetType.Tags, [{ numericRanking: en_home_data_model_1.BoardSchema.MaxExtraWidgets + 7, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Clipped, [{ numericRanking: en_home_data_model_1.BoardSchema.MaxExtraWidgets + 8, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop Row 5
+        [en_home_data_model_1.WidgetType.Notebooks, [{ numericRanking: en_home_data_model_1.BoardSchema.MaxExtraWidgets + 9, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Shortcuts, [{ numericRanking: en_home_data_model_1.BoardSchema.MaxExtraWidgets + 10, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+    ]);
+};
+const personalZero = () => {
+    return new Map([
+        // Not on desktop
+        [en_home_data_model_1.WidgetType.OnboardingChecklist, [{ numericRanking: 0, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop Row 1
+        [en_home_data_model_1.WidgetType.Notes, [{ numericRanking: 1, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Tasks, [{ numericRanking: 2, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop Row 2
+        [en_home_data_model_1.WidgetType.ScratchPad, [{ numericRanking: 3, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Calendar, [{ numericRanking: 4, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Pinned, [{ numericRanking: 5, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop Row 3
+        [en_home_data_model_1.WidgetType.FilteredNotes, [{ numericRanking: 6, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Clipped, [{ numericRanking: 7, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop Row 4
+        [en_home_data_model_1.WidgetType.Tags, [{ numericRanking: 8, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Notebooks, [{ numericRanking: 9, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Shortcuts, [{ numericRanking: 10, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // Disabled at this tier
+        [en_home_data_model_1.WidgetType.Extra, [...new Array(en_home_data_model_1.BoardSchema.MaxExtraWidgets).keys()].map(idx => {
+                return { numericRanking: 11 + idx, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null };
+            })],
+    ]);
+};
+const premiumZero = () => {
+    return new Map([
+        // Not on desktop
+        [en_home_data_model_1.WidgetType.OnboardingChecklist, [{ numericRanking: 0, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop Row 1
+        [en_home_data_model_1.WidgetType.Notes, [{ numericRanking: 1, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.ScratchPad, [{ numericRanking: 2, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop Row 2
+        [en_home_data_model_1.WidgetType.Pinned, [{ numericRanking: 3, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Clipped, [{ numericRanking: 4, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop Row 3
+        [en_home_data_model_1.WidgetType.Notebooks, [{ numericRanking: 5, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Tags, [{ numericRanking: 6, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Shortcuts, [{ numericRanking: 7, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // In a weird place, as it needs to be auto-added for Beta/Conduit E2Es, but ultimately becomes professional.
+        [en_home_data_model_1.WidgetType.Calendar, [{ numericRanking: 8, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: true }]],
+        [en_home_data_model_1.WidgetType.Tasks, [{ numericRanking: 9, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // Disabled at this tier.
+        [en_home_data_model_1.WidgetType.FilteredNotes, [{ numericRanking: 10, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Extra, [...new Array(en_home_data_model_1.BoardSchema.MaxExtraWidgets).keys()].map(idx => {
+                return { numericRanking: 11 + idx, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null };
+            })],
+    ]);
+};
+const premiumOne = () => {
+    return new Map([
+        // Not on desktop
+        [en_home_data_model_1.WidgetType.OnboardingChecklist, [{ numericRanking: 0, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop Row 1
+        [en_home_data_model_1.WidgetType.Notes, [{ numericRanking: 1, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.ScratchPad, [{ numericRanking: 2, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop Row 2
+        [en_home_data_model_1.WidgetType.Pinned, [{ numericRanking: 3, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Clipped, [{ numericRanking: 4, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop Row 3
+        [en_home_data_model_1.WidgetType.Notebooks, [{ numericRanking: 5, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Tags, [{ numericRanking: 6, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Shortcuts, [{ numericRanking: 7, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // In a weird place, as it needs to be auto-added for Beta/Conduit E2Es, but ultimately becomes professional.
+        [en_home_data_model_1.WidgetType.Calendar, [{ numericRanking: 8, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Tasks, [{ numericRanking: 9, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // Disabled at this tier.
+        [en_home_data_model_1.WidgetType.FilteredNotes, [{ numericRanking: 10, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Extra, [...new Array(en_home_data_model_1.BoardSchema.MaxExtraWidgets).keys()].map(idx => {
+                return { numericRanking: 11 + idx, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null };
+            })],
+    ]);
+};
+const freeZero = () => {
+    return new Map([
+        // Not on desktop
+        [en_home_data_model_1.WidgetType.OnboardingChecklist, [{ numericRanking: 0, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop row 1
+        [en_home_data_model_1.WidgetType.Notes, [{ numericRanking: 1, isEnabled: true, desktopWidth: 3, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop row 2 (pinned disabled for legacy config support)
+        [en_home_data_model_1.WidgetType.ScratchPad, [{ numericRanking: 2, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Pinned, [{ numericRanking: 3, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Clipped, [{ numericRanking: 4, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, autoPosition: null }]],
+        // Disabled at this tier.
+        [en_home_data_model_1.WidgetType.Notebooks, [{ numericRanking: 5, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Tags, [{ numericRanking: 6, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Shortcuts, [{ numericRanking: 7, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Calendar, [{ numericRanking: 8, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Tasks, [{ numericRanking: 9, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.FilteredNotes, [{ numericRanking: 10, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Extra, [...new Array(en_home_data_model_1.BoardSchema.MaxExtraWidgets).keys()].map(idx => {
+                return { numericRanking: 11 + idx, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null };
+            })],
+    ]);
+};
+const freeOne = () => {
+    return new Map([
+        // Not on desktop
+        [en_home_data_model_1.WidgetType.OnboardingChecklist, [{ numericRanking: 0, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop row 1
+        [en_home_data_model_1.WidgetType.Notes, [{ numericRanking: 1, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.ScratchPad, [{ numericRanking: 2, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        // Desktop row 2 (pinned disabled for legacy config support)
+        [en_home_data_model_1.WidgetType.Pinned, [{ numericRanking: 3, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Clipped, [{ numericRanking: 4, isEnabled: true, desktopWidth: 3, mutableWidgetType: null, autoPosition: null }]],
+        // Disabled at this tier.
+        [en_home_data_model_1.WidgetType.Notebooks, [{ numericRanking: 5, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Tags, [{ numericRanking: 6, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Shortcuts, [{ numericRanking: 7, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Calendar, [{ numericRanking: 8, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Tasks, [{ numericRanking: 9, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.FilteredNotes, [{ numericRanking: 10, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null }]],
+        [en_home_data_model_1.WidgetType.Extra, [...new Array(en_home_data_model_1.BoardSchema.MaxExtraWidgets).keys()].map(idx => {
+                return { numericRanking: 11 + idx, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, autoPosition: null };
+            })],
+    ]);
+};
+const clientLayoutVersionZero = (userAdjustedServiceLevelV2) => {
+    if (userAdjustedServiceLevelV2 >= en_data_model_1.AdjustedServiceLevelV2.PREMIUM) {
+        return premiumZero();
     }
-    async create(trc, ctx, userAdjustedServiceLevelV2, boardType, widgetTypes, boardInternalID = 0) {
-        var _a;
-        const configMap = this.useServiceLevelV2Layouts
-            ? this.serviceLevelV2Config(userAdjustedServiceLevelV2)
-            : this.serviceLevelV1Config(userAdjustedServiceLevelV2);
+    return freeZero();
+};
+const clientLayoutVersionOne = (userAdjustedServiceLevelV2) => {
+    if (userAdjustedServiceLevelV2 >= en_data_model_1.AdjustedServiceLevelV2.PROFESSIONAL) {
+        return professionalZero();
+    }
+    else if (userAdjustedServiceLevelV2 >= en_data_model_1.AdjustedServiceLevelV2.PERSONAL) {
+        return personalZero();
+    }
+    else if (userAdjustedServiceLevelV2 >= en_data_model_1.AdjustedServiceLevelV2.PREMIUM) {
+        return premiumOne();
+    }
+    return freeOne();
+};
+class WidgetDefaultsFactory {
+    constructor() {
+        this.layoutGenerators = new Map([
+            [0, clientLayoutVersionZero],
+            [1, clientLayoutVersionOne],
+        ]);
+    }
+    async create(trc, ctx, userAdjustedServiceLevelV2, clientLayoutVersion, boardType, widgetTypes, boardInternalID = 0) {
+        var _a, _b;
+        const layoutGenerator = (_a = this.layoutGenerators.get(clientLayoutVersion)) !== null && _a !== void 0 ? _a : clientLayoutVersionZero;
+        const configMap = layoutGenerator(userAdjustedServiceLevelV2);
         const lexoRankHandler = new conduit_utils_1.LexoRankHandler(50);
         const mobileRankings = lexoRankHandler.distribute(widgetTypes.length);
         const desktopRankings = lexoRankHandler.distribute(widgetTypes.length - 1);
         const widgetCountsByWidgetType = new Map();
         const widgetDefaults = [];
         for (const widgetType of widgetTypes) {
-            const internalID = (_a = widgetCountsByWidgetType.get(widgetType)) !== null && _a !== void 0 ? _a : 0;
+            const internalID = (_b = widgetCountsByWidgetType.get(widgetType)) !== null && _b !== void 0 ? _b : 0;
             widgetCountsByWidgetType.set(widgetType, internalID + 1);
             const configArray = configMap.get(widgetType);
             const config = configArray ? configArray[internalID] : undefined;
@@ -39,15 +226,9 @@ class WidgetDefaultsFactory {
                 isEnabled: config.isEnabled,
                 internalID,
                 mutableWidgetType: config.mutableWidgetType,
-                selectedTab: null,
-                serviceLevelV1Upgrade: config.serviceLevelV1Upgrade,
+                selectedTab: Utilities.getDefaultSelectedTabByWidgetType(widgetType),
+                autoPosition: config.autoPosition,
             };
-            if (widgetType === en_home_data_model_1.WidgetType.Notebooks || widgetType === en_home_data_model_1.WidgetType.Notes) {
-                widgetDefault.selectedTab = en_home_data_model_1.WidgetSelectedTab.Recent;
-            }
-            else if (widgetType === en_home_data_model_1.WidgetType.Clipped) {
-                widgetDefault.selectedTab = en_home_data_model_1.WidgetSelectedTab.WebClips;
-            }
             widgetDefaults.push(widgetDefault);
         }
         widgetDefaults.sort((a, b) => {
@@ -93,131 +274,6 @@ class WidgetDefaultsFactory {
             maxMobileSortWeight: mobileRankings[mobileRankings.length - 1],
             widgetTypeConfig: widgetTypeConfigResults,
         };
-    }
-    serviceLevelV1Config(userAdjustedServiceLevelV2) {
-        if (userAdjustedServiceLevelV2 >= en_data_model_1.AdjustedServiceLevelV2.PREMIUM) {
-            return this.premium();
-        }
-        return this.free();
-    }
-    serviceLevelV2Config(userAdjustedServiceLevelV2) {
-        if (userAdjustedServiceLevelV2 >= en_data_model_1.AdjustedServiceLevelV2.PROFESSIONAL) {
-            return this.professional();
-        }
-        else if (userAdjustedServiceLevelV2 >= en_data_model_1.AdjustedServiceLevelV2.PERSONAL) {
-            return this.personal();
-        }
-        else if (userAdjustedServiceLevelV2 >= en_data_model_1.AdjustedServiceLevelV2.PREMIUM) {
-            return this.premium();
-        }
-        return this.free();
-    }
-    professional() {
-        return new Map([
-            // Not on desktop
-            [en_home_data_model_1.WidgetType.OnboardingChecklist, [{ numericRanking: 0, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            // Desktop Row 1
-            [en_home_data_model_1.WidgetType.Notes, [{ numericRanking: 1, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Tasks, [{ numericRanking: 2, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            // Desktop Row 2
-            [en_home_data_model_1.WidgetType.ScratchPad, [{ numericRanking: 3, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Calendar, [{ numericRanking: 4, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Pinned, [{ numericRanking: 5, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            // Desktop Row 3
-            [en_home_data_model_1.WidgetType.Extra, [...new Array(en_home_data_model_1.BoardSchema.MaxExtraWidgets).keys()].map(idx => {
-                    if (idx > 1) { // Most of these start disabled by default
-                        return { numericRanking: 6 + idx, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null };
-                    }
-                    else if (idx === 1) { // ScratchPad in the second position for the row
-                        return { numericRanking: 6 + idx, isEnabled: true, desktopWidth: 1, mutableWidgetType: en_home_data_model_1.MutableWidgetType.ScratchPad, serviceLevelV1Upgrade: null };
-                    }
-                    // Pinned in first position for the row
-                    return { numericRanking: 6 + idx, isEnabled: true, desktopWidth: 1, mutableWidgetType: en_home_data_model_1.MutableWidgetType.Pinned, serviceLevelV1Upgrade: null };
-                })],
-            [en_home_data_model_1.WidgetType.FilteredNotes, [{ numericRanking: en_home_data_model_1.BoardSchema.MaxExtraWidgets + 6, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            // Desktop Row 4
-            [en_home_data_model_1.WidgetType.Tags, [{ numericRanking: en_home_data_model_1.BoardSchema.MaxExtraWidgets + 7, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Clipped, [{ numericRanking: en_home_data_model_1.BoardSchema.MaxExtraWidgets + 8, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            // Desktop Row 5
-            [en_home_data_model_1.WidgetType.Notebooks, [{ numericRanking: en_home_data_model_1.BoardSchema.MaxExtraWidgets + 9, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Shortcuts, [{ numericRanking: en_home_data_model_1.BoardSchema.MaxExtraWidgets + 10, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-        ]);
-    }
-    personal() {
-        return new Map([
-            // Not on desktop
-            [en_home_data_model_1.WidgetType.OnboardingChecklist, [{ numericRanking: 0, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            // Desktop Row 1
-            [en_home_data_model_1.WidgetType.Notes, [{ numericRanking: 1, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Tasks, [{ numericRanking: 2, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            // Desktop Row 2
-            [en_home_data_model_1.WidgetType.ScratchPad, [{ numericRanking: 3, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Calendar, [{ numericRanking: 4, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Pinned, [{ numericRanking: 5, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            // Desktop Row 3
-            [en_home_data_model_1.WidgetType.FilteredNotes, [{ numericRanking: 6, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Clipped, [{ numericRanking: 7, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            // Desktop Row 4
-            [en_home_data_model_1.WidgetType.Tags, [{ numericRanking: 8, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Notebooks, [{ numericRanking: 9, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Shortcuts, [{ numericRanking: 10, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            // Disabled at this tier
-            [en_home_data_model_1.WidgetType.Extra, [...new Array(en_home_data_model_1.BoardSchema.MaxExtraWidgets).keys()].map(idx => {
-                    return { numericRanking: 11 + idx, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null };
-                })],
-        ]);
-    }
-    premium() {
-        return new Map([
-            // Not on desktop
-            [en_home_data_model_1.WidgetType.OnboardingChecklist, [{ numericRanking: 0, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            // Desktop Row 1
-            [en_home_data_model_1.WidgetType.Notes, [{ numericRanking: 1, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.ScratchPad, [{ numericRanking: 2, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            // Desktop Row 2
-            [en_home_data_model_1.WidgetType.Pinned, [{ numericRanking: 3, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Clipped, [{ numericRanking: 4, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            // Desktop Row 3
-            [en_home_data_model_1.WidgetType.Notebooks, [{ numericRanking: 5, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Tags, [{ numericRanking: 6, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Shortcuts, [{ numericRanking: 7, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            // In a weird place, as it needs to be auto-added for Beta/Conduit E2Es, but ultimately becomes professional.
-            [en_home_data_model_1.WidgetType.Calendar, [{
-                        numericRanking: 8, isEnabled: !this.useServiceLevelV2Layouts, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: !this.useServiceLevelV2Layouts,
-                    }]],
-            [en_home_data_model_1.WidgetType.Tasks, [{
-                        numericRanking: 9, isEnabled: !this.useServiceLevelV2Layouts, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: !this.useServiceLevelV2Layouts,
-                    }]],
-            // Disabled at this tier.
-            [en_home_data_model_1.WidgetType.FilteredNotes, [{ numericRanking: 10, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Extra, [...new Array(en_home_data_model_1.BoardSchema.MaxExtraWidgets).keys()].map(idx => {
-                    return { numericRanking: 11 + idx, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null };
-                })],
-        ]);
-    }
-    free() {
-        return new Map([
-            // Not on desktop
-            [en_home_data_model_1.WidgetType.OnboardingChecklist, [{ numericRanking: 0, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            // Desktop row 1
-            [en_home_data_model_1.WidgetType.Notes, [{ numericRanking: 1, isEnabled: true, desktopWidth: 3, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            // Desktop row 2 (pinned disabled for legacy config support)
-            [en_home_data_model_1.WidgetType.ScratchPad, [{ numericRanking: 2, isEnabled: true, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Pinned, [{ numericRanking: 3, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Clipped, [{ numericRanking: 4, isEnabled: true, desktopWidth: 2, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            // Disabled at this tier.
-            [en_home_data_model_1.WidgetType.Notebooks, [{ numericRanking: 5, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Tags, [{ numericRanking: 6, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Shortcuts, [{ numericRanking: 7, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            // Service level flag here for compatibility reasons, as these were added shortly before the V2 switch over.
-            [en_home_data_model_1.WidgetType.Calendar, [{ numericRanking: 8, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: !this.useServiceLevelV2Layouts }]],
-            [en_home_data_model_1.WidgetType.Tasks, [{ numericRanking: 9, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: !this.useServiceLevelV2Layouts }]],
-            // Added at the time of V2 switch over.
-            [en_home_data_model_1.WidgetType.FilteredNotes, [{ numericRanking: 10, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null }]],
-            [en_home_data_model_1.WidgetType.Extra, [...new Array(en_home_data_model_1.BoardSchema.MaxExtraWidgets).keys()].map(idx => {
-                    return { numericRanking: 11 + idx, isEnabled: false, desktopWidth: 1, mutableWidgetType: null, serviceLevelV1Upgrade: null };
-                })],
-        ]);
     }
 }
 exports.WidgetDefaultsFactory = WidgetDefaultsFactory;

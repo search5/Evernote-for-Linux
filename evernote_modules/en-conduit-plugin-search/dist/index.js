@@ -22,7 +22,7 @@ const gSearchShareMetadata = new conduit_utils_1.CacheManager({ softCap: 800, ha
 let gSearchStorageChangeReceiver;
 let gSearchStorageProcessor;
 let gSearcher;
-let gSearchEngine;
+let gSearchIndexManager;
 /**
  * Cleans up global variables, calls gSearchEngine destructor if it's defined.
  */
@@ -31,8 +31,8 @@ function clean() {
     en_thrift_connector_1.OfflineSearchIndexActivity.setupIndexation(undefined);
     gSearchStorageProcessor = undefined;
     gSearcher = undefined;
-    gSearchEngine === null || gSearchEngine === void 0 ? void 0 : gSearchEngine.destructor();
-    gSearchEngine = undefined;
+    gSearchIndexManager === null || gSearchIndexManager === void 0 ? void 0 : gSearchIndexManager.destructor();
+    gSearchIndexManager = undefined;
     gSearchShareMetadata.emptyAll();
 }
 /**
@@ -238,11 +238,17 @@ function getENSearchPlugin(provideSearchEngine, di) {
             return new Promise(resolve => {
                 if (provideSearchEngine) {
                     // creates search engine with the provided factory function
-                    gSearchEngine = provideSearchEngine(conduit_utils_1.logger);
-                    conduit_utils_1.logger.debug(`SearchEngine: type:${gSearchEngine.getEngineType()}; version:${gSearchEngine.getVersion()}`);
-                    gSearcher = new Searcher_1.Searcher(gSearchEngine);
+                    gSearchIndexManager = provideSearchEngine(conduit_utils_1.logger);
+                    // print indices information
+                    const indexNames = gSearchIndexManager.getIndexNames();
+                    const indicesInfo = new Array();
+                    for (const indexName of indexNames) {
+                        indicesInfo.push(`name: ${indexName}; version: ${gSearchIndexManager.getVersion(indexName)}`);
+                    }
+                    conduit_utils_1.logger.info(`SearchEngine: type:${gSearchIndexManager.getEngineType()}; indices: ${indicesInfo.join('; ')}`);
+                    gSearcher = new Searcher_1.Searcher(gSearchIndexManager);
                     // creates search processor and injects the search engine
-                    gSearchStorageProcessor = new SearchProcessor_1.SearchProcessor(graphDB, gSearchEngine);
+                    gSearchStorageProcessor = new SearchProcessor_1.SearchProcessor(graphDB, gSearchIndexManager);
                     // injects indexation hook in the activity
                     en_thrift_connector_1.OfflineSearchIndexActivity.setupIndexation(process);
                     // injects search processor in the storage event receiver

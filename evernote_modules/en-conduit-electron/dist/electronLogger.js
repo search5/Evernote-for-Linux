@@ -37,6 +37,7 @@ function electronLogger(config) {
                 throw new Error('No file name found for electronLogger');
             }
             const initialData = config.fileHeaderText || 'No initial data';
+            // eslint-disable-next-line max-len
             fs_extra_1.default.appendFileSync(config.file.name, `********\n* The Activity Log may contain information about your account and notes.\n* For example, the titles of some of your notes may be mentioned in this log file.\n* When providing log information, feel free to edit the file to remove anything\n* you do not want to send us.\n********\n\n${initialData}\n\n`);
         });
         streams.push({

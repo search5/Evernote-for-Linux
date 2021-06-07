@@ -6,11 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.noteSetApplicationDataEntry = exports.noteSetCreated = exports.noteUnlinkConflictBackup = exports.noteInvite = exports.noteSetAuthor = exports.noteSetSourceApplication = exports.noteSetSourceUrl = exports.noteSetSource = exports.noteSetContentClass = exports.noteSetReminderOrder = exports.noteSetReminderDone = exports.noteClearReminder = exports.noteSetReminder = exports.noteSetSubjectDate = exports.noteSetPlaceName = exports.noteSetLocation = exports.noteSendByEmail = exports.noteSetSharePublic = exports.noteSetContent = exports.noteMoveInternal = exports.notesExpunge = exports.noteExpunge = exports.noteSetLabel = exports.noteRestore = exports.noteDelete = exports.noteCreate = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const __1 = require("..");
 const AccountLimits_1 = require("../AccountLimits");
 const CommandPolicyRules_1 = require("../CommandPolicyRules");
 const EntityConstants_1 = require("../EntityConstants");
-const MembershipPrivilege_1 = require("../MembershipPrivilege");
 const Note_1 = require("../NodeTypes/Note");
 const ShareUtils_1 = require("../ShareUtils");
 const NoteMutatorHelpers_1 = require("./Helpers/NoteMutatorHelpers");
@@ -852,7 +852,7 @@ exports.noteInvite = {
     type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
     params: {
         note: 'ID',
-        privilege: MembershipPrivilege_1.MembershipPrivilegeSchema,
+        privilege: en_conduit_sync_types_1.MembershipPrivilegeSchema,
         emails: conduit_utils_1.NullableListOf('string'),
         userIDs: conduit_utils_1.NullableListOf('ID'),
         profileIDs: conduit_utils_1.NullableListOf('ID'),

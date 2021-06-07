@@ -3,6 +3,7 @@
 #include <chrono>
 
 #include "ense_utils.h"
+#include "ense_query_utils.h"
 #include "ense_reco_resource_parser.h"
 #include "search_engine_context.h"
 
@@ -132,7 +133,7 @@ namespace en_search {
 
             auto jQueryWithParams = json::parse(queryWithParams);
             
-            auto filterString = getFilterStringFromJson(jQueryWithParams);
+            auto filterString = evernote::cosm::core::getFilterStringFromJson(jQueryWithParams);
             // printf("filterString: %s\n", filterString.c_str());
             auto filterStringUc = util::toWstring(filterString);
             auto filterStringQuery = util::cst_del_unique_ptr<Query>(
@@ -145,7 +146,7 @@ namespace en_search {
                 _CLDELETE(filter);
             });
 
-            auto queryString = getQueryStringFromJson(jQueryWithParams);
+            auto queryString = evernote::cosm::core::getQueryStringFromJson(jQueryWithParams);
             // printf("queryString: %s\n", queryString.c_str());
             auto queryStringUc = util::toWstring(queryString);
             auto queryStringQuery = util::cst_del_unique_ptr<Query>(
@@ -155,21 +156,21 @@ namespace en_search {
                 });
 
 
-            auto searchParams = getSearchParamsFromJson(jQueryWithParams);
-            auto storedFields = getStoredFieldsFromJson(jQueryWithParams);
+            auto searchParams = evernote::cosm::core::getSearchParamsFromJson(jQueryWithParams);
+            auto storedFields = evernote::cosm::core::getStoredFieldsFromJson(jQueryWithParams);
             
             SortField* sortField = NULL;
             switch (searchParams.sortType) {
-                case SortType::CREATED:
+                case evernote::cosm::core::SortType::CREATED:
                     sortField = _CLNEW SortField (_T("created"), SortField::LONG, searchParams.reverseOrder);
                     break;
-                case SortType::UPDATED:
+                case evernote::cosm::core::SortType::UPDATED:
                     sortField = _CLNEW SortField (_T("updated"), SortField::LONG, searchParams.reverseOrder);
                     break;
-                case SortType::TITLE:
+                case evernote::cosm::core::SortType::TITLE:
                     sortField = _CLNEW SortField (_T("titleRaw"), SortField::STRING, searchParams.reverseOrder);
                     break;
-                case SortType::RELEVANCE:
+                case evernote::cosm::core::SortType::RELEVANCE:
                 default:
                     sortField = SortField::FIELD_SCORE();
                     break;
@@ -187,15 +188,20 @@ namespace en_search {
                 });
 
             auto maxHitsCount = hits->length();
+            auto startIndex = std::min((size_t)std::max(searchParams.from, 0), maxHitsCount);
+            maxHitsCount -= startIndex;
+            auto maxResults = (searchParams.size >= 0 && (size_t)searchParams.size < maxHitsCount) ? (size_t)searchParams.size : maxHitsCount;
+
             std::vector<SInterimResults> interimResults;
-            auto needRescoring = searchParams.sortType == SortType::RELEVANCE;
-            if (needRescoring) {
-                interimResults.resize(maxHitsCount);
-                for (size_t i = 0; i < maxHitsCount; ++i) {
+            auto needRescoring = searchParams.sortType == evernote::cosm::core::SortType::RELEVANCE;
+            if (needRescoring && maxResults > 0) {
+                interimResults.resize(maxResults);
+                for (auto i = startIndex; i < startIndex + maxResults; ++i) {
+                    // todo:: change this to document version
                     auto updatedStr = getStringFromField(hits->doc(i), L"updated");
                     auto updated = std::stoll(updatedStr.c_str());
-                    interimResults[i].index = i;
-                    interimResults[i].score = hits->score(i) * smarttiming2plain(updated);
+                    interimResults[i - startIndex].index = i;
+                    interimResults[i - startIndex].score = hits->score(i) * smarttiming2plain(updated);
                 }
 
                 std::sort(interimResults.begin(), interimResults.end(), [](const SInterimResults &lhs, const SInterimResults &rhs) {
@@ -203,12 +209,9 @@ namespace en_search {
                 });
             }
 
-            auto startIndex = std::min((size_t)std::max(searchParams.from, 0), maxHitsCount);
-            maxHitsCount -= startIndex;
-            auto maxResults = (searchParams.size >= 0 && (size_t)searchParams.size < maxHitsCount) ? (size_t)searchParams.size : maxHitsCount;
             for (auto i = startIndex; i < startIndex + maxResults; ++i) {
-                auto index = needRescoring ? interimResults[i].index : i;
-                auto interimScore = needRescoring ? interimResults[i].score : hits->score(i);
+                auto index = needRescoring ? interimResults[i - startIndex].index : i;
+                auto interimScore = needRescoring ? interimResults[i - startIndex].score : hits->score(i);
                 auto &hitDoc = hits->doc(index);
 
                 // ids/guids can only contain ascii symbols
@@ -247,7 +250,7 @@ namespace en_search {
             error = util::format_exception("search", "std::exception", "masked exception");
             searchResultGroup = get_empty_search_result_group();
         } catch (...) {
-            error = util::format_exception("DumpRAMDirectoryAsync", "unknown exception", "unknown");
+            error = util::format_exception("search", "unknown exception", "unknown");
             searchResultGroup = get_empty_search_result_group();
         }
        
@@ -457,43 +460,6 @@ namespace en_search {
         analyzer_->addAnalyzer(kExists.c_str(), new StandardAnalyzer());
         
         this->get_index_writer();
-    }
-
-    std::string getFilterStringFromJson(const json &jQueryWithParams) {
-        return ((jQueryWithParams.contains("filterString") && jQueryWithParams["filterString"].is_string())) ? 
-            jQueryWithParams["filterString"].get<std::string>() : "*:*";
-    }
-
-    std::string getQueryStringFromJson(const json &jQueryWithParams) {
-        return ((jQueryWithParams.contains("queryString") && jQueryWithParams["queryString"].is_string())) ? 
-            jQueryWithParams["queryString"].get<std::string>() : "*:*";
-    }
-
-    SearchParams getSearchParamsFromJson(const json &jQueryWithParams) {
-        SearchParams searchParams;
-        searchParams.from = ((jQueryWithParams.contains("from") && jQueryWithParams["from"].is_number())) ? 
-            jQueryWithParams["from"].get<int>() : 0;
-        searchParams.size = ((jQueryWithParams.contains("size") && jQueryWithParams["size"].is_number())) ? 
-            jQueryWithParams["size"].get<int>() : -1;
-        searchParams.sortType = ((jQueryWithParams.contains("sortType") && jQueryWithParams["sortType"].is_number())) ? 
-            static_cast<SortType>(jQueryWithParams["sortType"].get<int>()) : SortType::RELEVANCE;
-        searchParams.reverseOrder = ((jQueryWithParams.contains("reverseOrder") && jQueryWithParams["reverseOrder"].is_boolean())) ? 
-            jQueryWithParams["reverseOrder"].get<bool>() : false;        
-        
-        return searchParams;
-    }
-
-    std::vector<std::string> getStoredFieldsFromJson(const json &jQueryWithParams) {
-        std::vector<std::string> storedFields; 
-        if (jQueryWithParams.contains("stored_fields") && jQueryWithParams["stored_fields"].is_array()) {
-            for (const auto &field: jQueryWithParams["stored_fields"]) {
-                if (field.is_string()) {
-                    storedFields.push_back(field.get<std::string>());
-                }
-            }
-        }
-
-        return storedFields;
     }
 
     std::string getStringFromField(const Document &document, const TCHAR *fieldName) {

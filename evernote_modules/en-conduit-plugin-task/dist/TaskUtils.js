@@ -3,7 +3,7 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseAndValidateTasksExportData = exports.getTasksExportData = exports.getTaskUserSettingsIdByUserId = exports.getTaskUserSettingsByMutationContext = exports.TasksExportDataSchema = void 0;
+exports.parseAndValidateTasksExportData = exports.getTasksExportData = exports.getTaskUserSettingsIdByUserId = exports.getTaskUserSettingsIdByMutationContext = exports.TasksExportDataSchema = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_data_model_1 = require("en-data-model");
@@ -35,10 +35,10 @@ exports.TasksExportDataSchema = conduit_utils_1.Struct({
     }),
     taskGroupNoteLevelIDs: conduit_utils_1.ListOf('string'),
 }, 'TasksExportData');
-function getTaskUserSettingsByMutationContext(ctx) {
+function getTaskUserSettingsIdByMutationContext(ctx) {
     return getTaskUserSettingsIdByUserId(ctx.userID);
 }
-exports.getTaskUserSettingsByMutationContext = getTaskUserSettingsByMutationContext;
+exports.getTaskUserSettingsIdByMutationContext = getTaskUserSettingsIdByMutationContext;
 function getTaskUserSettingsIdByUserId(userID) {
     return en_data_model_1.DefaultDeterministicIdGenerator.createId({
         entityType: en_data_model_1.EntityTypes.TaskUserSettings,

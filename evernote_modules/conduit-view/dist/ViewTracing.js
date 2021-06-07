@@ -7,7 +7,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.traceUserEvent = exports.markUserEvent = exports.enableReactTracing = exports.getHookOwnerUnstable = exports.viewTracingContext = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const React = require('react'); // tslint:disable-line:no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const React = require('react');
 exports.viewTracingContext = conduit_utils_1.createTraceContext('UserEvent');
 const gTracePool = new conduit_utils_1.AsyncTracePool('UserEvent');
 const UNKNOWN_DISPLAY_NAME = '<unknown>';

@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CALENDAR_EVENT_LINKS_QUERY = exports.CALENDAR_EVENT_QUERY = exports.CALENDAR_EVENTS_QUERY = exports.CALENDAR_ACCOUNT_QUERY = exports.CALENDAR_ACCOUNTS_QUERY = exports.CALENDAR_SETTINGS_QUERY = void 0;
 exports.CALENDAR_SETTINGS_QUERY = `
-query {
+query calendarSettings {
   calendarSettings {
     mobileReminders{
       openNoteMinutes
@@ -20,7 +20,7 @@ query {
 }
 `;
 exports.CALENDAR_ACCOUNTS_QUERY = `
-query($activeCalendarOnly: Boolean!) {
+query calendarAccounts ($activeCalendarOnly: Boolean!) {
   calendarAccounts(activeCalendarOnly: $activeCalendarOnly) {
     id
     provider
@@ -43,7 +43,7 @@ query($activeCalendarOnly: Boolean!) {
 }
 `;
 exports.CALENDAR_ACCOUNT_QUERY = `
-query($id: String!) {
+query calendarAccount ($id: String!) {
   calendarAccount(id: $id) {
     id
     provider
@@ -67,7 +67,7 @@ query($id: String!) {
 `;
 // REVIEW: check for optional parameters
 exports.CALENDAR_EVENTS_QUERY = `
-query($from: Timestamp, $to: Timestamp, $provider: CalendarProvider) {
+query calendarEvents ($from: Timestamp, $to: Timestamp, $provider: CalendarProvider) {
   calendarEvents(from: $from , to: $to, provider: $provider) {
     id
     provider
@@ -77,6 +77,7 @@ query($from: Timestamp, $to: Timestamp, $provider: CalendarProvider) {
     summary
     displayColor
     description
+    location
     isAllDay
     start
     end
@@ -103,6 +104,7 @@ query($from: Timestamp, $to: Timestamp, $provider: CalendarProvider) {
     externalProviderDeleted
     isAccountConnected
     recurrentEventId
+    isRecurrenceInstance
     iCalendarUid
     attendees {
       contact {
@@ -119,7 +121,7 @@ query($from: Timestamp, $to: Timestamp, $provider: CalendarProvider) {
 }
 `;
 exports.CALENDAR_EVENT_QUERY = `
-query($id: String!) {
+query calendarEvent ($id: String!) {
   calendarEvent(id: $id) {
     id
     provider
@@ -129,6 +131,7 @@ query($id: String!) {
     summary
     displayColor
     description
+    location
     isAllDay
     start
     end
@@ -155,6 +158,7 @@ query($id: String!) {
     externalProviderDeleted
     isAccountConnected
     recurrentEventId
+    isRecurrenceInstance
     iCalendarUid
     attendees {
       contact {
@@ -171,7 +175,7 @@ query($id: String!) {
 }
 `;
 exports.CALENDAR_EVENT_LINKS_QUERY = `
-query($noteID: String!) {
+query calendarEventLinks ($noteID: String!) {
   calendarEventLinks(noteID: $noteID) {
     id
     linkedTimestamp
@@ -210,6 +214,7 @@ query($noteID: String!) {
       externalProviderDeleted
       isAccountConnected
       recurrentEventId
+      isRecurrenceInstance
       iCalendarUid
       attendees {
         contact {

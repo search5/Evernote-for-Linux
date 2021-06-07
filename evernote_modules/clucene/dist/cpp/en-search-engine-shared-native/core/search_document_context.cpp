@@ -58,7 +58,8 @@ namespace en_search {
             return;
         }
 
-        auto tokens = evernote::cosm::util::token::suffix_tokenize(w_value, kMaxTokenLengthForSuffixTokenization);
+        auto lowercase_w_value = evernote::cosm::util::token::token_to_lowercase_token(w_value);
+        auto tokens = evernote::cosm::util::token::suffix_tokenize(lowercase_w_value, kMaxTokenLengthForSuffixTokenization);
         for (const auto& token : tokens) {
             auto field = _CLNEW Field(w_key.c_str(), token.c_str(), lucene::document::Field::Store::STORE_NO | lucene::document::Field::Index::INDEX_UNTOKENIZED);
             document_->add(*field);

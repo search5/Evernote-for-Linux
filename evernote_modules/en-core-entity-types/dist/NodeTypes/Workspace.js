@@ -3,19 +3,12 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isWorkspace = exports.workspaceIndexConfig = exports.workspaceTypeDef = exports.pinnedContentDef = exports.WorkspaceAccessStatusSchema = exports.WorkspaceAccessStatus = exports.PinnedContentTypeEnum = exports.WorkspaceLayoutStyleSchema = exports.WorkspaceLayoutStyle = exports.WorkspaceTypeSchema = exports.WorkspaceType = void 0;
+exports.isWorkspace = exports.workspaceIndexConfig = exports.workspaceTypeDef = exports.pinnedContentDef = exports.WorkspaceAccessStatusSchema = exports.WorkspaceAccessStatus = exports.PinnedContentTypeEnum = exports.WorkspaceLayoutStyleSchema = exports.WorkspaceLayoutStyle = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const EntityConstants_1 = require("../EntityConstants");
-const MembershipPrivilege_1 = require("../MembershipPrivilege");
 const PINNED_CONTENTS_TIMEOUT = 5 * conduit_utils_1.MILLIS_IN_ONE_SECOND;
-var WorkspaceType;
-(function (WorkspaceType) {
-    WorkspaceType["INVITE_ONLY"] = "INVITE_ONLY";
-    WorkspaceType["DISCOVERABLE"] = "DISCOVERABLE";
-    WorkspaceType["OPEN"] = "OPEN";
-})(WorkspaceType = exports.WorkspaceType || (exports.WorkspaceType = {}));
-exports.WorkspaceTypeSchema = conduit_utils_1.Enum(WorkspaceType, 'WorkspaceType');
 var WorkspaceLayoutStyle;
 (function (WorkspaceLayoutStyle) {
     WorkspaceLayoutStyle["LIST"] = "LIST";
@@ -51,11 +44,11 @@ exports.workspaceTypeDef = {
     schema: {
         accessStatus: exports.WorkspaceAccessStatusSchema,
         description: 'string',
-        workspaceType: exports.WorkspaceTypeSchema,
+        workspaceType: en_conduit_sync_types_1.WorkspaceTypeSchema,
         created: 'timestamp',
         updated: 'timestamp',
         viewed: 'boolean',
-        defaultRole: conduit_utils_1.Nullable(MembershipPrivilege_1.MembershipPrivilegeSchema),
+        defaultRole: conduit_utils_1.Nullable(en_conduit_sync_types_1.MembershipPrivilegeSchema),
         isSample: 'boolean',
         notesCount: 'number',
         notebooksCount: 'number',

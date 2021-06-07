@@ -7,9 +7,9 @@ namespace en_search
     using namespace lucene::util;
 
     SearchEngineDeleteWorker::SearchEngineDeleteWorker(
-        Napi::Function& callback, std::shared_ptr<SearchEngineContext> search_engine_context,
+        Napi::Function& callback, std::shared_ptr<evernote::cosm::core::ENScheduler> scheduler,
         const std::string& guid):
-        Napi::AsyncWorker(callback), search_engine_context_(search_engine_context),
+        Napi::AsyncWorker(callback), scheduler_(scheduler),
         guid_(guid), documents_deleted_(0), delete_time_(0)
     {}
 
@@ -18,7 +18,7 @@ namespace en_search
         try {
             auto start_time = Misc::currentTimeMillis();
             // std::cerr << "guid: " << guid_ << std::endl;
-            search_engine_context_->delete_document(guid_);
+            scheduler_->delete_document(guid_);
             delete_time_ = static_cast<uint32_t>(Misc::currentTimeMillis() - start_time);
             documents_deleted_ = 1;
         } catch(CLuceneError& exception) {

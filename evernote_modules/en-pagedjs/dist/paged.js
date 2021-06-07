@@ -1,5 +1,5 @@
 /**
- * @license Paged.js v1.0.4 | MIT | https://gitlab.pagedmedia.org/tools/pagedjs
+ * @license Paged.js v1.0.11 | MIT | https://gitlab.pagedmedia.org/tools/pagedjs
  */
 
 (function (global, factory) {
@@ -13,7 +13,15 @@
 			return;
 		}
 		let rect;
-		if (typeof element.getBoundingClientRect !== "undefined") {
+		if (element.tagName === "IMG") {
+			const rects = element.getClientRects();
+			const lastRect = rects[rects.length - 1];
+			rect = lastRect;
+		} else if (element.nodeType === 1) {
+			let range = document.createRange();
+			range.selectNode(element);
+			rect = range.getBoundingClientRect();
+		} else if (typeof element.getBoundingClientRect !== "undefined") {
 			rect = element.getBoundingClientRect();
 		} else {
 			let range = document.createRange();
@@ -342,6 +350,25 @@
 				parent.removeAttribute("data-previous-break-after");
 			}
 
+			// If the current node is a table, its child "colgroup" node should also be repeated
+			if (ancestor.tagName === "TABLE") {
+				const colgroup = ancestor.getElementsByTagName("colgroup")[0];
+				if (colgroup) {
+					parent.appendChild(colgroup.cloneNode(true));
+				}
+			}
+
+			// If the current node is a list item, restore the rest of its children
+			if (ancestor.tagName === "LI") {
+				for (let j = 0; j < ancestor.children.length; j++)
+				{
+					const child = ancestor.children[j];
+					if (i < ancestors.length - 1 ? child !== ancestors[i + 1] : child !== node) {
+						parent.appendChild(child.cloneNode(true));
+					}
+				}
+			}
+			
 			if (added.length) {
 				let container = added[added.length-1];
 				container.appendChild(parent);
@@ -529,6 +556,7 @@
 			case "DFN":
 			case "EM":
 			case "I":
+			case "ICONS":
 			case "IMG":
 			case "INPUT":
 			case "KBD":
@@ -1232,6 +1260,7 @@
 				this.hooks.beforeOverflow = new Hook();
 				this.hooks.onOverflow = new Hook();
 				this.hooks.onBreakToken = new Hook();
+				this.hooks.onRenderedLength = new Hook();
 			}
 
 			this.settings = options || {};
@@ -1311,7 +1340,16 @@
 
 				let rendered = this.append(node, wrapper, breakToken, shallow);
 
-				length += rendered.textContent.length;
+				let addedLength = rendered.textContent.length;
+				
+				let renderedLengthHooks = this.hooks.onRenderedLength.triggerSync(rendered, node, addedLength, this);
+				renderedLengthHooks.forEach((newRenderedLength) => {
+					if (typeof newRenderedLength != "undefined") {
+						addedLength = newRenderedLength;
+					}
+				});
+				
+				length += addedLength;
 
 				// Check if layout has content yet
 				if (!hasRenderedContent) {
@@ -1350,13 +1388,32 @@
 
 					newBreakToken = this.findBreakToken(wrapper, source, bounds, prevBreakToken);
 
-					if (newBreakToken && newBreakToken.equals(prevBreakToken)) {
-						console.warn("Unable to layout item: ", node);
-						return undefined;
-					}
-
 					if (newBreakToken) {
 						length = 0;
+					}
+
+					if (newBreakToken && newBreakToken.equals(prevBreakToken)) {
+						console.warn("Unable to layout item: ", node);
+
+						/*
+						 * Happens sometimes with HTML Content blocks.
+						 * Try to recover by skipping traversal to the next note.
+						 */
+						let currentNoteNode = null;
+						if (typeof node.closest !== "undefined") {
+							currentNoteNode = node.closest("div.html-note");
+						} else if (node.parentElement) {
+							currentNoteNode = node.parentElement.closest("div.html-note");
+						}
+						 
+						if (currentNoteNode && currentNoteNode.nextElementSibling) {
+							newBreakToken = {
+								node: currentNoteNode.nextElementSibling,
+								offset: 0,
+							};
+							break;
+						}
+						return undefined;
 					}
 				}
 
@@ -1439,6 +1496,11 @@
 
 			} else {
 				dest.appendChild(clone);
+			}
+
+			if (clone.tagName === "IMG") {
+				const imgHeight = clone.height;
+				clone.style.maxHeight = `${imgHeight}px`;
 			}
 
 			let nodeHooks = this.hooks.renderNode.triggerSync(clone, node, this);
@@ -1588,7 +1650,7 @@
 		}
 
 		findBreakToken(rendered, source, bounds = this.bounds, prevBreakToken, extract = true) {
-			let overflow = this.findOverflow(rendered, bounds);
+			let overflow = this.findOverflow(rendered, bounds, prevBreakToken);
 			let breakToken, breakLetter;
 
 			let overflowHooks = this.hooks.onOverflow.triggerSync(overflow, rendered, bounds, this);
@@ -1634,7 +1696,7 @@
 			return Math.max(Math.floor(width), scrollWidth) > Math.round(bounds.width);
 		}
 
-		findOverflow(rendered, bounds = this.bounds) {
+		findOverflow(rendered, bounds = this.bounds, prevBreakToken) {
 			if (!this.hasOverflow(rendered, bounds)) return;
 
 			let start = Math.round(bounds.left);
@@ -1660,6 +1722,17 @@
 					let right = Math.floor(pos.right);
 
 					if (!range && left >= end) {
+
+						if (node.tagName === "IMG") {
+							const dataRef = node.attributes["data-ref"].value;
+
+							const prevTokenDataRef = prevBreakToken.node.attributes["data-ref"].value;
+
+							if (dataRef === prevTokenDataRef) {
+								continue;
+							}
+						}
+						
 						// Check if it is a float
 						let isFloat = false;
 
@@ -1668,6 +1741,8 @@
 						if (insideTableCell && window.getComputedStyle(insideTableCell)["break-inside"] === "avoid") {
 							// breaking inside a table cell produces unexpected result, as a workaround, we forcibly avoid break inside in a cell.
 							prev = insideTableCell;
+						} else if(insideTableCell) {
+							prev = parentOf(insideTableCell, "TR", rendered);
 						} else if (isElement(node)) {
 							let styles = window.getComputedStyle(node);
 							isFloat = styles.getPropertyValue("float") !== "none";
@@ -2524,6 +2599,7 @@
 			this.hooks.layoutNode = new Hook(this);
 			this.hooks.onOverflow = new Hook(this);
 			this.hooks.onBreakToken = new Hook();
+			this.hooks.onRenderedLength = new Hook();
 			this.hooks.afterPageLayout = new Hook(this);
 			this.hooks.afterRendered = new Hook(this);
 

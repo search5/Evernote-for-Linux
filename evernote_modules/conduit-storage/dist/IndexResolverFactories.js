@@ -6,7 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getIndexByResolverForDenormalizedEdgeCount = exports.getIndexByResolverForDenormalizedEdge = exports.getIndexByResolverForEdgeCount = exports.getIndexByResolverForEdge = exports.getIndexByResolverForPrimitives = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const GraphTypes_1 = require("./GraphTypes");
-function getIndexByResolverForPrimitives(nodeTypeDef, path, useLocaleCompare) {
+function getIndexByResolverForPrimitives(nodeTypeDef, path, comparatorOpts, version) {
+    var _a;
     let schemaType = null;
     let graphqlPath = path;
     if (path[0] === 'NodeFields') {
@@ -26,11 +27,16 @@ function getIndexByResolverForPrimitives(nodeTypeDef, path, useLocaleCompare) {
     if (!conduit_utils_1.fieldTypeIsBasic(schemaType)) {
         throw new Error(`Unindexable schema type (${schemaType}) for index resolver (${path.join('.')})`);
     }
+    if (!conduit_utils_1.isNullish(comparatorOpts === null || comparatorOpts === void 0 ? void 0 : comparatorOpts.overrideLocaleCompareOptions) && !conduit_utils_1.isStashEmpty(comparatorOpts === null || comparatorOpts === void 0 ? void 0 : comparatorOpts.overrideLocaleCompareOptions) && !comparatorOpts.useLocaleCompare) {
+        throw new Error(`Do not provide comparator options without using locale compare`);
+    }
     return {
         schemaType,
         resolver: path,
         graphqlPath,
-        useLocaleCompare: useLocaleCompare !== null && useLocaleCompare !== void 0 ? useLocaleCompare : path[0] === 'label',
+        useLocaleCompare: (_a = comparatorOpts === null || comparatorOpts === void 0 ? void 0 : comparatorOpts.useLocaleCompare) !== null && _a !== void 0 ? _a : path[0] === 'label',
+        overrideLocaleCompareOptions: comparatorOpts === null || comparatorOpts === void 0 ? void 0 : comparatorOpts.overrideLocaleCompareOptions,
+        version,
     };
 }
 exports.getIndexByResolverForPrimitives = getIndexByResolverForPrimitives;

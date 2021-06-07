@@ -96,7 +96,7 @@ class EvernoteIndexer {
                                 propagateTo[propagateFromIndex][dstType] = {};
                             }
                             for (const edge of (_a = from[propagateFromIndex].traversalToDst) !== null && _a !== void 0 ? _a : []) {
-                                const dstPort = edge.edge && edge.edge[0] === 'outputs' && edge.edge[1];
+                                const dstPort = edge.edge && edge.edge[1];
                                 if (!dstPort) {
                                     continue;
                                 }
@@ -302,6 +302,12 @@ class EvernoteIndexer {
             result = await componentResolver.resolver(trc, node, nodeFieldLookup || dummyNodeFieldLookup);
             if (componentResolver.propagatedFrom) {
                 propagatedFields[field] = result;
+            }
+        }
+        // Sanitize any undefined values
+        for (let i = 0; i < result.length; i++) {
+            if (result[i] === undefined) {
+                result[i] = null;
             }
         }
         return result;
@@ -673,7 +679,7 @@ class EvernoteIndexer {
                 const filter = filters.find(e => e.field === indexComponent.field);
                 if (filter) {
                     const indexResolver = this.config[type].indexResolvers[indexComponent.field];
-                    indexOrderedFilters.push(Object.assign(Object.assign({}, filter), { useLocaleCompare: indexResolver.useLocaleCompare }));
+                    indexOrderedFilters.push(Object.assign(Object.assign({}, filter), { useLocaleCompare: indexResolver.useLocaleCompare, overrideLocaleCompareOptions: indexResolver.overrideLocaleCompareOptions }));
                 }
             }
             if (!indexOrderedFilters.length) {

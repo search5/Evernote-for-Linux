@@ -32,9 +32,10 @@ async function combineFetchResults(ps) {
     return combinedResults;
 }
 class KeyValCachedStorage extends KeyValStorage_1.KeyValStorage {
-    constructor(dbName, cachePolicy, mutexTimeout) {
+    constructor(dbName, cachePolicy, mutexTimeout, useMap) {
         super(dbName, cachePolicy, mutexTimeout);
         this.cachePolicy = cachePolicy;
+        this.useMap = useMap;
         this.keys = {};
         this.maxBatchSize = 100;
         this.batchQueue = [];
@@ -122,11 +123,7 @@ class KeyValCachedStorage extends KeyValStorage_1.KeyValStorage {
     }
     async fetchKeysLookup(trc, tableName) {
         const keysArray = await this.getKeysRaw(trc, tableName);
-        const ret = {};
-        for (const key of keysArray) {
-            ret[key] = true;
-        }
-        return ret;
+        return this.initKeysLookup(trc, keysArray);
     }
     getTableKeysLoader(tableName) {
         if (!this.keys[tableName]) {
@@ -142,15 +139,15 @@ class KeyValCachedStorage extends KeyValStorage_1.KeyValStorage {
     }
     async hasKeyImpl(trc, tableName, key) {
         const tableKeys = await this.getTableKeysLookup(trc, tableName);
-        return tableKeys[key] === true;
+        return this.getKeysLookupValue(tableKeys, key);
     }
     async getKeysImpl(trc, tableName) {
         const tableKeys = await this.getTableKeysLookup(trc, tableName);
-        return Object.keys(tableKeys);
+        return this.keysLookupToKeys(tableKeys);
     }
     async getValueImpl(trc, tableName, key, priority) {
         const tableKeys = await this.getTableKeysLookup(trc, tableName);
-        if (tableKeys[key] !== true) {
+        if (!this.getKeysLookupValue(tableKeys, key)) {
             return undefined;
         }
         const cachedValue = this.cacheManager.get(tableName, key);
@@ -170,7 +167,7 @@ class KeyValCachedStorage extends KeyValStorage_1.KeyValStorage {
         const pendingKeys = [];
         const values = {};
         for (const key of keys) {
-            if (tableKeys[key] !== true) {
+            if (!this.getKeysLookupValue(tableKeys, key)) {
                 values[key] = undefined;
                 continue;
             }
@@ -215,20 +212,20 @@ class KeyValCachedStorage extends KeyValStorage_1.KeyValStorage {
                     case 1:
                         this.cacheManager.emptyAll();
                         for (const table in this.keys) {
-                            keys[table] = {};
+                            keys[table] = this.getEmptyKeysLookup();
                             this.getTableKeysLoader(table).setData(keys[table]);
                         }
                         break;
                     case 2:
                         this.cacheManager.empty(tableName);
-                        keys[tableName] = {};
+                        keys[tableName] = this.getEmptyKeysLookup();
                         this.getTableKeysLoader(tableName).setData(keys[tableName]);
                         break;
                     case 3:
                         const key = event.path[2];
                         this.cacheManager.delete(tableName, key);
                         if (keys[tableName]) {
-                            delete keys[tableName][key];
+                            this.deleteKeysLookupEntry(keys[tableName], key);
                         }
                         break;
                     default:
@@ -242,7 +239,7 @@ class KeyValCachedStorage extends KeyValStorage_1.KeyValStorage {
                 const key = event.path[2];
                 this.cacheManager.put(tableName, key, event.value);
                 if (keys[tableName]) {
-                    keys[tableName][key] = true;
+                    this.setKeysLookupValue(keys[tableName], key, true);
                 }
             }
         }
@@ -251,6 +248,38 @@ class KeyValCachedStorage extends KeyValStorage_1.KeyValStorage {
         await this.importDatabaseRaw(trc, filename);
         this.cacheManager.emptyAll();
         this.keys = {};
+    }
+    initKeysLookup(trc, keysArray) {
+        conduit_utils_1.traceEventStart(trc, 'initKeysLookup', { numKeys: keysArray.length });
+        if (this.useMap) {
+            const ret = new Map();
+            for (const key of keysArray) {
+                ret.set(key, true);
+            }
+            conduit_utils_1.traceEventEnd(trc, 'initKeysLookup');
+            return ret;
+        }
+        const ret = {};
+        for (const key of keysArray) {
+            ret[key] = true;
+        }
+        conduit_utils_1.traceEventEnd(trc, 'initKeysLookup');
+        return ret;
+    }
+    keysLookupToKeys(tableKeys) {
+        return tableKeys instanceof Map ? Array.from(tableKeys.keys()) : Object.keys(tableKeys);
+    }
+    getKeysLookupValue(tableKeys, key) {
+        return (tableKeys instanceof Map ? tableKeys.get(key) : tableKeys[key]) || false;
+    }
+    setKeysLookupValue(tableKeys, key, val) {
+        tableKeys instanceof Map ? tableKeys.set(key, val) : tableKeys[key] = val;
+    }
+    deleteKeysLookupEntry(tableKeys, key) {
+        tableKeys instanceof Map ? tableKeys.delete(key) : delete tableKeys[key];
+    }
+    getEmptyKeysLookup() {
+        return this.useMap ? new Map() : {};
     }
 }
 __decorate([

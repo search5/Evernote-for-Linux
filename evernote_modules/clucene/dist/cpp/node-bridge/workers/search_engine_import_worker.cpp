@@ -7,14 +7,14 @@ namespace en_search
     using namespace lucene::util;
 
     SearchEngineImportWorker::SearchEngineImportWorker(
-        Napi::Function& callback, std::shared_ptr<SearchEngineContext> search_engine_context, const std::string& base64_buffer):
-        Napi::AsyncWorker(callback), search_engine_context_(search_engine_context), base64_buffer_(base64_buffer)
+        Napi::Function& callback, std::shared_ptr<evernote::cosm::core::ENScheduler> scheduler, const std::string& base64_buffer):
+        Napi::AsyncWorker(callback), scheduler_(scheduler), base64_buffer_(base64_buffer)
     {}
 
     void SearchEngineImportWorker::Execute()
     {
         try {
-            search_engine_context_->import_index(base64_buffer_);
+            scheduler_->import_index(base64_buffer_);
         } catch(CLuceneError& exception) {
             if (exception.number() == CL_ERR_OutOfMemory) {
                 throw;

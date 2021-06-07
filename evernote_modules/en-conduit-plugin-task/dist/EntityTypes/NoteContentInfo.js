@@ -29,6 +29,14 @@ exports.noteContentInfoTypeDef = {
 exports.noteContentInfoIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.noteContentInfoTypeDef, {
     indexResolvers: {
         parent: conduit_storage_1.getIndexByResolverForEdge(exports.noteContentInfoTypeDef, ['edges', 'parent']),
+        hasTaskGroup: {
+            schemaType: 'boolean',
+            resolver: async (trc, node, _) => {
+                return [Boolean(node.NodeFields.taskGroupNoteLevelIDs && node.NodeFields.taskGroupNoteLevelIDs.length)];
+            },
+            graphqlPath: ['hasTaskGroup'],
+            isUnSyncedField: true,
+        },
     },
     indexes: {
         parent: {
@@ -40,9 +48,9 @@ exports.noteContentInfoIndexConfig = conduit_storage_1.buildNodeIndexConfigurati
     queries: {
         NoteContentInfoAll: {
             params: {},
-            includeFields: ['parent'],
+            includeFields: ['parent', 'hasTaskGroup'],
         },
     },
-    lookups: ['parent'],
+    lookups: ['parent', 'hasTaskGroup'],
 });
 //# sourceMappingURL=NoteContentInfo.js.map

@@ -14,4 +14,9 @@ __export(require("./parsers/advanced/QueryStringParser"));
 __export(require("./parsers/advanced/GlobalOperator"));
 __export(require("./parsers/advanced/ESQueryStringBuilder"));
 __export(require("./parsers/advanced/ENMessageQueryParser"));
+// cosm v2
+__export(require("./ENSearchIndexManager"));
+__export(require("./ENSearchSchemas"));
+__export(require("./ENSearchIndexCommandHelper"));
+__export(require("./ENSearchUtils"));
 //# sourceMappingURL=index.js.map

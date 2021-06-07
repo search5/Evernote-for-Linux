@@ -57,7 +57,38 @@ exports.CoreEntityNSyncConverters = {
     [en_data_model_1.EntityTypes.Tag]: { [en_data_model_1.NSyncEntityType.TAG]: TagConverter_1.getTagNodesAndEdges },
     [en_data_model_1.EntityTypes.Workspace]: { [en_data_model_1.NSyncEntityType.WORKSPACE]: WorkspaceConverter_1.getWorkspaceNodesAndEdges },
 };
-async function getEntityAndEdges(trc, instance, currentUserID, eventManager, tx, dataHelpers) {
+/*
+export async function getEntityAndEdgesBySchema<SyncContextMetadata>(
+  trc: TracingContext,
+  instance: ClientNSyncTypes.EntityInstance,
+  context: NSyncConverterContext<SyncContextMetadata>,
+): Promise<Maybe<NodesAndEdges>> {
+  const node = convertNsyncEntityToNode<GraphNode>(instance, context);
+  if (!node) {
+    return null;
+  }
+
+  const nodesToUpsert: GraphNode[] = [];
+  const edgesToCreate: GraphEdge[] = [];
+  const edgesToDelete: GraphEdgeFilter[] = [];
+
+  nodesToUpsert.push(node);
+
+  // TODO autoconvert embedded associations
+
+  return {
+    nodes: {
+      nodesToUpsert,
+      nodesToDelete: [],
+    },
+    edges: {
+      edgesToCreate,
+      edgesToDelete,
+    },
+  };
+}
+*/
+async function getEntityAndEdges(trc, instance, currentUserID, eventManager, tx) {
     if (!instance.ref) {
         conduit_utils_1.logger.info('NSync eventSrc doc missing instance or entity');
         return null;
@@ -66,8 +97,8 @@ async function getEntityAndEdges(trc, instance, currentUserID, eventManager, tx,
         currentUserID,
         eventManager,
         converters: eventManager.di.getNsyncConverters(),
-        dataHelpers,
         tx,
+        di: eventManager.di,
     };
     if (!context.converters[instance.ref.type]) {
         conduit_utils_1.logger.warn(`NSync type ${instance.ref.type} not supported`);
@@ -80,7 +111,7 @@ function getInvitationNode(instance, params, out) {
     const node = {
         localChangeTimestamp: 0,
         id: generateInvitationID(instance.ref),
-        label: instance.label,
+        label: instance.label || '-',
         syncContexts: [],
         version: instance.version,
         type: en_core_entity_types_1.CoreEntityTypes.Invitation,
@@ -173,19 +204,19 @@ function getMembership(eventManager, instance, currentUserID) {
         throw new Error('Missing membership dst ref id');
     }
     const instanceRole = en_data_model_1.ClientNSyncTypes.Role[instance.role];
-    const privilege = (_a = en_conduit_sync_types_1.NSyncPrivilegeMap[instanceRole]) !== null && _a !== void 0 ? _a : en_core_entity_types_1.MembershipPrivilege.READ;
+    const privilege = (_a = en_conduit_sync_types_1.NSyncPrivilegeMap[instanceRole]) !== null && _a !== void 0 ? _a : en_conduit_sync_types_1.MembershipPrivilege.READ;
     const recipientType = en_conduit_sync_types_1.NSyncAgentToRecipientMap[instance.ref.src.type];
     if (recipientType === undefined) {
         throw new Error('Missing agent/recipient type in membership');
     }
     let recipientSource = en_core_entity_types_1.PROFILE_SOURCE.User;
-    if (recipientType === en_core_entity_types_1.MembershipRecipientType.IDENTITY) {
+    if (recipientType === en_conduit_sync_types_1.MembershipRecipientType.IDENTITY) {
         recipientSource = en_core_entity_types_1.PROFILE_SOURCE.Identity;
     }
-    else if (recipientType === en_core_entity_types_1.MembershipRecipientType.EMAIL) {
+    else if (recipientType === en_conduit_sync_types_1.MembershipRecipientType.EMAIL) {
         recipientSource = en_core_entity_types_1.PROFILE_SOURCE.Contact;
     }
-    else if (recipientType === en_core_entity_types_1.MembershipRecipientType.BUSINESS) {
+    else if (recipientType === en_conduit_sync_types_1.MembershipRecipientType.BUSINESS) {
         recipientSource = en_core_entity_types_1.PROFILE_SOURCE.User; // TODO: v2 I don't think this is user. May need new type when we
     }
     let recipientIsMe = false;
