@@ -158,6 +158,7 @@ exports.CoreEntityTypeDefs = {
     [EntityConstants_1.CoreEntityTypes.User]: {
         typeDef: User_1.userTypeDef,
         dataResolver: UserDataResolver_1.UserDataResolver,
+        indexConfig: User_1.userIndexConfig,
     },
     [EntityConstants_1.CoreEntityTypes.Workspace]: {
         typeDef: Workspace_1.workspaceTypeDef,

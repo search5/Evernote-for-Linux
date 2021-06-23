@@ -1,15 +1,15 @@
 {
   "name": "en-core-data-model",
-  "version": "3.7.1",
+  "version": "3.8.0",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "http://localhost:4873/"
   },
   "files": [
     "dist"
   ],
   "main": "dist/index",
   "dependencies": {
-    "en-data-model": "3.7.1",
+    "en-data-model": "3.8.0",
     "en-ts-utils": "^5.1.0"
   },
   "devDependencies": {

@@ -1,8 +1,8 @@
 {
   "name": "en-conduit-plugin-notification-scheduler",
-  "version": "1.36.3",
+  "version": "1.37.3",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "http://localhost:4873/"
   },
   "description": "Module managing system notifications",
   "main": "dist/index",
@@ -10,10 +10,10 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-core": "1.36.3",
-    "conduit-storage": "1.36.3",
-    "conduit-utils": "1.36.3",
-    "en-conduit-plugin-scheduled-notification": "1.36.3",
+    "conduit-core": "1.37.3",
+    "conduit-storage": "1.37.3",
+    "conduit-utils": "1.37.3",
+    "en-conduit-plugin-scheduled-notification": "1.37.3",
     "en-data-model": "^3.6.2"
   },
   "devDependencies": {

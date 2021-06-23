@@ -36,10 +36,9 @@ const conduit_view_types_1 = require("conduit-view-types");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const simply_immutable_1 = require("simply-immutable");
-const Helpers_1 = require("../Helpers");
 const AccountLimitsConverter = __importStar(require("./AccountLimitsConverter"));
 const Converters_1 = require("./Converters");
-const Helpers_2 = require("./Helpers");
+const Helpers_1 = require("./Helpers");
 const InvitationConverter_1 = require("./InvitationConverter");
 const LinkedNotebookHelpers_1 = require("./LinkedNotebookHelpers");
 const MembershipConverter_1 = require("./MembershipConverter");
@@ -196,7 +195,7 @@ async function shareNotebookWithContacts(trc, params, syncContext, syncContextMe
     if (!syncContextMetadata || !syncContextMetadata.userID) {
         throw new Error(`Unable to find owningUserID for syncContext ${syncContext}`);
     }
-    const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+    const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
     const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
     const messageStore = params.thriftComm.getMessageStore(params.personalAuth.urls.messageStoreUrl);
     const notebookGuid = Converters_1.convertGuidToService(createParams.notebook, en_core_entity_types_1.CoreEntityTypes.Notebook);
@@ -306,7 +305,7 @@ function notebookObjectFromService(syncContext, serviceData, nbsMarkedOffline) {
     // inWorkspace field is not set on service side, so have to mimic what Ion does.
     // if user has access to nb but not to parent ws, worskpaceGuid will be null. So, have to derive inWorkspace based on restrictions.
     const nbInWorkspace = ((_b = (_a = serviceData.restrictions) === null || _a === void 0 ? void 0 : _a.canMoveToContainerRestrictions) === null || _b === void 0 ? void 0 : _b.canMoveToContainer) === en_conduit_sync_types_1.TCanMoveToContainerStatus.INSUFFICIENT_CONTAINER_PRIVILEGE || false;
-    const isExternal = Boolean(syncContext.match(Helpers_1.EXTERNAL_CONTEXT_REGEX));
+    const isExternal = en_core_entity_types_1.isExternalSyncContext(syncContext);
     const reminderNotifyEmail = serviceData.recipientSettings ? ((_c = serviceData.recipientSettings.reminderNotifyEmail) !== null && _c !== void 0 ? _c : false) : false;
     const reminderNotifyInApp = serviceData.recipientSettings ? ((_d = serviceData.recipientSettings.reminderNotifyInApp) !== null && _d !== void 0 ? _d : false) : false;
     const nbId = Converters_1.convertGuidFromService(serviceData.guid, en_core_entity_types_1.CoreEntityTypes.Notebook);
@@ -457,7 +456,7 @@ async function convertNotebookFromServiceImpl(trc, params, syncContext, serviceD
         }
     }
     const notebook = await notebookFromService(trc, params, syncContext, serviceData);
-    await Helpers_2.ensureIsExternal(trc, params, syncContext, notebook);
+    await Helpers_1.ensureIsExternal(trc, params, syncContext, notebook);
     const syncContextMetadata = await params.graphTransaction.getSyncContextMetadata(trc, null, syncContext);
     if (!syncContextMetadata) {
         throw new conduit_utils_1.NotFoundError(syncContext, `Missing syncContextMetadata ${syncContext}`);
@@ -542,7 +541,7 @@ class NotebookConverterClass {
         }
     }
     async createOnService(trc, params, syncContext, notebook, serviceGuidSeed, remoteFields) {
-        const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+        const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
         const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
         const serviceData = {
             seed: serviceGuidSeed,
@@ -563,7 +562,7 @@ class NotebookConverterClass {
                     throw new Error('Personal auth token needed');
                 }
                 const createParams = commandRun.params;
-                const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+                const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
                 const syncContextMetadata = await params.graphTransaction.getSyncContextMetadata(trc, null, syncContext);
                 const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
                 const notebook = await noteStore.getNotebook(trc, auth.token, Converters_1.convertGuidToService(createParams.notebook, en_core_entity_types_1.CoreEntityTypes.Notebook));
@@ -594,7 +593,7 @@ class NotebookConverterClass {
                             id: Converters_1.convertGuidToService(emailAndID.profileID, en_core_entity_types_1.CoreEntityTypes.Profile),
                             type: en_conduit_sync_types_1.TContactType.EVERNOTE,
                         };
-                        const connectionCheckResult = await Helpers_2.checkUserConnection(trc, params, contactWithUserId);
+                        const connectionCheckResult = await Helpers_1.checkUserConnection(trc, params, contactWithUserId);
                         if (connectionCheckResult) {
                             contacts.push(contactWithUserId);
                         }
@@ -658,7 +657,7 @@ class NotebookConverterClass {
                     throw new conduit_utils_1.NotFoundError(nbID, 'Notebook not found in graph');
                 }
                 const serviceGuid = exports.NotebookConverter.convertGuidToService(nbID);
-                const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+                const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
                 const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
                 await noteStore.unpublishNotebook(trc, auth.token, serviceGuid, false);
                 return null;
@@ -667,7 +666,7 @@ class NotebookConverterClass {
                 const nbID = commandRun.params.notebook;
                 const serviceGuid = Converters_1.convertGuidToService(nbID, en_core_entity_types_1.CoreEntityTypes.Notebook);
                 // for setNotebookRecipientSettings had to use personal auth
-                const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, conduit_core_1.PERSONAL_USER_CONTEXT);
+                const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, conduit_core_1.PERSONAL_USER_CONTEXT);
                 const authToken = auth.token;
                 const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
                 const recipientSettings = new en_conduit_sync_types_1.TNotebookRecipientSettings({ recipientStatus: en_conduit_sync_types_1.TRecipientStatus.IN_MY_LIST });
@@ -680,7 +679,7 @@ class NotebookConverterClass {
                 if (!node) {
                     throw new conduit_utils_1.NotFoundError(nbID, 'Notebook not found in graph');
                 }
-                const businessAuth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, conduit_core_1.VAULT_USER_CONTEXT);
+                const businessAuth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, conduit_core_1.VAULT_USER_CONTEXT);
                 if (!businessAuth || !businessAuth.token || !((_a = businessAuth.urls) === null || _a === void 0 ? void 0 : _a.noteStoreUrl)) {
                     throw new Error('No business auth found');
                 }
@@ -707,7 +706,7 @@ class NotebookConverterClass {
         }
     }
     async deleteFromService(trc, params, syncContext, ids) {
-        const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+        const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
         const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
         for (const id of ids) {
             const serviceGuid = Converters_1.convertGuidToService(id, en_core_entity_types_1.CoreEntityTypes.Notebook);
@@ -720,7 +719,7 @@ class NotebookConverterClass {
         if (!curNotebook) {
             throw new conduit_utils_1.NotFoundError(notebookID, `Missing notebook ${notebookID} from local graph storage`);
         }
-        const { auth, syncContext } = await Helpers_2.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, curNotebook);
+        const { auth, syncContext } = await Helpers_1.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, curNotebook);
         const syncContextMetadata = await params.graphTransaction.getSyncContextMetadata(trc, null, syncContext);
         if (!syncContextMetadata) {
             throw new conduit_utils_1.NotFoundError(syncContext, `Missing syncContextMetadata ${syncContext}`);
@@ -796,7 +795,7 @@ class NotebookConverterClass {
         if (!curNotebook) {
             throw new conduit_utils_1.NotFoundError(notebookID, `Missing notebook ${notebookID} from local graph storage`);
         }
-        const { auth, syncContext } = await Helpers_2.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, curNotebook);
+        const { auth, syncContext } = await Helpers_1.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, curNotebook);
         const syncContextMetadata = await params.graphTransaction.getSyncContextMetadata(trc, null, syncContext);
         if (!syncContextMetadata) {
             throw new conduit_utils_1.NotFoundError(syncContext, `Missing syncContextMetadata ${syncContext}`);

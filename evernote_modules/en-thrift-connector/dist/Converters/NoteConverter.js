@@ -37,11 +37,10 @@ const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const Auth_1 = require("../Auth");
-const Helpers_1 = require("../Helpers");
 const AccountLimitsConverter = __importStar(require("./AccountLimitsConverter"));
 const BlobConverter_1 = require("./BlobConverter");
 const Converters_1 = require("./Converters");
-const Helpers_2 = require("./Helpers");
+const Helpers_1 = require("./Helpers");
 const MembershipConverter_1 = require("./MembershipConverter");
 const MessageConverter_1 = require("./MessageConverter");
 const NotebookConverter_1 = require("./NotebookConverter");
@@ -54,7 +53,7 @@ async function shareNoteWithContacts(trc, params, syncContext, syncContextMetada
     if (!syncContextMetadata || !syncContextMetadata.userID) {
         throw new Error(`Unable to find owningUserID for syncContext ${syncContext}`);
     }
-    const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+    const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
     const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
     const messageStore = params.thriftComm.getMessageStore(params.personalAuth.urls.messageStoreUrl);
     const messageThreads = [];
@@ -157,7 +156,7 @@ function noteFromService(trc, params, syncContext, syncContextMetadata, serviceD
         size: serviceData.contentLength,
         body: serviceData.content,
     };
-    const isExternal = Boolean(syncContext.match(Helpers_1.EXTERNAL_CONTEXT_REGEX));
+    const isExternal = en_core_entity_types_1.isExternalSyncContext(syncContext);
     const note = {
         id: noteID,
         type: en_core_entity_types_1.CoreEntityTypes.Note,
@@ -307,7 +306,7 @@ async function fetchAndCacheNoteContentData(trc, thriftComm, auth, noteID, syncC
         const personalUserId = personalMetadata ? personalMetadata.userID : conduit_utils_1.NullUserID;
         const vaultMetadata = await graphTransaction.getSyncContextMetadata(trc, null, conduit_core_1.VAULT_USER_CONTEXT);
         const vaultUserId = vaultMetadata ? vaultMetadata.userID : conduit_utils_1.NullUserID;
-        const params = await Helpers_2.makeConverterParams({
+        const params = await Helpers_1.makeConverterParams({
             trc,
             graphTransaction,
             personalUserId,
@@ -358,7 +357,7 @@ async function backupNoteOnConflict(trc, params, noteRef) {
     if (!noteNode) {
         throw new conduit_utils_1.NotFoundError(noteRef.id, 'Note not found');
     }
-    const { auth, syncContext } = await Helpers_2.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, noteNode);
+    const { auth, syncContext } = await Helpers_1.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, noteNode);
     const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
     const noteGuid = Converters_1.convertGuidToService(noteRef.id, en_core_entity_types_1.CoreEntityTypes.Note);
     const notebookGuid = await getNoteServiceNotebookGuid(trc, params, noteRef.id);
@@ -384,7 +383,7 @@ async function convertNoteFromServiceImpl(trc, params, syncContext, serviceData,
         contentDownloaded = conduit_utils_1.isStashEmpty(currentSyncState);
     }
     let note = noteFromService(trc, params, syncContext, syncContextMetadata, serviceData, contentDownloaded);
-    await Helpers_2.ensureIsExternal(trc, params, syncContext, note);
+    await Helpers_1.ensureIsExternal(trc, params, syncContext, note);
     const prevNote = await params.graphTransaction.replaceNodeAndEdges(trc, syncContext, note);
     if (prevNote && prevNote.version > note.version) {
         // new note data is out of date and did not get stored, so don't do any of the membership and attachment reconciliation
@@ -507,7 +506,7 @@ async function updateNote(trc, params, curNote, noteServiceData, hashUpdate, edi
         // The Thrift API requires the title to be set for all updateNote calls for no good reason
         noteServiceData.title = curNote.label;
     }
-    const { auth, syncContext } = await Helpers_2.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, curNote);
+    const { auth, syncContext } = await Helpers_1.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, curNote);
     const utilityStore = params.thriftComm.getUtilityStore(auth.urls.utilityUrl);
     const res = await utilityStore.updateNoteIfUsnMatches(trc, auth.token, noteServiceData, hashUpdate !== null && hashUpdate !== void 0 ? hashUpdate : {});
     conduit_utils_1.traceTestCounts(trc, {
@@ -527,7 +526,7 @@ async function updateNote(trc, params, curNote, noteServiceData, hashUpdate, edi
             noteInResponse: Boolean(resNote),
             reqUsn: noteServiceData.updateSequenceNum,
             resUsn: resNote === null || resNote === void 0 ? void 0 : resNote.updateSequenceNum,
-            resHash: Helpers_2.convertHashFromService(resNote === null || resNote === void 0 ? void 0 : resNote.contentHash),
+            resHash: Helpers_1.convertHashFromService(resNote === null || resNote === void 0 ? void 0 : resNote.contentHash),
         });
         throw new conduit_utils_1.ConflictError(curNote.id, en_core_entity_types_1.CoreEntityTypes.Note, resNote ? 'NotePresent' : 'NoteAbsent');
     }
@@ -535,7 +534,7 @@ async function updateNote(trc, params, curNote, noteServiceData, hashUpdate, edi
         en_core_entity_types_1.NoteConflictLogger.logEvent(curNote.id, 'note_upsynced', {
             reqUsn: noteServiceData.updateSequenceNum,
             resUsn: resNote.updateSequenceNum,
-            resHash: Helpers_2.convertHashFromService(resNote.contentHash),
+            resHash: Helpers_1.convertHashFromService(resNote.contentHash),
         });
         if (noteServiceData.content) {
             // shove result blob data back into our synced graph storage (so we don't refetch it)
@@ -593,7 +592,7 @@ async function updateNoteContentToService(trc, params, noteID, syncContext, remo
     let hashDiff = remoteFields.hashDiff;
     if (!hashDiff || hadConflict) {
         // diff resource hashes in new content against old content to get the resourcesUpdate
-        const { auth } = await Helpers_2.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, curNote);
+        const { auth } = await Helpers_1.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, curNote);
         const oldContent = await getOrFetchNoteContentData(trc, params, auth, curNote, syncContext);
         hashDiff = conduit_core_1.extractResourceHashDiff(oldContent, content);
     }
@@ -695,7 +694,7 @@ class NoteConverterClass {
                 if (!noteNode) {
                     throw new conduit_utils_1.NotFoundError(shareParams.note, 'Note not found');
                 }
-                const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+                const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
                 const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
                 if (shareParams.enable) {
                     const secret = await noteStore.shareNote(trc, auth.token, Converters_1.convertGuidToService(shareParams.note, en_core_entity_types_1.CoreEntityTypes.Note));
@@ -732,7 +731,7 @@ class NoteConverterClass {
                 if (!noteNode) {
                     throw new conduit_utils_1.NotFoundError(inviteParams.note, 'Note not found');
                 }
-                const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+                const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
                 const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
                 const syncContextMetadata = await params.graphTransaction.getSyncContextMetadata(trc, null, syncContext);
                 const note = await noteStore.getNote(trc, auth.token, Converters_1.convertGuidToService(inviteParams.note, en_core_entity_types_1.CoreEntityTypes.Note), false, false, false, false);
@@ -764,7 +763,7 @@ class NoteConverterClass {
                                 id: Converters_1.convertGuidToService(emailAndID.profileID, en_core_entity_types_1.CoreEntityTypes.Profile),
                                 type: en_conduit_sync_types_1.TContactType.EVERNOTE,
                             };
-                            const connectionCheckResult = await Helpers_2.checkUserConnection(trc, params, contactWithUserId);
+                            const connectionCheckResult = await Helpers_1.checkUserConnection(trc, params, contactWithUserId);
                             if (connectionCheckResult) {
                                 contacts.push(contactWithUserId);
                             }
@@ -808,7 +807,7 @@ class NoteConverterClass {
             }
             case 'sendByEmail': {
                 const commandParams = commandRun.params;
-                const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+                const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
                 const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
                 await noteStore.emailNote(trc, auth.token, {
                     guid: Converters_1.convertGuidToService(commandParams.note, en_core_entity_types_1.CoreEntityTypes.Note),
@@ -821,7 +820,7 @@ class NoteConverterClass {
             }
             case 'noteSetAppData': {
                 const commandParams = commandRun.params;
-                const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+                const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
                 const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
                 const guid = Converters_1.convertGuidToService(commandParams.id, en_core_entity_types_1.CoreEntityTypes.Note);
                 if (commandParams.value !== null) {
@@ -851,7 +850,7 @@ class NoteConverterClass {
             }
         }
         en_core_entity_types_1.NoteConflictLogger.logEvent(noteID, 'note_created', {
-            respHash: Helpers_2.convertHashFromService(res.data.contentHash),
+            respHash: Helpers_1.convertHashFromService(res.data.contentHash),
         });
         // shove content string into service response so it gets cached in the content blob
         res.data.content = serviceData.content;
@@ -865,14 +864,14 @@ class NoteConverterClass {
         if (!note) {
             return undefined;
         }
-        const { auth } = await Helpers_2.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, note);
+        const { auth } = await Helpers_1.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, note);
         const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
         const { data: applicationData } = await conduit_utils_1.withError(noteStore.getNoteApplicationData(trc, auth.token, Converters_1.convertGuidToService(note.id, en_core_entity_types_1.CoreEntityTypes.Note)));
         return applicationData;
     }
     async createOnService(trc, params, syncContext, note, serviceGuidSeed, remoteFields, blobs) {
         var _a;
-        const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+        const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
         const serviceData = {
             seed: serviceGuidSeed,
             title: note.label || 'Untitled',
@@ -928,7 +927,7 @@ class NoteConverterClass {
         return true;
     }
     async deleteFromService(trc, params, syncContext, noteIDs) {
-        const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+        const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
         const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
         // expungeNotes thrift call recommends deleting 100 notes or less in each call.
         const batchNoteIDs = conduit_utils_1.chunkArray(noteIDs, 100);

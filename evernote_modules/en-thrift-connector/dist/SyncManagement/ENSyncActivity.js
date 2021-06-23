@@ -1,62 +1,22 @@
 "use strict";
 /*
- * Copyright 2019 Evernote Corporation. All rights reserved.
+ * Copyright 2021 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SyncActivity = exports.CancelActivityError = exports.CONTENT_SYNC_PROGRESS_TABLE = exports.BACKGROUND_SYNC_PROGRESS_TABLE = exports.INITIAL_DOWNSYNC_PROGRESS_TABLE = exports.SyncActivityType = exports.SyncActivityPriority = void 0;
+exports.ENSyncActivity = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-var SyncActivityPriority;
-(function (SyncActivityPriority) {
-    SyncActivityPriority[SyncActivityPriority["INITIAL_DOWNSYNC"] = 10] = "INITIAL_DOWNSYNC";
-    SyncActivityPriority[SyncActivityPriority["IMMEDIATE"] = 5] = "IMMEDIATE";
-    SyncActivityPriority[SyncActivityPriority["BACKGROUND"] = 0] = "BACKGROUND";
-})(SyncActivityPriority = exports.SyncActivityPriority || (exports.SyncActivityPriority = {}));
-var SyncActivityType;
-(function (SyncActivityType) {
-    SyncActivityType["FetchPrebuiltDatabaseActivity"] = "FetchPrebuiltDatabaseActivity";
-    SyncActivityType["UserUpdateActivity"] = "UserUpdateActivity";
-    SyncActivityType["BootstrapActivity"] = "BootstrapActivity";
-    SyncActivityType["VaultBootstrapActivity"] = "VaultBootstrapActivity";
-    SyncActivityType["BetaFeatureSyncActivity"] = "BetaFeatureSyncActivity";
-    SyncActivityType["MaestroSyncActivity"] = "MaestroSyncActivity";
-    SyncActivityType["PromotionsSyncActivity"] = "PromotionsSyncActivity";
-    SyncActivityType["MessagesSyncActivity"] = "MessagesSyncActivity";
-    SyncActivityType["NotesFetchActivity"] = "NotesFetchActivity";
-    SyncActivityType["BackgroundNoteSyncActivity"] = "BackgroundNoteSyncActivity";
-    SyncActivityType["TrashedNoteMetadataFetchActivity"] = "TrashedNoteMetadataFetchActivity";
-    SyncActivityType["NoteMetadataFetchActivity"] = "NoteMetadataFetchActivity";
-    SyncActivityType["SnippetsFetchActivity"] = "SnippetsFetchActivity";
-    SyncActivityType["ReindexActivity"] = "ReindexActivity";
-    SyncActivityType["InitialDownsyncCompleteActivity"] = "InitialDownsyncCompleteActivity";
-    SyncActivityType["CatchupSyncActivity"] = "CatchupSyncActivity";
-    SyncActivityType["OfflineSearchIndexActivity"] = "OfflineSearchIndexActivity";
-    SyncActivityType["ContentFetchSyncActivity"] = "ContentFetchSyncActivity";
-    SyncActivityType["IncrementalSyncActivity"] = "IncrementalSyncActivity";
-    SyncActivityType["SchemaMigrationActivity"] = "SchemaMigrationActivity";
-    SyncActivityType["SchemaMigrationCompleteActivity"] = "SchemaMigrationCompleteActivity";
-    SyncActivityType["NotesCountFetchActivity"] = "NotesCountFetchActivity";
-    SyncActivityType["AccountSessionSyncActivity"] = "AccountSessionSyncActivity";
-    SyncActivityType["NSyncInitActivity"] = "NSyncInitActivity";
-    SyncActivityType["NSyncInitialDownsyncActivity"] = "NSyncInitialDownsyncActivity";
-})(SyncActivityType = exports.SyncActivityType || (exports.SyncActivityType = {}));
-exports.INITIAL_DOWNSYNC_PROGRESS_TABLE = 'InitialSyncProgress';
-exports.BACKGROUND_SYNC_PROGRESS_TABLE = 'BackgroundSyncProgress';
-exports.CONTENT_SYNC_PROGRESS_TABLE = 'ContentFetchSyncProgress';
-class CancelActivityError extends Error {
-    constructor(message) {
-        super(message);
-    }
-}
-exports.CancelActivityError = CancelActivityError;
+const conduit_view_types_1 = require("conduit-view-types");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 function cancel() {
-    return new CancelActivityError('cancelled');
+    return new en_conduit_sync_types_1.CancelActivityError('cancelled');
 }
 function abort() {
     return new conduit_utils_1.RetryError('aborted', 10);
 }
-class SyncActivity {
+class ENSyncActivity extends conduit_core_1.SyncActivity {
     constructor(baseDI, context, params, options) {
+        super(options);
         this.baseDI = baseDI;
         this.context = context;
         this.params = params;
@@ -75,7 +35,7 @@ class SyncActivity {
         this.setProgress = async (trc, percent, isInit = false) => {
             const tableName = this.options.syncProgressTableName;
             if (tableName) {
-                const percentValue = tableName === exports.CONTENT_SYNC_PROGRESS_TABLE ?
+                const percentValue = tableName === en_conduit_sync_types_1.CONTENT_SYNC_PROGRESS_TABLE ?
                     0 :
                     percent >= 0 || percent <= 1 ? percent : 1;
                 await this.context.syncEngine.transactEphemeral(trc, 'updateSyncProgress', async (tx) => {
@@ -183,6 +143,7 @@ class SyncActivity {
         return null;
     }
     initParams(user, subpath, chunkTimebox, subBucketSize, offset) {
+        var _a, _b, _c;
         const auth = this.context.syncManager.getAuth();
         if (!auth) {
             throw new Error('Cannot downsync without auth');
@@ -208,15 +169,16 @@ class SyncActivity {
             isVault,
             syncContext,
             syncStatePath: subpath ? [syncContext, subpath] : null,
-            personalUserID: this.context.syncEngine.userId,
-            vaultUserID: this.context.syncEngine.vaultUserId,
+            personalUserID: this.context.syncEngine.getPersonalUserID(),
+            vaultUserID: this.context.syncEngine.getVaultUserID(),
             chunkTimebox,
             setProgress: reportProgress,
             yieldCheck: this.yieldCheck,
-            localSettings: this.context.syncEngine.localSettings,
-            offlineContentStrategy: this.context.syncEngine.offlineContentStrategy,
+            localSettings: this.baseDI.getLocalSettings(),
+            offlineContentStrategy: (_c = (_b = (_a = this.baseDI).getOfflineContentStrategy) === null || _b === void 0 ? void 0 : _b.call(_a)) !== null && _c !== void 0 ? _c : conduit_view_types_1.OfflineContentStrategy.NONE,
             offsetProgress: offset,
             subBucketProgressSize: subBucketSize,
+            updateUser: this.baseDI.updateUser,
         };
         return this.curParams;
     }
@@ -228,5 +190,5 @@ class SyncActivity {
         };
     }
 }
-exports.SyncActivity = SyncActivity;
-//# sourceMappingURL=SyncActivity.js.map
+exports.ENSyncActivity = ENSyncActivity;
+//# sourceMappingURL=ENSyncActivity.js.map

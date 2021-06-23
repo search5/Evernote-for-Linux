@@ -26,7 +26,6 @@ exports.updateNodeTypeCount = exports.updateAccountLimitsNode = exports.initAcco
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const SimplyImmutable = __importStar(require("simply-immutable"));
-const Helpers_1 = require("../Helpers");
 const EMPTY_RESOURCE_COUNTS = SimplyImmutable.deepFreeze({
     userNoteCount: 0,
     userNotebookCount: 0,
@@ -103,7 +102,7 @@ async function updateNodeTypeCount(trc, graphTransaction, syncContext, type, del
         return;
     }
     if (!current.syncContexts.includes(syncContext)) {
-        if (!customCountName && type === en_core_entity_types_1.CoreEntityTypes.Notebook && syncContext.match(Helpers_1.LINKED_CONTEXT_REGEX)) {
+        if (!customCountName && type === en_core_entity_types_1.CoreEntityTypes.Notebook && en_core_entity_types_1.isLinkedSyncContext(syncContext)) {
             const accountLimitsContext = current.syncContexts[0]; // I can't think of a case where the AccountLimits node would have two syncContexts
             await graphTransaction.updateNode(trc, accountLimitsContext, en_core_entity_types_1.ACCOUNT_LIMITS_REF, {
                 NodeFields: {

@@ -27,6 +27,7 @@ const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
 const Auth = __importStar(require("../Auth"));
@@ -36,14 +37,15 @@ const MaestroPropsSync_1 = require("../SyncFunctions/MaestroPropsSync");
 const MessageSync_1 = require("../SyncFunctions/MessageSync");
 const Migrations_1 = require("../SyncFunctions/Migrations");
 const NoteStoreSync_1 = require("../SyncFunctions/NoteStoreSync");
+const NSyncSync_1 = require("../SyncFunctions/NSyncSync");
 const PromotionsSync_1 = require("../SyncFunctions/PromotionsSync");
 const SyncHelpers_1 = require("../SyncFunctions/SyncHelpers");
 const BackgroundNoteSyncActivity_1 = require("./BackgroundNoteSyncActivity");
 const ContentFetchSyncActivity_1 = require("./ContentFetchSyncActivity");
+const ENSyncActivity_1 = require("./ENSyncActivity");
 const IncrementalSyncActivity_1 = require("./IncrementalSyncActivity");
 const NSyncInitActivity_1 = require("./NSyncInitActivity");
 const SchemaMigrationActivity_1 = require("./SchemaMigrationActivity");
-const SyncActivity_1 = require("./SyncActivity");
 exports.INITIAL_DOWNSYNC_CHUNK_TIMEBOX = 30000;
 var FINAL_ACTIVITY_ORDER;
 (function (FINAL_ACTIVITY_ORDER) {
@@ -56,11 +58,11 @@ var FINAL_ACTIVITY_ORDER;
 const DEFAULT_INITIAL_NOTES_TO_FETCH = 250;
 const DEFAULT_LIMITED_DOWNSYNC_CEILING = 20000;
 /*********************************************************/
-class InitialDownsyncCompleteActivity extends SyncActivity_1.SyncActivity {
+class InitialDownsyncCompleteActivity extends ENSyncActivity_1.ENSyncActivity {
     constructor(di, context, subpriority = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.InitialDownsyncCompleteActivity,
-            priority: SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC,
+            activityType: en_conduit_sync_types_1.SyncActivityType.InitialDownsyncCompleteActivity,
+            priority: en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC,
             subpriority,
             runAfter: Date.now(),
         }, {
@@ -79,15 +81,15 @@ function initialDownsyncCompleteActivityHydrator(di, context, p) {
 }
 exports.initialDownsyncCompleteActivityHydrator = initialDownsyncCompleteActivityHydrator;
 /*********************************************************/
-class FetchPrebuiltDatabaseActivity extends SyncActivity_1.SyncActivity {
+class FetchPrebuiltDatabaseActivity extends ENSyncActivity_1.ENSyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.FetchPrebuiltDatabaseActivity,
-            priority: SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC,
+            activityType: en_conduit_sync_types_1.SyncActivityType.FetchPrebuiltDatabaseActivity,
+            priority: en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC,
             subpriority,
             runAfter: Date.now() + timeout,
         }, {
-            syncProgressTableName: SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
+            syncProgressTableName: en_conduit_sync_types_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
         });
         this.di = di;
         this.totalBytes = 1000; // gets updated during download
@@ -108,7 +110,8 @@ class FetchPrebuiltDatabaseActivity extends SyncActivity_1.SyncActivity {
         }
     }
     async runSyncImpl(trc) {
-        const auth = this.context.syncEngine.auth;
+        var _a, _b;
+        const auth = this.context.syncManager.getAuth();
         if (!auth || !this.di.fetchPrebuiltDatabase) {
             await this.setProgress(trc, 1);
             return;
@@ -126,7 +129,7 @@ class FetchPrebuiltDatabaseActivity extends SyncActivity_1.SyncActivity {
         }
         conduit_utils_1.logger.info('Got prebuilt DB', downloadedFilename);
         conduit_utils_1.traceTestCounts(trc, { fetchPrebuiltDatabase: 1 });
-        const importRes = await conduit_utils_1.withError(this.context.syncEngine.importRemoteGraphDatabase(trc, downloadedFilename));
+        const importRes = await conduit_utils_1.withError(this.di.importDatabase(trc, downloadedFilename));
         if (importRes.err) {
             // don't throw the error, just log it and fall back to normal sync
             conduit_utils_1.logger.error('Error trying to import prebuilt DB', importRes.err);
@@ -145,6 +148,7 @@ class FetchPrebuiltDatabaseActivity extends SyncActivity_1.SyncActivity {
         }
         // Let activites know if this DB has been loaded from a prebuilt database
         this.context.usedPrebuilt = true;
+        this.di.emitEvent(conduit_view_types_1.ConduitEvent.PREBUILT_DB_LOADED);
         // reinstate syncProgressType value which gets overriden by importRemoteGraphDatabase.
         await SyncHelpers_1.updateSyncProgressType(trc, this.context.syncEngine, conduit_view_types_1.SyncProgressType.INITIAL_DOWNSYNC);
         conduit_utils_1.traceTestCounts(trc, { importRemoteGraphDatabase: 1 });
@@ -154,29 +158,30 @@ class FetchPrebuiltDatabaseActivity extends SyncActivity_1.SyncActivity {
         // add activity to progress bucket.
         await schemaMigrationActivity.setBucketSize(trc);
         const syncEngine = this.context.syncEngine;
-        if (syncEngine.offlineContentStrategy !== conduit_view_types_1.OfflineContentStrategy.NONE) {
+        if (this.di.getOfflineContentStrategy && this.di.getOfflineContentStrategy() !== conduit_view_types_1.OfflineContentStrategy.NONE) {
+            const userID = (_b = (_a = this.context.syncManager.getAuth()) === null || _a === void 0 ? void 0 : _a.userID) !== null && _b !== void 0 ? _b : conduit_utils_1.NullUserID;
             // populate PendingOfflineNoteSyncStateEntry table
             await syncEngine.transact(trc, 'initPendingOfflineNoteSyncStates', async (tx) => {
-                await NotebookConverter_1.initPendingOfflineNoteSyncStates(trc, tx, syncEngine.offlineContentStrategy, syncEngine.localSettings, syncEngine.userId);
+                await NotebookConverter_1.initPendingOfflineNoteSyncStates(trc, tx, this.di.getOfflineContentStrategy(), this.di.getLocalSettings(), userID);
             });
             // and kickoff content fetch in the background
             await this.context.syncManager.addActivity(trc, new ContentFetchSyncActivity_1.ContentFetchSyncActivity(this.di, this.context, null));
         }
         if (this.di.loadingScreenConfig.showDuringIncrementalSyncAfterPrebuilt) {
-            const incremental = new IncrementalSyncActivity_1.IncrementalSyncActivity(this.di, this.context, SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC, FINAL_ACTIVITY_ORDER.INCREMENTAL_SYNC, undefined, true);
+            const incremental = new IncrementalSyncActivity_1.IncrementalSyncActivity(this.di, this.context, en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC, FINAL_ACTIVITY_ORDER.INCREMENTAL_SYNC, undefined, true);
             await this.context.syncManager.addActivity(trc, incremental);
         }
         // remove hybrid-mode sync activities from the queue
         await this.context.syncManager.removeActivitiesByType(trc, [
-            SyncActivity_1.SyncActivityType.SchemaMigrationCompleteActivity,
-            SyncActivity_1.SyncActivityType.BootstrapActivity,
-            SyncActivity_1.SyncActivityType.VaultBootstrapActivity,
-            SyncActivity_1.SyncActivityType.NotesCountFetchActivity,
-            SyncActivity_1.SyncActivityType.NotesFetchActivity,
-            SyncActivity_1.SyncActivityType.BackgroundNoteSyncActivity,
-            SyncActivity_1.SyncActivityType.TrashedNoteMetadataFetchActivity,
-            SyncActivity_1.SyncActivityType.NoteMetadataFetchActivity,
-            SyncActivity_1.SyncActivityType.SnippetsFetchActivity,
+            en_conduit_sync_types_1.SyncActivityType.SchemaMigrationCompleteActivity,
+            en_conduit_sync_types_1.SyncActivityType.BootstrapActivity,
+            en_conduit_sync_types_1.SyncActivityType.VaultBootstrapActivity,
+            en_conduit_sync_types_1.SyncActivityType.NotesCountFetchActivity,
+            en_conduit_sync_types_1.SyncActivityType.NotesFetchActivity,
+            en_conduit_sync_types_1.SyncActivityType.BackgroundNoteSyncActivity,
+            en_conduit_sync_types_1.SyncActivityType.TrashedNoteMetadataFetchActivity,
+            en_conduit_sync_types_1.SyncActivityType.NoteMetadataFetchActivity,
+            en_conduit_sync_types_1.SyncActivityType.SnippetsFetchActivity,
         ]);
         // Read the reindexing activity to run immediately after
         await this.context.syncManager.addReindexingActivity(trc, undefined, true);
@@ -188,18 +193,19 @@ function fetchPrebuiltDatabaseActivityHydrator(di, context, p, timeout) {
 }
 exports.fetchPrebuiltDatabaseActivityHydrator = fetchPrebuiltDatabaseActivityHydrator;
 /*********************************************************/
-class UserUpdateActivity extends SyncActivity_1.SyncActivity {
-    get progressBucketSize() { return 500; }
+class UserUpdateActivity extends ENSyncActivity_1.ENSyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.UserUpdateActivity,
-            priority: SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC,
+            activityType: en_conduit_sync_types_1.SyncActivityType.UserUpdateActivity,
+            priority: en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC,
             subpriority,
             runAfter: Date.now() + timeout,
         }, {
             syncProgressTableName: null,
         });
+        this.di = di;
     }
+    get progressBucketSize() { return 500; }
     async runSyncImpl(trc) {
         const syncEngine = this.context.syncEngine;
         const thriftComm = this.context.thriftComm;
@@ -219,10 +225,10 @@ class UserUpdateActivity extends SyncActivity_1.SyncActivity {
         const vaultUser = auth.vaultAuth ? await Auth.getUser(trc, thriftComm, auth.vaultAuth) : undefined;
         await syncEngine.transact(trc, 'initUser', async (tx) => {
             if (user) {
-                await syncEngine.updateUser(trc, tx, user, false, auth);
+                await this.di.updateUser(trc, tx, user, false, auth);
             }
             if (vaultUser && auth.vaultAuth) {
-                await syncEngine.updateUser(trc, tx, vaultUser, true, auth.vaultAuth);
+                await this.di.updateUser(trc, tx, vaultUser, true, auth.vaultAuth);
             }
         });
     }
@@ -232,11 +238,11 @@ function userUpdateActivityHydrator(di, context, p, timeout) {
 }
 exports.userUpdateActivityHydrator = userUpdateActivityHydrator;
 /*********************************************************/
-class NotesCountFetchActivity extends SyncActivity_1.SyncActivity {
+class NotesCountFetchActivity extends ENSyncActivity_1.ENSyncActivity {
     constructor(di, context, subpriority = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.NotesCountFetchActivity,
-            priority: subpriority > 0 ? SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC : SyncActivity_1.SyncActivityPriority.IMMEDIATE,
+            activityType: en_conduit_sync_types_1.SyncActivityType.NotesCountFetchActivity,
+            priority: subpriority > 0 ? en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC : en_conduit_sync_types_1.SyncActivityPriority.IMMEDIATE,
             subpriority,
             runAfter: Date.now(),
         }, {
@@ -267,18 +273,18 @@ function notesCountFetchActivityHydrator(di, context, p) {
 }
 exports.notesCountFetchActivityHydrator = notesCountFetchActivityHydrator;
 /*********************************************************/
-class BootstrapActivity extends SyncActivity_1.SyncActivity {
+class BootstrapActivity extends ENSyncActivity_1.ENSyncActivity {
     get progressBucketSize() { return 10000; }
     constructor(di, context, forVault, shouldBootstrapNotes, subpriority = 0, timeout = 0) {
         super(di, context, {
-            activityType: forVault ? SyncActivity_1.SyncActivityType.VaultBootstrapActivity : SyncActivity_1.SyncActivityType.BootstrapActivity,
-            priority: SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC,
+            activityType: forVault ? en_conduit_sync_types_1.SyncActivityType.VaultBootstrapActivity : en_conduit_sync_types_1.SyncActivityType.BootstrapActivity,
+            priority: en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC,
             subpriority,
             runAfter: Date.now() + timeout,
         }, {
             forVault,
             shouldBootstrapNotes,
-            syncProgressTableName: SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
+            syncProgressTableName: en_conduit_sync_types_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
         });
     }
     async runSyncImpl(trc) {
@@ -300,15 +306,15 @@ function vaultBootstrapActivityHydrator(di, context, p, timeout) {
 }
 exports.vaultBootstrapActivityHydrator = vaultBootstrapActivityHydrator;
 /*********************************************************/
-class BetaFeatureSyncActivity extends SyncActivity_1.SyncActivity {
+class BetaFeatureSyncActivity extends ENSyncActivity_1.ENSyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.BetaFeatureSyncActivity,
-            priority: subpriority ? SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC : SyncActivity_1.SyncActivityPriority.BACKGROUND,
+            activityType: en_conduit_sync_types_1.SyncActivityType.BetaFeatureSyncActivity,
+            priority: subpriority ? en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC : en_conduit_sync_types_1.SyncActivityPriority.BACKGROUND,
             subpriority,
             runAfter: Date.now() + timeout,
         }, {
-            syncProgressTableName: subpriority > 0 ? SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE : null,
+            syncProgressTableName: subpriority > 0 ? en_conduit_sync_types_1.INITIAL_DOWNSYNC_PROGRESS_TABLE : null,
         });
         this.di = di;
     }
@@ -326,15 +332,15 @@ function betaFeatureSyncActivityHydrator(di, context, p, timeout) {
 }
 exports.betaFeatureSyncActivityHydrator = betaFeatureSyncActivityHydrator;
 /*********************************************************/
-class MaestroSyncActivity extends SyncActivity_1.SyncActivity {
+class MaestroSyncActivity extends ENSyncActivity_1.ENSyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.MaestroSyncActivity,
-            priority: subpriority ? SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC : SyncActivity_1.SyncActivityPriority.BACKGROUND,
+            activityType: en_conduit_sync_types_1.SyncActivityType.MaestroSyncActivity,
+            priority: subpriority ? en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC : en_conduit_sync_types_1.SyncActivityPriority.BACKGROUND,
             subpriority,
             runAfter: Date.now() + timeout,
         }, {
-            syncProgressTableName: subpriority > 0 ? SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE : null,
+            syncProgressTableName: subpriority > 0 ? en_conduit_sync_types_1.INITIAL_DOWNSYNC_PROGRESS_TABLE : null,
         });
         this.di = di;
     }
@@ -356,15 +362,15 @@ function maestroSyncActivityHydrator(di, context, p, timeout) {
 }
 exports.maestroSyncActivityHydrator = maestroSyncActivityHydrator;
 /*********************************************************/
-class PromotionsSyncActivity extends SyncActivity_1.SyncActivity {
+class PromotionsSyncActivity extends ENSyncActivity_1.ENSyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.PromotionsSyncActivity,
-            priority: subpriority ? SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC : SyncActivity_1.SyncActivityPriority.BACKGROUND,
+            activityType: en_conduit_sync_types_1.SyncActivityType.PromotionsSyncActivity,
+            priority: subpriority ? en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC : en_conduit_sync_types_1.SyncActivityPriority.BACKGROUND,
             subpriority,
             runAfter: Date.now() + timeout,
         }, {
-            syncProgressTableName: subpriority > 0 ? SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE : null,
+            syncProgressTableName: subpriority > 0 ? en_conduit_sync_types_1.INITIAL_DOWNSYNC_PROGRESS_TABLE : null,
         });
         this.di = di;
     }
@@ -383,15 +389,15 @@ function promotionsSyncActivityHydrator(di, context, p, timeout) {
 }
 exports.promotionsSyncActivityHydrator = promotionsSyncActivityHydrator;
 /*********************************************************/
-class MessagesSyncActivity extends SyncActivity_1.SyncActivity {
+class MessagesSyncActivity extends ENSyncActivity_1.ENSyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.MessagesSyncActivity,
-            priority: SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC,
+            activityType: en_conduit_sync_types_1.SyncActivityType.MessagesSyncActivity,
+            priority: en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC,
             subpriority,
             runAfter: Date.now() + timeout,
         }, {
-            syncProgressTableName: SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
+            syncProgressTableName: en_conduit_sync_types_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
         });
     }
     async runSyncImpl(trc) {
@@ -404,15 +410,15 @@ function messagesSyncActivityHydrator(di, context, p, timeout) {
 }
 exports.messagesSyncActivityHydrator = messagesSyncActivityHydrator;
 /*********************************************************/
-class SnippetsFetchActivity extends SyncActivity_1.SyncActivity {
+class SnippetsFetchActivity extends ENSyncActivity_1.ENSyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.SnippetsFetchActivity,
-            priority: SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC,
+            activityType: en_conduit_sync_types_1.SyncActivityType.SnippetsFetchActivity,
+            priority: en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC,
             subpriority,
             runAfter: Date.now() + timeout,
         }, {
-            syncProgressTableName: SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
+            syncProgressTableName: en_conduit_sync_types_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
         });
     }
     async runSyncImpl(trc) {
@@ -431,16 +437,16 @@ function snippetsFetchActivityHydrator(di, context, p, timeout) {
 }
 exports.snippetsFetchActivityHydrator = snippetsFetchActivityHydrator;
 /*********************************************************/
-class TrashedNoteMetadataFetchActivity extends SyncActivity_1.SyncActivity {
+class TrashedNoteMetadataFetchActivity extends ENSyncActivity_1.ENSyncActivity {
     constructor(di, context, forVault, subpriority = 0, timeout = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.TrashedNoteMetadataFetchActivity,
-            priority: SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC,
+            activityType: en_conduit_sync_types_1.SyncActivityType.TrashedNoteMetadataFetchActivity,
+            priority: en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC,
             subpriority,
             runAfter: Date.now() + timeout,
         }, {
             forVault,
-            syncProgressTableName: SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
+            syncProgressTableName: en_conduit_sync_types_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
         });
     }
     async runSyncImpl(trc) {
@@ -453,17 +459,17 @@ function trashedNoteMetadataFetchActivityHydrator(di, context, p, timeout) {
 }
 exports.trashedNoteMetadataFetchActivityHydrator = trashedNoteMetadataFetchActivityHydrator;
 /*********************************************************/
-class NoteMetadataFetchActivity extends SyncActivity_1.SyncActivity {
+class NoteMetadataFetchActivity extends ENSyncActivity_1.ENSyncActivity {
     get progressBucketSize() { return 10000; }
     constructor(di, context, forVault, subpriority = 0, timeout = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.NoteMetadataFetchActivity,
-            priority: SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC,
+            activityType: en_conduit_sync_types_1.SyncActivityType.NoteMetadataFetchActivity,
+            priority: en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC,
             subpriority,
             runAfter: Date.now() + timeout,
         }, {
             forVault,
-            syncProgressTableName: SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
+            syncProgressTableName: en_conduit_sync_types_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
         });
     }
     async runSyncImpl(trc) {
@@ -480,16 +486,16 @@ function noteMetadataFetchActivityHydrator(di, context, p, timeout) {
     return new NoteMetadataFetchActivity(di, context, p.options.forVault, p.subpriority, timeout);
 }
 exports.noteMetadataFetchActivityHydrator = noteMetadataFetchActivityHydrator;
-class NotesFetchActivity extends SyncActivity_1.SyncActivity {
+class NotesFetchActivity extends ENSyncActivity_1.ENSyncActivity {
     constructor(di, context, immediateSyncArgs, subpriority = 0, timeout = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.NotesFetchActivity,
-            priority: subpriority > 0 ? SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC : SyncActivity_1.SyncActivityPriority.IMMEDIATE,
+            activityType: en_conduit_sync_types_1.SyncActivityType.NotesFetchActivity,
+            priority: subpriority > 0 ? en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC : en_conduit_sync_types_1.SyncActivityPriority.IMMEDIATE,
             subpriority,
             runAfter: Date.now() + timeout,
             dontPersist: Boolean(immediateSyncArgs),
         }, {
-            syncProgressTableName: SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
+            syncProgressTableName: en_conduit_sync_types_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
             immediateSyncArgs,
         });
         this.di = di;
@@ -551,12 +557,12 @@ function notesFetchActivityHydrator(di, context, p, timeout) {
 }
 exports.notesFetchActivityHydrator = notesFetchActivityHydrator;
 /*********************************************************/
-class SchemaMigrationCompleteActivity extends SyncActivity_1.SyncActivity {
+class SchemaMigrationCompleteActivity extends ENSyncActivity_1.ENSyncActivity {
     get progressBucketSize() { return 2500; }
     constructor(di, context, subpriority = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.SchemaMigrationCompleteActivity,
-            priority: SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC,
+            activityType: en_conduit_sync_types_1.SyncActivityType.SchemaMigrationCompleteActivity,
+            priority: en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC,
             subpriority,
             runAfter: Date.now(),
         }, {
@@ -585,16 +591,16 @@ function schemaMigrationCompleteActivityHydrator(di, context, p) {
 }
 exports.schemaMigrationCompleteActivityHydrator = schemaMigrationCompleteActivityHydrator;
 /*********************************************************/
-class NSyncInitialDownsyncActivity extends SyncActivity_1.SyncActivity {
+class NSyncInitialDownsyncActivity extends ENSyncActivity_1.ENSyncActivity {
     get progressBucketSize() { return 500; }
     constructor(di, context, subpriority = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.NSyncInitialDownsyncActivity,
-            priority: SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC,
+            activityType: en_conduit_sync_types_1.SyncActivityType.NSyncInitialDownsyncActivity,
+            priority: en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC,
             subpriority,
             runAfter: Date.now(),
         }, {
-            syncProgressTableName: SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
+            syncProgressTableName: en_conduit_sync_types_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
         });
     }
     async runSyncImpl(trc) {
@@ -603,43 +609,8 @@ class NSyncInitialDownsyncActivity extends SyncActivity_1.SyncActivity {
         if (!syncEventManager) {
             return;
         }
-        const syncParams = this.initParams('personal', 'initialDownsync', exports.INITIAL_DOWNSYNC_CHUNK_TIMEBOX);
-        if (syncEventManager.isEnabled()) {
-            let complete = false;
-            while (complete === false) {
-                await syncEventManager.flush(trc, syncParams);
-                complete = await new Promise((resolve, reject) => {
-                    let handled = false;
-                    syncEventManager.setMessageConsumer(msg => {
-                        switch (msg.type) {
-                            case 'Error': {
-                                handled = true;
-                                syncEventManager.clearMessageConsumer();
-                                return reject(msg.error);
-                            }
-                            case 'Disconnect': {
-                                handled = true;
-                                syncEventManager.clearMessageConsumer();
-                                return reject('Disconnected from nSync');
-                            }
-                            case 'Complete': {
-                                handled = true;
-                                syncEventManager.clearMessageConsumer();
-                                return resolve(true);
-                            }
-                        }
-                    });
-                    if (!handled) {
-                        syncEventManager.clearMessageConsumer();
-                        return resolve(false);
-                    }
-                });
-                if (!complete) {
-                    await conduit_utils_1.sleep(250);
-                }
-            }
-        }
-        syncParams.setProgress && await syncParams.setProgress(trc, 1); // TODO: move syncParams into downsync and make progress granular
+        const syncParams = this.initParams('personal', 'initialDownsync', exports.INITIAL_DOWNSYNC_CHUNK_TIMEBOX); // TODO: move syncParams into downsync and make progress granular
+        await NSyncSync_1.syncNSync(trc, syncEventManager, syncParams, true);
     }
 }
 exports.NSyncInitialDownsyncActivity = NSyncInitialDownsyncActivity;
@@ -672,7 +643,7 @@ async function addInitialDownsyncActivities(trc, di, context, tx) {
         await context.syncManager.addActivity(trc, new VaultBootstrapActivity(di, context, shouldBootstrapNotes, order++), tx);
     }
     await context.syncManager.addActivity(trc, new BootstrapActivity(di, context, false, shouldBootstrapNotes, order++), tx);
-    await context.syncManager.addActivity(trc, new NSyncInitActivity_1.NSyncInitActivity(di, context, order++), tx);
+    await context.syncManager.addActivity(trc, new NSyncInitActivity_1.NSyncInitActivity(di, context, en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC, order++), tx);
     await context.syncManager.addActivity(trc, new NSyncInitialDownsyncActivity(di, context, order++), tx);
     if (!isDownsyncMode(conduit_view_types_1.DownsyncMode.LEGACY_FOR_PREBUILT)) {
         await context.syncManager.addActivity(trc, new BetaFeatureSyncActivity(di, context, order++), tx);

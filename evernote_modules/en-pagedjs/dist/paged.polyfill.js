@@ -1,5 +1,5 @@
 /**
- * @license Paged.js v1.0.11 | MIT | https://gitlab.pagedmedia.org/tools/pagedjs
+ * @license Paged.js v1.0.14 | MIT | https://gitlab.pagedmedia.org/tools/pagedjs
  */
 
 (function (global, factory) {
@@ -415,7 +415,7 @@
 		if (element.tagName === "IMG") {
 			const rects = element.getClientRects();
 			const lastRect = rects[rects.length - 1];
-			rect = lastRect;
+			rect = lastRect ? lastRect : element.getBoundingClientRect();
 		} else if (element.nodeType === 1) {
 			let range = document.createRange();
 			range.selectNode(element);
@@ -779,6 +779,35 @@
 
 		added = undefined;
 		return fragment;
+	}
+
+	function areElementsInSameTableRow(element1, element2, limiter) {
+		const insideCell = parentOf(element1, "TD", limiter);
+		if (insideCell) {
+			const nodeParent = parentOf(insideCell, "TR", limiter);
+			const prevNodeParent = parentOf(element2, "TR", limiter);
+
+			if(nodeParent && prevNodeParent) {
+				const parentRef =	extractDataRef(nodeParent);
+				const prevParentRef = extractDataRef(prevNodeParent);
+
+				if (parentRef && prevParentRef && parentRef === prevParentRef) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	function isAvoidingBreakInsideRow(element, limiter) {
+		const insideRow = parentOf(element, "TR", limiter);
+		return insideRow && window.getComputedStyle(insideRow)["break-inside"] === "avoid";
+	}
+
+	function extractDataRef(element) {
+		return element.attributes &&
+			element.attributes["data-ref"] &&
+			element.attributes["data-ref"].value;
 	}
 
 	/*
@@ -1340,8 +1369,7 @@
 
 				let rendered = this.append(node, wrapper, breakToken, shallow);
 
-				let addedLength = rendered.textContent.length;
-				
+				let addedLength = rendered.textContent && rendered.textContent.length;
 				let renderedLengthHooks = this.hooks.onRenderedLength.triggerSync(rendered, node, addedLength, this);
 				renderedLengthHooks.forEach((newRenderedLength) => {
 					if (typeof newRenderedLength != "undefined") {
@@ -1467,7 +1495,7 @@
 			return start;
 		}
 
-		append(node, dest, breakToken, shallow = true, rebuild = true) {
+		async append(node, dest, breakToken, shallow = true, rebuild = true) {
 
 			let clone = cloneNode(node, !shallow);
 
@@ -1499,6 +1527,7 @@
 			}
 
 			if (clone.tagName === "IMG") {
+				await this.waitForImages(clone);
 				const imgHeight = clone.height;
 				clone.style.maxHeight = `${imgHeight}px`;
 			}
@@ -1521,8 +1550,11 @@
 		}
 
 		async awaitImageLoaded(image) {
-			return new Promise(resolve => {
-				if (image.complete !== true) {
+			return new Promise((resolve) => {
+				if (!image.src) {
+					console.warn('There is no src in img!');
+				}
+				if (image.src && image.complete !== true) {
 					image.onload = function () {
 						let {width, height} = window.getComputedStyle(image);
 						resolve(width, height);
@@ -1720,19 +1752,24 @@
 					let pos = getBoundingClientRect(node);
 					let left = Math.round(pos.left);
 					let right = Math.floor(pos.right);
-
+				
 					if (!range && left >= end) {
 
 						if (node.tagName === "IMG") {
-							const dataRef = node.attributes["data-ref"].value;
+							const dataRef = node.attributes && node.attributes["data-ref"].value;
 
-							const prevTokenDataRef = prevBreakToken.node.attributes["data-ref"].value;
+							const prevTokenDataRef = extractDataRef(prevBreakToken.node);
 
 							if (dataRef === prevTokenDataRef) {
 								continue;
 							}
-						}
-						
+						}	
+
+						if (areElementsInSameTableRow(node, prevBreakToken.node, rendered) &&
+							isAvoidingBreakInsideRow(node, rendered)) {
+							continue;
+						}	
+
 						// Check if it is a float
 						let isFloat = false;
 
@@ -1770,11 +1807,16 @@
 							break;
 						}
 
-					}
+					}				
 
 					if (!range && isText(node) &&
 						node.textContent.trim().length &&
 						!breakInsideAvoidParentNode(node.parentNode)) {
+						
+						if (areElementsInSameTableRow(node, prevBreakToken.node, rendered) &&
+							isAvoidingBreakInsideRow(node, rendered)) {
+							continue;
+						}	
 
 						let rects = getClientRects(node);
 						let rect;

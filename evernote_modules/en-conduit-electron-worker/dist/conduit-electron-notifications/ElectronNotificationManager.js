@@ -24,7 +24,7 @@ class ElectronNotificationManager extends conduit_core_1.NotificationManager {
             return;
         }
         const convertedNotification = this.notificationConverter.convert(notificationData.notification);
-        conduit_utils_1.logger.debug(`ElectronNotificationsScheduler -- schedule: id: ${convertedNotification.id} `, `-- title: ${convertedNotification.title} `, `-- subtitle: ${convertedNotification.subtitle}`, `-- body: ${convertedNotification.body}`, `-- sendAt: ${notificationData.sendAt} `);
+        conduit_utils_1.logger.debug(`ElectronNotificationsScheduler -- schedule: id: ${convertedNotification.id} `, `-- title: ${convertedNotification.title} `, `-- subtitle: ${convertedNotification.subtitle}`, `-- buttons: ${conduit_utils_1.safeStringify(convertedNotification.buttons)} `, `-- closeButtonText: ${convertedNotification.closeButtonText} `, `-- body: ${convertedNotification.body}`, `-- sendAt: ${notificationData.sendAt} `);
         this.electronNotifications.addPendingNotification(convertedNotification, notificationData.sendAt);
     }
     unschedule(notificationId) {

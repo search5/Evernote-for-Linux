@@ -7,13 +7,13 @@ exports.accountSessionActivityHydrator = exports.AccountSessionSyncActivity = vo
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const Auth_1 = require("../Auth");
-const SyncActivity_1 = require("./SyncActivity");
+const ENSyncActivity_1 = require("./ENSyncActivity");
 const ACCOUNT_SESSION_SYNC_ACTIVITY_INTERVAL = conduit_utils_1.MILLIS_IN_ONE_MINUTE;
-class AccountSessionSyncActivity extends SyncActivity_1.SyncActivity {
+class AccountSessionSyncActivity extends ENSyncActivity_1.ENSyncActivity {
     constructor(di, context, subpriority = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.AccountSessionSyncActivity,
-            priority: SyncActivity_1.SyncActivityPriority.BACKGROUND,
+            activityType: en_conduit_sync_types_1.SyncActivityType.AccountSessionSyncActivity,
+            priority: en_conduit_sync_types_1.SyncActivityPriority.BACKGROUND,
             subpriority,
             runAfter: Date.now() + ACCOUNT_SESSION_SYNC_ACTIVITY_INTERVAL,
         }, {
@@ -22,14 +22,15 @@ class AccountSessionSyncActivity extends SyncActivity_1.SyncActivity {
     }
     async runSyncImpl(trc) {
         const params = this.initParams('best', null, 0);
-        if (!Auth_1.hasNAPData(params.auth) || !this.context.syncEngine.clientCredentials) {
+        const clientCredentials = this.context.syncEngine.getClientCredentials();
+        if (!Auth_1.hasNAPData(params.auth) || !clientCredentials) {
             return;
         }
         const request = new en_conduit_sync_types_1.THasActiveSessionRequest({
             authenticationToken: params.auth.token,
-            deviceIdentifier: this.context.syncEngine.clientCredentials.deviceIdentifier,
+            deviceIdentifier: clientCredentials.deviceIdentifier,
             clientId: params.auth.napAuthInfo.clientID,
-            consumerKey: this.context.syncEngine.clientCredentials.consumerKey,
+            consumerKey: clientCredentials.consumerKey,
         });
         const utility = params.thriftComm.getUtilityStore(params.auth.urls.utilityUrl);
         try {

@@ -1,8 +1,8 @@
 {
   "name": "en-conduit-sync-types",
-  "version": "1.36.3",
+  "version": "1.37.3",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "http://localhost:4873/"
   },
   "description": "Shared types between conduit-core and conduit-view",
   "main": "dist/index",
@@ -10,11 +10,11 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-auth-shared": "1.36.3",
-    "conduit-core": "1.36.3",
-    "conduit-storage": "1.36.3",
-    "conduit-utils": "1.36.3",
-    "conduit-view-types": "1.36.3",
+    "conduit-auth-shared": "1.37.3",
+    "conduit-core": "1.37.3",
+    "conduit-storage": "1.37.3",
+    "conduit-utils": "1.37.3",
+    "conduit-view-types": "1.37.3",
     "en-data-model": "^3.6.2",
     "en-graph-types": "2.0.0",
     "en-thrift-internal": "2.7.18"

@@ -16,12 +16,11 @@ class TokenStorage {
      * load token and expiration from cache
      */
     load(tokenStorageKey) {
-        let tokenResult;
         if (!tokenStorageKey) {
             conduit_utils_1.logger.error(`TokenStorage: invalid token type ${tokenStorageKey}`);
             return { token: null, expiresAt: null };
         }
-        tokenResult = this.tokenCache.get(tokenStorageKey);
+        const tokenResult = this.tokenCache.get(tokenStorageKey);
         return tokenResult || { token: null, expiresAt: null };
     }
     /**

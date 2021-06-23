@@ -230,6 +230,39 @@ exports.noteIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
                 traversalToDst: [{ edge: ['outputs', 'children'], type: EntityConstants_1.CoreEntityTypes.Note }],
             },
         },
+        isShared: {
+            schemaType: 'boolean',
+            resolver: async (trc, node, nodeFieldLookup) => {
+                const creatorEdge = conduit_utils_1.firstStashEntry(node.outputs.creator);
+                if (!creatorEdge) {
+                    return [false];
+                }
+                if (node.NodeFields.isExternal) {
+                    return [true];
+                }
+                const userProfileID = await nodeFieldLookup(trc, { id: conduit_core_1.PERSONAL_USER_ID, type: EntityConstants_1.CoreEntityTypes.User }, 'profile');
+                return [node.owner ? creatorEdge.dstID !== userProfileID && node.owner !== userProfileID : creatorEdge.dstID !== userProfileID];
+            },
+            graphqlPath: ['isShared'],
+            isUnSyncedField: true,
+        },
+        isDefaultTaskNote: {
+            schemaType: 'boolean',
+            resolver: async (trc, node, _) => {
+                return [!conduit_utils_1.isStashEmpty(node.inputs.taskUserSettingsForDefaultNote)];
+            },
+            graphqlPath: ['isDefaultTaskNote'],
+            isUnSyncedField: true,
+        },
+        tasksCount: {
+            schemaType: 'int',
+            resolver: async (trc, node, _) => {
+                var _a;
+                return [Object.keys((_a = node.outputs.tasks) !== null && _a !== void 0 ? _a : {}).length];
+            },
+            graphqlPath: ['tasksCount'],
+            isUnSyncedField: true,
+        },
         inBusinessAccount: {
             schemaType: 'boolean',
             resolver: async (trc, node, _) => {
@@ -240,14 +273,19 @@ exports.noteIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
         },
         hasTaskGroup: {
             schemaType: 'boolean',
-            resolver: async (trc, node, nodeFieldLookup) => {
+            resolver: async (trc, node, nodeFieldLookup, dependentFieldValues) => {
                 const noteContentInfoEdge = conduit_utils_1.firstStashEntry(node.outputs.noteContentInfo);
                 if (!noteContentInfoEdge) {
                     return [false];
                 }
-                const hasTaskGroup = await nodeFieldLookup(trc, { id: noteContentInfoEdge.dstID, type: noteContentInfoEdge.dstType }, 'hasTaskGroup');
-                return [Boolean(hasTaskGroup)];
+                const hasTaskGroup = Boolean(await nodeFieldLookup(trc, { id: noteContentInfoEdge.dstID, type: noteContentInfoEdge.dstType }, 'hasTaskGroup'));
+                if (hasTaskGroup) {
+                    return [true];
+                }
+                const [isDefaultTaskNote] = dependentFieldValues.isDefaultTaskNote;
+                return [isDefaultTaskNote];
             },
+            dependencies: ['isDefaultTaskNote'],
             graphqlPath: ['hasTaskGroup'],
             isUnSyncedField: true,
             propagatedFrom: {
@@ -255,6 +293,26 @@ exports.noteIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
                 srcField: 'hasTaskGroup',
                 traversalToDst: [{ edge: ['inputs', 'parent'], type: EntityConstants_1.CoreEntityTypes.Note }],
             },
+        },
+        hasCompletedAllTasks: {
+            schemaType: 'boolean',
+            resolver: async (trc, node, nodeFieldLookup) => {
+                var _a;
+                const tasks = (_a = node.outputs.tasks) !== null && _a !== void 0 ? _a : {};
+                if (conduit_utils_1.isStashEmpty(tasks)) {
+                    return [false];
+                }
+                for (const edge of Object.values(tasks)) {
+                    const ref = { id: edge.dstID, type: edge.dstType };
+                    const status = await nodeFieldLookup(trc, ref, 'status');
+                    if (status === 'open') {
+                        return [false];
+                    }
+                }
+                return [true];
+            },
+            graphqlPath: ['hasCompletedAllTasks'],
+            isUnSyncedField: true,
         },
     },
     indexes: {
@@ -421,6 +479,7 @@ exports.noteIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
                 }],
         },
     },
+    lookups: ['created'],
     queries: {
         NotesInParent: {
             traversalName: 'childNotes',
@@ -467,14 +526,111 @@ exports.noteIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
                     value: true,
                 }],
             params: {
+                hasCompletedAllTasks: {
+                    optional: true,
+                    match: { field: 'hasCompletedAllTasks' },
+                },
+                isShared: {
+                    optional: true,
+                    match: { field: 'isShared' },
+                },
                 orderBy: {
                     sort: {
-                        label: [{ field: 'label', order: 'ASC' }, { field: 'updated', order: 'DESC' }, { field: 'created', order: 'DESC' }],
-                        created: [{ field: 'created', order: 'DESC' }, { field: 'label', order: 'ASC' }, { field: 'updated', order: 'DESC' }],
-                        updated: [{ field: 'updated', order: 'DESC' }, { field: 'label', order: 'ASC' }, { field: 'created', order: 'DESC' }],
+                        label: [
+                            { field: 'label', order: 'ASC' },
+                            { field: 'updated', order: 'DESC' },
+                            { field: 'created', order: 'DESC' },
+                        ],
+                        labelCompletedAtBottom: [
+                            { field: 'hasCompletedAllTasks', order: 'ASC' },
+                            { field: 'label', order: 'ASC' },
+                            { field: 'updated', order: 'DESC' },
+                            { field: 'created', order: 'DESC' },
+                        ],
+                        labelDTNPinned: [
+                            { field: 'isDefaultTaskNote', order: 'DESC' },
+                            { field: 'label', order: 'ASC' },
+                            { field: 'updated', order: 'DESC' },
+                            { field: 'created', order: 'DESC' },
+                        ],
+                        labelDTNPinnedCompletedAtBottom: [
+                            { field: 'isDefaultTaskNote', order: 'DESC' },
+                            { field: 'hasCompletedAllTasks', order: 'ASC' },
+                            { field: 'label', order: 'ASC' },
+                            { field: 'updated', order: 'DESC' },
+                            { field: 'created', order: 'DESC' },
+                        ],
+                        created: [
+                            { field: 'created', order: 'DESC' },
+                            { field: 'label', order: 'ASC' },
+                            { field: 'updated', order: 'DESC' },
+                        ],
+                        createdCompletedAtBottom: [
+                            { field: 'hasCompletedAllTasks', order: 'ASC' },
+                            { field: 'created', order: 'DESC' },
+                            { field: 'label', order: 'ASC' },
+                            { field: 'updated', order: 'DESC' },
+                        ],
+                        createdDTNPinned: [
+                            { field: 'isDefaultTaskNote', order: 'DESC' },
+                            { field: 'created', order: 'DESC' },
+                            { field: 'label', order: 'ASC' },
+                            { field: 'updated', order: 'DESC' },
+                        ],
+                        createdDTNPinnedCompletedAtBottom: [
+                            { field: 'isDefaultTaskNote', order: 'DESC' },
+                            { field: 'hasCompletedAllTasks', order: 'ASC' },
+                            { field: 'created', order: 'DESC' },
+                            { field: 'label', order: 'ASC' },
+                            { field: 'updated', order: 'DESC' },
+                        ],
+                        updated: [
+                            { field: 'updated', order: 'DESC' },
+                            { field: 'label', order: 'ASC' },
+                            { field: 'created', order: 'DESC' },
+                        ],
+                        updatedCompletedAtBottom: [
+                            { field: 'hasCompletedAllTasks', order: 'ASC' },
+                            { field: 'updated', order: 'DESC' },
+                            { field: 'label', order: 'ASC' },
+                            { field: 'created', order: 'DESC' },
+                        ],
+                        updatedDTNPinned: [
+                            { field: 'isDefaultTaskNote', order: 'DESC' },
+                            { field: 'updated', order: 'DESC' },
+                            { field: 'label', order: 'ASC' },
+                            { field: 'created', order: 'DESC' },
+                        ],
+                        updatedDTNPinnedCompletedAtBottom: [
+                            { field: 'isDefaultTaskNote', order: 'DESC' },
+                            { field: 'hasCompletedAllTasks', order: 'ASC' },
+                            { field: 'updated', order: 'DESC' },
+                            { field: 'label', order: 'ASC' },
+                            { field: 'created', order: 'DESC' },
+                        ],
                     },
                 },
             },
+            includeFields: ['hasCompletedAllTasks', 'isDefaultTaskNote', 'isShared', 'tasksCount'],
+        },
+        TaskNotesCompletedInSession: {
+            filter: [{
+                    field: 'inTrash',
+                    value: false,
+                }, {
+                    field: 'hasTaskGroup',
+                    value: true,
+                }, {
+                    field: 'hasCompletedAllTasks',
+                    value: true,
+                }],
+            sort: [{ field: 'updated', order: 'DESC' }, { field: 'label', order: 'ASC' }],
+            params: {
+                updated: {
+                    range: { field: 'updated' },
+                },
+            },
+            includeFields: ['isShared'],
         },
         NotesWithReminders: {
             traversalName: 'reminderNotes',

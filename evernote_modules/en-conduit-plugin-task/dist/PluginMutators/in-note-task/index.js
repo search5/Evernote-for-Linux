@@ -52,6 +52,7 @@ const TaskInputSchema = conduit_utils_1.Struct({
     reminders: conduit_utils_1.ListOf(ReminderInputSchema),
     assigneeID: conduit_utils_1.NullableString,
     assigneeEmail: conduit_utils_1.NullableString,
+    creationEventLabel: conduit_utils_1.NullableString,
 }, 'TaskInput');
 const TaskGroupInputSchema = conduit_utils_1.Struct({
     noteLevelID: 'string',

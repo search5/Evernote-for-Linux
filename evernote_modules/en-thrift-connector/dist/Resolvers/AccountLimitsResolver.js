@@ -73,6 +73,10 @@ function AccountLimitsResolver() {
             type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableNumber),
             resolve: userNotesAndNotebookSharesSentResolver,
         },
+        ['AccountLimits.taskAssignmentLimitDaily']: {
+            type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableNumber),
+            resolve: genericRatioResolverFactory('taskAssignmentLimitDaily', 'taskAssignmentLimitDaily'),
+        },
     };
 }
 exports.AccountLimitsResolver = AccountLimitsResolver;

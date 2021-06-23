@@ -1,1 +1,1 @@
-{"version":3,"file":"MessageSync.d.ts","sourceRoot":"","sources":["../../src/SyncFunctions/MessageSync.ts"],"names":[],"mappings":"AAIA,OAAO,EAAiB,cAAc,EAAE,MAAM,eAAe,CAAC;AAG9D,OAAO,EAA0E,UAAU,EAAE,MAAM,eAAe,CAAC;AAEnH,wBAAsB,YAAY,CAAC,GAAG,EAAE,cAAc,EAAE,MAAM,EAAE,UAAU,iBA2CzE"}
+{"version":3,"file":"MessageSync.d.ts","sourceRoot":"","sources":["../../src/SyncFunctions/MessageSync.ts"],"names":[],"mappings":"AAIA,OAAO,EAAiB,cAAc,EAAE,MAAM,eAAe,CAAC;AAG9D,OAAO,EAA0E,gBAAgB,EAAE,MAAM,eAAe,CAAC;AAEzH,wBAAsB,YAAY,CAAC,GAAG,EAAE,cAAc,EAAE,MAAM,EAAE,gBAAgB,iBA2C/E"}

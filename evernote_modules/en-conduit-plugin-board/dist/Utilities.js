@@ -21,27 +21,15 @@ function getBoardPluginFeatures(di) {
     return (_b = (_a = di.featureFlags) === null || _a === void 0 ? void 0 : _a.boardPluginFeatures) !== null && _b !== void 0 ? _b : { schema: {} };
 }
 exports.getBoardPluginFeatures = getBoardPluginFeatures;
-function isWidgetSupported(schemaFeatures, boardType, widgetType) {
-    if (widgetType === en_home_data_model_1.WidgetType.Calendar && !schemaFeatures.calendar) {
-        return false;
-    }
-    else if (widgetType === en_home_data_model_1.WidgetType.Tasks && !schemaFeatures.tasks) {
-        return false;
-    }
-    else if (widgetType === en_home_data_model_1.WidgetType.FilteredNotes && !schemaFeatures.filteredNotes) {
-        return false;
-    }
-    else if (widgetType === en_home_data_model_1.WidgetType.Extra && !schemaFeatures.extra) {
-        return false;
-    }
-    return Boolean(en_home_data_model_1.WidgetType[widgetType]) && Boolean(en_home_data_model_1.BoardType[boardType]);
+function isWidgetSupported(boardType) {
+    return Boolean(en_home_data_model_1.BoardType[boardType]);
 }
 exports.isWidgetSupported = isWidgetSupported;
-function safeMutableWidgetType(schemaFeatures, boardType, widgetType) {
+function safeMutableWidgetType(boardType, widgetType) {
     if (!widgetType) {
         return null;
     }
-    return isWidgetSupported(schemaFeatures, boardType, widgetType) ? widgetType : null;
+    return isWidgetSupported(boardType) ? widgetType : null;
 }
 exports.safeMutableWidgetType = safeMutableWidgetType;
 function compare(a, b) {

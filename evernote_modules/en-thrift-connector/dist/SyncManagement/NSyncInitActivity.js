@@ -23,16 +23,18 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.nsyncInitActivityHydrator = exports.NSyncInitActivity = void 0;
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const Auth = __importStar(require("../Auth"));
-const SyncActivity_1 = require("./SyncActivity");
-class NSyncInitActivity extends SyncActivity_1.SyncActivity {
-    constructor(di, context, subpriority = 0, timeout = 0) {
+const ENSyncActivity_1 = require("./ENSyncActivity");
+class NSyncInitActivity extends ENSyncActivity_1.ENSyncActivity {
+    constructor(di, context, priority = en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC, subpriority = 0, timeout = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.NSyncInitActivity,
-            priority: SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC,
+            activityType: en_conduit_sync_types_1.SyncActivityType.NSyncInitActivity,
+            priority,
             subpriority,
             runAfter: Date.now() + timeout,
         }, {
+            priority,
             syncProgressTableName: null,
         });
         this.di = di;
@@ -46,42 +48,15 @@ class NSyncInitActivity extends SyncActivity_1.SyncActivity {
         if (!auth) {
             return;
         }
-        const storage = {
-            transact: (newTrc, name, func) => {
-                return this.context.syncEngine.transact(newTrc, name, func);
-            },
-            getNode: async (newTrc, ref) => {
-                return await this.context.syncEngine.graphStorage.getNode(newTrc, null, ref, false);
-            },
-            getEdge: async (newTrc, ref) => {
-                return await this.context.syncEngine.graphStorage.getEdge(newTrc, null, ref);
-            },
-            getSyncState: (newTrc, watcher, path) => {
-                return this.context.syncEngine.graphStorage.getSyncState(newTrc, watcher, path);
-            },
-            getEphemeralFlag: (newTrc, table, key) => {
-                return this.context.syncEngine.getEphemeralFlag(newTrc, table, key);
-            },
-            transactEphemeral: (newTrc, name, func) => {
-                return this.context.syncEngine.transactEphemeral(newTrc, name, func);
-            },
-            getUserID: () => {
-                const authInner = this.context.syncManager.getAuth();
-                if (!authInner) {
-                    throw new Error('Missing auth in initted SyncManager');
-                }
-                return authInner.userID;
-            },
-        };
         const napAuthInfo = Auth.hasNapAuthInfo(auth) ? auth.napAuthInfo : null;
         if (this.di.initSyncEventManager) {
-            this.context.syncEventManager = await this.di.initSyncEventManager(trc, auth.urlHost, auth.token, (napAuthInfo === null || napAuthInfo === void 0 ? void 0 : napAuthInfo.jwt) || '', (napAuthInfo === null || napAuthInfo === void 0 ? void 0 : napAuthInfo.clientID) || '', storage, this.context.usedPrebuilt);
+            this.context.syncEventManager = await this.di.initSyncEventManager(trc, auth.urlHost, auth.token, (napAuthInfo === null || napAuthInfo === void 0 ? void 0 : napAuthInfo.jwt) || '', (napAuthInfo === null || napAuthInfo === void 0 ? void 0 : napAuthInfo.clientID) || '', this.context.usedPrebuilt);
         }
     }
 }
 exports.NSyncInitActivity = NSyncInitActivity;
 function nsyncInitActivityHydrator(di, context, p, timeout) {
-    return new NSyncInitActivity(di, context, p.subpriority, timeout);
+    return new NSyncInitActivity(di, context, p.options.priority, p.subpriority, timeout);
 }
 exports.nsyncInitActivityHydrator = nsyncInitActivityHydrator;
 //# sourceMappingURL=NSyncInitActivity.js.map

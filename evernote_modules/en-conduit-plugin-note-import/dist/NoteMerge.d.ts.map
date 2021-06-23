@@ -1,1 +1,1 @@
-{"version":3,"file":"NoteMerge.d.ts","sourceRoot":"","sources":["../src/NoteMerge.ts"],"names":[],"mappings":"AAAA;;GAEG;AAEH,OAAO,EACL,cAAc,EAMf,MAAM,cAAc,CAAC;AAMtB,OAAO,EAAE,kBAAkB,EAAsB,MAAM,SAAS,CAAC;AA4MjE,eAAO,MAAM,SAAS,EAAE,kBAAkB,CAAC,GAAG,EAAE,cAAc,CAc7D,CAAC"}
+{"version":3,"file":"NoteMerge.d.ts","sourceRoot":"","sources":["../src/NoteMerge.ts"],"names":[],"mappings":"AAAA;;GAEG;AAEH,OAAO,EACL,cAAc,EAMf,MAAM,cAAc,CAAC;AAOtB,OAAO,EAAE,kBAAkB,EAAsB,MAAM,SAAS,CAAC;AA4MjE,eAAO,MAAM,SAAS,EAAE,kBAAkB,CAAC,GAAG,EAAE,cAAc,CAc7D,CAAC"}

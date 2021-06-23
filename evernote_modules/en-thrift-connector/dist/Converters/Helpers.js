@@ -164,7 +164,7 @@ async function ensureIsExternal(trc, params, syncContext, item) {
         const prev = await params.graphTransaction.getNode(trc, null, item);
         // if we have a previous node and it's in the process of being updated (node does not have the current sync context)
         if (prev && !prev.syncContexts.includes(syncContext)) {
-            if (prev.syncContexts[0].match(Helpers_1.EXTERNAL_CONTEXT_REGEX)) {
+            if (en_core_entity_types_1.isExternalSyncContext(prev.syncContexts[0])) {
                 item.NodeFields.isExternal = true;
             }
         }

@@ -29,6 +29,7 @@ var ConduitEvent;
     ConduitEvent["SEARCH_INDEX_UPDATED"] = "SearchIndexUpdated";
     ConduitEvent["NOTIFICATION_ACTION"] = "NotificationAction";
     ConduitEvent["FIRE_NOTIFICATION"] = "FireNotification";
+    ConduitEvent["PREBUILT_DB_LOADED"] = "PrebuiltDBLoaded";
 })(ConduitEvent = exports.ConduitEvent || (exports.ConduitEvent = {}));
 function isExternalUpload(params) {
     return 'url' in params && params.url !== undefined && params.url !== '';

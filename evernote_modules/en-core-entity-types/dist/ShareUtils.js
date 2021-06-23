@@ -3,10 +3,13 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSharerID = exports.getRecipientID = exports.getOwnerID = exports.getOwnMemberships = exports.MutationPermissionContext = exports.GraphQLPermissionContext = void 0;
+exports.isExternalSyncContext = exports.isSharedNoteSyncContext = exports.isLinkedSyncContext = exports.getSharerID = exports.getRecipientID = exports.getOwnerID = exports.getOwnMemberships = exports.MutationPermissionContext = exports.GraphQLPermissionContext = exports.EXTERNAL_CONTEXT_REGEX = exports.SHARED_NOTE_CONTEXT_REGEX = exports.LINKED_CONTEXT_REGEX = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const EntityConstants_1 = require("./EntityConstants");
+exports.LINKED_CONTEXT_REGEX = /^LinkedNotebook:/;
+exports.SHARED_NOTE_CONTEXT_REGEX = /^SharedNote:/;
+exports.EXTERNAL_CONTEXT_REGEX = /(^LinkedNotebook:|^SharedNote:)/;
 // Adapter for GraphQLContext
 class GraphQLPermissionContext {
     constructor(context) {
@@ -101,4 +104,16 @@ async function getSharerID(membership) {
     }
 }
 exports.getSharerID = getSharerID;
+function isLinkedSyncContext(syncContext) {
+    return Boolean(syncContext.match(exports.LINKED_CONTEXT_REGEX));
+}
+exports.isLinkedSyncContext = isLinkedSyncContext;
+function isSharedNoteSyncContext(syncContext) {
+    return Boolean(syncContext.match(exports.SHARED_NOTE_CONTEXT_REGEX));
+}
+exports.isSharedNoteSyncContext = isSharedNoteSyncContext;
+function isExternalSyncContext(syncContext) {
+    return Boolean(syncContext.match(exports.EXTERNAL_CONTEXT_REGEX));
+}
+exports.isExternalSyncContext = isExternalSyncContext;
 //# sourceMappingURL=ShareUtils.js.map

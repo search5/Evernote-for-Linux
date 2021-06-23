@@ -3,13 +3,21 @@
  * Copyright 2021-present Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMultiDay = exports.getTimeRange = exports.getEndedAt = exports.getAllDay = exports.getStartsAt = exports.createNoteUntitled = exports.openNoteUntitled = exports.createNoteTitle = exports.openNoteTitle = void 0;
+exports.getClose = exports.getMultiDay = exports.getTimeRange = exports.getEndedAt = exports.getAllDay = exports.getStartsAt = exports.createNoteUntitled = exports.openNoteUntitled = exports.createNoteTitle = exports.createNote = exports.openNoteTitle = exports.openNote = void 0;
 const locale_1 = require("./locale");
 const data_1 = require("./data");
+function openNote(locale = 'en') {
+    return data_1.getTranslator(data_1.Translated.OPEN_NOTE, locale)();
+}
+exports.openNote = openNote;
 function openNoteTitle(eventTitle, locale = 'en') {
     return data_1.getTranslator(data_1.Translated.OPEN_NOTE_TITLE, locale)(eventTitle);
 }
 exports.openNoteTitle = openNoteTitle;
+function createNote(locale = 'en') {
+    return data_1.getTranslator(data_1.Translated.CREATE_NOTE, locale)();
+}
+exports.createNote = createNote;
 function createNoteTitle(eventTitle, locale = 'en') {
     return data_1.getTranslator(data_1.Translated.CREATE_NOTE_TITLE, locale)(eventTitle);
 }
@@ -48,4 +56,8 @@ function getMultiDay(startTime, endTime, locale) {
     return data_1.getTranslator(data_1.Translated.TIME_RANGE, locale)(startDay, endDay);
 }
 exports.getMultiDay = getMultiDay;
+function getClose(locale) {
+    return data_1.getTranslator(data_1.Translated.CLOSE, locale)();
+}
+exports.getClose = getClose;
 //# sourceMappingURL=helpers.js.map

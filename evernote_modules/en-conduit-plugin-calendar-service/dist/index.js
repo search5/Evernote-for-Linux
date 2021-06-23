@@ -229,22 +229,39 @@ function getCalendarServicePlugin(httpClient) {
     async function eventsResolver(parent, args, context) {
         var _a, _b, _c, _d;
         conduit_core_1.validateDB(context, 'Must be authenticated to retrieve Google Calendar data.');
-        const resultOrError = await context.makeQueryRequest({ query: QueryConstants_1.CALENDAR_EVENTS_QUERY, args }, context);
+        // search locally
+        const cachedData = await Utilities_1.getEventsByDays(context, args.from, args.to);
         if (context.watcher) {
-            context.watcher.triggerAfterTime(CalendarConstants_1.POLL_INTERVAL);
+            // set time to trigger to smallest between poll time and next expiration
+            const currentTime = Date.now();
+            context.watcher.triggerAfterTime(Math.min(CalendarConstants_1.POLL_INTERVAL, cachedData && cachedData.expiration > currentTime ? cachedData.expiration - currentTime : Number.MAX_SAFE_INTEGER));
             // Watch this row in order to get notified of calendar (de)activations
             await context.db.getMemoryStorage().getValue(context.trc, context.watcher, CalendarConstants_1.CALENDAR_UPDATES_TABLE_NAME, CalendarConstants_1.CALENDAR_UPDATES_ROW_NAME);
         }
-        if ((_b = (_a = resultOrError.result) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.calendarEvents) {
-            const calendarEvents = (_d = (_c = resultOrError.result) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.calendarEvents;
-            for (const event of calendarEvents) {
-                await Utilities_1.cacheEvent(context, event);
-                event.linkedNotes = await Utilities_1.getLinkedNotes(context, event);
-            }
-            return calendarEvents;
+        if (cachedData && Date.now() <= cachedData.expiration) {
+            const events = await Utilities_1.addLinkedNotesToEvents(context, cachedData.cachedEvents);
+            return events;
         }
         else {
-            throw resultOrError.error || new Error('No Results from Query Service. Try again.');
+            // if not present, go to QS and cache
+            const expandedDates = Utilities_1.expandRequestedDates(args);
+            const calendars = await context.db.getGraphNodesByType(context.trc, context.watcher, en_data_model_1.EntityTypes.UserCalendarSettings);
+            const calendarIds = calendars.filter(cal => cal.NodeFields.isActive).map(cal => cal.id);
+            const resultOrError = await context.makeQueryRequest({ query: QueryConstants_1.CALENDAR_EVENTS_QUERY, args: Object.assign(Object.assign({}, expandedDates), { calendarIds }) }, context);
+            if ((_b = (_a = resultOrError.result) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.calendarEventsV2) {
+                const calendarEvents = (_d = (_c = resultOrError.result) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.calendarEventsV2;
+                calendarEvents.data = await Utilities_1.addLinkedNotesToEvents(context, calendarEvents.data);
+                await Utilities_1.cacheEventsById(context, calendarEvents.data);
+                await Utilities_1.cacheEventsByDay(context, calendarEvents, expandedDates);
+                return calendarEvents.data;
+            }
+            else {
+                // if QS was not available use the response from cache even if TTL is expired
+                if (cachedData) {
+                    return cachedData.cachedEvents;
+                }
+                throw resultOrError.error || new Error('Could not fetch events. Try again.');
+            }
         }
     }
     async function eventResolver(parent, args, context) {
@@ -258,7 +275,7 @@ function getCalendarServicePlugin(httpClient) {
         }
         if ((_b = (_a = resultOrError.result) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.calendarEvent) {
             const calendarEvent = (_d = (_c = resultOrError.result) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.calendarEvent;
-            await Utilities_1.cacheEvent(context, calendarEvent);
+            await Utilities_1.cacheEventsById(context, [calendarEvent]);
             calendarEvent.linkedNotes = await Utilities_1.getLinkedNotes(context, calendarEvent);
             return calendarEvent;
         }
@@ -286,20 +303,34 @@ function getCalendarServicePlugin(httpClient) {
             throw new conduit_utils_1.NotFoundError(args.noteID, 'Note not found');
         }
         if (graphDBevent) {
-            await context.db.runMutator(context.trc, 'calendarEventLinkInternal', Object.assign({ noteID: args.noteID, eventID: args.eventID, noteOwnerID: noteOwnerMetadata.userID }, graphDBevent.NodeFields));
-            return { success: true, result: graphDBevent.id };
+            try {
+                await context.db.runMutator(context.trc, 'calendarEventLinkInternal', Object.assign({ noteID: args.noteID, eventID: args.eventID, noteOwnerID: noteOwnerMetadata.userID }, graphDBevent.NodeFields));
+                return { success: true, result: graphDBevent.id };
+            }
+            catch (err) {
+                conduit_utils_1.logger.debug('Could not run mutation with GraphDB event.', err);
+            }
         }
-        const ephemeralEvent = await context.db.getMemoryStorage().getValue(context.trc, null, CalendarConstants_1.EPHEMERAL_EVENTS_TABLE_NAME, args.eventID);
+        const ephemeralEvent = await context.db.getMemoryStorage().getValue(context.trc, null, CalendarConstants_1.EPHEMERAL_EVENTS_BY_ID_TABLE_NAME, args.eventID);
         if (ephemeralEvent) {
-            const { id } = ephemeralEvent, eventWithoutID = __rest(ephemeralEvent, ["id"]);
-            await context.db.runMutator(context.trc, 'calendarEventLinkInternal', Object.assign({ noteID: args.noteID, eventID: args.eventID, noteOwnerID: noteOwnerMetadata.userID }, eventWithoutID));
-            return { success: true, result: ephemeralEvent.id };
+            try {
+                await context.db.runMutator(context.trc, 'calendarEventLinkInternal', Object.assign({ noteID: args.noteID, eventID: args.eventID, noteOwnerID: noteOwnerMetadata.userID }, ephemeralEvent));
+                return { success: true, result: args.eventID };
+            }
+            catch (err) {
+                conduit_utils_1.logger.debug('Could not run mutation with cached event.', err);
+            }
         }
         const qsEvent = await context.makeQueryRequest({ query: QueryConstants_1.CALENDAR_EVENT_QUERY, args: { id: args.eventID } }, context);
         if ((_b = (_a = qsEvent.result) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.calendarEvent) {
-            const _c = qsEvent.result.data.calendarEvent, { id } = _c, eventWithoutID = __rest(_c, ["id"]);
-            await context.db.runMutator(context.trc, 'calendarEventLinkInternal', Object.assign({ noteID: args.noteID, eventID: args.eventID, noteOwnerID: noteOwnerMetadata.userID }, eventWithoutID));
-            return { success: true, result: qsEvent.id };
+            try {
+                const _c = qsEvent.result.data.calendarEvent, { id } = _c, eventWithoutID = __rest(_c, ["id"]);
+                await context.db.runMutator(context.trc, 'calendarEventLinkInternal', Object.assign({ noteID: args.noteID, eventID: args.eventID, noteOwnerID: noteOwnerMetadata.userID }, eventWithoutID));
+                return { success: true, result: qsEvent.id };
+            }
+            catch (err) {
+                conduit_utils_1.logger.debug('Could not run mutation with QS event.', err);
+            }
         }
         return { success: false, result: 'Could not fetch event from Ephemeral DB nor Query Service' };
     }
@@ -313,6 +344,7 @@ function getCalendarServicePlugin(httpClient) {
             await context.db.getMemoryStorage().transact(context.trc, 'SetUpdatedCalendarTime', async (tx) => {
                 await tx.setValue(context.trc, CalendarConstants_1.CALENDAR_UPDATES_TABLE_NAME, CalendarConstants_1.CALENDAR_UPDATES_ROW_NAME, Date.now());
             });
+            await Utilities_1.expireEventsByDayCache(context);
             return { success: true, result: args.userCalendarSettingsId };
         }
         catch (error) {

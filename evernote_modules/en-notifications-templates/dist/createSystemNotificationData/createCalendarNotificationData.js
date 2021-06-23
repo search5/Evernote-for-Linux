@@ -12,6 +12,7 @@ function createCalendarNotificationData(notificationId, srcData, locale, logger)
     let target;
     let actionName;
     let localizedTitle;
+    let localizedButtonText;
     if (noteID) {
         target = noteID;
         actionName = notifications_1.SystemNotificationActionName.CalendarNavigateToNote;
@@ -22,6 +23,7 @@ function createCalendarNotificationData(notificationId, srcData, locale, logger)
         else {
             localizedTitle = l10n_1.openNoteUntitled(locale);
         }
+        localizedButtonText = l10n_1.openNote(locale);
     }
     else {
         target = calendarEventId;
@@ -32,6 +34,7 @@ function createCalendarNotificationData(notificationId, srcData, locale, logger)
         else {
             localizedTitle = l10n_1.createNoteUntitled(locale);
         }
+        localizedButtonText = l10n_1.createNote(locale);
     }
     let meetingDescription;
     try {
@@ -67,6 +70,16 @@ function createCalendarNotificationData(notificationId, srcData, locale, logger)
         body,
         clickNotificationActionTarget: target,
         clickNotificationActionName: actionName,
+        buttons: [
+            {
+                text: localizedButtonText,
+                action: {
+                    target,
+                    name: actionName,
+                },
+            },
+        ],
+        closeButtonText: l10n_1.getClose(locale),
     };
 }
 exports.createCalendarNotificationData = createCalendarNotificationData;

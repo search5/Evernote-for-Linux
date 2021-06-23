@@ -1,8 +1,8 @@
 {
   "name": "en-conduit-electron",
-  "version": "1.36.3",
+  "version": "1.37.3",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "http://localhost:4873/"
   },
   "description": "Conduit main process bridge for Electron",
   "main": "dist/index",
@@ -25,12 +25,12 @@
     "bunyan": "^1.8.12",
     "bunyan-prettystream": "^0.1.3",
     "bunyan-rotating-file-stream": "^1.6.3",
-    "conduit-auth-shared": "1.36.3",
-    "conduit-storage": "1.36.3",
-    "conduit-utils": "1.36.3",
-    "conduit-view": "1.36.3",
-    "conduit-view-types": "1.36.3",
-    "en-conduit-electron-shared": "1.36.3",
+    "conduit-auth-shared": "1.37.3",
+    "conduit-storage": "1.37.3",
+    "conduit-utils": "1.37.3",
+    "conduit-view": "1.37.3",
+    "conduit-view-types": "1.37.3",
+    "en-conduit-electron-shared": "1.37.3",
     "fs-extra": "^7.0.1",
     "keytar": "^6.0.1",
     "sanitize-filename": "^1.6.3"

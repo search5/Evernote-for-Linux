@@ -6,21 +6,22 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.backgroundNoteSyncActivityHydrator = exports.BackgroundNoteSyncActivity = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const NoteStoreSync_1 = require("../SyncFunctions/NoteStoreSync");
 const SyncHelpers_1 = require("../SyncFunctions/SyncHelpers");
 const ContentFetchSyncActivity_1 = require("./ContentFetchSyncActivity");
-const SyncActivity_1 = require("./SyncActivity");
+const ENSyncActivity_1 = require("./ENSyncActivity");
 let gMaxTime = conduit_utils_1.registerDebugSetting('BackgroundNoteMaxTimePerPoll', 1000, v => gMaxTime = v);
 let gChunkTimebox = conduit_utils_1.registerDebugSetting('BackgroundNoteChunkTimebox', 400, v => gChunkTimebox = v);
-class BackgroundNoteSyncActivity extends SyncActivity_1.SyncActivity {
+class BackgroundNoteSyncActivity extends ENSyncActivity_1.ENSyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.BackgroundNoteSyncActivity,
-            priority: subpriority > 0 ? SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC : SyncActivity_1.SyncActivityPriority.BACKGROUND,
+            activityType: en_conduit_sync_types_1.SyncActivityType.BackgroundNoteSyncActivity,
+            priority: subpriority > 0 ? en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC : en_conduit_sync_types_1.SyncActivityPriority.BACKGROUND,
             subpriority,
             runAfter: Date.now() + timeout,
         }, {
-            syncProgressTableName: SyncActivity_1.BACKGROUND_SYNC_PROGRESS_TABLE,
+            syncProgressTableName: en_conduit_sync_types_1.BACKGROUND_SYNC_PROGRESS_TABLE,
         });
         this.di = di;
     }
@@ -48,7 +49,7 @@ class BackgroundNoteSyncActivity extends SyncActivity_1.SyncActivity {
         if (res.hasMore) {
             // keep going in the background
             this.params.subpriority = 0;
-            this.options.syncProgressTableName = SyncActivity_1.BACKGROUND_SYNC_PROGRESS_TABLE;
+            this.options.syncProgressTableName = en_conduit_sync_types_1.BACKGROUND_SYNC_PROGRESS_TABLE;
             throw new conduit_utils_1.RetryError('continue', pollTime);
         }
         else {

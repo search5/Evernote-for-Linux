@@ -34,7 +34,7 @@ const BlobConverter_1 = require("../Converters/BlobConverter");
 const Converters_1 = require("../Converters/Converters");
 const NotebookConverter_1 = require("../Converters/NotebookConverter");
 const ResourceConverter_1 = require("../Converters/ResourceConverter");
-const SyncActivity_1 = require("./SyncActivity");
+const ENSyncActivity_1 = require("./ENSyncActivity");
 ;
 // Queue of resources currently being downloaded
 const resourcesQueue = [];
@@ -130,7 +130,7 @@ async function fetchNoteContent(trc, params, note, syncContext) {
         }
         conduit_utils_1.logger.debug(`Fetching note content for note ${note.id} ${note.label}`);
         const authData = Auth.decodeAuthData(metadata.authToken);
-        const noteStore = params.syncEngine.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
+        const noteStore = params.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
         const serviceGuid = Converters_1.convertGuidToService(noteID, en_core_entity_types_1.CoreEntityTypes.Note);
         const specs = new en_conduit_sync_types_1.TNoteResultSpec({
             includeContent: true,
@@ -180,7 +180,7 @@ async function fetchNoteResources(trc, params, noteID, syncContext, maxResources
     if (!noteSyncState) {
         return true;
     }
-    const resourceManager = params.syncEngine.resourceManager;
+    const resourceManager = params.syncEngine.getResourceManager();
     if (!resourceManager || !noteSyncState.resources) {
         if (!resourceManager) {
             conduit_utils_1.logger.warn('Resource Manager should be provided during conduit init to fetch resources.');
@@ -339,7 +339,7 @@ async function fetchAndUpdateSearchText(trc, params, attachment, authData) {
     }
     conduit_utils_1.logger.debug(`Fetching search text for attachment ${attachment.id}`);
     conduit_utils_1.traceTestCounts(trc, { fetchResourceSearchText: 1 });
-    const noteStore = params.syncEngine.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
+    const noteStore = params.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
     const serviceGuid = Converters_1.convertGuidToService(attachment.id, en_core_entity_types_1.CoreEntityTypes.Attachment);
     const searchText = await noteStore.getResourceSearchText(trc, authData.token, serviceGuid);
     // Set cached field
@@ -355,16 +355,16 @@ async function removeSearchText(trc, params, attachment) {
     });
     conduit_utils_1.traceTestCounts(trc, { emptyResourceSearchText: 1 });
 }
-class ContentFetchSyncActivity extends SyncActivity_1.SyncActivity {
+class ContentFetchSyncActivity extends ENSyncActivity_1.ENSyncActivity {
     constructor(di, context, args, subpriority = 0, timeout = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.ContentFetchSyncActivity,
-            priority: args ? SyncActivity_1.SyncActivityPriority.IMMEDIATE : SyncActivity_1.SyncActivityPriority.BACKGROUND,
+            activityType: en_conduit_sync_types_1.SyncActivityType.ContentFetchSyncActivity,
+            priority: args ? en_conduit_sync_types_1.SyncActivityPriority.IMMEDIATE : en_conduit_sync_types_1.SyncActivityPriority.BACKGROUND,
             subpriority,
             runAfter: Date.now() + timeout,
             dontPersist: Boolean(args),
         }, {
-            syncProgressTableName: SyncActivity_1.CONTENT_SYNC_PROGRESS_TABLE,
+            syncProgressTableName: en_conduit_sync_types_1.CONTENT_SYNC_PROGRESS_TABLE,
             immediateSyncArgs: args,
         });
         this.di = di;

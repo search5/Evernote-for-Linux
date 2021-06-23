@@ -25,7 +25,7 @@ async function applyTaskComparisonChanges(context, comparisonResult, sourceOfCha
                     break;
                 }
                 case Types_1.ComparisonStatus.added: {
-                    const { label, dueDate, timeZone, dueDateUIOption, flag, sortWeight, noteLevelID, status, taskGroupNoteLevelID, assigneeID, assigneeEmail, } = result.inputNode;
+                    const { label, dueDate, timeZone, dueDateUIOption, flag, sortWeight, noteLevelID, status, taskGroupNoteLevelID, assigneeID, assigneeEmail, creationEventLabel, } = result.inputNode;
                     const mutation = await context.db.runMutator(context.trc, 'taskCreate', {
                         container: result.parent.id,
                         taskGroupNoteLevelID,
@@ -38,6 +38,7 @@ async function applyTaskComparisonChanges(context, comparisonResult, sourceOfCha
                         noteLevelID,
                         status,
                         sourceOfChange,
+                        creationEventLabel,
                     });
                     const taskID = mutation.results.result.toString();
                     if (assigneeID || assigneeEmail) {

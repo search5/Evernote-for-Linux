@@ -167,10 +167,11 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
         this.mutationManager = new MutationManager_1.MutationManager(this.di, this.localKeyValStorage);
         this.ephemeralState = new conduit_storage_1.KeyValOverlay(this.localKeyValStorage, true);
         this.ephemeralState.addChangeHandler(this);
-        this.syncEngine = this.di.SyncEngine(this.remoteSyncedGraphStorage, this.ephemeralState, this.di.localSettings);
-        this.stagedBlobManager = this.di.StagedBlobManager(this.remoteSyncedGraphStorage, this.localKeyValStorage, this.di.localSettings);
+        const localSettings = this.di.getLocalSettings();
+        this.syncEngine = this.di.SyncEngine(this.remoteSyncedGraphStorage, this.ephemeralState, localSettings);
+        this.stagedBlobManager = this.di.StagedBlobManager(this.remoteSyncedGraphStorage, this.localKeyValStorage, localSettings);
         this.fileUploader = new FileUploader_1.FileUploader(this.di, this, this.di.getResourceManager(), this.stagedBlobManager);
-        this.remoteMutationExecutor = this.di.RemoteMutationExecutor(this.remoteSyncedGraphStorage, this.di.sendMutationMetrics, this.di.localSettings, this.stagedBlobManager, this.syncEngine);
+        this.remoteMutationExecutor = this.di.RemoteMutationExecutor(this.remoteSyncedGraphStorage, this.di.sendMutationMetrics, localSettings, this.stagedBlobManager, this.syncEngine);
         this.remoteMutationConsumer = new conduit_utils_1.DataConsumer({
             debugName: 'Upsync',
             bufferTime: REMOTE_MUTATION_BUFFER,

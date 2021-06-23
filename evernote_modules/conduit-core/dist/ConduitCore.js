@@ -416,7 +416,7 @@ class ConduitCore {
                 return storage;
             }, KeyValStorage: (trc, name) => {
                 return this.di.KeyValStorage(trc, this.multiUserManager.getFullDBName(name));
-            }, localSettings: this.localSettings, getCurrentUserID: async (trc, watcher) => {
+            }, getLocalSettings: () => this.getLocalSettings(), getCurrentUserID: async (trc, watcher) => {
                 return await this.multiUserManager.getCurrentUserID(trc, watcher);
             }, getAuthTokenAndState: async (trc, watcher, authUserID) => {
                 return await this.multiUserManager.getAuthTokenAndState(trc, watcher, authUserID);

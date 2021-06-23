@@ -1,8 +1,8 @@
 {
   "name": "conduit-view-types",
-  "version": "1.36.3",
+  "version": "1.37.3",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "http://localhost:4873/"
   },
   "description": "Shared types between conduit-core and conduit-view",
   "main": "dist/index",
@@ -10,6 +10,6 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-utils": "1.36.3"
+    "conduit-utils": "1.37.3"
   }
 }

@@ -1,8 +1,8 @@
 {
   "name": "conduit-storage-better-sqlite3",
-  "version": "1.36.3",
+  "version": "1.37.3",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "http://localhost:4873/"
   },
   "description": "Conduit better-sqlite3 wrapper",
   "main": "dist/index",
@@ -19,8 +19,8 @@
   },
   "dependencies": {
     "better-sqlite3": "^7.1.2",
-    "conduit-storage": "1.36.3",
-    "conduit-utils": "1.36.3",
+    "conduit-storage": "1.37.3",
+    "conduit-utils": "1.37.3",
     "fs-extra": "^7.0.1"
   }
 }

@@ -22,7 +22,7 @@ for entry in files:
         continue
     
     r = requests.head("https://registry.npmjs.org/{}".format(item))
-    print("{} Processing... {}".format(item, r.status_code))
+    #print("{} Processing... {}".format(item, r.status_code))
 
     if r.status_code != 404:
         shutil.rmtree(entry)

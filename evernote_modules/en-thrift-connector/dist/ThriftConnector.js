@@ -109,8 +109,11 @@ function init(di, configs) {
     // X is an arbitrary number that is most likely smaller than any realistic auth token lifetime.
     const [refreshNAPAuthToken] = conduit_utils_1.memoize('refreshAuthToken', refreshAuthToken, (_, oldAuth) => `${oldAuth.token}:${oldAuth.userID}`, gAuthTokenCacheLifetime);
     const quasarConnector = new QuasarConnector_1.QuasarConnectorAndExecutor(di, hostResolver, nSyncEventManager);
-    const initSyncEventManager = async (trc, host, token, jwt, clientID, storage, fromPrebuilt) => {
-        await nSyncEventManager.init(trc, host, token, jwt, storage, clientID, resourceManager, fromPrebuilt);
+    const setupSyncEventStorage = (storage) => {
+        nSyncEventManager.setupStorage(storage);
+    };
+    const initSyncEventManager = async (trc, host, token, jwt, clientID, fromPrebuilt) => {
+        await nSyncEventManager.init(trc, host, token, jwt, clientID, resourceManager, fromPrebuilt);
         return nSyncEventManager;
     };
     const pluginTokenRefreshManager = new PluginHelpers_1.PluginTokenRefreshManager({ refreshAuthToken: refreshNAPAuthToken }, (_b = configs.maxBackoffTimeout) !== null && _b !== void 0 ? _b : 16000);
@@ -172,7 +175,8 @@ function init(di, configs) {
                 };
             },
             SyncEngine: (graphStorage, ephemeralState, localSettings) => {
-                const engine = new ThriftSyncEngine_1.ThriftSyncEngine(Object.assign(Object.assign({}, di), { initSyncEventManager, refreshAuthToken: refreshNAPAuthToken }), graphStorage, ephemeralState, thriftComm, localSettings, resourceManager, offlineContentStrategy, di.clientCredentials);
+                const engine = new ThriftSyncEngine_1.ThriftSyncEngine(Object.assign(Object.assign({}, di), { initSyncEventManager,
+                    setupSyncEventStorage, refreshAuthToken: refreshNAPAuthToken, getOfflineContentStrategy: () => di.getOfflineContentStrategy ? di.getOfflineContentStrategy() : conduit_view_types_1.OfflineContentStrategy.NONE }), graphStorage, ephemeralState, thriftComm, localSettings, resourceManager, offlineContentStrategy, di.clientCredentials);
                 return engine;
             },
             StagedBlobManager: (graphStorage, blobStorage, localSettings) => {
@@ -207,7 +211,7 @@ function init(di, configs) {
             },
             getHttpTransport: di.getHttpTransport,
             getMutationServiceLastProcessingTime: async (newTrc, graphStorage) => {
-                const timeReturn = await graphStorage.getSyncState(newTrc, null, ['LastNSyncProcessingTime']) || 0;
+                const timeReturn = await graphStorage.getSyncState(newTrc, null, [en_nsync_connector_1.LAST_NSYNC_SYNC_STATE_PATH]) || 0;
                 if (typeof (timeReturn) !== 'number') {
                     return 0;
                 }

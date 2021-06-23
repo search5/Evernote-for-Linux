@@ -123,13 +123,13 @@ async function getAndUpdateUser(trc, params, userLastUpdated) {
     if (!syncStatePath) {
         return;
     }
-    const userStore = params.syncEngine.thriftComm.getUserStore(params.auth.urls.userStoreUrl);
+    const userStore = params.thriftComm.getUserStore(params.auth.urls.userStoreUrl);
     const user = await SyncHelpers_1.interruptible(params, userStore.getUser(trc, params.auth.token));
     if (user.id !== params.auth.userID) {
         throw new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.USER_CHANGED, params.auth.token);
     }
     await params.syncEngine.transact(trc, 'updateUser', async (graphTransaction) => {
-        await params.syncEngine.updateUser(trc, graphTransaction, user, params.isVault, params.auth);
+        await params.updateUser(trc, graphTransaction, user, params.isVault, params.auth);
         await graphTransaction.updateSyncState(trc, syncStatePath, { userLastUpdated });
     });
 }
@@ -138,7 +138,7 @@ async function getAndUpdateBusinessUsers(trc, params, businessUsersUpdateCount) 
     if (!syncStatePath) {
         return;
     }
-    const userStore = params.syncEngine.thriftComm.getUserStore(params.auth.urls.userStoreUrl);
+    const userStore = params.thriftComm.getUserStore(params.auth.urls.userStoreUrl);
     const businessUserFilter = { statuses: [en_conduit_sync_types_1.TBusinessUserStatus.ACTIVE, en_conduit_sync_types_1.TBusinessUserStatus.DEACTIVATED] };
     const currentUsers = await SyncHelpers_1.interruptible(params, userStore.listBusinessUsers(trc, params.auth.token, businessUserFilter));
     const businessProfiles = currentUsers.map(user => ProfileConverter_1.profileFromUserProfile(user, true));

@@ -55,9 +55,7 @@ exports.widgetTypeDef = {
         },
     },
 };
-const createWidgetIndexConfig = (di) => {
-    // Eagerly initializing as this code can conceivably be called a lot.
-    const schemaFeatures = Utilities.getBoardPluginFeatures(di).schema;
+const createWidgetIndexConfig = () => {
     return conduit_storage_1.buildNodeIndexConfiguration(exports.widgetTypeDef, {
         indexResolvers: {
             parent: conduit_storage_1.getIndexByResolverForEdge(exports.widgetTypeDef, ['edges', 'parent']),
@@ -79,16 +77,17 @@ const createWidgetIndexConfig = (di) => {
                 schemaType: conduit_utils_1.Nullable(en_home_data_model_1.MutableWidgetTypeSchema),
                 resolver: async (trc, node, _) => {
                     const { boardType, mutableWidgetType, } = node.NodeFields;
-                    return [Utilities.safeMutableWidgetType(schemaFeatures, boardType, mutableWidgetType)];
+                    return [Utilities.safeMutableWidgetType(boardType, mutableWidgetType)];
                 },
                 graphqlPath: ['mutableWidgetType'],
                 isUnSyncedField: true,
+                version: 5,
             },
-            isSupportedV3: {
+            isVisibleToClients: {
                 schemaType: 'boolean',
                 resolver: async (trc, node, _) => {
-                    const { boardType, widgetType, } = node.NodeFields;
-                    let visibleToClients = Utilities.isWidgetSupported(schemaFeatures, boardType, widgetType);
+                    const { boardType, } = node.NodeFields;
+                    let visibleToClients = Utilities.isWidgetSupported(boardType);
                     /*
                      * We could add a second index for this; however, the overall ideay is the same.
                      *  Show this widget to the clients?
@@ -102,13 +101,14 @@ const createWidgetIndexConfig = (di) => {
                 },
                 graphqlPath: ['isSupported'],
                 isUnSyncedField: true,
+                version: 2,
             },
         },
         queries: {
             WidgetsInBoard: {
                 traversalName: 'platformWidgets',
                 filter: [{
-                        field: 'isSupportedV3',
+                        field: 'isVisibleToClients',
                         value: true,
                     }],
                 params: {

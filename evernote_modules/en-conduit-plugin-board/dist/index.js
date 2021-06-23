@@ -56,7 +56,6 @@ function getENBoardPlugin() {
             return mutators;
         },
         defineQueries: di => {
-            const boardFeatureSchema = Utilities.getBoardPluginFeatures(di).schema;
             const queries = {
                 'Board.headerBG': di.fileResolver(en_data_model_1.EntityTypes.Board, 'headerBG', false),
                 'Board.headerBGPreviousUpload': di.fileResolver(en_data_model_1.EntityTypes.Board, 'headerBGPreviousUpload', false),
@@ -64,7 +63,7 @@ function getENBoardPlugin() {
                     type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.Nullable(en_home_data_model_1.MutableWidgetTypeSchema)),
                     resolve: async (widget, _, context) => {
                         const { boardType, mutableWidgetType, } = widget;
-                        return Utilities.safeMutableWidgetType(boardFeatureSchema, boardType, mutableWidgetType);
+                        return Utilities.safeMutableWidgetType(boardType, mutableWidgetType);
                     },
                 },
                 ['Widget.selectedTab']: {
@@ -104,7 +103,7 @@ function getENBoardPlugin() {
                 },
                 [en_data_model_1.EntityTypes.Widget]: {
                     typeDef: Widget_1.widgetTypeDef,
-                    indexConfig: Widget_1.createWidgetIndexConfig(di),
+                    indexConfig: Widget_1.createWidgetIndexConfig(),
                     nsyncConverters: { [en_data_model_1.NSyncEntityType.WIDGET]: WidgetConverter_1.getWidgetNode },
                 },
                 [en_data_model_1.EntityTypes.WidgetContentConflict]: {

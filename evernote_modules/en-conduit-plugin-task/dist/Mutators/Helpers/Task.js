@@ -81,6 +81,16 @@ async function taskCreatePlan(trc, ctx, params) {
             });
         }
     }
+    ctx.updateAnalytics({
+        taskCreate: {
+            category: 'task',
+            action: 'create',
+            label: params.creationEventLabel,
+            dimensions: {
+                ['task_id']: taskID,
+            },
+        },
+    });
     return plan;
 }
 exports.taskCreatePlan = taskCreatePlan;

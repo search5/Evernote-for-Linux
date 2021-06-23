@@ -72,31 +72,30 @@ async function genNoteMoveToTrashOps(trc, ctx, noteRef, ops, targetContainer) {
     if (!policy.canMoveToTrash) {
         throw new conduit_utils_1.PermissionError('Permission Denied: cannot move note to trash');
     }
-    const noteOwner = await ctx.resolveOwnerRef(trc, note);
-    const isSharedWithMe = noteOwner !== ctx.userID && (!ctx.vaultUserID || noteOwner !== ctx.vaultUserID);
     const parentID = getNoteParentID(note);
     let container = targetContainer || null;
     if (!container) {
         container = parentID ? await fetchContainer(trc, ctx, parentID) : null;
     }
-    if (!isSharedWithMe || !ctx.isOptimistic) {
-        const fields = {
-            deleted: ctx.thriftTimestamp,
-        };
-        const node = ctx.assignFields(EntityConstants_1.CoreEntityTypes.Note, fields);
-        ops.push({
-            changeType: 'Node:UPDATE',
-            nodeRef: noteRef,
-            node,
-        });
-    }
-    else {
+    // the optimistic behavior should be to delete note if it is shared
+    const noteOwner = await ctx.resolveOwnerRef(trc, note);
+    const isSharedWithMe = noteOwner !== ctx.userID && (!ctx.vaultUserID || noteOwner !== ctx.vaultUserID);
+    if (isSharedWithMe && ctx.isOptimistic) {
         ops.push({
             changeType: 'Node:DELETE',
             nodeRef: noteRef,
         });
         return;
     }
+    const fields = {
+        deleted: ctx.thriftTimestamp,
+    };
+    const node = ctx.assignFields(EntityConstants_1.CoreEntityTypes.Note, fields);
+    ops.push({
+        changeType: 'Node:UPDATE',
+        nodeRef: noteRef,
+        node,
+    });
     if (!ctx.isOptimistic) {
         return;
     }

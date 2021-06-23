@@ -6,9 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.schemaMigrationActivityHydrator = exports.SchemaMigrationActivity = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const Migrations_1 = require("../SyncFunctions/Migrations");
 const SyncHelpers_1 = require("../SyncFunctions/SyncHelpers");
-const SyncActivity_1 = require("./SyncActivity");
+const ENSyncActivity_1 = require("./ENSyncActivity");
 const MAX_PENDING_MIGRATIONS_LIMIT = 30;
 function ensurePendingMigrationsLimit(pendingMutations) {
     if (pendingMutations.length > MAX_PENDING_MIGRATIONS_LIMIT) {
@@ -16,15 +17,15 @@ function ensurePendingMigrationsLimit(pendingMutations) {
         throw new Migrations_1.SchemaMigrationError('pending mutations exceed limit');
     }
 }
-class SchemaMigrationActivity extends SyncActivity_1.SyncActivity {
+class SchemaMigrationActivity extends ENSyncActivity_1.ENSyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.SchemaMigrationActivity,
-            priority: SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC,
+            activityType: en_conduit_sync_types_1.SyncActivityType.SchemaMigrationActivity,
+            priority: en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC,
             subpriority,
             runAfter: Date.now() + timeout,
         }, {
-            syncProgressTableName: SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
+            syncProgressTableName: en_conduit_sync_types_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
         });
     }
     get progressBucketSize() {

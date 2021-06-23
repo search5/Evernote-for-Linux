@@ -65,58 +65,60 @@ query calendarAccount ($id: String!) {
   }
 }
 `;
-// REVIEW: check for optional parameters
 exports.CALENDAR_EVENTS_QUERY = `
-query calendarEvents ($from: Timestamp, $to: Timestamp, $provider: CalendarProvider) {
-  calendarEvents(from: $from , to: $to, provider: $provider) {
-    id
-    provider
-    userIdFromExternalProvider
-    userCalendarExternalId
-    calendarEventExternalId
-    summary
-    displayColor
-    description
-    location
-    isAllDay
-    start
-    end
-    isBusy
-    status
-    created
-    lastModified
-    eventCreator {
-      email
-      avatar
-      displayName
-    }
-    eventOrganizer {
-      email
-      avatar
-      displayName
-    }
-    links {
-      type
+query calendarEventsV2 ($from: Timestamp, $to: Timestamp, $provider: CalendarProvider, $calendarIds: [String]) {
+  calendarEventsV2(from: $from , to: $to, provider: $provider, calendarIds: $calendarIds) {
+    data {
+      id
+      provider
+      userIdFromExternalProvider
+      userCalendarExternalId
+      calendarEventExternalId
+      summary
+      displayColor
       description
-      uri
-    }
-    recurrence
-    externalProviderDeleted
-    isAccountConnected
-    recurrentEventId
-    isRecurrenceInstance
-    iCalendarUid
-    attendees {
-      contact {
+      location
+      isAllDay
+      start
+      end
+      isBusy
+      status
+      created
+      lastModified
+      eventCreator {
         email
         avatar
         displayName
       }
-      isOptional
-      responseStatus
-      isResource
-      isSelf
+      eventOrganizer {
+        email
+        avatar
+        displayName
+      }
+      links {
+        type
+        description
+        uri
+      }
+      recurrence
+      externalProviderDeleted
+      isAccountConnected
+      recurrentEventId
+      isRecurrenceInstance
+      iCalendarUid
+      attendees {
+        contact {
+          email
+          avatar
+          displayName
+        }
+        isOptional
+        responseStatus
+        isResource
+        isSelf
+      }
     }
+    refreshAfter
   }
 }
 `;

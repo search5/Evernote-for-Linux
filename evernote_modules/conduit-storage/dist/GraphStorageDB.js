@@ -304,12 +304,14 @@ class GraphStorageBase extends StorageEventEmitter_1.StorageEventEmitter {
         return await this.storage.getValidatedValue(trc, watcher, tableForNodeType(nodeRef.type), nodeRef.id, getDummy ? validateIsGraphNode : validateIsRealGraphNode);
     }
     async batchGetNodes(trc, watcher, type, nodeIDs, getDummy = false) {
+        conduit_utils_1.traceEventStart(trc, 'batchGetNodes', { type, noteIDsCount: nodeIDs.length });
         const validate = getDummy ? validateIsGraphNode : validateIsRealGraphNode;
         const values = await this.storage.batchGetValues(trc, watcher, tableForNodeType(type), nodeIDs);
         const nodes = [];
         for (const nodeID of nodeIDs) {
             nodes.push(validate(values[nodeID]));
         }
+        conduit_utils_1.traceEventEnd(trc, 'batchGetNodes');
         return nodes;
     }
     async getAllGraphNodeRefs(trc, watcher) {
@@ -479,8 +481,10 @@ class GraphStorageBase extends StorageEventEmitter_1.StorageEventEmitter {
         return await this.storage.getKeys(trc, watcher, tableForCustomSyncState(customType));
     }
     async getFullTable(trc, watcher, tableName) {
+        conduit_utils_1.traceEventStart(trc, 'getFullTable', { tableName });
         const keys = (await this.storage.getKeys(trc, watcher, tableName)).sort();
         if (!keys.length) {
+            conduit_utils_1.traceEventEnd(trc, 'getFullTable');
             return undefined;
         }
         const values = await this.storage.batchGetValues(trc, watcher, tableName, keys);
@@ -491,6 +495,7 @@ class GraphStorageBase extends StorageEventEmitter_1.StorageEventEmitter {
                 ret[key] = val;
             }
         }
+        conduit_utils_1.traceEventEnd(trc, 'getFullTable');
         return ret;
     }
     getCacheConfig(nodeType, cacheField) {
@@ -581,7 +586,7 @@ class GraphStorageBase extends StorageEventEmitter_1.StorageEventEmitter {
         return this.getNodeLookup(tableName).getData(trc);
     }
     async getNodeLookupTable(trc, type, lookupField) {
-        return this.getNodeLookupTableByName(trc, tableForNodeLookup(type, lookupField));
+        return await this.getNodeLookupTableByName(trc, tableForNodeLookup(type, lookupField));
     }
     clearLookups() {
         for (const type in this.config.indexer.config) {
@@ -593,6 +598,12 @@ class GraphStorageBase extends StorageEventEmitter_1.StorageEventEmitter {
         }
     }
 }
+__decorate([
+    conduit_utils_1.traceAsync('loadNodeLookupTable', 'tableName')
+], GraphStorageBase.prototype, "loadNodeLookupTable", null);
+__decorate([
+    conduit_utils_1.traceAsync('clearLookups')
+], GraphStorageBase.prototype, "clearLookups", null);
 exports.GraphStorageBase = GraphStorageBase;
 class GraphTransactionContext extends GraphStorageBase {
     constructor(db, ephemeralDB, config, underlay) {
@@ -610,6 +621,13 @@ class GraphTransactionContext extends GraphStorageBase {
         // finalizeIndexPropagation will set the nodes with the updated PropagatedFields, thus no redundant setNodes will occur.
         await this.finalizeIndexPropagation(trc);
         await super.destructor(trc);
+    }
+    getPendingChangesKey(ref) {
+        return `${ref.type}::${ref.id}`;
+    }
+    splitPendingChangesKey(key) {
+        const idx = key.indexOf('::');
+        return idx !== -1 ? key.slice(idx + 2) : '';
     }
     readWriteTreeForTypeAndIndex(type, index, inMemory, rootID) {
         const table = tableForIndex(type, index);
@@ -724,6 +742,7 @@ class GraphTransactionContext extends GraphStorageBase {
         await this.db.removeValue(trc, tableForCustomSyncState(customType), key);
     }
     async setNodeFieldLookupValue(trc, nodeRef, lookupField, lookupValue) {
+        conduit_utils_1.traceEventStart(trc, 'setNodeFieldLookupValue', { type: nodeRef.type, lookupField });
         const tableName = tableForNodeLookup(nodeRef.type, lookupField);
         const isRemove = lookupValue === null || lookupValue === undefined;
         const lookup = await this.getNodeLookup(tableName).getData(trc);
@@ -740,6 +759,7 @@ class GraphTransactionContext extends GraphStorageBase {
         else {
             await this.db.setValue(trc, tableName, nodeRef.id, lookupValue);
         }
+        conduit_utils_1.traceEventEnd(trc, 'setNodeFieldLookupValue');
     }
     // INDEX METHODS:
     async _updateIndexes(trc, oldIndexes, newIndexes, priorities, localeChanged, mustBeReindexed, setProgress) {
@@ -757,7 +777,12 @@ class GraphTransactionContext extends GraphStorageBase {
         for (const tableName in allTableNames) {
             const oldIndex = oldIndexes[tableName];
             const newIndex = newIndexes[tableName];
-            if (tableName !== localeKey && (IndexSchemaDiff_1.hasStoredIndexChanged(oldIndex, newIndex) || localeChanged || mustBeReindexed[tableName])) {
+            if (tableName === localeKey) {
+                if (IndexSchemaDiff_1.hasStoredIndexChanged(oldIndex, newIndex)) {
+                    changedIndexes[tableName] = newIndex;
+                }
+            }
+            else if (localeChanged || IndexSchemaDiff_1.hasStoredIndexChanged(oldIndex, newIndex) || mustBeReindexed[tableName]) {
                 ++changeCount;
                 await this.db.clearTable(trc, tableName);
                 await this.db.removeValue(trc, Tables.StoredIndexes, tableName);
@@ -960,16 +985,18 @@ class GraphTransactionContext extends GraphStorageBase {
         if (!port) {
             return;
         }
-        this.pendingChanges[id] = this.pendingChanges[id] || { type, changes: [] };
-        this.pendingChanges[id].changes.push({
+        const key = this.getPendingChangesKey({ id, type });
+        this.pendingChanges[key] = this.pendingChanges[key] || { type, changes: [] };
+        this.pendingChanges[key].changes.push({
             edge,
             isRemove,
         });
     }
     async applyPendingChanges(trc) {
         const idsByType = {};
-        for (const id in this.pendingChanges) {
-            const change = this.pendingChanges[id];
+        for (const key in this.pendingChanges) {
+            const change = this.pendingChanges[key];
+            const id = this.splitPendingChangesKey(key);
             const type = change.type;
             idsByType[type] = idsByType[type] || [];
             idsByType[type].push(id);
@@ -1157,9 +1184,9 @@ class GraphTransactionContext extends GraphStorageBase {
         return node;
     }
     async updateNodeDeferred(trc, nodeRef, path, value, doNotIndex = false) {
-        const { id, type } = nodeRef;
-        this.pendingChanges[id] = this.pendingChanges[id] || { type, changes: [] };
-        this.pendingChanges[id].changes.push({
+        const key = this.getPendingChangesKey(nodeRef);
+        this.pendingChanges[key] = this.pendingChanges[key] || { type: nodeRef.type, changes: [] };
+        this.pendingChanges[key].changes.push({
             path,
             value,
             doNotIndex,
@@ -1538,10 +1565,10 @@ class GraphTransactionContext extends GraphStorageBase {
             const byPort = edgesToPropagateToByType[dstPort];
             // Propagated values should never need any async operations to resolve from the source node, hence we're not passing the nodeFieldLookup func
             if (origNode) {
-                const origValue = await this.config.indexer.resolveField(trc, origNode, byPort.srcField, null, {});
+                const origValue = await this.config.indexer.resolveField(trc, origNode, byPort.srcField, null, {}, {});
                 origPropagatedFields[byPort.dstField] = origValue;
             }
-            const newValue = newNode ? await this.config.indexer.resolveField(trc, newNode, byPort.srcField, null, {}) : [null];
+            const newValue = newNode ? await this.config.indexer.resolveField(trc, newNode, byPort.srcField, null, {}, {}) : [null];
             newPropagatedFields[byPort.dstField] = newValue;
         }
         if (conduit_utils_1.isEqual(origPropagatedFields, newPropagatedFields)) {
@@ -1609,7 +1636,7 @@ class GraphTransactionContext extends GraphStorageBase {
         }
         const pending = this.pendingPropagatedFields[nodeRef.type] && this.pendingPropagatedFields[nodeRef.type][nodeRef.id];
         const propagatedFields = pending ? SimplyImmutable.cloneMutable(pending) : {};
-        const origResolvedFields = origNode ? await this.config.indexer.resolveAllFields(trc, origNode, null, origNode.PropagatedFields || {}) : {};
+        const origResolvedFields = origNode ? await this.config.indexer.resolveAllFields(trc, origNode, this.nodeFieldLookup, origNode.PropagatedFields || {}) : {};
         const resolvedFields = node ? await this.config.indexer.resolveAllFields(trc, node, this.nodeFieldLookup, propagatedFields) : {};
         const fieldsChanged = Object.keys(resolvedFields).filter(field => !conduit_utils_1.isEqual(origResolvedFields[field], resolvedFields[field]));
         const typeIndexes = await this.getIndexesForType(trc, nodeRef.type);
@@ -1807,9 +1834,10 @@ class GraphTransactionContext extends GraphStorageBase {
         if (!node && !getDummy) {
             return node;
         }
-        const pending = this.pendingChanges[nodeRef.id];
-        if (pending && pending.type === nodeRef.type) {
-            delete this.pendingChanges[nodeRef.id];
+        const key = this.getPendingChangesKey(nodeRef);
+        const pending = this.pendingChanges[key];
+        if (pending) {
+            delete this.pendingChanges[key];
             node = await this.applyPendingNodeUpdates(trc, nodeRef, node, pending.changes);
         }
         return node;
@@ -1837,7 +1865,7 @@ __decorate([
     conduit_utils_1.traceAsync
 ], GraphTransactionContext.prototype, "_updateIndexes", null);
 __decorate([
-    conduit_utils_1.traceAsync
+    conduit_utils_1.traceAsync('reindexType', 'type', 'indexes')
 ], GraphTransactionContext.prototype, "reindexType", null);
 __decorate([
     conduit_utils_1.traceAsync

@@ -9,7 +9,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NSyncEventManager = void 0;
+exports.NSyncEventManager = exports.LAST_NSYNC_SYNC_STATE_PATH = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
@@ -17,6 +17,7 @@ const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
 const NSyncProcessor_1 = require("./NSyncProcessor");
 const ServiceAvailability_1 = require("./ServiceAvailability");
+exports.LAST_NSYNC_SYNC_STATE_PATH = 'LastNSyncProcessTime';
 const gTracePool = new conduit_utils_1.AsyncTracePool('NSyncEventManager');
 const LAST_CONNECTION_BUFFER_TIME = 60000;
 const BACKOFF_RECONNECT = 5 * conduit_utils_1.MILLIS_IN_ONE_SECOND;
@@ -64,7 +65,7 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         this.firstMessageResolve = null;
         this.testOverride = async (trc, args, context) => {
             conduit_core_1.validateDB(context);
-            let disable = args.disable;
+            const disable = args.disable;
             this.disableWithOverride = disable;
             const nsyncDisabled = await context.db.getEphemeralFlag(context.trc, context.watcher, 'SyncManager', 'nsyncDisabled');
             await this.onSyncStateChange(trc, nsyncDisabled, this.isPaused);
@@ -77,7 +78,7 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             }
             const connInfo = await context.db.getSyncState(context.trc, context.watcher, ['NSyncEventManager']);
             const nsyncDisabled = await context.db.getEphemeralFlag(context.trc, context.watcher, 'SyncManager', 'nsyncDisabled');
-            const lastNSyncProcessTime = await context.db.getSyncState(context.trc, context.watcher, ['LastNSyncProcessTime']);
+            const lastNSyncProcessTime = await context.db.getSyncState(context.trc, context.watcher, [exports.LAST_NSYNC_SYNC_STATE_PATH]);
             const paused = await context.db.getEphemeralFlag(context.trc, context.watcher, 'SyncManager', 'syncPaused');
             const completed = await context.db.getEphemeralFlag(context.trc, context.watcher, 'SyncManager', 'nsyncCompleted');
             return {
@@ -104,10 +105,15 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         }
         this.expungeSet = new Set();
     }
-    async init(trc, host, monolithToken, jwtToken, storage, clientID, resourceManager, usedPrebuilt) {
+    setupStorage(storage) {
+        this.storage = storage;
+    }
+    async init(trc, host, monolithToken, jwtToken, clientID, resourceManager, usedPrebuilt) {
+        if (!this.storage) {
+            throw new Error('Did not setup storage before init');
+        }
         this.isDestroyed = false;
         this.monolithHost = host;
-        this.storage = storage;
         this.clientID = clientID;
         this.monolithToken = monolithToken;
         this.jwt = jwtToken;
@@ -164,11 +170,10 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         }
     }
     isAvailable() {
-        var _a;
         if (this.disableWithOverride) {
             return false;
         }
-        return Boolean(this.di.isNSyncEnabled && ((_a = this.availability) === null || _a === void 0 ? void 0 : _a.isServiceAvailable()) && this.di.nSyncEntityFilter.length);
+        return Boolean(this.di.isNSyncEnabled && (!this.availability || this.availability.isServiceAvailable()) && this.di.nSyncEntityFilter.length);
     }
     isEnabled() {
         return !this.isDisabled;
@@ -535,12 +540,12 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
                     return;
                 }
                 try {
-                    await this.storage.transact(trc, 'UpdateLastNSyncProcessingTime', async (transaction) => {
-                        await transaction.replaceSyncState(trc, ['LastNSyncProcessingTime'], lastNSyncProcessingTime);
+                    await this.storage.transact(trc, 'UpdateLastNSyncProcessTime', async (transaction) => {
+                        await transaction.replaceSyncState(trc, [exports.LAST_NSYNC_SYNC_STATE_PATH], lastNSyncProcessingTime);
                     });
                 }
                 catch (err) {
-                    conduit_utils_1.logger.error('Cannot save LastNSyncProcessingTime. Error: ', err);
+                    conduit_utils_1.logger.error('Cannot save LastNSyncProcessTime. Error: ', err);
                 }
             }
         });

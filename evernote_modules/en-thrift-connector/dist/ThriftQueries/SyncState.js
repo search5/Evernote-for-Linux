@@ -7,9 +7,9 @@ exports.addSyncStateQueries = exports.addSyncStateMutators = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const Auth_1 = require("../Auth");
 const SyncHelpers_1 = require("../SyncFunctions/SyncHelpers");
-const SyncActivity_1 = require("../SyncManagement/SyncActivity");
 function addSyncStateMutators(out) {
     async function addSessionResolver(parent, args, context) {
         conduit_core_1.validateDB(context);
@@ -86,10 +86,10 @@ function addSyncStateQueries(out) {
         const precision = (_a = args === null || args === void 0 ? void 0 : args.precision) !== null && _a !== void 0 ? _a : 10;
         const precUp = precision * 100;
         const precDown = 1 / precision;
-        const initialDownsyncCount = await getDownsyncCount(context, SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE);
-        const backgroundDownsyncCount = await getDownsyncCount(context, SyncActivity_1.BACKGROUND_SYNC_PROGRESS_TABLE);
+        const initialDownsyncCount = await getDownsyncCount(context, en_conduit_sync_types_1.INITIAL_DOWNSYNC_PROGRESS_TABLE);
+        const backgroundDownsyncCount = await getDownsyncCount(context, en_conduit_sync_types_1.BACKGROUND_SYNC_PROGRESS_TABLE);
         const backgroundProgressPercent = backgroundDownsyncCount.syncerCount ? precDown * Math.floor(precUp * backgroundDownsyncCount.current / backgroundDownsyncCount.total) : 100;
-        const contentFetchSyncCount = await getDownsyncCount(context, SyncActivity_1.CONTENT_SYNC_PROGRESS_TABLE);
+        const contentFetchSyncCount = await getDownsyncCount(context, en_conduit_sync_types_1.CONTENT_SYNC_PROGRESS_TABLE);
         const contentFetchSyncProgressPercent = contentFetchSyncCount.syncerCount ? precDown * Math.floor(precUp * contentFetchSyncCount.current / contentFetchSyncCount.total) : 100;
         const syncType = await context.db.getSyncState(context.trc, context.watcher, SyncHelpers_1.SYNC_TYPE_SYNC_STATE_PATH) || {};
         const adaptiveDownsyncType = syncType.adaptiveDownsyncType || conduit_view_types_1.AdaptiveDownsyncType.NONE;

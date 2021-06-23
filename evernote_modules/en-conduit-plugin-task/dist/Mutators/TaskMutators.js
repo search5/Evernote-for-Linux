@@ -66,6 +66,7 @@ exports.taskCreate = {
         status: conduit_utils_1.NullableString,
         noteLevelID: conduit_utils_1.NullableString,
         sourceOfChange: conduit_utils_1.NullableString,
+        creationEventLabel: conduit_utils_1.NullableString,
     },
     resultTypes: conduit_core_1.GenericMutatorResultsSchema,
     initParams: async (trc, ctx, paramsIn, paramsOut) => {
@@ -86,6 +87,7 @@ exports.taskCreate = {
             timeZone: params.timeZone,
             taskGroupNoteLevelID: params.taskGroupNoteLevelID,
             sourceOfChange: params.sourceOfChange,
+            creationEventLabel: params.creationEventLabel,
         };
         return await Task_1.taskCreatePlan(trc, ctx, taskCreateParams);
     },
@@ -345,17 +347,17 @@ exports.taskAssign = {
                 plan.ops.push(await TaskUserSettings_1.getNewTaskUserSettingsOps(trc, ctx, taskUserSettingsID, taskUserSettingsRef, undefined, Utilities_1.getDay(new Date(ctx.timestamp)).getTime(), 1));
             }
             else {
-                const isSameDay = Boolean(taskUserSettings.NodeFields.taskAssignDate) && Utilities_1.sameDay(new Date(taskUserSettings.NodeFields.taskAssignDate), new Date(ctx.timestamp));
+                const isSameDay = taskUserSettings.NodeFields.taskAssignDate && Utilities_1.sameDay(new Date(taskUserSettings.NodeFields.taskAssignDate), new Date(ctx.timestamp));
                 if (isSameDay) {
                     const accountLimits = await ctx.fetchEntity(trc, en_core_entity_types_1.ACCOUNT_LIMITS_REF);
-                    en_core_entity_types_1.validateAccountLimits(accountLimits, { taskAssignmentLimitDaily: taskUserSettings.NodeFields.taskAssignCount + 1 });
+                    en_core_entity_types_1.validateAccountLimits(accountLimits, { taskAssignmentLimitDaily: (taskUserSettings.NodeFields.taskAssignCount || 0) + 1 });
                 }
                 const taskUserSettingsFields = {
                     taskAssignCount: undefined,
                     taskAssignDate: undefined,
                 };
                 if (taskUserSettings.NodeFields.taskAssignDate && isSameDay) {
-                    taskUserSettingsFields.taskAssignCount = taskUserSettings.NodeFields.taskAssignCount + 1;
+                    taskUserSettingsFields.taskAssignCount = (taskUserSettings.NodeFields.taskAssignCount || 0) + 1;
                 }
                 else {
                     taskUserSettingsFields.taskAssignDate = Utilities_1.getDay(new Date(ctx.timestamp)).getTime();

@@ -20,6 +20,7 @@ type AccountLimits {
   userWorkspaceRatio: Float
   userUploadedRatio: Float
   userNoteAndNotebookSharesSentRatio: Float
+  taskAssignmentLimitDaily: Float
 }
 
 type AccountLimitsCounts {
@@ -1557,13 +1558,16 @@ type Note {
   hasSource: Boolean!
   workspace: String
   stack: String
+  isShared: Boolean!
+  isDefaultTaskNote: Boolean!
   inBusinessAccount: Boolean!
   hasTaskGroup: Boolean!
+  hasCompletedAllTasks: Boolean!
   childAttachments(isActive: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): NoteChildAttachmentsResults!
   allMemberships(orderBy: NoteAllMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NoteAllMembershipsResults!
   ownMemberships(orderBy: NoteOwnMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NoteOwnMembershipsResults!
   conflictBackups(inTrash: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): NoteConflictBackupsResults!
-  descendentTasks(status: TaskStatus, reverseOrder: Boolean, pageInfo: PageInfo): NoteDescendentTasksResults!
+  descendentTasks(creator: String, dueDate: NoteDescendentTasksDueDate, status: TaskStatus, orderBy: NoteDescendentTasksOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): NoteDescendentTasksResults!
   CommandPolicy: NoteCommandPolicy!
   shareCount: Float!
   taskGroups: [TaskGroupResult]
@@ -2149,14 +2153,30 @@ enum NoteContentInfoSortField {
   label
 }
 
+input NoteDescendentTasksDueDate {
+  min: Float
+  max: Float
+}
+
+enum NoteDescendentTasksOrderBy {
+  sortWeight
+  sortWeightCompletedAtBottom
+}
+
 type NoteDescendentTasksResultFields {
   id: String!
   type: String!
   unindexed: Task!
   parent: Note
-  sortWeight: String!
-  status: TaskStatus!
+  contentInfo: String!
   taskGroupNoteLevelID: String!
+  sortWeight: String!
+  assignedBy: Profile
+  assignee: Profile
+  dueDate: Float
+  hasReminder: Boolean!
+  label: String!
+  status: TaskStatus!
 }
 
 type NoteDescendentTasksResults {
@@ -2189,8 +2209,12 @@ enum NoteFilterField {
   hasSource
   workspace
   stack
+  isShared
+  isDefaultTaskNote
+  tasksCount
   inBusinessAccount
   hasTaskGroup
+  hasCompletedAllTasks
   id
   isMetadata
   isUntitled
@@ -2455,8 +2479,12 @@ enum NoteSortField {
   hasSource
   workspace
   stack
+  isShared
+  isDefaultTaskNote
+  tasksCount
   inBusinessAccount
   hasTaskGroup
+  hasCompletedAllTasks
   id
   isMetadata
   isUntitled
@@ -2627,7 +2655,40 @@ type Profile {
   relatedIdentitiesCount: Int!
   parent: Profile
   isRootProfile: Boolean!
-  TasksByAssignee(inTrash: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): ProfileTasksByAssigneeResults!
+  Tasks(assignee: String, dueDate: ProfileTasksDueDate, flag: Boolean, status: TaskStatus, orderBy: ProfileTasksOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): ProfileTasksResults!
+  descendentTasks(parent: String!, dueDate: ProfileDescendentTasksDueDate, status: TaskStatus, orderBy: ProfileDescendentTasksOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): ProfileDescendentTasksResults!
+  TasksWithoutNote(dueDate: ProfileTasksWithoutNoteDueDate, status: TaskStatus, orderBy: ProfileTasksWithoutNoteOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): ProfileTasksWithoutNoteResults!
+}
+
+input ProfileDescendentTasksDueDate {
+  min: Float
+  max: Float
+}
+
+enum ProfileDescendentTasksOrderBy {
+  sortWeight
+  sortWeightCompletedAtBottom
+}
+
+type ProfileDescendentTasksResultFields {
+  id: String!
+  type: String!
+  unindexed: Task!
+  parent: Note
+  contentInfo: String!
+  taskGroupNoteLevelID: String!
+  sortWeight: String!
+  assignedBy: Profile
+  assignee: Profile
+  dueDate: Float
+  hasReminder: Boolean!
+  label: String!
+  status: TaskStatus!
+}
+
+type ProfileDescendentTasksResults {
+  count: Int!
+  list: [ProfileDescendentTasksResultFields!]!
 }
 
 input ProfileFilter {
@@ -2709,17 +2770,63 @@ enum ProfileStatus {
   INACTIVE
 }
 
-type ProfileTasksByAssigneeResultFields {
+input ProfileTasksDueDate {
+  min: Float
+  max: Float
+}
+
+enum ProfileTasksOrderBy {
+  dueDate
+  dueDateFlaggedAbove
+  dueDateCompletedAtBottom
+}
+
+type ProfileTasksResultFields {
   id: String!
   type: String!
   unindexed: Task!
+  dueDate: Float
+  label: String!
+  assignedBy: Profile
   assignee: Profile
-  sortWeight: String!
+  hasNote: Boolean!
+  hasReminder: Boolean!
+  status: TaskStatus!
+  taskGroupNoteLevelID: String!
 }
 
-type ProfileTasksByAssigneeResults {
+type ProfileTasksResults {
   count: Int!
-  list: [ProfileTasksByAssigneeResultFields!]!
+  list: [ProfileTasksResultFields!]!
+}
+
+input ProfileTasksWithoutNoteDueDate {
+  min: Float
+  max: Float
+}
+
+enum ProfileTasksWithoutNoteOrderBy {
+  dueDate
+  dueDateCompletedAtBottom
+  sortWeight
+  sortWeightCompletedAtBottom
+}
+
+type ProfileTasksWithoutNoteResultFields {
+  id: String!
+  type: String!
+  unindexed: Task!
+  assignedBy: Profile
+  dueDate: Float
+  hasReminder: Boolean!
+  label: String!
+  status: TaskStatus!
+  taskGroupNoteLevelID: String!
+}
+
+type ProfileTasksWithoutNoteResults {
+  count: Int!
+  list: [ProfileTasksWithoutNoteResultFields!]!
 }
 
 type Promotion {
@@ -3104,7 +3211,7 @@ type RootMutationType {
   targetUrlCreate(url: String!, utm_source: String!, utm_medium: String!, host: String, two_factor_token: String, url_params: String): String!
   targetUrlCreateWithOAuth(serviceHost: String!, tokenPayload: String!, serviceProvider: String!, url: String!, utm_source: String!, utm_medium: String!, urlParams: String): String!
   taskAssign(task: String!, assigneeID: String, assigneeEmail: String, sourceOfChange: String): AutoMutatorRes!
-  taskCreate(container: String!, label: String!, taskGroupNoteLevelID: String!, dueDate: Float, timeZone: String, dueDateUIOption: TaskDueDateUIOption, flag: Boolean, sortWeight: String, status: String, noteLevelID: String, sourceOfChange: String): AutoMutatorRes!
+  taskCreate(container: String!, label: String!, taskGroupNoteLevelID: String!, dueDate: Float, timeZone: String, dueDateUIOption: TaskDueDateUIOption, flag: Boolean, sortWeight: String, status: String, noteLevelID: String, sourceOfChange: String, creationEventLabel: String): AutoMutatorRes!
   taskDelete(task: String!, sourceOfChange: String): AutoMutatorRes!
   taskGroupCreateDefaultTaskNoteUpsert(defaultTaskNoteLabel: String!, pinDefaultTaskNote: Boolean, noteContent: String): TaskGroupCreateDefaultTaskNoteUpsertResult!
   taskGroupUpsertInNoteContentInfo(taskGroupNoteLevelIDs: [String!]!, noteID: String, sourceOfChange: String): AutoMutatorRes!
@@ -3235,14 +3342,17 @@ type RootQueryType {
   Tags(parent: String, orderBy: TagsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TagsResults!
   TagsAllowed(id: String!, filters: [TagInContextFilter!], sorts: [TagsInContextSort!]): TagsAllowed!
   Task(id: String!): Task
-  TaskNotesNotInTrash(orderBy: TaskNotesNotInTrashOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TaskNotesNotInTrashResults!
+  TaskNotesCompletedInSession(updated: TaskNotesCompletedInSessionUpdated!, reverseOrder: Boolean, pageInfo: PageInfo): TaskNotesCompletedInSessionResults!
+  TaskNotesNotInTrash(hasCompletedAllTasks: Boolean, isShared: Boolean, orderBy: TaskNotesNotInTrashOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TaskNotesNotInTrashResults!
   TaskUserSettings(id: String!): TaskUserSettings
-  TasksByAssignee(assignee: String!, inTrash: Boolean, reverseOrder: Boolean, pageInfo: PageInfo): TasksByAssigneeResults!
-  TasksInNote(parent: String!, status: TaskStatus, reverseOrder: Boolean, pageInfo: PageInfo): TasksInNoteResults!
+  Tasks(assignee: String, creator: String, dueDate: TasksDueDate, flag: Boolean, status: TaskStatus, orderBy: TasksOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TasksResults!
+  TasksInNote(parent: String!, creator: String, dueDate: TasksInNoteDueDate, status: TaskStatus, orderBy: TasksInNoteOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TasksInNoteResults!
+  TasksWithoutNote(creator: String, dueDate: TasksWithoutNoteDueDate, status: TaskStatus, orderBy: TasksWithoutNoteOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TasksWithoutNoteResults!
   Thread(id: String!): Thread
   Threads(reverseOrder: Boolean, pageInfo: PageInfo): ThreadsResults!
   User(id: String!): User
   UserCalendarSettings(id: String!): UserCalendarSettings
+  Users(reverseOrder: Boolean, pageInfo: PageInfo): UsersResults!
   Widget(id: String!): Widget
   WidgetContentConflict(id: String!): WidgetContentConflict
   WidgetsInBoard(board: String!, platform: WidgetsInBoardPlatform!, reverseOrder: Boolean, pageInfo: PageInfo): WidgetsInBoardResults!
@@ -4116,7 +4226,11 @@ type Task {
   assignee: Profile
   assignedBy: Profile
   parent: Note
+  assignedToMe: Boolean
+  hasReminder: Boolean!
   inTrash: Boolean!
+  contentInfo: String!
+  hasNote: Boolean!
   allMemberships(orderBy: TaskAllMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TaskAllMembershipsResults!
   ownMemberships(orderBy: TaskOwnMembershipsOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TaskOwnMembershipsResults!
 }
@@ -4154,19 +4268,25 @@ input TaskFilter {
 }
 
 enum TaskFilterField {
+  creator
   parent
   assignee
+  assignedBy
+  dueDate
+  flag
   label
   sortWeight
   status
   taskGroupNoteLevelID
+  assignedToMe
+  hasReminder
   inTrash
+  contentInfo
+  hasNote
   id
-  dueDate
   dueDateUIOption
   timeZone
   inNote
-  flag
   noteLevelID
   statusUpdated
   sourceOfChange
@@ -4213,6 +4333,7 @@ input TaskInput {
   reminders: [ReminderInput!]!
   assigneeID: String
   assigneeEmail: String
+  creationEventLabel: String
 }
 
 type TaskListResults {
@@ -4225,10 +4346,42 @@ type TaskListResults {
   list: [Task!]!
 }
 
+type TaskNotesCompletedInSessionResultFields {
+  id: String!
+  type: String!
+  unindexed: Note!
+  updated: Float!
+  label: String!
+  isShared: Boolean!
+}
+
+type TaskNotesCompletedInSessionResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [TaskNotesCompletedInSessionResultFields!]!
+}
+
+input TaskNotesCompletedInSessionUpdated {
+  min: Float!
+  max: Float!
+}
+
 enum TaskNotesNotInTrashOrderBy {
   label
+  labelCompletedAtBottom
+  labelDTNPinned
+  labelDTNPinnedCompletedAtBottom
   created
+  createdCompletedAtBottom
+  createdDTNPinned
+  createdDTNPinnedCompletedAtBottom
   updated
+  updatedCompletedAtBottom
+  updatedDTNPinned
+  updatedDTNPinnedCompletedAtBottom
 }
 
 type TaskNotesNotInTrashResultFields {
@@ -4238,6 +4391,10 @@ type TaskNotesNotInTrashResultFields {
   label: String!
   updated: Float!
   created: Float!
+  hasCompletedAllTasks: Boolean!
+  isDefaultTaskNote: Boolean!
+  isShared: Boolean!
+  tasksCount: Int!
 }
 
 type TaskNotesNotInTrashResults {
@@ -4267,21 +4424,9 @@ type TaskOwnMembershipsResults {
   list: [TaskOwnMembershipsResultFields!]!
 }
 
-type TasksByAssigneeResultFields {
-  id: String!
-  type: String!
-  unindexed: Task!
-  assignee: Profile
-  sortWeight: String!
-}
-
-type TasksByAssigneeResults {
-  count: Int!
-  prevPageKey: String
-  nextPageKey: String
-  numPriorItems: Float
-  numRemainingItems: Float
-  list: [TasksByAssigneeResultFields!]!
+input TasksDueDate {
+  min: Float
+  max: Float
 }
 
 input TasksExportData {
@@ -4302,14 +4447,30 @@ input TasksExportDataTasks {
   sourceOfChange: String!
 }
 
+input TasksInNoteDueDate {
+  min: Float
+  max: Float
+}
+
+enum TasksInNoteOrderBy {
+  sortWeight
+  sortWeightCompletedAtBottom
+}
+
 type TasksInNoteResultFields {
   id: String!
   type: String!
   unindexed: Task!
   parent: Note
-  sortWeight: String!
-  status: TaskStatus!
+  contentInfo: String!
   taskGroupNoteLevelID: String!
+  sortWeight: String!
+  assignedBy: Profile
+  assignee: Profile
+  dueDate: Float
+  hasReminder: Boolean!
+  label: String!
+  status: TaskStatus!
 }
 
 type TasksInNoteResults {
@@ -4321,25 +4482,37 @@ type TasksInNoteResults {
   list: [TasksInNoteResultFields!]!
 }
 
+enum TasksOrderBy {
+  dueDate
+  dueDateFlaggedAbove
+  dueDateCompletedAtBottom
+}
+
 input TaskSort {
   field: TaskSortField!
   order: IndexOrderType!
 }
 
 enum TaskSortField {
+  creator
   parent
   assignee
+  assignedBy
+  dueDate
+  flag
   label
   sortWeight
   status
   taskGroupNoteLevelID
+  assignedToMe
+  hasReminder
   inTrash
+  contentInfo
+  hasNote
   id
-  dueDate
   dueDateUIOption
   timeZone
   inNote
-  flag
   noteLevelID
   statusUpdated
   sourceOfChange
@@ -4349,9 +4522,65 @@ enum TaskSortField {
   deleted
 }
 
+type TasksResultFields {
+  id: String!
+  type: String!
+  unindexed: Task!
+  dueDate: Float
+  label: String!
+  assignedBy: Profile
+  assignee: Profile
+  hasNote: Boolean!
+  hasReminder: Boolean!
+  status: TaskStatus!
+  taskGroupNoteLevelID: String!
+}
+
+type TasksResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [TasksResultFields!]!
+}
+
 enum TaskStatus {
   open
   completed
+}
+
+input TasksWithoutNoteDueDate {
+  min: Float
+  max: Float
+}
+
+enum TasksWithoutNoteOrderBy {
+  dueDate
+  dueDateCompletedAtBottom
+  sortWeight
+  sortWeightCompletedAtBottom
+}
+
+type TasksWithoutNoteResultFields {
+  id: String!
+  type: String!
+  unindexed: Task!
+  assignedBy: Profile
+  dueDate: Float
+  hasReminder: Boolean!
+  label: String!
+  status: TaskStatus!
+  taskGroupNoteLevelID: String!
+}
+
+type TasksWithoutNoteResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [TasksWithoutNoteResultFields!]!
 }
 
 type TaskUserSettings {
@@ -4654,6 +4883,83 @@ type UserCalendarSettingsResult {
   id: String!
 }
 
+input UserFilter {
+  field: UserFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum UserFilterField {
+  profile
+  id
+  isVaultUser
+  username
+  email
+  name
+  timezone
+  privilege
+  serviceLevel
+  serviceLevelV2
+  created
+  updated
+  deleted
+  active
+  photoUrl
+  photoLastUpdated
+  businessUserRole
+  businessName
+  Accounting_uploadLimit
+  Accounting_uploadLimitEnd
+  Accounting_uploadLimitNextMonth
+  Accounting_premiumServiceStatus
+  Accounting_premiumOrderNumber
+  Accounting_premiumCommerceService
+  Accounting_premiumServiceStart
+  Accounting_premiumServiceSKU
+  Accounting_lastSuccessfulCharge
+  Accounting_lastFailedCharge
+  Accounting_lastFailedChargeReason
+  Accounting_nextPaymentDue
+  Accounting_premiumLockUntil
+  Accounting_updated
+  Accounting_premiumSubscriptionNumber
+  Accounting_lastRequestedCharge
+  Accounting_currency
+  Accounting_unitPrice
+  Accounting_businessId
+  Accounting_businessName
+  Accounting_businessRole
+  Accounting_unitDiscount
+  Accounting_nextChargeDate
+  Accounting_availablePoints
+  Accounting_backupPaymentInfo_premiumCommerceService
+  Accounting_backupPaymentInfo_premiumServiceSKU
+  Accounting_backupPaymentInfo_currency
+  Accounting_backupPaymentInfo_unitPrice
+  Accounting_backupPaymentInfo_paymentMethodId
+  Accounting_backupPaymentInfo_orderNumber
+  Attributes_preferredLanguage
+  Attributes_emailAddressLastConfirmed
+  Attributes_passwordUpdated
+  Attributes_incomingEmailAddress
+  Attributes_reminderEmail
+  canEmptyTrash
+  subscriptionInfo_updatedTime
+  subscriptionInfo_isSubscribed
+  subscriptionInfo_subscriptionRecurring
+  subscriptionInfo_subscriptionExpirationDate
+  subscriptionInfo_subscriptionPending
+  subscriptionInfo_subscriptionCancellationPending
+  subscriptionInfo_serviceLevelsEligibleForPurchase
+  subscriptionInfo_currentSku
+  subscriptionInfo_validUntil
+  subscriptionInfo_itunesReceiptRequested
+  label
+}
+
 type UserInfo {
   userID: String!
   username: String!
@@ -4661,6 +4967,16 @@ type UserInfo {
   fullName: String!
   businessName: String!
   photoUrl: String!
+}
+
+type UserListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [User!]!
 }
 
 enum UserPrivilegeLevel {
@@ -4691,6 +5007,94 @@ enum UserServiceLevelV2 {
   PERSONAL
   PROFESSIONAL
   TEAMS
+}
+
+input UserSort {
+  field: UserSortField!
+  order: IndexOrderType!
+}
+
+enum UserSortField {
+  profile
+  id
+  isVaultUser
+  username
+  email
+  name
+  timezone
+  privilege
+  serviceLevel
+  serviceLevelV2
+  created
+  updated
+  deleted
+  active
+  photoUrl
+  photoLastUpdated
+  businessUserRole
+  businessName
+  Accounting_uploadLimit
+  Accounting_uploadLimitEnd
+  Accounting_uploadLimitNextMonth
+  Accounting_premiumServiceStatus
+  Accounting_premiumOrderNumber
+  Accounting_premiumCommerceService
+  Accounting_premiumServiceStart
+  Accounting_premiumServiceSKU
+  Accounting_lastSuccessfulCharge
+  Accounting_lastFailedCharge
+  Accounting_lastFailedChargeReason
+  Accounting_nextPaymentDue
+  Accounting_premiumLockUntil
+  Accounting_updated
+  Accounting_premiumSubscriptionNumber
+  Accounting_lastRequestedCharge
+  Accounting_currency
+  Accounting_unitPrice
+  Accounting_businessId
+  Accounting_businessName
+  Accounting_businessRole
+  Accounting_unitDiscount
+  Accounting_nextChargeDate
+  Accounting_availablePoints
+  Accounting_backupPaymentInfo_premiumCommerceService
+  Accounting_backupPaymentInfo_premiumServiceSKU
+  Accounting_backupPaymentInfo_currency
+  Accounting_backupPaymentInfo_unitPrice
+  Accounting_backupPaymentInfo_paymentMethodId
+  Accounting_backupPaymentInfo_orderNumber
+  Attributes_preferredLanguage
+  Attributes_emailAddressLastConfirmed
+  Attributes_passwordUpdated
+  Attributes_incomingEmailAddress
+  Attributes_reminderEmail
+  canEmptyTrash
+  subscriptionInfo_updatedTime
+  subscriptionInfo_isSubscribed
+  subscriptionInfo_subscriptionRecurring
+  subscriptionInfo_subscriptionExpirationDate
+  subscriptionInfo_subscriptionPending
+  subscriptionInfo_subscriptionCancellationPending
+  subscriptionInfo_serviceLevelsEligibleForPurchase
+  subscriptionInfo_currentSku
+  subscriptionInfo_validUntil
+  subscriptionInfo_itunesReceiptRequested
+  label
+}
+
+type UsersResultFields {
+  id: String!
+  type: String!
+  unindexed: User!
+}
+
+type UsersResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [UsersResultFields!]!
 }
 
 type UserSubscriptionInfo {
@@ -4884,7 +5288,7 @@ enum WidgetFilterField {
   isEnabled
   selectedTab
   mutableWidgetType
-  isSupportedV3
+  isVisibleToClients
   id
   boardType
   softDelete
@@ -5018,7 +5422,7 @@ enum WidgetSortField {
   isEnabled
   selectedTab
   mutableWidgetType
-  isSupportedV3
+  isVisibleToClients
   id
   boardType
   softDelete

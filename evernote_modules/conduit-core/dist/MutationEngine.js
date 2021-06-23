@@ -229,7 +229,10 @@ class MutationEngine {
         if (mutatorDef.initParams) {
             const paramsOut = Object.assign({}, params);
             await mutatorDef.initParams(trc, ctx, params, paramsOut);
-            params = paramsOut;
+            params = SimplyImmutable.cloneImmutable(paramsOut);
+        }
+        else {
+            params = SimplyImmutable.cloneImmutable(params);
         }
         const mutation = {
             mutationID: this.config.guidGenerator.generateID(userID, 'Mutation')[1],

@@ -89,8 +89,11 @@ class QSPFieldOperatorContext {
     static isCoordinateOperator(operator) {
         return operator ? QSPFieldOperatorContext.COORDINATE_OPERATORS.has(operator) : false;
     }
-    static isMetadataOperator(operator) {
-        return operator ? QSPFieldOperatorContext.METADATA_OPERATORS.has(operator) : false;
+    static isMetadataOperator(operator, value) {
+        if (!operator || !QSPFieldOperatorContext.METADATA_OPERATORS.has(operator)) {
+            return false;
+        }
+        return (operator === QSPFieldOperator.contains) ? QSPFieldOperatorContext.CONTAINS_VALUE.has(value) : true;
     }
 }
 exports.QSPFieldOperatorContext = QSPFieldOperatorContext;
@@ -129,5 +132,11 @@ QSPFieldOperatorContext.METADATA_OPERATORS = new Set([
     QSPFieldOperator.author,
     QSPFieldOperator.creatorId,
     QSPFieldOperator.lastEditorId,
+    QSPFieldOperator.contains,
+]);
+QSPFieldOperatorContext.CONTAINS_VALUE = new Set([
+    'task',
+    'taskCompleted',
+    'taskNotCompleted',
 ]);
 //# sourceMappingURL=FieldOperator.js.map

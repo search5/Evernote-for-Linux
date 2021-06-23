@@ -89,7 +89,7 @@ async function nodeResolver(node, context, fieldSelection) {
             // Checking against undefined saves us from recalculating things like stackID for notes which is expensive, hence the custom walkObjectPath
             const alreadyResolved = conduit_utils_1.walkObjectPath(ret, resolver.graphqlPath, undefined) !== undefined;
             if (isInSelection && !alreadyResolved) {
-                const res = await context.indexer.resolveField(context.trc, node, key, context.db.nodeFieldLookup, node.PropagatedFields || {});
+                const res = await context.indexer.resolveField(context.trc, node, key, context.db.nodeFieldLookup, node.PropagatedFields || {}, {});
                 if (res && res.length) {
                     conduit_utils_1.objectSetField(res[0], resolver.graphqlPath, ret);
                 }

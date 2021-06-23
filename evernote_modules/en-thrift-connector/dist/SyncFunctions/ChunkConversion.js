@@ -122,7 +122,7 @@ async function convertSyncChunk(trc, params, chunk, lastUpdateCount, onChunkProc
             }
             let expungedLinkedNbs = await LinkedNotebookHelpers_1.getExpungedLinkedNotebooks(trc, graphTransaction, chunk.notebooks) || [];
             expungedLinkedNbs = chunk.expungedLinkedNotebooks ? chunk.expungedLinkedNotebooks.concat(expungedLinkedNbs) : expungedLinkedNbs;
-            const { partialNbsToAdd, partialNbsToRemove } = await LinkedNotebookHelpers_1.processLinkedNotebooksForPartialNotebooks(trc, graphTransaction, params.syncEngine.businessId, chunk.linkedNotebooks, expungedLinkedNbs);
+            const { partialNbsToAdd, partialNbsToRemove } = await LinkedNotebookHelpers_1.processLinkedNotebooksForPartialNotebooks(trc, graphTransaction, params.syncEngine.getBusinessID(), chunk.linkedNotebooks, expungedLinkedNbs);
             if (partialNbsToAdd) {
                 chunk.notebooks = chunk.notebooks ? chunk.notebooks.concat(partialNbsToAdd) : partialNbsToAdd;
             }

@@ -3,7 +3,7 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userTypeDef = exports.UserReminderEmailConfigSchema = exports.UserReminderEmailConfig = exports.PremiumOrderStatusSchema = exports.PremiumOrderStatus = void 0;
+exports.userIndexConfig = exports.userTypeDef = exports.UserReminderEmailConfigSchema = exports.UserReminderEmailConfig = exports.PremiumOrderStatusSchema = exports.PremiumOrderStatus = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
@@ -143,4 +143,16 @@ exports.userTypeDef = {
         },
     },
 };
+exports.userIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.userTypeDef, {
+    priority: conduit_storage_1.IndexPriority.HIGH,
+    indexResolvers: {
+        profile: conduit_storage_1.getIndexByResolverForEdge(exports.userTypeDef, ['edges', 'profile']),
+    },
+    queries: {
+        Users: {
+            params: {},
+        },
+    },
+    lookups: ['profile'],
+});
 //# sourceMappingURL=User.js.map

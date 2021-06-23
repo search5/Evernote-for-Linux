@@ -3,7 +3,7 @@
  * Copyright 2021 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.convertMutationGuids = exports.ResourceProxyType = exports.NSYNC_CONTEXT = void 0;
+exports.FeatureRolloutClientTypes = exports.convertMutationGuids = exports.ResourceProxyType = exports.NSYNC_CONTEXT = void 0;
 exports.NSYNC_CONTEXT = 'NSyncContext';
 var ResourceProxyType;
 (function (ResourceProxyType) {
@@ -25,4 +25,10 @@ function convertMutationGuids(conduitGuids) {
     return serviceGuids;
 }
 exports.convertMutationGuids = convertMutationGuids;
+var FeatureRolloutClientTypes;
+(function (FeatureRolloutClientTypes) {
+    FeatureRolloutClientTypes["Unknown"] = "unknown";
+    FeatureRolloutClientTypes["Desktop"] = "desktop";
+    FeatureRolloutClientTypes["Mobile"] = "mobile";
+})(FeatureRolloutClientTypes = exports.FeatureRolloutClientTypes || (exports.FeatureRolloutClientTypes = {}));
 //# sourceMappingURL=Types.js.map

@@ -1,6 +1,6 @@
 "use strict";
 /*
- * Copyright 2019 Evernote Corporation. All rights reserved.
+ * Copyright 2021 Evernote Corporation. All rights reserved.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -28,25 +28,25 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SyncManager = void 0;
+exports.ENSyncManager = void 0;
+const Auth = __importStar(require("conduit-auth-shared"));
 const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
-const Auth = __importStar(require("../Auth"));
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const NotebookConverter_1 = require("../Converters/NotebookConverter");
-const Migrations_1 = require("../SyncFunctions/Migrations");
 const NoteStoreSync_1 = require("../SyncFunctions/NoteStoreSync");
 const SyncHelpers_1 = require("../SyncFunctions/SyncHelpers");
 const AccountSessionSyncActivity_1 = require("./AccountSessionSyncActivity");
 const ContentFetchSyncActivity_1 = require("./ContentFetchSyncActivity");
+const FeatureRolloutSyncActivity_1 = require("./FeatureRolloutSyncActivity");
 const HybridInitialDownsyncActivity_1 = require("./HybridInitialDownsyncActivity");
 const IncrementalSyncActivity_1 = require("./IncrementalSyncActivity");
 const NSyncInitActivity_1 = require("./NSyncInitActivity");
 const OfflineSearchIndexActivity_1 = require("./OfflineSearchIndexActivity");
 const ReindexActivity_1 = require("./ReindexActivity");
 const SchemaMigrationActivity_1 = require("./SchemaMigrationActivity");
-const SyncActivity_1 = require("./SyncActivity");
 const SyncActivityHydration_1 = require("./SyncActivityHydration");
 const logger = conduit_utils_1.createLogger('SyncManager');
 let gQuerySuppressionTime = conduit_utils_1.registerDebugSetting('QuerySuppressionTime', 100, v => gQuerySuppressionTime = v);
@@ -63,8 +63,9 @@ function cmpActivities(a1, a2) {
     }
     return a2.params.runAfter - a1.params.runAfter;
 }
-class SyncManager {
+class ENSyncManager extends conduit_core_1.SyncManager {
     constructor(di, thriftComm, syncEngine) {
+        super(syncEngine);
         this.di = di;
         this.auth = null;
         this.queue = [];
@@ -99,7 +100,7 @@ class SyncManager {
             return true;
         }
         for (const activity of this.queue) {
-            if (activity.params.priority === SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC) {
+            if (activity.params.priority === en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC) {
                 return false;
             }
         }
@@ -111,7 +112,7 @@ class SyncManager {
         }
         let p;
         for (const activity of this.queue) {
-            if (activity.params.priority === SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC) {
+            if (activity.params.priority === en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC) {
                 // wait for final initial downsync activity to complete
                 p = activity.completionPromise;
             }
@@ -157,7 +158,7 @@ class SyncManager {
                     if (isColdStart) {
                         activities.push(this.getSchemaMigrationActivity(trc));
                         activities.push(this.getReindexingActivity(trc));
-                        activities.push(this.getImmediateIncrementalSync(trc, isColdStart, SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC));
+                        activities.push(this.getImmediateIncrementalSync(trc, isColdStart, en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC));
                     }
                 }
                 else {
@@ -166,7 +167,7 @@ class SyncManager {
                         activities.push(this.getReindexingActivity(trc));
                     }
                     const showLoadingScreen = (_a = this.di.loadingScreenConfig.showDuringIncrementalSyncAfterStartup) !== null && _a !== void 0 ? _a : true;
-                    activities.push(this.getImmediateIncrementalSync(trc, isColdStart && showLoadingScreen, SyncActivity_1.SyncActivityPriority.IMMEDIATE));
+                    activities.push(this.getImmediateIncrementalSync(trc, isColdStart && showLoadingScreen, en_conduit_sync_types_1.SyncActivityPriority.IMMEDIATE));
                     activities.push(new HybridInitialDownsyncActivity_1.MaestroSyncActivity(this.di, this.activityContext));
                     activities.push(new HybridInitialDownsyncActivity_1.PromotionsSyncActivity(this.di, this.activityContext));
                     const contentFetchActivity = await this.getContentFetchSyncActivity(trc);
@@ -179,13 +180,16 @@ class SyncManager {
             if (Auth.hasNAPData(auth)) {
                 activities.push(new AccountSessionSyncActivity_1.AccountSessionSyncActivity(this.di, this.activityContext));
             }
+            if (this.di.featureRolloutClientType !== en_conduit_sync_types_1.FeatureRolloutClientTypes.Unknown) {
+                activities.push(new FeatureRolloutSyncActivity_1.FeatureRolloutSyncActivity(this.di, this.activityContext, 0)); // fetch data immediately when a session started
+            }
             await this.addActivitiesOnInit(trc, activities);
             await this.activityContext.syncEngine.transact(trc, 'initUserSyncContext', async (graphTransaction) => {
-                await this.activityContext.syncEngine.initUserSyncContext(trc, graphTransaction, conduit_core_1.PERSONAL_USER_CONTEXT, auth);
+                await this.di.initUserSyncContext(trc, graphTransaction, conduit_core_1.PERSONAL_USER_CONTEXT, auth);
                 if (auth.vaultAuth) {
-                    await this.activityContext.syncEngine.initUserSyncContext(trc, graphTransaction, conduit_core_1.VAULT_USER_CONTEXT, auth.vaultAuth);
+                    await this.di.initUserSyncContext(trc, graphTransaction, conduit_core_1.VAULT_USER_CONTEXT, auth.vaultAuth);
                 }
-                await this.activityContext.syncEngine.initUserSyncContext(trc, graphTransaction, conduit_storage_1.NSYNC_CONTEXT, null);
+                await this.di.initUserSyncContext(trc, graphTransaction, conduit_storage_1.NSYNC_CONTEXT, null);
             });
         }
         else {
@@ -226,7 +230,7 @@ class SyncManager {
         });
         await this.onSyncStateChange(trc);
     }
-    async toggleNSync(trc, disable) {
+    async toggleEventSync(trc, disable) {
         var _a;
         // if not available, always set to disable
         const available = Boolean((_a = this.activityContext.syncEventManager) === null || _a === void 0 ? void 0 : _a.isAvailable());
@@ -267,11 +271,11 @@ class SyncManager {
         }
     }
     async forceDownsyncUpdate(trc, timeout) {
-        await this.addImmediateActivity(trc, new IncrementalSyncActivity_1.IncrementalSyncActivity(this.di, this.activityContext, SyncActivity_1.SyncActivityPriority.IMMEDIATE), timeout);
+        await this.addImmediateActivity(trc, new IncrementalSyncActivity_1.IncrementalSyncActivity(this.di, this.activityContext, en_conduit_sync_types_1.SyncActivityPriority.IMMEDIATE), timeout);
     }
     async needImmediateNotesDownsync(trc, args) {
-        const existingActivity = this.findActivity(trc, SyncActivity_1.SyncActivityType.NotesFetchActivity);
-        if (existingActivity && existingActivity.params.priority === SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC) {
+        const existingActivity = this.findActivity(trc, en_conduit_sync_types_1.SyncActivityType.NotesFetchActivity);
+        if (existingActivity && existingActivity.params.priority === en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC) {
             throw new conduit_utils_1.InvalidOperationError('Cannot execute immediateNotesDownsync when initial downsync is in progress');
         }
         let activity = existingActivity;
@@ -288,10 +292,10 @@ class SyncManager {
         return await NoteStoreSync_1.checkNotesSyncAvailable(trc, syncParams);
     }
     async cancelImmediateNotesDownsync(trc) {
-        await this.abortActivityByType(trc, SyncActivity_1.SyncActivityType.NotesFetchActivity);
+        await this.abortActivityByType(trc, en_conduit_sync_types_1.SyncActivityType.NotesFetchActivity);
     }
     async needContentFetchSync(trc) {
-        if (this.activityContext.syncEngine.offlineContentStrategy === conduit_view_types_1.OfflineContentStrategy.NONE) {
+        if (this.di.getOfflineContentStrategy() === conduit_view_types_1.OfflineContentStrategy.NONE) {
             return false;
         }
         const noteIDs = await NotebookConverter_1.getPendingOfflineNoteIDs(trc, this.activityContext.syncEngine.graphStorage);
@@ -315,7 +319,7 @@ class SyncManager {
     async abortActivityByType(trc, type) {
         const activity = this.findActivity(trc, type);
         if (activity) {
-            if (activity.params.priority === SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC) {
+            if (activity.params.priority === en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC) {
                 throw new conduit_utils_1.InvalidOperationError('Cannot abort initial downsync activities');
             }
             if (this.currentActivity && this.currentActivity === activity) {
@@ -332,14 +336,14 @@ class SyncManager {
         setTimeout(() => {
             this.isSuppressed = false;
         }, gQuerySuppressionTime);
-        if (this.currentActivity && this.currentActivity.params.priority < SyncActivity_1.SyncActivityPriority.IMMEDIATE && this.currentActivity.isRunning() && !this.currentActivity.isSuppressed()) {
+        if (this.currentActivity && this.currentActivity.params.priority < en_conduit_sync_types_1.SyncActivityPriority.IMMEDIATE && this.currentActivity.isRunning() && !this.currentActivity.isSuppressed()) {
             // suppress anything less than a high priority activity on active query
             logger.debug('Suppressing current sync activity because of active query', { activity: this.currentActivity.params.activityType, query: name });
             this.currentActivity.suppress(gQuerySuppressionTime);
         }
     }
     getNSyncInitActivity(trc) {
-        return new NSyncInitActivity_1.NSyncInitActivity(this.di, this.activityContext, HybridInitialDownsyncActivity_1.FINAL_ACTIVITY_ORDER.NSYNC_INIT_ACTIVITY);
+        return new NSyncInitActivity_1.NSyncInitActivity(this.di, this.activityContext, en_conduit_sync_types_1.SyncActivityPriority.IMMEDIATE, HybridInitialDownsyncActivity_1.FINAL_ACTIVITY_ORDER.NSYNC_INIT_ACTIVITY);
     }
     getSchemaMigrationActivity(trc) {
         return new SchemaMigrationActivity_1.SchemaMigrationActivity(this.di, this.activityContext, HybridInitialDownsyncActivity_1.FINAL_ACTIVITY_ORDER.SCHEMA_MIGRATION);
@@ -376,7 +380,7 @@ class SyncManager {
                     logger.error('Caught error running sync activity queue', err);
                     this.isSyncing = false;
                     this.syncPromise = null;
-                    if (err instanceof Migrations_1.SchemaMigrationError) {
+                    if (err instanceof en_conduit_sync_types_1.SchemaMigrationError) {
                         this.handleSchemaMigrationFailure(trc)
                             .catch(e => logger.error('schema migration handle failure', e));
                     }
@@ -404,13 +408,14 @@ class SyncManager {
         });
     }
     getImmediateIncrementalSync(trc, trackProgress, priority) {
-        return new IncrementalSyncActivity_1.IncrementalSyncActivity(this.di, this.activityContext, priority, 0, 0, trackProgress);
+        // subpriority must be set to make sure incremental sync runs after NsyncInit on cold start.
+        return new IncrementalSyncActivity_1.IncrementalSyncActivity(this.di, this.activityContext, priority, HybridInitialDownsyncActivity_1.FINAL_ACTIVITY_ORDER.INCREMENTAL_SYNC, 0, trackProgress);
     }
     // No need to add a new content fetch activity if its already in queue or
     // if background note sync hasn't completed. ContentFetchSyncActivity will be
     // added after background note sync completion.
     async getContentFetchSyncActivity(trc) {
-        if (this.activityContext.syncEngine.offlineContentStrategy === conduit_view_types_1.OfflineContentStrategy.NONE) {
+        if (this.di.getOfflineContentStrategy() === conduit_view_types_1.OfflineContentStrategy.NONE) {
             return;
         }
         await NotebookConverter_1.resetOfflineNbsSyncStateOnInit(trc, this.activityContext.syncEngine.graphStorage);
@@ -603,7 +608,7 @@ class SyncManager {
         let nextTime = Infinity;
         let noIncremental = false;
         for (const activity of this.queue) {
-            if (activity.params.activityType === SyncActivity_1.SyncActivityType.IncrementalSyncActivity) {
+            if (activity.params.activityType === en_conduit_sync_types_1.SyncActivityType.IncrementalSyncActivity) {
                 incremental = activity;
             }
             nextTime = Math.min(nextTime, activity.params.runAfter);
@@ -611,18 +616,18 @@ class SyncManager {
                 next = activity;
                 break;
             }
-            if (activity.params.priority > SyncActivity_1.SyncActivityPriority.IMMEDIATE) {
+            if (activity.params.priority > en_conduit_sync_types_1.SyncActivityPriority.IMMEDIATE) {
                 // activities above IMMEDIATE priority must be run in order
                 noIncremental = true;
                 break;
             }
         }
         if (!next && !incremental && !noIncremental) {
-            incremental = new IncrementalSyncActivity_1.IncrementalSyncActivity(this.di, this.activityContext, SyncActivity_1.SyncActivityPriority.BACKGROUND);
+            incremental = new IncrementalSyncActivity_1.IncrementalSyncActivity(this.di, this.activityContext, en_conduit_sync_types_1.SyncActivityPriority.BACKGROUND);
             await this.addActivity(trc, incremental);
             nextTime = Math.min(nextTime, incremental.params.runAfter);
         }
-        if (this.isSuppressed && next && next.params.priority < SyncActivity_1.SyncActivityPriority.IMMEDIATE) {
+        if (this.isSuppressed && next && next.params.priority < en_conduit_sync_types_1.SyncActivityPriority.IMMEDIATE) {
             // suppress this low priority activity because of active queries
             next = null;
             nextTime = now + gQuerySuppressionTime;
@@ -639,7 +644,7 @@ class SyncManager {
         const err = await activity.runSync(trc);
         this.currentActivity = null;
         const elapsed = Date.now() - start;
-        if (this.initialDownsyncTimings && activity.params.priority === SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC) {
+        if (this.initialDownsyncTimings && activity.params.priority === en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC) {
             this.initialDownsyncTimings[activity.params.activityType] = this.initialDownsyncTimings[activity.params.activityType] || 0;
             this.initialDownsyncTimings[activity.params.activityType] += elapsed;
         }
@@ -654,8 +659,8 @@ class SyncManager {
         if (this.isDestroyed) {
             return;
         }
-        if (!err || err instanceof SyncActivity_1.CancelActivityError) {
-            logger.debug(`activity ${err instanceof SyncActivity_1.CancelActivityError ? 'cancelled' : 'completed'} ${activity.params.activityType}`);
+        if (!err || err instanceof en_conduit_sync_types_1.CancelActivityError) {
+            logger.debug(`activity ${err instanceof en_conduit_sync_types_1.CancelActivityError ? 'cancelled' : 'completed'} ${activity.params.activityType}`);
             await this.removeActivity(trc, activity);
             return;
         }
@@ -665,7 +670,7 @@ class SyncManager {
             logger.debug('retrying activity', activity.params.activityType, err.message);
             timeout = err.timeout;
         }
-        else if (err instanceof Migrations_1.SchemaMigrationError) {
+        else if (err instanceof en_conduit_sync_types_1.SchemaMigrationError) {
             throw err;
         }
         else {
@@ -702,12 +707,12 @@ class SyncManager {
 }
 __decorate([
     conduit_utils_1.traceAsync('SyncManager')
-], SyncManager.prototype, "initAuth", null);
+], ENSyncManager.prototype, "initAuth", null);
 __decorate([
     conduit_utils_1.traceAsync('SyncManager')
-], SyncManager.prototype, "forceDownsyncUpdate", null);
+], ENSyncManager.prototype, "forceDownsyncUpdate", null);
 __decorate([
     conduit_utils_1.traceAsync('SyncManager')
-], SyncManager.prototype, "onSyncStateChange", null);
-exports.SyncManager = SyncManager;
-//# sourceMappingURL=SyncManager.js.map
+], ENSyncManager.prototype, "onSyncStateChange", null);
+exports.ENSyncManager = ENSyncManager;
+//# sourceMappingURL=ENSyncManager.js.map

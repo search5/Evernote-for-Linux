@@ -1,8 +1,8 @@
 {
   "name": "en-nsync-connector",
-  "version": "1.36.3",
+  "version": "1.37.3",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "http://localhost:4873/"
   },
   "description": "New API to NSync API translation layer",
   "main": "dist/index",
@@ -19,13 +19,13 @@
     "ts-sinon": "^1.0.21"
   },
   "dependencies": {
-    "conduit-core": "1.36.3",
-    "conduit-storage": "1.36.3",
-    "conduit-utils": "1.36.3",
-    "conduit-view-types": "1.36.3",
-    "en-conduit-sync-types": "1.36.3",
-    "en-core-data-model": "^3.6.2",
-    "en-core-entity-types": "1.36.3",
+    "conduit-core": "1.37.3",
+    "conduit-storage": "1.37.3",
+    "conduit-utils": "1.37.3",
+    "conduit-view-types": "1.37.3",
+    "en-conduit-sync-types": "1.37.3",
+    "en-core-data-model": "^3.4.4",
+    "en-core-entity-types": "1.37.3",
     "en-data-model": "^3.6.2",
     "en-graph-types": "2.0.0"
   }

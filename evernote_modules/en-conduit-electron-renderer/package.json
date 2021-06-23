@@ -1,8 +1,8 @@
 {
   "name": "en-conduit-electron-renderer",
-  "version": "1.36.3",
+  "version": "1.37.3",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "http://localhost:4873/"
   },
   "description": "Conduit integration for Electron Renderer process",
   "main": "dist/index",
@@ -10,9 +10,9 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-utils": "1.36.3",
-    "conduit-view": "1.36.3",
-    "conduit-view-types": "1.36.3",
-    "en-conduit-electron-shared": "1.36.3"
+    "conduit-utils": "1.37.3",
+    "conduit-view": "1.37.3",
+    "conduit-view-types": "1.37.3",
+    "en-conduit-electron-shared": "1.37.3"
   }
 }

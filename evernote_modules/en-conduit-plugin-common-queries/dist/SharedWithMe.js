@@ -50,7 +50,7 @@ async function resolveSharedWithMe(_, args, context, info) {
             memberships.push(ref);
         }
         for (const syncContext of node.syncContexts) {
-            if (syncContext.startsWith('SharedNote:')) {
+            if (en_core_entity_types_1.isSharedNoteSyncContext(syncContext)) {
                 syncContexts.add(syncContext);
             }
         }

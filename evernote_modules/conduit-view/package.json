@@ -1,8 +1,8 @@
 {
   "name": "conduit-view",
-  "version": "1.36.3",
+  "version": "1.37.3",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "http://localhost:4873/"
   },
   "description": "Render/View Layer for Conduit",
   "main": "dist/index",
@@ -13,8 +13,8 @@
     "@types/node": "^10.12.2"
   },
   "dependencies": {
-    "conduit-utils": "1.36.3",
-    "conduit-view-types": "1.36.3",
+    "conduit-utils": "1.37.3",
+    "conduit-view-types": "1.37.3",
     "en-data-model": "^3.6.2",
     "en-home-data-model": "^3.6.2",
     "graphql": "^14.0.2",

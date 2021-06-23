@@ -21,6 +21,6 @@
   "license": "MIT",
   "homepage": "https://source.build.etonreve.com/projects/NP/repos/en-node-gyp-build",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "http://localhost:4873/"
   }
 }

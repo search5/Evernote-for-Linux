@@ -29,7 +29,6 @@ const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const Helpers_1 = require("../Converters/Helpers");
-const SyncActivity_1 = require("../SyncManagement/SyncActivity");
 exports.DEFAULT_POLL_INTERVAL = 30000;
 exports.MIN_POLL_INTERVAL = 5000;
 exports.RETRY_TIMEOUT = 10000;
@@ -188,7 +187,7 @@ exports.updateSyncRate = updateSyncRate;
 async function clearSyncProgress(trc, syncEngine) {
     // clear initial downsync progress keys for correct progressPercent calculation after initial downsync
     await syncEngine.transactEphemeral(trc, 'clearInitialSyncProgressTable', async (tx) => {
-        await tx.clearTable(trc, SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE);
+        await tx.clearTable(trc, en_conduit_sync_types_1.INITIAL_DOWNSYNC_PROGRESS_TABLE);
     });
     // set syncProgressType to none
     await updateSyncProgressType(trc, syncEngine, conduit_view_types_1.SyncProgressType.NONE);

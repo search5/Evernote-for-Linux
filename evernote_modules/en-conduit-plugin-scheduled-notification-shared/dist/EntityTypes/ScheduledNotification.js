@@ -11,7 +11,7 @@ const en_notifications_data_model_1 = require("en-notifications-data-model");
 exports.scheduledNotificationTypeDef = {
     name: en_data_model_1.EntityTypes.ScheduledNotification,
     syncSource: conduit_storage_1.SyncSource.NSYNC,
-    nsyncFeatureGroup: 'Tasks',
+    nsyncFeatureGroup: 'Calendar',
     fieldValidation: {},
     schema: Object.assign(Object.assign({}, conduit_utils_1.shallowCloneExcluding(en_notifications_data_model_1.ScheduledNotificationEntitySchema.fields, ['scheduling', 'dataSource'])), { created: 'timestamp', updated: 'timestamp' }),
     cache: {

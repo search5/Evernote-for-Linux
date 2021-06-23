@@ -62,7 +62,7 @@ class QSPCheckMetadataOperators {
         const token = node.token;
         if (token.type != QueryToken_1.QSPTokenType.ARGUMENT) // not a leaf node
             return;
-        if (!token.isFieldOperator() || !FieldOperator_1.QSPFieldOperatorContext.isMetadataOperator(token.fieldOperator)) {
+        if (!token.isFieldOperator() || !FieldOperator_1.QSPFieldOperatorContext.isMetadataOperator(token.fieldOperator, token.fieldValue)) {
             this.success = false;
         }
     }

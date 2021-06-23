@@ -13,6 +13,7 @@ def main(registry):
     npm_packages = glob.glob(f"{evernote_module_prefix}/*", recursive=False)
     npm_packages.append(f"{evernote_module_prefix}/en-graph-types/node_modules/en-data-model")
     npm_packages.append(f"{evernote_module_prefix}/en-tasks-data-model/node_modules/en-data-model")
+    npm_packages.append(f"{evernote_module_prefix}/en-core-data-model/node_modules/en-data-model")
     npm_packages.append(f"{evernote_module_prefix}/conduit-utils/node_modules/en-ts-utils")
     #print(npm_packages)
 

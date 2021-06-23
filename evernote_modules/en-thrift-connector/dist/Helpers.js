@@ -3,12 +3,10 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.shouldBufferMutation = exports.getBestSyncContextForNode = exports.EXTERNAL_CONTEXT_REGEX = exports.SHARED_NOTE_CONTEXT_REGEX = exports.LINKED_CONTEXT_REGEX = void 0;
+exports.shouldBufferMutation = exports.getBestSyncContextForNode = void 0;
 const conduit_core_1 = require("conduit-core");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
-exports.LINKED_CONTEXT_REGEX = /^LinkedNotebook:/;
-exports.SHARED_NOTE_CONTEXT_REGEX = /^SharedNote:/;
-exports.EXTERNAL_CONTEXT_REGEX = /(^LinkedNotebook:|^SharedNote:)/;
+const en_core_entity_types_1 = require("en-core-entity-types");
 async function getSyncContextMetadata(trc, syncContextMetadataProvider, storageDB, syncContext) {
     if (syncContextMetadataProvider) {
         return await syncContextMetadataProvider.getSyncContextMetadata(trc, syncContext);
@@ -23,7 +21,7 @@ async function getBestSyncContextForNode(trc, node, syncContextMetadataProvider,
         return node.syncContexts[0];
     }
     const hasVaultContext = node.syncContexts.includes(conduit_core_1.VAULT_USER_CONTEXT);
-    const hasSharedNoteContext = node.syncContexts.some(context => context.match(exports.SHARED_NOTE_CONTEXT_REGEX));
+    const hasSharedNoteContext = node.syncContexts.some(context => en_core_entity_types_1.isSharedNoteSyncContext(context));
     if (hasVaultContext && !hasSharedNoteContext) {
         // vault auth can be used for all entities except directly shared Notes.
         return conduit_core_1.VAULT_USER_CONTEXT;

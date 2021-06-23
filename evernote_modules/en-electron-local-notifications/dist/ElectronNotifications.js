@@ -74,6 +74,7 @@ class ElectronNotifications {
             title: notificationData.title,
             body: notificationData.body,
             subtitle: notificationData.subtitle,
+            closeButtonText: notificationData.closeButtonText,
             actions: (_a = notificationData.buttons) === null || _a === void 0 ? void 0 : _a.map(button => ({
                 text: button.text,
                 type: 'button',

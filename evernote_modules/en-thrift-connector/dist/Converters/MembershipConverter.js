@@ -14,9 +14,8 @@ const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const Helpers_1 = require("../Helpers");
 const Converters_1 = require("./Converters");
-const Helpers_2 = require("./Helpers");
+const Helpers_1 = require("./Helpers");
 const MessageAttachmentConverter_1 = require("./MessageAttachmentConverter");
 const NotebookConverter_1 = require("./NotebookConverter");
 const ProfileConverter_1 = require("./ProfileConverter");
@@ -611,7 +610,7 @@ class MembershipConverterClass {
                 if (!parentEdge) {
                     throw new Error('No parent edge found');
                 }
-                const { auth } = await Helpers_2.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, membership);
+                const { auth } = await Helpers_1.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, membership);
                 switch (parentEdge.srcType) {
                     case en_core_entity_types_1.CoreEntityTypes.Workspace: {
                         return await removeMembershipFromWorkspace(trc, params, auth, parentEdge.srcID, membership);
@@ -647,7 +646,7 @@ class MembershipConverterClass {
             }
             if (parentEdge.srcType === en_core_entity_types_1.CoreEntityTypes.Workspace) {
                 const workspace = parentEdge.srcID;
-                const auth = await Helpers_2.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
+                const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
                 const utilityStore = params.thriftComm.getUtilityStore(auth.urls.utilityUrl);
                 const workspaceId = Converters_1.convertGuidToService(workspace, en_core_entity_types_1.CoreEntityTypes.Workspace);
                 await utilityStore.leaveWorkspace(trc, auth.token, workspaceId);
@@ -672,7 +671,7 @@ class MembershipConverterClass {
                 const noteStore = params.thriftComm.getNoteStore(noteStoreUrl);
                 const recipientSettings = new en_conduit_sync_types_1.TNotebookRecipientSettings({ recipientStatus: en_conduit_sync_types_1.TRecipientStatus.NOT_IN_MY_LIST });
                 await noteStore.setNotebookRecipientSettings(trc, authToken, serviceGuid, recipientSettings);
-                if (metadata && metadata.sharedNotebookGlobalID && syncContext.match(Helpers_1.LINKED_CONTEXT_REGEX)) {
+                if (metadata && metadata.sharedNotebookGlobalID && en_core_entity_types_1.isLinkedSyncContext(syncContext)) {
                     // clean up linkedNb syncContext for shared nbs to avoid race with a pending invitationAccept
                     const syncStatePath = ['sharing', 'sharedNotebooks', metadata.sharedNotebookGlobalID];
                     await params.graphTransaction.deleteSyncState(trc, syncStatePath);
@@ -691,7 +690,7 @@ class MembershipConverterClass {
             throw new Error('No parent edge found');
         }
         if (diff.NodeFields && diff.NodeFields.privilege) {
-            const { auth } = await Helpers_2.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, membership);
+            const { auth } = await Helpers_1.getAuthAndSyncContextForNode(trc, params.graphTransaction, params.authCache, membership);
             switch (parentEdge.srcType) {
                 case en_core_entity_types_1.CoreEntityTypes.Workspace: {
                     await updateWorkspaceMembershipPrivilege(trc, params, auth, membershipRef.id, parentEdge.srcID, diff.NodeFields.privilege);

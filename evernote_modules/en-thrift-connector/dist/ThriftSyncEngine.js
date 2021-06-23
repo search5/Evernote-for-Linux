@@ -38,7 +38,7 @@ const UserConverter_1 = require("./Converters/UserConverter");
 const LinkedNotebookSync_1 = require("./SyncFunctions/LinkedNotebookSync");
 const SharedNoteSync_1 = require("./SyncFunctions/SharedNoteSync");
 const SyncHelpers_1 = require("./SyncFunctions/SyncHelpers");
-const SyncManager_1 = require("./SyncManagement/SyncManager");
+const ENSyncManager_1 = require("./SyncManagement/ENSyncManager");
 // hook into GraphStorageDB to remove auth token before persisting.
 async function sanitizeSyncContextMetadata(trc, m) {
     if (m.isUser || m.isVaultUser) {
@@ -112,7 +112,88 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
         this.vaultUserId = conduit_utils_1.NullUserID;
         this.businessId = null;
         this.isDestroyed = false;
-        this.syncManager = new SyncManager_1.SyncManager(di, thriftComm, this);
+        this.importRemoteGraphDatabase = async (trc, filename) => {
+            await this.graphStorage.importDatabase(trc, filename);
+        };
+        this.updateUser = async (trc, graphTransaction, user, isVaultUser, auth) => {
+            var _a, _b, _c;
+            const syncContext = await initUserSyncContext(trc, graphTransaction, isVaultUser ? conduit_core_1.VAULT_USER_CONTEXT : conduit_core_1.PERSONAL_USER_CONTEXT, auth);
+            const params = await Helpers_1.makeConverterParams({
+                trc,
+                graphTransaction,
+                personalUserId: this.userId,
+                vaultUserId: this.vaultUserId,
+                localSettings: this.localSettings,
+                offlineContentStrategy: this.offlineContentStrategy,
+            });
+            const userNode = await UserConverter_1.convertUserFromService(trc, params, syncContext, user, isVaultUser);
+            if (!isVaultUser) {
+                const enLocale = (_a = userNode.NodeFields.Attributes.preferredLanguage) !== null && _a !== void 0 ? _a : undefined;
+                // Needs to be mapped to BCP-47
+                // https://appmakers.dev/bcp-47-language-codes-list/
+                const enLocaleMap = {
+                    en_US: 'en-US',
+                    en_XA: 'en-XA',
+                    in: 'id',
+                    pt_BR: 'pt-BR',
+                    zh_CN: 'zh-CN',
+                    zh_TW: 'zh-TW',
+                    zh_CN_yxbj: 'zh-CN',
+                };
+                const resolvedLocale = enLocale ? enLocaleMap[enLocale] || enLocale : enLocale;
+                this.locale = resolvedLocale || await this.di.getSystemLocale();
+                const oldLocale = await graphTransaction.getStoredLocale(trc, null);
+                (_c = (_b = this.di).didSetLocale) === null || _c === void 0 ? void 0 : _c.call(_b, trc, this.locale);
+                if ((!oldLocale && this.locale) || (this.locale && oldLocale !== this.locale)) {
+                    // Going through the sync manager so that the loading screen appears
+                    await this.syncManager.addReindexingActivity(trc, graphTransaction);
+                }
+                const userInfo = {
+                    userID: conduit_utils_1.keyStringForUserID(userNode.NodeFields.internal_userID),
+                    email: userNode.NodeFields.email || '',
+                    username: userNode.NodeFields.username || '',
+                    fullName: userNode.NodeFields.name || '',
+                    photoUrl: userNode.NodeFields.photoUrl,
+                    businessName: (user.businessUserInfo && user.businessUserInfo.businessName) || '',
+                };
+                await this.di.setUserInfo(trc, userInfo);
+            }
+            if (isVaultUser || !user.businessUserInfo) {
+                await AccountLimitsConverter_1.initAccountLimitsNode(trc, Object.assign(Object.assign({}, params), { thriftComm: this.thriftComm }), syncContext, auth, user.accountLimits || undefined);
+            }
+        };
+        this.createSyncEventStorage = () => {
+            const storage = {
+                transact: (newTrc, name, func) => {
+                    return this.transact(newTrc, name, func);
+                },
+                getNode: async (newTrc, ref) => {
+                    return await this.graphStorage.getNode(newTrc, null, ref, false);
+                },
+                getEdge: async (newTrc, ref) => {
+                    return await this.graphStorage.getEdge(newTrc, null, ref);
+                },
+                getSyncState: (newTrc, watcher, path) => {
+                    return this.graphStorage.getSyncState(newTrc, watcher, path);
+                },
+                getEphemeralFlag: (newTrc, table, key) => {
+                    return this.getEphemeralFlag(newTrc, table, key);
+                },
+                transactEphemeral: (newTrc, name, func) => {
+                    return this.transactEphemeral(newTrc, name, func);
+                },
+                getUserID: () => {
+                    const authInner = this.syncManager.getAuth();
+                    if (!authInner) {
+                        throw new Error('Missing auth in initted SyncManager');
+                    }
+                    return authInner.userID;
+                },
+            };
+            return storage;
+        };
+        this.syncManager = new ENSyncManager_1.ENSyncManager(Object.assign(Object.assign({}, di), { updateUser: this.updateUser, importDatabase: this.importRemoteGraphDatabase, initUserSyncContext }), thriftComm, this);
+        this.di.setupSyncEventStorage(this.createSyncEventStorage());
     }
     async destructor(trc) {
         await this.syncManager.destructor(trc);
@@ -152,8 +233,14 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
         }
         await this.syncManager.initAuth(trc, this.auth, !startSync);
     }
+    getPersonalUserID() {
+        return this.userId;
+    }
     getVaultUserID() {
         return this.vaultUserId;
+    }
+    getBusinessID() {
+        return this.businessId;
     }
     isEventServiceEnabled() {
         return this.syncManager.isEventServiceEnabled();
@@ -174,7 +261,7 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
         await this.syncManager.pauseSyncing(trc);
     }
     async toggleNSync(trc, disable) {
-        await this.syncManager.toggleNSync(trc, disable);
+        await this.syncManager.toggleEventSync(trc, disable);
     }
     async forceDownsyncUpdate(trc, timeout) {
         await this.syncManager.forceDownsyncUpdate(trc, timeout);
@@ -218,9 +305,6 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
     suppressSyncForQuery(name) {
         this.syncManager.suppressSyncForQuery(name);
     }
-    async importRemoteGraphDatabase(trc, filename) {
-        await this.graphStorage.importDatabase(trc, filename);
-    }
     async transact(trc, name, func, tx, mutexTimeoutOverride) {
         if (this.isDestroyed) {
             throw new Error('SyncEngine destructed');
@@ -237,56 +321,6 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
     }
     async getEphemeralFlag(trc, tableName, key) {
         return await this.ephemeralState.getValidatedValue(trc, null, tableName, key, conduit_storage_1.validateIsBoolean);
-    }
-    async initUserSyncContext(trc, graphTransaction, syncContext, auth) {
-        return initUserSyncContext(trc, graphTransaction, syncContext, auth);
-    }
-    async updateUser(trc, graphTransaction, user, isVaultUser, auth) {
-        var _a, _b, _c;
-        const syncContext = await this.initUserSyncContext(trc, graphTransaction, isVaultUser ? conduit_core_1.VAULT_USER_CONTEXT : conduit_core_1.PERSONAL_USER_CONTEXT, auth);
-        const params = await Helpers_1.makeConverterParams({
-            trc,
-            graphTransaction,
-            personalUserId: this.userId,
-            vaultUserId: this.vaultUserId,
-            localSettings: this.localSettings,
-            offlineContentStrategy: this.offlineContentStrategy,
-        });
-        const userNode = await UserConverter_1.convertUserFromService(trc, params, syncContext, user, isVaultUser);
-        if (!isVaultUser) {
-            const enLocale = (_a = userNode.NodeFields.Attributes.preferredLanguage) !== null && _a !== void 0 ? _a : undefined;
-            // Needs to be mapped to BCP-47
-            // https://appmakers.dev/bcp-47-language-codes-list/
-            const enLocaleMap = {
-                en_US: 'en-US',
-                en_XA: 'en-XA',
-                in: 'id',
-                pt_BR: 'pt-BR',
-                zh_CN: 'zh-CN',
-                zh_TW: 'zh-TW',
-                zh_CN_yxbj: 'zh-CN',
-            };
-            const resolvedLocale = enLocale ? enLocaleMap[enLocale] || enLocale : enLocale;
-            this.locale = resolvedLocale || await this.di.getSystemLocale();
-            const oldLocale = await graphTransaction.getStoredLocale(trc, null);
-            (_c = (_b = this.di).didSetLocale) === null || _c === void 0 ? void 0 : _c.call(_b, trc, this.locale);
-            if ((!oldLocale && this.locale) || (this.locale && oldLocale !== this.locale)) {
-                // Going through the sync manager so that the loading screen appears
-                await this.syncManager.addReindexingActivity(trc, graphTransaction);
-            }
-            const userInfo = {
-                userID: conduit_utils_1.keyStringForUserID(userNode.NodeFields.internal_userID),
-                email: userNode.NodeFields.email || '',
-                username: userNode.NodeFields.username || '',
-                fullName: userNode.NodeFields.name || '',
-                photoUrl: userNode.NodeFields.photoUrl,
-                businessName: (user.businessUserInfo && user.businessUserInfo.businessName) || '',
-            };
-            await this.di.setUserInfo(trc, userInfo);
-        }
-        if (isVaultUser || !user.businessUserInfo) {
-            await AccountLimitsConverter_1.initAccountLimitsNode(trc, Object.assign(Object.assign({}, params), { thriftComm: this.thriftComm }), syncContext, auth, user.accountLimits || undefined);
-        }
     }
     async revalidateAuth(trc, err, tx) {
         const allMetadata = await this.graphStorage.getAllSyncContextMetadata(trc, null);
@@ -415,6 +449,13 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
     }
     async configureIndexes(trc, setProgress) {
         return await this.graphStorage.configureIndexes(trc, this.locale, setProgress);
+    }
+    getClientCredentials() {
+        var _a;
+        return (_a = this.clientCredentials) !== null && _a !== void 0 ? _a : null;
+    }
+    getResourceManager() {
+        return this.resourceManager;
     }
 }
 exports.ThriftSyncEngine = ThriftSyncEngine;

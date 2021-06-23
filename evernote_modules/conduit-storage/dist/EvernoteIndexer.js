@@ -280,10 +280,24 @@ class EvernoteIndexer {
         }
         return conduit_utils_1.comparatorFactory(opts, this.locale)(a, b);
     }
-    async resolveField(trc, node, field, nodeFieldLookup, propagatedFields) {
-        const componentResolver = this.config[node.type].indexResolvers[field];
+    async resolveField(trc, node, field, nodeFieldLookup, propagatedFields, dependentFieldValues) {
+        const resolvers = this.config[node.type].indexResolvers;
+        const componentResolver = resolvers[field];
         if (!componentResolver) {
             throw new Error(`Index component: ${field} does not exist in the configured index paths for node type: ${node.type}`);
+        }
+        const dependencies = {};
+        if (componentResolver.dependencies) {
+            for (const key of componentResolver.dependencies) {
+                if (!resolvers.hasOwnProperty(key)) {
+                    throw new conduit_utils_1.InternalError(`Incorrectly configured dependency: ${key} for field: ${field} does not exist`);
+                }
+                if (key in dependentFieldValues) {
+                    dependencies[key] = dependentFieldValues[key];
+                    continue;
+                }
+                dependencies[key] = await this.resolveField(trc, node, key, nodeFieldLookup, propagatedFields, dependencies);
+            }
         }
         let result = [null];
         if (Array.isArray(componentResolver.resolver)) {
@@ -299,7 +313,7 @@ class EvernoteIndexer {
             result = propagatedFields[field];
         }
         else {
-            result = await componentResolver.resolver(trc, node, nodeFieldLookup || dummyNodeFieldLookup);
+            result = await componentResolver.resolver(trc, node, nodeFieldLookup || dummyNodeFieldLookup, dependencies);
             if (componentResolver.propagatedFrom) {
                 propagatedFields[field] = result;
             }
@@ -313,15 +327,34 @@ class EvernoteIndexer {
         return result;
     }
     async resolveAllFields(trc, node, nodeFieldLookup, propagatedFields) {
-        if (!this.config[node.type]) {
+        const typeConfig = this.config[node.type];
+        if (!typeConfig) {
             return {};
         }
-        const fieldNames = Object.keys(this.config[node.type].indexResolvers);
-        const fieldValues = await conduit_utils_1.allSettled(fieldNames.map(field => this.resolveField(trc, node, field, nodeFieldLookup, propagatedFields)));
-        return fieldNames.reduce((obj, field, idx) => {
-            obj[field] = fieldValues[idx];
+        const resolverConfig = typeConfig.indexResolvers;
+        const independentFieldNames = [];
+        const dependentFieldNames = [];
+        for (const field in resolverConfig) {
+            const resolver = resolverConfig[field];
+            if (resolver.dependencies && resolver.dependencies.length) {
+                dependentFieldNames.push(field);
+            }
+            else {
+                independentFieldNames.push(field);
+            }
+        }
+        const independentFieldValues = await conduit_utils_1.allSettled(independentFieldNames
+            .map(field => this.resolveField(trc, node, field, nodeFieldLookup, propagatedFields, {})));
+        const independentlyResolvedFields = independentFieldNames.reduce((obj, field, idx) => {
+            obj[field] = independentFieldValues[idx];
             return obj;
         }, {});
+        const dependentFieldValues = await conduit_utils_1.allSettled(dependentFieldNames
+            .map(field => this.resolveField(trc, node, field, nodeFieldLookup, propagatedFields, independentlyResolvedFields)));
+        return dependentFieldNames.reduce((obj, field, idx) => {
+            obj[field] = dependentFieldValues[idx];
+            return obj;
+        }, independentlyResolvedFields);
     }
     checkShouldIndexNode(indexItem, resolvedFields) {
         for (const condition of indexItem.indexCondition) {

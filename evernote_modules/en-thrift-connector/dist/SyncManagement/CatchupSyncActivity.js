@@ -4,15 +4,16 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.catchupSyncActivityHydrator = exports.CatchupSyncActivity = void 0;
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const NoteStoreSync_1 = require("../SyncFunctions/NoteStoreSync");
 const SyncHelpers_1 = require("../SyncFunctions/SyncHelpers");
-const SyncActivity_1 = require("./SyncActivity");
+const ENSyncActivity_1 = require("./ENSyncActivity");
 const CHUNK_TIMEBOX = 200;
-class CatchupSyncActivity extends SyncActivity_1.SyncActivity {
+class CatchupSyncActivity extends ENSyncActivity_1.ENSyncActivity {
     constructor(di, context, isVault, subBucketSize, offset, timeout = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.CatchupSyncActivity,
-            priority: SyncActivity_1.SyncActivityPriority.BACKGROUND,
+            activityType: en_conduit_sync_types_1.SyncActivityType.CatchupSyncActivity,
+            priority: en_conduit_sync_types_1.SyncActivityPriority.BACKGROUND,
             subpriority: 0,
             runAfter: Date.now() + timeout,
         }, {

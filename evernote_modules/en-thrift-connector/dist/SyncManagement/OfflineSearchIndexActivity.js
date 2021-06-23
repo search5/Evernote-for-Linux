@@ -5,18 +5,19 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.offlineSearchIndexActivityHydrator = exports.OfflineSearchIndexActivity = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const SyncActivity_1 = require("./SyncActivity");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
+const ENSyncActivity_1 = require("./ENSyncActivity");
 /**
  * Periodically runs offline search indexation.
  *
  * **WARNING**: the offline search WON'T work correctly in the case of multiple conduit instances
  * due to the offline search global variables (the same state will be shared accross all instances)
  */
-class OfflineSearchIndexActivity extends SyncActivity_1.SyncActivity {
+class OfflineSearchIndexActivity extends ENSyncActivity_1.ENSyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.OfflineSearchIndexActivity,
-            priority: SyncActivity_1.SyncActivityPriority.BACKGROUND,
+            activityType: en_conduit_sync_types_1.SyncActivityType.OfflineSearchIndexActivity,
+            priority: en_conduit_sync_types_1.SyncActivityPriority.BACKGROUND,
             subpriority,
             runAfter: Date.now() + timeout,
         }, {

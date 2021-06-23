@@ -6,17 +6,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.reindexActivityHydrator = exports.ReindexActivity = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
+const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const SyncHelpers_1 = require("../SyncFunctions/SyncHelpers");
-const SyncActivity_1 = require("./SyncActivity");
-class ReindexActivity extends SyncActivity_1.SyncActivity {
+const ENSyncActivity_1 = require("./ENSyncActivity");
+class ReindexActivity extends ENSyncActivity_1.ENSyncActivity {
     constructor(di, context, subpriority = 0, timeout = 0) {
         super(di, context, {
-            activityType: SyncActivity_1.SyncActivityType.ReindexActivity,
-            priority: SyncActivity_1.SyncActivityPriority.INITIAL_DOWNSYNC,
+            activityType: en_conduit_sync_types_1.SyncActivityType.ReindexActivity,
+            priority: en_conduit_sync_types_1.SyncActivityPriority.INITIAL_DOWNSYNC,
             subpriority,
             runAfter: Date.now() + timeout,
         }, {
-            syncProgressTableName: SyncActivity_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
+            syncProgressTableName: en_conduit_sync_types_1.INITIAL_DOWNSYNC_PROGRESS_TABLE,
         });
     }
     get progressBucketSize() { return 20000; }

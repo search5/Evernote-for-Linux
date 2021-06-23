@@ -1511,7 +1511,7 @@
 	  if (element.tagName === "IMG") {
 	    var rects = element.getClientRects();
 	    var lastRect = rects[rects.length - 1];
-	    rect = lastRect;
+	    rect = lastRect ? lastRect : element.getBoundingClientRect();
 	  } else if (element.nodeType === 1) {
 	    var range = document.createRange();
 	    range.selectNode(element);
@@ -1800,6 +1800,9 @@
 	exports.displayedElementBefore = displayedElementBefore;
 	exports.stackChildren = stackChildren;
 	exports.rebuildAncestors = rebuildAncestors;
+	exports.areElementsInSameTableRow = areElementsInSameTableRow;
+	exports.isAvoidingBreakInsideRow = isAvoidingBreakInsideRow;
+	exports.extractDataRef = extractDataRef;
 	exports.needsBreakBefore = needsBreakBefore;
 	exports.needsBreakAfter = needsBreakAfter;
 	exports.needsPreviousBreakAfter = needsPreviousBreakAfter;
@@ -2098,6 +2101,35 @@
 
 	  added = undefined;
 	  return fragment;
+	}
+
+	function areElementsInSameTableRow(element1, element2, limiter) {
+	  var insideCell = parentOf(element1, "TD", limiter);
+
+	  if (insideCell) {
+	    var nodeParent = parentOf(insideCell, "TR", limiter);
+	    var prevNodeParent = parentOf(element2, "TR", limiter);
+
+	    if (nodeParent && prevNodeParent) {
+	      var parentRef = extractDataRef(nodeParent);
+	      var prevParentRef = extractDataRef(prevNodeParent);
+
+	      if (parentRef && prevParentRef && parentRef === prevParentRef) {
+	        return true;
+	      }
+	    }
+	  }
+
+	  return false;
+	}
+
+	function isAvoidingBreakInsideRow(element, limiter) {
+	  var insideRow = parentOf(element, "TR", limiter);
+	  return insideRow && window.getComputedStyle(insideRow)["break-inside"] === "avoid";
+	}
+
+	function extractDataRef(element) {
+	  return element.attributes && element.attributes["data-ref"] && element.attributes["data-ref"].value;
 	}
 	/*
 	export function split(bound, cutElement, breakAfter) {
@@ -2656,33 +2688,36 @@
 	var dom_9 = dom.displayedElementBefore;
 	var dom_10 = dom.stackChildren;
 	var dom_11 = dom.rebuildAncestors;
-	var dom_12 = dom.needsBreakBefore;
-	var dom_13 = dom.needsBreakAfter;
-	var dom_14 = dom.needsPreviousBreakAfter;
-	var dom_15 = dom.needsPageBreak;
-	var dom_16 = dom.words;
-	var dom_17 = dom.letters;
-	var dom_18 = dom.isContainer;
-	var dom_19 = dom.cloneNode;
-	var dom_20 = dom.findElement;
-	var dom_21 = dom.findRef;
-	var dom_22 = dom.validNode;
-	var dom_23 = dom.prevValidNode;
-	var dom_24 = dom.nextValidNode;
-	var dom_25 = dom.indexOf;
-	var dom_26 = dom.child;
-	var dom_27 = dom.isVisible;
-	var dom_28 = dom.hasContent;
-	var dom_29 = dom.hasTextContent;
-	var dom_30 = dom.indexOfTextNode;
-	var dom_31 = dom.isIgnorable;
-	var dom_32 = dom.isAllWhitespace;
-	var dom_33 = dom.previousSignificantNode;
-	var dom_34 = dom.breakInsideAvoidParentNode;
-	var dom_35 = dom.parentOf;
-	var dom_36 = dom.nextSignificantNode;
-	var dom_37 = dom.getNextSibling;
-	var dom_38 = dom.filterTree;
+	var dom_12 = dom.areElementsInSameTableRow;
+	var dom_13 = dom.isAvoidingBreakInsideRow;
+	var dom_14 = dom.extractDataRef;
+	var dom_15 = dom.needsBreakBefore;
+	var dom_16 = dom.needsBreakAfter;
+	var dom_17 = dom.needsPreviousBreakAfter;
+	var dom_18 = dom.needsPageBreak;
+	var dom_19 = dom.words;
+	var dom_20 = dom.letters;
+	var dom_21 = dom.isContainer;
+	var dom_22 = dom.cloneNode;
+	var dom_23 = dom.findElement;
+	var dom_24 = dom.findRef;
+	var dom_25 = dom.validNode;
+	var dom_26 = dom.prevValidNode;
+	var dom_27 = dom.nextValidNode;
+	var dom_28 = dom.indexOf;
+	var dom_29 = dom.child;
+	var dom_30 = dom.isVisible;
+	var dom_31 = dom.hasContent;
+	var dom_32 = dom.hasTextContent;
+	var dom_33 = dom.indexOfTextNode;
+	var dom_34 = dom.isIgnorable;
+	var dom_35 = dom.isAllWhitespace;
+	var dom_36 = dom.previousSignificantNode;
+	var dom_37 = dom.breakInsideAvoidParentNode;
+	var dom_38 = dom.parentOf;
+	var dom_39 = dom.nextSignificantNode;
+	var dom_40 = dom.getNextSibling;
+	var dom_41 = dom.filterTree;
 
 	var breaktoken = createCommonjsModule(function (module, exports) {
 
@@ -2911,7 +2946,7 @@
 	                // Should the Node be a shallow or deep clone
 	                shallow = (0, dom.isContainer)(node);
 	                rendered = this.append(node, wrapper, breakToken, shallow);
-	                addedLength = rendered.textContent.length;
+	                addedLength = rendered.textContent && rendered.textContent.length;
 	                renderedLengthHooks = this.hooks.onRenderedLength.triggerSync(rendered, node, addedLength, this);
 	                renderedLengthHooks.forEach(function (newRenderedLength) {
 	                  if (typeof newRenderedLength != "undefined") {
@@ -3071,93 +3106,128 @@
 	    }
 	  }, {
 	    key: "append",
-	    value: function append(node, dest, breakToken) {
-	      var shallow = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
-	      var rebuild = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : true;
-	      var clone = (0, dom.cloneNode)(node, !shallow);
+	    value: function () {
+	      var _append = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(node, dest, breakToken) {
+	        var shallow,
+	            rebuild,
+	            clone,
+	            parent,
+	            fragment,
+	            imgHeight,
+	            nodeHooks,
+	            _args2 = arguments;
+	        return _regenerator["default"].wrap(function _callee2$(_context2) {
+	          while (1) {
+	            switch (_context2.prev = _context2.next) {
+	              case 0:
+	                shallow = _args2.length > 3 && _args2[3] !== undefined ? _args2[3] : true;
+	                rebuild = _args2.length > 4 && _args2[4] !== undefined ? _args2[4] : true;
+	                clone = (0, dom.cloneNode)(node, !shallow);
 
-	      if (node.parentNode && (0, dom.isElement)(node.parentNode)) {
-	        var parent = (0, dom.findElement)(node.parentNode, dest); // Rebuild chain
+	                if (node.parentNode && (0, dom.isElement)(node.parentNode)) {
+	                  parent = (0, dom.findElement)(node.parentNode, dest); // Rebuild chain
 
-	        if (parent) {
-	          parent.appendChild(clone);
-	        } else if (rebuild) {
-	          var fragment = (0, dom.rebuildAncestors)(node);
-	          parent = (0, dom.findElement)(node.parentNode, fragment);
+	                  if (parent) {
+	                    parent.appendChild(clone);
+	                  } else if (rebuild) {
+	                    fragment = (0, dom.rebuildAncestors)(node);
+	                    parent = (0, dom.findElement)(node.parentNode, fragment);
 
-	          if (!parent) {
-	            dest.appendChild(clone);
-	          } else if (breakToken && (0, dom.isText)(breakToken.node) && breakToken.offset > 0) {
-	            clone.textContent = clone.textContent.substring(breakToken.offset);
-	            parent.appendChild(clone);
-	          } else {
-	            parent.appendChild(clone);
+	                    if (!parent) {
+	                      dest.appendChild(clone);
+	                    } else if (breakToken && (0, dom.isText)(breakToken.node) && breakToken.offset > 0) {
+	                      clone.textContent = clone.textContent.substring(breakToken.offset);
+	                      parent.appendChild(clone);
+	                    } else {
+	                      parent.appendChild(clone);
+	                    }
+
+	                    dest.appendChild(fragment);
+	                  } else {
+	                    dest.appendChild(clone);
+	                  }
+	                } else {
+	                  dest.appendChild(clone);
+	                }
+
+	                if (!(clone.tagName === "IMG")) {
+	                  _context2.next = 9;
+	                  break;
+	                }
+
+	                _context2.next = 7;
+	                return this.waitForImages(clone);
+
+	              case 7:
+	                imgHeight = clone.height;
+	                clone.style.maxHeight = "".concat(imgHeight, "px");
+
+	              case 9:
+	                nodeHooks = this.hooks.renderNode.triggerSync(clone, node, this);
+	                nodeHooks.forEach(function (newNode) {
+	                  if (typeof newNode != "undefined") {
+	                    clone = newNode;
+	                  }
+	                });
+	                return _context2.abrupt("return", clone);
+
+	              case 12:
+	              case "end":
+	                return _context2.stop();
+	            }
 	          }
+	        }, _callee2, this);
+	      }));
 
-	          dest.appendChild(fragment);
-	        } else {
-	          dest.appendChild(clone);
-	        }
-	      } else {
-	        dest.appendChild(clone);
+	      function append(_x4, _x5, _x6) {
+	        return _append.apply(this, arguments);
 	      }
 
-	      if (clone.tagName === "IMG") {
-	        var imgHeight = clone.height;
-	        clone.style.maxHeight = "".concat(imgHeight, "px");
-	      }
-
-	      var nodeHooks = this.hooks.renderNode.triggerSync(clone, node, this);
-	      nodeHooks.forEach(function (newNode) {
-	        if (typeof newNode != "undefined") {
-	          clone = newNode;
-	        }
-	      });
-	      return clone;
-	    }
+	      return append;
+	    }()
 	  }, {
 	    key: "waitForImages",
 	    value: function () {
-	      var _waitForImages = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee3(imgs) {
+	      var _waitForImages = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee4(imgs) {
 	        var _this = this;
 
 	        var results;
-	        return _regenerator["default"].wrap(function _callee3$(_context3) {
+	        return _regenerator["default"].wrap(function _callee4$(_context4) {
 	          while (1) {
-	            switch (_context3.prev = _context3.next) {
+	            switch (_context4.prev = _context4.next) {
 	              case 0:
 	                results = Array.from(imgs).map( /*#__PURE__*/function () {
-	                  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(img) {
-	                    return _regenerator["default"].wrap(function _callee2$(_context2) {
+	                  var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee3(img) {
+	                    return _regenerator["default"].wrap(function _callee3$(_context3) {
 	                      while (1) {
-	                        switch (_context2.prev = _context2.next) {
+	                        switch (_context3.prev = _context3.next) {
 	                          case 0:
-	                            return _context2.abrupt("return", _this.awaitImageLoaded(img));
+	                            return _context3.abrupt("return", _this.awaitImageLoaded(img));
 
 	                          case 1:
 	                          case "end":
-	                            return _context2.stop();
+	                            return _context3.stop();
 	                        }
 	                      }
-	                    }, _callee2);
+	                    }, _callee3);
 	                  }));
 
-	                  return function (_x5) {
+	                  return function (_x8) {
 	                    return _ref.apply(this, arguments);
 	                  };
 	                }());
-	                _context3.next = 3;
+	                _context4.next = 3;
 	                return Promise.all(results);
 
 	              case 3:
 	              case "end":
-	                return _context3.stop();
+	                return _context4.stop();
 	            }
 	          }
-	        }, _callee3);
+	        }, _callee4);
 	      }));
 
-	      function waitForImages(_x4) {
+	      function waitForImages(_x7) {
 	        return _waitForImages.apply(this, arguments);
 	      }
 
@@ -3166,13 +3236,17 @@
 	  }, {
 	    key: "awaitImageLoaded",
 	    value: function () {
-	      var _awaitImageLoaded = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee4(image) {
-	        return _regenerator["default"].wrap(function _callee4$(_context4) {
+	      var _awaitImageLoaded = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee5(image) {
+	        return _regenerator["default"].wrap(function _callee5$(_context5) {
 	          while (1) {
-	            switch (_context4.prev = _context4.next) {
+	            switch (_context5.prev = _context5.next) {
 	              case 0:
-	                return _context4.abrupt("return", new Promise(function (resolve) {
-	                  if (image.complete !== true) {
+	                return _context5.abrupt("return", new Promise(function (resolve) {
+	                  if (!image.src) {
+	                    console.warn('There is no src in img!');
+	                  }
+
+	                  if (image.src && image.complete !== true) {
 	                    image.onload = function () {
 	                      var _window$getComputedSt = window.getComputedStyle(image),
 	                          width = _window$getComputedSt.width,
@@ -3199,13 +3273,13 @@
 
 	              case 1:
 	              case "end":
-	                return _context4.stop();
+	                return _context5.stop();
 	            }
 	          }
-	        }, _callee4);
+	        }, _callee5);
 	      }));
 
-	      function awaitImageLoaded(_x6) {
+	      function awaitImageLoaded(_x9) {
 	        return _awaitImageLoaded.apply(this, arguments);
 	      }
 
@@ -3405,12 +3479,16 @@
 
 	          if (!range && left >= end) {
 	            if (node.tagName === "IMG") {
-	              var dataRef = node.attributes["data-ref"].value;
-	              var prevTokenDataRef = prevBreakToken.node.attributes["data-ref"].value;
+	              var dataRef = node.attributes && node.attributes["data-ref"].value;
+	              var prevTokenDataRef = (0, dom.extractDataRef)(prevBreakToken.node);
 
 	              if (dataRef === prevTokenDataRef) {
 	                continue;
 	              }
+	            }
+
+	            if ((0, dom.areElementsInSameTableRow)(node, prevBreakToken.node, rendered) && (0, dom.isAvoidingBreakInsideRow)(node, rendered)) {
+	              continue;
 	            } // Check if it is a float
 
 
@@ -3452,6 +3530,10 @@
 	          }
 
 	          if (!range && (0, dom.isText)(node) && node.textContent.trim().length && !(0, dom.breakInsideAvoidParentNode)(node.parentNode)) {
+	            if ((0, dom.areElementsInSameTableRow)(node, prevBreakToken.node, rendered) && (0, dom.isAvoidingBreakInsideRow)(node, rendered)) {
+	              continue;
+	            }
+
 	            var rects = (0, utils.getClientRects)(node);
 	            var rect = void 0;
 	            left = 0;

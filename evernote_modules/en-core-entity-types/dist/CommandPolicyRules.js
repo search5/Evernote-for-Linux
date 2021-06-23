@@ -23,13 +23,11 @@ function isUserSyncContext(node) {
 function isBusinessSyncContext(node) {
     return node.syncContexts.includes(conduit_core_1.VAULT_USER_CONTEXT);
 }
-function isSharedSyncContext(node) {
-    for (const syncContext of node.syncContexts) {
-        if (syncContext.split(':')[0] === 'SharedNote') {
-            return true;
-        }
-    }
-    return false;
+function hasSharedNoteSyncContext(node) {
+    return node.syncContexts.some(context => ShareUtils_1.isSharedNoteSyncContext(context));
+}
+function hasLinkedNotebookSyncContext(node) {
+    return node.syncContexts.some(context => ShareUtils_1.isLinkedSyncContext(context));
 }
 async function getParent(node, context) {
     const parentEdge = conduit_utils_1.firstStashEntry(node.inputs.parent);
@@ -68,7 +66,7 @@ async function permissionOf(node, permissionContext, ancestors) {
     }
     if (node.type === EntityConstants_1.CoreEntityTypes.Note) {
         // The only way a note has higher permission than its container is via sharing
-        const isShared = isSharedSyncContext(node);
+        const isShared = hasSharedNoteSyncContext(node);
         nodePermission = isShared ? en_conduit_sync_types_1.highestPrivilege(nodePermission, parentPermission) : parentPermission;
     }
     else {
@@ -128,6 +126,8 @@ async function commandPolicyOfNote(noteID, context) {
     const isBusinessContext = isBusinessSyncContext(note);
     const parentFullControl = en_conduit_sync_types_1.MembershipPrivilege.MANAGE === parentPermission;
     const parentEditable = parentFullControl || en_conduit_sync_types_1.MembershipPrivilege.EDIT === parentPermission;
+    // is it shared note from linked notebook in the trash (the field 'deleted' is set but sync has not happened yet)
+    const isNotExpungedSharedNote = inTrash && hasLinkedNotebookSyncContext(note);
     // owned by either business or someone else (shared entity)
     switch (nodePermission) {
         case en_conduit_sync_types_1.MembershipPrivilege.MANAGE:
@@ -138,7 +138,7 @@ async function commandPolicyOfNote(noteID, context) {
                 canEmail: isBusinessContext,
                 canExpunge: false,
                 canMove: parentEditable,
-                canMoveToTrash: parentEditable && !inTrash,
+                canMoveToTrash: parentEditable && (!inTrash || isNotExpungedSharedNote),
                 canRestoreFromTrash: isBusinessContext && inTrash,
                 canSeeVersionHistory: isBusinessContext,
                 canShare: true,
@@ -156,7 +156,7 @@ async function commandPolicyOfNote(noteID, context) {
                 canEmail: isBusinessContext,
                 canExpunge: false,
                 canMove: parentEditable,
-                canMoveToTrash: parentEditable && !inTrash,
+                canMoveToTrash: parentEditable && (!inTrash || isNotExpungedSharedNote),
                 canRestoreFromTrash: isBusinessContext && inTrash,
                 canSeeVersionHistory: isBusinessContext,
                 canShare: false,
