@@ -1,0 +1,16 @@
+{
+   "allDay" : "全天",
+   "close" : "关闭",
+   "createNote" : "创建笔记",
+   "createNoteForEvent" : "为 {EVENT_TITLE} 创建笔记",
+   "createNoteForUntitledEvent" : "为无标题事件创建笔记",
+   "dueAtDate" : "到期时间 {DATE}",
+   "dueAtDateTime" : "到期日期 {DATE} {TIME}",
+   "endedAt" : "截止日期： {TIME}",
+   "openNote" : "打开笔记",
+   "openNoteForEvent" : "为 {EVENT_TITLE} 创建笔记",
+   "openNoteForUntitledEvent" : "为无标题事件打开笔记",
+   "startsAt" : "开始日期： {TIME}",
+   "timeRange" : "{START_TIME} - {END_TIME}",
+   "untitledTask" : "无标题任务"
+}

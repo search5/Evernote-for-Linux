@@ -1,8 +1,8 @@
 {
   "name": "en-conduit-plugin-datadog-metrics",
-  "version": "1.37.3",
+  "version": "1.37.8",
   "publishConfig": {
-    "registry": "http://localhost:4873/"
+    "registry": "http://localhost:4873"
   },
   "description": "Plugin for setting up a conduit-core TelemetryDestination for recording metrics on Datadog",
   "main": "dist/index",
@@ -10,9 +10,9 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-core": "1.37.3",
-    "conduit-utils": "1.37.3",
-    "conduit-view-types": "1.37.3"
+    "conduit-core": "1.37.8",
+    "conduit-utils": "1.37.8",
+    "conduit-view-types": "1.37.8"
   },
   "devDependencies": {
     "chai": "^4.2.0"

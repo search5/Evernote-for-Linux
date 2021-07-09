@@ -1,0 +1,3 @@
+nodeenv -n 14.17.3 -p
+npm install -g node-gyp
+npm install -g node-addon-api

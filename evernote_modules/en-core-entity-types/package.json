@@ -1,8 +1,8 @@
 {
   "name": "en-core-entity-types",
-  "version": "1.37.3",
+  "version": "1.37.8",
   "publishConfig": {
-    "registry": "http://localhost:4873/"
+    "registry": "http://localhost:4873"
   },
   "description": "Node types, schemas, and mutators for Evernote-secific domain logic.",
   "main": "dist/index",
@@ -15,11 +15,11 @@
     "simply-immutable": "^2.1.1"
   },
   "dependencies": {
-    "conduit-core": "1.37.3",
-    "conduit-storage": "1.37.3",
-    "conduit-utils": "1.37.3",
-    "conduit-view-types": "1.37.3",
-    "en-conduit-sync-types": "1.37.3",
+    "conduit-core": "1.37.8",
+    "conduit-storage": "1.37.8",
+    "conduit-utils": "1.37.8",
+    "conduit-view-types": "1.37.8",
+    "en-conduit-sync-types": "1.37.8",
     "en-data-model": "^3.6.2"
   }
 }

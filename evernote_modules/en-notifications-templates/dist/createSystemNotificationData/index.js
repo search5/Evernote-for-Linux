@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createSystemNotificationData = void 0;
 const notifications_1 = require("../types/notifications");
 const createCalendarNotificationData_1 = require("./createCalendarNotificationData");
+const createTaskReminderNotificationData_1 = require("./createTaskReminderNotificationData");
 /**
  * Transforms input into SystemNotificationData, which includes the required fields to
  * schedule system notifications for both client-side & server-side scenarios.
@@ -21,6 +22,8 @@ function createSystemNotificationData({ notificationId, srcData, notificationTyp
     switch (notificationType) {
         case notifications_1.SystemNotificationType.Calendar:
             return createCalendarNotificationData_1.createCalendarNotificationData(notificationId, srcData, locale, logger);
+        case notifications_1.SystemNotificationType.TaskReminder:
+            return createTaskReminderNotificationData_1.createTaskReminderNotificationData(notificationId, srcData, locale, logger);
         default:
             throw new Error(`SystemNotificationType: ${notificationType} not supported`);
     }

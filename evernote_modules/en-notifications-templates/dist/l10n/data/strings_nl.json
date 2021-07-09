@@ -1,0 +1,16 @@
+{
+   "allDay" : "Hele dag",
+   "close" : "Sluit",
+   "createNote" : "Maak notitie aan",
+   "createNoteForEvent" : "Maak notitie aan voor {EVENT_TITLE}",
+   "createNoteForUntitledEvent" : "Maak notitie aan voor activiteit zonder titel",
+   "dueAtDate" : "Vervalt {DATE}",
+   "dueAtDateTime" : "Vervalt {DATE} om {TIME}",
+   "endedAt" : "Afgelopen om {TIME}",
+   "openNote" : "Open notitie",
+   "openNoteForEvent" : "Open notitie voor {EVENT_TITLE}",
+   "openNoteForUntitledEvent" : "Open notitie voor activiteit zonder titel",
+   "startsAt" : "Begint om {TIME}",
+   "timeRange" : "{START_TIME} - {END_TIME}",
+   "untitledTask" : "Naamloze taak"
+}

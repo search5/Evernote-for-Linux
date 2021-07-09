@@ -47,6 +47,6 @@
     "lib"
   ],
   "publishConfig": {
-    "registry": "http://localhost:4873/"
+    "registry": "http://localhost:4873"
   }
 }

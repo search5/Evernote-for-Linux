@@ -1,0 +1,16 @@
+{
+   "allDay" : "Tüm gün",
+   "close" : "Kapat",
+   "createNote" : "Not oluştur",
+   "createNoteForEvent" : "{EVENT_TITLE} için not oluştur",
+   "createNoteForUntitledEvent" : "İsimsiz etkinlik için not oluştur",
+   "dueAtDate" : "{DATE} tarihinde sona eriyor",
+   "dueAtDateTime" : "Şu tarih ve saatte sona eriyor: {DATE}, {TIME}",
+   "endedAt" : "{TIME} itibarıyla sona erdi",
+   "openNote" : "Notu aç",
+   "openNoteForEvent" : "{EVENT_TITLE} için not aç",
+   "openNoteForUntitledEvent" : "İsimsiz etkinlik için not aç",
+   "startsAt" : "{TIME} itibarıyla başlıyor",
+   "timeRange" : "{START_TIME} - {END_TIME}",
+   "untitledTask" : "İsimsiz görev"
+}
