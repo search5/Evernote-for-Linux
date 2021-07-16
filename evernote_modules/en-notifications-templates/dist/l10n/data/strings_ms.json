@@ -1,0 +1,16 @@
+{
+   "allDay" : "Sepanjang hari",
+   "close" : "Tutup",
+   "createNote" : "Buat nota",
+   "createNoteForEvent" : "Cipta nota untuk {EVENT_TITLE}",
+   "createNoteForUntitledEvent" : "Cipta nota untuk acara tanpa tajuk",
+   "dueAtDate" : "Tarikh jangka {DATE}",
+   "dueAtDateTime" : "Tarikh jangka {DATE} pada {TIME}",
+   "endedAt" : "Tamat pada {TIME}",
+   "openNote" : "Buka nota",
+   "openNoteForEvent" : "Buka nota untuk {EVENT_TITLE}",
+   "openNoteForUntitledEvent" : "Buka nota untuk acara tanpa tajuk",
+   "startsAt" : "Bermula pada {TIME}",
+   "timeRange" : "{START_TIME} - {END_TIME}",
+   "untitledTask" : "Tugas tanpa tajuk"
+}

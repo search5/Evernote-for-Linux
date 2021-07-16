@@ -479,7 +479,6 @@ exports.noteIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
                 }],
         },
     },
-    lookups: ['created'],
     queries: {
         NotesInParent: {
             traversalName: 'childNotes',

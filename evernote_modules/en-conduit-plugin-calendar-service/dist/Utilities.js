@@ -14,7 +14,7 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.expandRequestedDates = exports.getLinkedNotes = exports.addLinkedNotesToEvents = exports.mergeCalendars = exports.convertEventGuidFromService = exports.daysSinceEpoch = exports.nearestStartOfDay = exports.getEventsByDays = exports.expireEventsByDayCache = exports.cacheEventsByDay = exports.cacheEventsById = exports.persistCalendar = exports.persistCalendarAccount = void 0;
+exports.expandRequestedDates = exports.getLinkedNotes = exports.addLinkedNotesToEvents = exports.mergeCalendars = exports.convertEventGuidFromService = exports.daysSinceEpoch = exports.nearestStartOfDay = exports.narrowQsResponseToRequestedTimes = exports.getEventsByDays = exports.expireEventsByDayCache = exports.cacheEventsByDay = exports.cacheEventsById = exports.persistCalendar = exports.persistCalendarAccount = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
@@ -95,9 +95,9 @@ async function cacheEventsByDay(context, events, requestArgs) {
     conduit_core_1.validateDB(context);
     const dayBuckets = new Map();
     const orderedDays = [];
-    const startingDay = nearestStartOfDay(requestArgs.from);
-    const endDay = nearestStartOfDay(requestArgs.to) + conduit_utils_1.MILLIS_IN_ONE_DAY;
-    const daysToCache = daysSinceEpoch(endDay) - daysSinceEpoch(startingDay) + 1;
+    const startingDay = requestArgs.from;
+    const endDay = requestArgs.to;
+    const daysToCache = daysSinceEpoch(endDay) - daysSinceEpoch(startingDay);
     // make a bucket for each day
     for (let index = 0; index < daysToCache; index++) {
         const date = startingDay + index * conduit_utils_1.MILLIS_IN_ONE_DAY;
@@ -106,12 +106,18 @@ async function cacheEventsByDay(context, events, requestArgs) {
     }
     // loop over events and put them in day where they appear
     for (const event of events.data) {
-        let currentDayIndex = orderedDays.findIndex(currentStartOfDay => currentStartOfDay <= event.start && event.start <= currentStartOfDay + conduit_utils_1.MILLIS_IN_ONE_DAY);
-        if (currentDayIndex === -1) {
-            continue;
-        } // should not happen as the list is generated from the same times we issue to QS
+        let currentDayIndex;
+        if (event.start < orderedDays[0]) {
+            currentDayIndex = 0;
+        }
+        else {
+            currentDayIndex = orderedDays.findIndex(currentStartOfDay => isEventInRange(event, currentStartOfDay, currentStartOfDay + conduit_utils_1.MILLIS_IN_ONE_DAY));
+            if (currentDayIndex === -1) {
+                continue;
+            }
+        }
         // add the event from its starting day till the last one
-        while (event.end <= orderedDays[currentDayIndex] + conduit_utils_1.MILLIS_IN_ONE_DAY) {
+        while (currentDayIndex < orderedDays.length && isEventInRange(event, orderedDays[currentDayIndex], orderedDays[currentDayIndex] + conduit_utils_1.MILLIS_IN_ONE_DAY)) {
             (_a = dayBuckets.get(orderedDays[currentDayIndex])) === null || _a === void 0 ? void 0 : _a.push(event);
             currentDayIndex += 1;
         }
@@ -125,6 +131,28 @@ async function cacheEventsByDay(context, events, requestArgs) {
     });
 }
 exports.cacheEventsByDay = cacheEventsByDay;
+/**
+ * Checks wether a Event is in the time window provided
+ * @param  {CalendarEventResponse} event
+ * @param  {timestamp} firstDayStart
+ * @param  {timestamp} lastDayEnd
+ * @returns boolean
+ */
+function isEventInRange(event, firstDayStart, lastDayEnd) {
+    if (event.isAllDay) {
+        const date = new Date();
+        const timezoneOffset = date.getTimezoneOffset();
+        firstDayStart = firstDayStart - timezoneOffset * conduit_utils_1.MILLIS_IN_ONE_MINUTE;
+        lastDayEnd = lastDayEnd - timezoneOffset * conduit_utils_1.MILLIS_IN_ONE_MINUTE;
+    }
+    if (event.start >= lastDayEnd) { // if event starts after this day
+        return false;
+    }
+    if (event.end < firstDayStart) { // if event ends before this day
+        return false;
+    }
+    return true;
+}
 /**
  * Expire alll events on the Events by day cache
  * @param context - GraphQL context
@@ -154,7 +182,7 @@ exports.expireEventsByDayCache = expireEventsByDayCache;
 async function getEventsByDays(context, from, to) {
     conduit_core_1.validateDB(context);
     const results = [];
-    let currentDay = nearestStartOfDay(from);
+    let currentDay = from;
     let smallestExpiration = Number.MAX_SAFE_INTEGER;
     while (currentDay + conduit_utils_1.MILLIS_IN_ONE_DAY <= to) {
         const cachedData = await context.db.getMemoryStorage().getValue(context.trc, null, CalendarConstants_1.EPHEMERAL_EVENTS_BY_DAY_TABLE_NAME, currentDay.toString());
@@ -173,6 +201,17 @@ async function getEventsByDays(context, from, to) {
     return { cachedEvents: results, expiration: smallestExpiration };
 }
 exports.getEventsByDays = getEventsByDays;
+/**
+ * Gets the events that are in the original date range asked
+ * @param  {CalendarEventResponse[]} QsEvents
+ * @param  {timestamp} originalFrom
+ * @param  {timestamp} originalTo
+ * @returns CalendarEventResponse
+ */
+function narrowQsResponseToRequestedTimes(QsEvents, originalFrom, originalTo) {
+    return QsEvents.filter(event => isEventInRange(event, originalFrom, originalTo));
+}
+exports.narrowQsResponseToRequestedTimes = narrowQsResponseToRequestedTimes;
 /**
  *
  * @param time

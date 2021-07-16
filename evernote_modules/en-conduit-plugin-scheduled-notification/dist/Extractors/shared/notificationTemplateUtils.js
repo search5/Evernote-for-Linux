@@ -19,6 +19,9 @@ function transformActionName(inputActionName) {
         case en_notifications_templates_1.SystemNotificationActionName.NavigateToNote:
             actionName = ScheduledNotificationConstants_1.NotificationActionNames.NavigateToNote;
             break;
+        case en_notifications_templates_1.SystemNotificationActionName.NavigateToTask:
+            actionName = ScheduledNotificationConstants_1.NotificationActionNames.NavigateToTask;
+            break;
         default:
             throw conduit_utils_1.absurd(inputActionName, `unhandled switch case in transformActionName ${inputActionName}`);
     }
@@ -28,10 +31,10 @@ function transformToConduitNotificationData(data) {
     var _a;
     const inputActionName = data.clickNotificationActionName;
     const actionName = transformActionName(inputActionName);
-    const buttons = (_a = data.buttons) === null || _a === void 0 ? void 0 : _a.map(button => (Object.assign(Object.assign({}, button), { action: {
+    const buttons = ((_a = data.buttons) === null || _a === void 0 ? void 0 : _a.map(button => (Object.assign(Object.assign({}, button), { action: {
             target: button.action.target,
             name: transformActionName(button.action.name),
-        } })));
+        } })))) || [];
     return Object.assign(Object.assign({}, data), { buttons, clickNotificationActionName: actionName });
 }
 exports.transformToConduitNotificationData = transformToConduitNotificationData;

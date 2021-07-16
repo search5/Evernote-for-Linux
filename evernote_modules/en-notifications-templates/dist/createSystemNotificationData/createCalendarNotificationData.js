@@ -6,8 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createCalendarNotificationData = void 0;
 const en_ts_utils_1 = require("en-ts-utils");
 const l10n_1 = require("../l10n");
-const notifications_1 = require("../types/notifications");
+const __1 = require("../");
 function createCalendarNotificationData(notificationId, srcData, locale, logger) {
+    const l10n = l10n_1.L10N.getInstance(locale, logger);
     const { noteID, calendarEventId, title, startTime, endTime, notificationTime, location, isAllDay, } = srcData;
     let target;
     let actionName;
@@ -15,43 +16,53 @@ function createCalendarNotificationData(notificationId, srcData, locale, logger)
     let localizedButtonText;
     if (noteID) {
         target = noteID;
-        actionName = notifications_1.SystemNotificationActionName.CalendarNavigateToNote;
+        actionName = __1.SystemNotificationActionName.CalendarNavigateToNote;
         // Empty string is treated as false, conversion to Boolean leads to TS error
         if (title) {
-            localizedTitle = l10n_1.openNoteTitle(title, locale);
+            localizedTitle = l10n.l('openNoteForEvent', { EVENT_TITLE: title });
         }
         else {
-            localizedTitle = l10n_1.openNoteUntitled(locale);
+            localizedTitle = l10n.l('openNoteForUntitledEvent');
         }
-        localizedButtonText = l10n_1.openNote(locale);
+        localizedButtonText = l10n.l('openNote');
     }
     else {
         target = calendarEventId;
-        actionName = notifications_1.SystemNotificationActionName.CalendarCreateNote;
+        actionName = __1.SystemNotificationActionName.CalendarCreateNote;
         if (title) {
-            localizedTitle = l10n_1.createNoteTitle(title, locale);
+            localizedTitle = l10n.l('createNoteForEvent', { EVENT_TITLE: title });
         }
         else {
-            localizedTitle = l10n_1.createNoteUntitled(locale);
+            localizedTitle = l10n.l('createNoteForUntitledEvent');
         }
-        localizedButtonText = l10n_1.createNote(locale);
+        localizedButtonText = l10n.l('createNote');
     }
     let meetingDescription;
     try {
         if (isAllDay) {
-            meetingDescription = l10n_1.getAllDay(locale);
+            meetingDescription = l10n.l('allDay');
         }
         else if (endTime - startTime >= en_ts_utils_1.MILLIS_IN_ONE_DAY) {
-            meetingDescription = l10n_1.getMultiDay(startTime, endTime, locale);
+            meetingDescription = l10n.l('timeRange', {
+                START_TIME: l10n.t(startTime, 'MonthDay'),
+                END_TIME: l10n.t(endTime, 'MonthDay'),
+            });
         }
         else if (notificationTime < startTime) {
-            meetingDescription = l10n_1.getStartsAt(startTime, locale);
+            meetingDescription = l10n.l('startsAt', {
+                TIME: l10n.t(startTime, 'HourMinute'),
+            });
         }
         else if (notificationTime > endTime) {
-            meetingDescription = l10n_1.getEndedAt(endTime, locale);
+            meetingDescription = l10n.l('endedAt', {
+                TIME: l10n.t(endTime, 'HourMinute'),
+            });
         }
         else {
-            meetingDescription = l10n_1.getTimeRange(startTime, endTime, locale);
+            meetingDescription = l10n.l('timeRange', {
+                START_TIME: l10n.t(startTime, 'HourMinute'),
+                END_TIME: l10n.t(endTime, 'HourMinute'),
+            });
         }
     }
     catch (err) {
@@ -79,7 +90,7 @@ function createCalendarNotificationData(notificationId, srcData, locale, logger)
                 },
             },
         ],
-        closeButtonText: l10n_1.getClose(locale),
+        closeButtonText: l10n.l('close'),
     };
 }
 exports.createCalendarNotificationData = createCalendarNotificationData;

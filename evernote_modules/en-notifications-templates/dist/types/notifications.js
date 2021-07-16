@@ -17,5 +17,6 @@ var SystemNotificationActionName;
     SystemNotificationActionName["NavigateToNote"] = "NAVIGATE_TO_NOTE";
     SystemNotificationActionName["CalendarNavigateToNote"] = "CALENDAR_NAVIGATE_TO_NOTE";
     SystemNotificationActionName["CalendarCreateNote"] = "CALENDAR_CREATE_NOTE";
+    SystemNotificationActionName["NavigateToTask"] = "NAVIGATE_TO_TASK";
 })(SystemNotificationActionName = exports.SystemNotificationActionName || (exports.SystemNotificationActionName = {}));
 //# sourceMappingURL=notifications.js.map

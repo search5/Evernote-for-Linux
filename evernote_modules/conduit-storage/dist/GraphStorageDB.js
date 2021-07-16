@@ -152,6 +152,10 @@ class GraphStorageBase extends StorageEventEmitter_1.StorageEventEmitter {
         this.readonlyIndexingTrees = {};
         this.lookups = {};
         this.nodeFieldLookup = async (trc, ref, lookupField) => {
+            if (lookupField === '*') {
+                const node = await this.getNode(trc, null, ref);
+                return Boolean(node);
+            }
             const lookupTable = await this.getNodeLookupTable(trc, ref.type, lookupField);
             return lookupTable[ref.id];
         };
@@ -304,7 +308,7 @@ class GraphStorageBase extends StorageEventEmitter_1.StorageEventEmitter {
         return await this.storage.getValidatedValue(trc, watcher, tableForNodeType(nodeRef.type), nodeRef.id, getDummy ? validateIsGraphNode : validateIsRealGraphNode);
     }
     async batchGetNodes(trc, watcher, type, nodeIDs, getDummy = false) {
-        conduit_utils_1.traceEventStart(trc, 'batchGetNodes', { type, noteIDsCount: nodeIDs.length });
+        conduit_utils_1.traceEventStart(trc, 'batchGetNodes', { type, nodeIDsCount: nodeIDs.length });
         const validate = getDummy ? validateIsGraphNode : validateIsRealGraphNode;
         const values = await this.storage.batchGetValues(trc, watcher, tableForNodeType(type), nodeIDs);
         const nodes = [];
@@ -588,7 +592,7 @@ class GraphStorageBase extends StorageEventEmitter_1.StorageEventEmitter {
     async getNodeLookupTable(trc, type, lookupField) {
         return await this.getNodeLookupTableByName(trc, tableForNodeLookup(type, lookupField));
     }
-    clearLookups() {
+    clearLookups(trc) {
         for (const type in this.config.indexer.config) {
             const indexConfig = this.config.indexer.config[type];
             for (const lookupField of indexConfig.lookups) {
@@ -599,10 +603,13 @@ class GraphStorageBase extends StorageEventEmitter_1.StorageEventEmitter {
     }
 }
 __decorate([
-    conduit_utils_1.traceAsync('loadNodeLookupTable', 'tableName')
+    conduit_utils_1.traceAsync('GraphStorageDB', 'tableName')
+], GraphStorageBase.prototype, "getFullTable", null);
+__decorate([
+    conduit_utils_1.traceAsync('GraphStorageDB', 'tableName')
 ], GraphStorageBase.prototype, "loadNodeLookupTable", null);
 __decorate([
-    conduit_utils_1.traceAsync('clearLookups')
+    conduit_utils_1.traceAsync('GraphStorageDB')
 ], GraphStorageBase.prototype, "clearLookups", null);
 exports.GraphStorageBase = GraphStorageBase;
 class GraphTransactionContext extends GraphStorageBase {
@@ -647,7 +654,7 @@ class GraphTransactionContext extends GraphStorageBase {
     async clearAllData(trc) {
         await this.db.clearAll(trc);
         this.newIndexes = {};
-        this.clearLookups();
+        this.clearLookups(trc);
     }
     // SYNC CONTEXT METHODS:
     async createSyncContext(trc, syncContext, metadata) {
@@ -742,7 +749,6 @@ class GraphTransactionContext extends GraphStorageBase {
         await this.db.removeValue(trc, tableForCustomSyncState(customType), key);
     }
     async setNodeFieldLookupValue(trc, nodeRef, lookupField, lookupValue) {
-        conduit_utils_1.traceEventStart(trc, 'setNodeFieldLookupValue', { type: nodeRef.type, lookupField });
         const tableName = tableForNodeLookup(nodeRef.type, lookupField);
         const isRemove = lookupValue === null || lookupValue === undefined;
         const lookup = await this.getNodeLookup(tableName).getData(trc);
@@ -759,7 +765,6 @@ class GraphTransactionContext extends GraphStorageBase {
         else {
             await this.db.setValue(trc, tableName, nodeRef.id, lookupValue);
         }
-        conduit_utils_1.traceEventEnd(trc, 'setNodeFieldLookupValue');
     }
     // INDEX METHODS:
     async _updateIndexes(trc, oldIndexes, newIndexes, priorities, localeChanged, mustBeReindexed, setProgress) {
@@ -1290,35 +1295,46 @@ class GraphTransactionContext extends GraphStorageBase {
             return false;
         }
         const typeConfig = (_a = this.config.nodeTypes) === null || _a === void 0 ? void 0 : _a[nodeRef.type];
+        async function propagate(self) {
+            if (typeConfig) {
+                await self.propagateNodeDelete(trc, syncContext, node, typeConfig, isAccessLoss, deleteDummy, timestamp, propagatedFrom, originalSyncSource);
+            }
+        }
         const syncSource = typeConfig === null || typeConfig === void 0 ? void 0 : typeConfig.syncSource;
         originalSyncSource = originalSyncSource || syncSource;
         if (syncSource !== originalSyncSource) {
             syncContext = node.syncContexts[0];
         }
-        if (typeConfig) {
-            if (isAccessLoss && propagatedFrom && syncContext === exports.NSYNC_CONTEXT && await this.hasAccessToNode(trc, node, typeConfig, propagatedFrom)) {
-                return false;
-            }
-            await this.propagateNodeDelete(trc, syncContext, node, typeConfig, isAccessLoss, deleteDummy, timestamp, propagatedFrom, originalSyncSource);
-        }
         const isDummyNode = node.dummy;
-        if (isDummyNode) {
-            if (!deleteDummy) {
-                return false;
-            }
+        if (isDummyNode && !deleteDummy) {
+            return false;
         }
-        else if (syncContext !== '*') {
+        if (typeConfig && isAccessLoss && propagatedFrom && syncContext === exports.NSYNC_CONTEXT && await this.hasAccessToNode(trc, node, typeConfig, propagatedFrom)) {
+            return false;
+        }
+        if (!isDummyNode && syncContext !== '*') {
             const syncContextIdx = node.syncContexts.indexOf(syncContext);
             if (syncContextIdx < 0) {
+                await propagate(this);
                 return false;
             }
             if (node.syncContexts.length > 1) {
+                await propagate(this);
                 let updatedNode = SimplyImmutable.replaceImmutable(node, ['syncContexts'], removeSyncContext(node.syncContexts, syncContextIdx));
                 updatedNode = SimplyImmutable.updateImmutable(updatedNode, ['localChangeTimestamp'], timestamp !== null && timestamp !== void 0 ? timestamp : 0);
                 await this._setNode(trc, node, updatedNode);
                 return false;
             }
         }
+        if (!isDummyNode) {
+            // update indexes
+            node = await this.getNodeInternal(trc, nodeRef);
+            if (!node) {
+                return false;
+            }
+            await this.reindexNode(trc, node, null);
+        }
+        await propagate(this);
         const deleteHook = this.config.deleteHooks[nodeRef.type];
         if (deleteHook) {
             await deleteHook(trc, this, nodeRef.id);
@@ -1347,14 +1363,6 @@ class GraphTransactionContext extends GraphStorageBase {
             }
         }
         await this.removeEdges(trc, removedEdges, timestamp, nodeRef);
-        if (!isDummyNode) {
-            // update indexes
-            node = await this.getNodeInternal(trc, nodeRef);
-            if (!node) {
-                return false;
-            }
-            await this.reindexNode(trc, node, null);
-        }
         await this.db.removeValue(trc, tableForNodeType(nodeRef.type), nodeRef.id);
         if (!isDummyNode) {
             await this.config.countUpdater(trc, this, syncContext, nodeRef.type, -1);
@@ -1862,10 +1870,13 @@ class GraphTransactionContext extends GraphStorageBase {
     }
 }
 __decorate([
+    conduit_utils_1.traceAsync('GraphStorageDB', 'nodeRef', 'lookupField')
+], GraphTransactionContext.prototype, "setNodeFieldLookupValue", null);
+__decorate([
     conduit_utils_1.traceAsync
 ], GraphTransactionContext.prototype, "_updateIndexes", null);
 __decorate([
-    conduit_utils_1.traceAsync('reindexType', 'type', 'indexes')
+    conduit_utils_1.traceAsync('GraphStorageDB', 'type', 'indexes')
 ], GraphTransactionContext.prototype, "reindexType", null);
 __decorate([
     conduit_utils_1.traceAsync
@@ -1915,6 +1926,9 @@ __decorate([
 __decorate([
     conduit_utils_1.traceAsync
 ], GraphTransactionContext.prototype, "applyPendingNodeUpdates", null);
+__decorate([
+    conduit_utils_1.traceAsync('GraphStorageDB', 'nodeRef')
+], GraphTransactionContext.prototype, "applyNodePendingChanges", null);
 exports.GraphTransactionContext = GraphTransactionContext;
 class GraphStorageDB extends GraphStorageBase {
     constructor(storage, ephemeralStorage, config, underlay, storageOverlay) {
