@@ -1,8 +1,8 @@
 {
   "name": "en-conduit-plugin-scheduled-notification-shared",
-  "version": "1.37.3",
+  "version": "1.37.10",
   "publishConfig": {
-    "registry": "http://localhost:4873/"
+    "registry": "http://localhost:4873"
   },
   "description": "Shared notifications functions and types between modules",
   "main": "dist/index",
@@ -10,8 +10,8 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-storage": "1.37.3",
-    "conduit-utils": "1.37.3",
+    "conduit-storage": "1.37.10",
+    "conduit-utils": "1.37.10",
     "en-data-model": "^3.6.2",
     "en-notifications-data-model": "^3.4.4"
   }

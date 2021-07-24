@@ -39,6 +39,6 @@
     "opener": "^1.5.1"
   },
   "publishConfig": {
-    "registry": "http://localhost:4873/"
+    "registry": "http://localhost:4873"
   }
 }

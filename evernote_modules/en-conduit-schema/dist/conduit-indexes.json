@@ -4852,9 +4852,7 @@
         ]
       }
     },
-    "lookups": [
-      "created"
-    ]
+    "lookups": []
   },
   "NoteContentInfo": {
     "indexes": {

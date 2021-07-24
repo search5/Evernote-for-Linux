@@ -1,8 +1,8 @@
 {
   "name": "en-conduit-electron-shared",
-  "version": "1.37.3",
+  "version": "1.37.10",
   "publishConfig": {
-    "registry": "http://localhost:4873/"
+    "registry": "http://localhost:4873"
   },
   "description": "Common code and types for Electron conduit Integration",
   "main": "dist/index",
@@ -13,9 +13,9 @@
     "electron": "^11.3.0"
   },
   "dependencies": {
-    "conduit-ipc-messages": "1.37.3",
-    "conduit-utils": "1.37.3",
-    "conduit-view-types": "1.37.3",
+    "conduit-ipc-messages": "1.37.10",
+    "conduit-utils": "1.37.10",
+    "conduit-view-types": "1.37.10",
     "graphql": "^14.0.2"
   }
 }

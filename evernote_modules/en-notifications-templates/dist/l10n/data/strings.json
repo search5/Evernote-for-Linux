@@ -1,0 +1,16 @@
+{
+ "createNoteForEvent":  "Create note for {EVENT_TITLE}",
+ "openNoteForEvent": "Open note for {EVENT_TITLE}",
+ "createNoteForUntitledEvent": "Create note for untitled event",
+ "openNoteForUntitledEvent": "Open note for untitled event",
+ "createNote": "Create note",
+ "openNote": "Open note",
+ "startsAt": "Starts at {TIME}",
+ "endedAt": "Ended at {TIME}",
+ "timeRange": "{START_TIME} - {END_TIME}",
+ "allDay": "All day",
+ "close": "Close",
+ "dueAtDate": "Due {DATE}",
+ "dueAtDateTime": "Due {DATE} at {TIME}",
+ "untitledTask": "Untitled task"
+}

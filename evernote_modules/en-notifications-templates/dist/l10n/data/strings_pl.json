@@ -1,0 +1,16 @@
+{
+   "allDay" : "Cały dzień",
+   "close" : "Zamknij",
+   "createNote" : "Utwórz notatkę",
+   "createNoteForEvent" : "Utwórz notatkę dla wydarzenia „{EVENT_TITLE}”",
+   "createNoteForUntitledEvent" : "Utwórz notatkę dla wydarzenia bez tytułu",
+   "dueAtDate" : "Termin: {DATE}",
+   "dueAtDateTime" : "Termin: {DATE} o {TIME}",
+   "endedAt" : "Skończyło się o {TIME}",
+   "openNote" : "Otwórz notatkę",
+   "openNoteForEvent" : "Otwórz notatkę dla wydarzenia „{EVENT_TITLE}”",
+   "openNoteForUntitledEvent" : "Otwórz notatkę dla wydarzenia bez tytułu",
+   "startsAt" : "Rozpoczyna się o {TIME}",
+   "timeRange" : "{START_TIME} - {END_TIME}",
+   "untitledTask" : "Zadanie bez tytułu"
+}

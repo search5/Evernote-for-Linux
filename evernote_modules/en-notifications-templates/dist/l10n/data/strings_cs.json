@@ -1,0 +1,16 @@
+{
+   "allDay" : "Celý den",
+   "close" : "Zavřít",
+   "createNote" : "Vytvořit poznámku",
+   "createNoteForEvent" : "Vytvořit poznámku pro {EVENT_TITLE}",
+   "createNoteForUntitledEvent" : "Vytvořit poznámku pro nepojmenovanou událost",
+   "dueAtDate" : "Termín {DATE}",
+   "dueAtDateTime" : "Termín {DATE} v {TIME}",
+   "endedAt" : "Skončilo v {TIME}",
+   "openNote" : "Otevřít poznámku",
+   "openNoteForEvent" : "Otevřít poznámku pro {EVENT_TITLE}",
+   "openNoteForUntitledEvent" : "Otevřít poznámku pro nepojmenovanou událost",
+   "startsAt" : "Začíná v {TIME}",
+   "timeRange" : "{START_TIME} – {END_TIME}",
+   "untitledTask" : "Nepojmenovaný úkol"
+}

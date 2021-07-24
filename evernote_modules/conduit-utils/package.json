@@ -1,8 +1,8 @@
 {
   "name": "conduit-utils",
-  "version": "1.37.3",
+  "version": "1.37.10",
   "publishConfig": {
-    "registry": "http://localhost:4873/"
+    "registry": "http://localhost:4873"
   },
   "description": "Utils",
   "main": "dist/index",

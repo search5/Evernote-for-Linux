@@ -1,0 +1,16 @@
+{
+   "allDay" : "Hele dagen",
+   "close" : "Lukk",
+   "createNote" : "Opprett notat",
+   "createNoteForEvent" : "Opprett notat for {EVENT_TITLE}",
+   "createNoteForUntitledEvent" : "Opprett notat for arrangement uten navn",
+   "dueAtDate" : "Forfallsdato {DATE}",
+   "dueAtDateTime" : "Forfallsdato {DATE} kl. {TIME}",
+   "endedAt" : "Sluttet kl. {TIME}",
+   "openNote" : "Åpne notat",
+   "openNoteForEvent" : "Åpne notat for {EVENT_TITLE}",
+   "openNoteForUntitledEvent" : "Åpne notat for arrangement uten navn",
+   "startsAt" : "Begynner kl. {TIME}",
+   "timeRange" : "{START_TIME} - {END_TIME}",
+   "untitledTask" : "Oppgave uten tittel"
+}

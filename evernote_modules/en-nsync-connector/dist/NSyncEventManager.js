@@ -620,10 +620,10 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             this.enqueueErrorEvent(new conduit_utils_1.ServiceError('NSyncInternal', errorEvent.status.toString(), errorEvent.message), 'service error');
         }
         else if (errorEvent.message === undefined) {
-            conduit_utils_1.logger.warn('Empty message from nsync. Likely disconnect. Trying reconnect...', errorEvent);
+            conduit_utils_1.logger.warn('Empty message from nsync. Likely disconnect. Trying reconnect...');
         }
         else if (errorEvent.message === 'network error') {
-            conduit_utils_1.logger.warn('Network error message from nsync. Trying reconnect...', errorEvent);
+            conduit_utils_1.logger.warn('Network error message from nsync. Trying reconnect...');
         }
         else if (errorEvent.message === '`EventSource` instance closed while sending.') { // TODO: False mocksse error. Remove with CON-2254. Very Soon!
             if (this.isPaused === false) {

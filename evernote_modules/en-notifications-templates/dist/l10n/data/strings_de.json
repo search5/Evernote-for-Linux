@@ -1,0 +1,16 @@
+{
+   "allDay" : "Ganztägig",
+   "close" : "Schließen",
+   "createNote" : "Notiz erstellen",
+   "createNoteForEvent" : "Notiz zu „{EVENT_TITLE}“ erstellen",
+   "createNoteForUntitledEvent" : "Notiz für unbenannten Termin erstellen",
+   "dueAtDate" : "Fällig am {DATE}",
+   "dueAtDateTime" : "Fällig am {DATE} um {TIME}",
+   "endedAt" : "Ende um {TIME}",
+   "openNote" : "Notiz öffnen",
+   "openNoteForEvent" : "Notiz zu „{EVENT_TITLE}“ öffnen",
+   "openNoteForUntitledEvent" : "Notiz für unbenannten Termin öffnen",
+   "startsAt" : "Beginn um {TIME}",
+   "timeRange" : "{START_TIME}–{END_TIME}",
+   "untitledTask" : "Unbenannte Aufgabe"
+}

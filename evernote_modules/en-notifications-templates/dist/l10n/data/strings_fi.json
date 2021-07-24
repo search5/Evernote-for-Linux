@@ -1,0 +1,16 @@
+{
+   "allDay" : "Koko päivän",
+   "close" : "Sulje",
+   "createNote" : "Luo muistiinpano",
+   "createNoteForEvent" : "Laadi muistiinpano tapahtumalle {EVENT_TITLE}",
+   "createNoteForUntitledEvent" : "Luo muistiinpano nimettömälle tapahtumalle",
+   "dueAtDate" : "Määräaika {DATE}",
+   "dueAtDateTime" : "Määräaika {DATE} klo {TIME}",
+   "endedAt" : "Päättyi {TIME}",
+   "openNote" : "Avaa muistiinpano",
+   "openNoteForEvent" : "Avaa tapahtuman {EVENT_TITLE} muistiinpano",
+   "openNoteForUntitledEvent" : "Avaa nimettömän tapahtuman muistiinpano",
+   "startsAt" : "Alkaa {TIME}",
+   "timeRange" : "{START_TIME} - {END_TIME}",
+   "untitledTask" : "Nimetön tehtävä"
+}

@@ -253,7 +253,8 @@ function getCalendarServicePlugin(httpClient) {
                 calendarEvents.data = await Utilities_1.addLinkedNotesToEvents(context, calendarEvents.data);
                 await Utilities_1.cacheEventsById(context, calendarEvents.data);
                 await Utilities_1.cacheEventsByDay(context, calendarEvents, expandedDates);
-                return calendarEvents.data;
+                const eventsInOriginalTimeframe = Utilities_1.narrowQsResponseToRequestedTimes(calendarEvents.data, args.from, args.to);
+                return eventsInOriginalTimeframe;
             }
             else {
                 // if QS was not available use the response from cache even if TTL is expired

@@ -6,8 +6,9 @@ import os
 
 
 @click.command()
-@click.argument('registry')
-def main(registry):
+def main():
+    registry = 'http://localhost:4873'
+    
     # Node Modules Selection
     evernote_module_prefix = "../evernote_modules"
     npm_packages = glob.glob(f"{evernote_module_prefix}/*", recursive=False)

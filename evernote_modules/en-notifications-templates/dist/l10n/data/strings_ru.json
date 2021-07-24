@@ -1,0 +1,16 @@
+{
+   "allDay" : "Весь день",
+   "close" : "Закрыть",
+   "createNote" : "Создать заметку",
+   "createNoteForEvent" : "Создать заметку для «{EVENT_TITLE}»",
+   "createNoteForUntitledEvent" : "Создать заметку для события без названия",
+   "dueAtDate" : "К {DATE}",
+   "dueAtDateTime" : "К {DATE} {TIME}",
+   "endedAt" : "Закончилось в {TIME}",
+   "openNote" : "Открыть заметку",
+   "openNoteForEvent" : "Открыть заметку для «{EVENT_TITLE}»",
+   "openNoteForUntitledEvent" : "Открыть заметку для события без названия",
+   "startsAt" : "Начинается в {TIME}",
+   "timeRange" : "{START_TIME} — {END_TIME}",
+   "untitledTask" : "Задача без названия"
+}

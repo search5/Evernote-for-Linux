@@ -4,5 +4,5 @@
 */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CONDUIT_VERSION = void 0;
-exports.CONDUIT_VERSION = '1.37.3';
+exports.CONDUIT_VERSION = '1.37.10';
 //# sourceMappingURL=ConduitVersion.js.map

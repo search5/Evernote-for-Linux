@@ -1,0 +1,16 @@
+{
+   "allDay" : "Cả ngày",
+   "close" : "Đóng",
+   "createNote" : "Tạo ghi chú",
+   "createNoteForEvent" : "Tạo ghi chú cho sự kiện {EVENT_TITLE}",
+   "createNoteForUntitledEvent" : "Tạo ghi chú cho sự kiện chưa có tiêu đề",
+   "dueAtDate" : "Đến hạn vào {DATE}",
+   "dueAtDateTime" : "Đến hạn vào {TIME}, {DATE}",
+   "endedAt" : "Kết thúc vào {TIME}",
+   "openNote" : "Mở ghi chú",
+   "openNoteForEvent" : "Mở ghi chú của sự kiện {EVENT_TITLE}",
+   "openNoteForUntitledEvent" : "Mở ghi chú cho sự kiện chưa có tiêu đề",
+   "startsAt" : "Bắt đầu vào {TIME}",
+   "timeRange" : "{START_TIME} - {END_TIME}",
+   "untitledTask" : "Nhiệm vụ chưa có tiêu đề"
+}

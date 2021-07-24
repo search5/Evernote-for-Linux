@@ -1,8 +1,8 @@
 {
   "name": "en-electron-local-notifications",
-  "version": "1.37.3",
+  "version": "1.37.10",
   "publishConfig": {
-    "registry": "http://localhost:4873/"
+    "registry": "http://localhost:4873"
   },
   "description": "Electron module for scheduling and showing local notification",
   "main": "dist/index",
@@ -19,6 +19,6 @@
     "electron": "^11.3.0"
   },
   "dependencies": {
-    "conduit-utils": "1.37.3"
+    "conduit-utils": "1.37.10"
   }
 }

@@ -110,7 +110,7 @@ exports.taskIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
         },
         hasNote: {
             schemaType: 'boolean',
-            version: 2,
+            version: 3,
             resolver: async (trc, node, nodeFieldLookup) => {
                 conduit_utils_1.traceEventStart(trc, 'hasNote');
                 const noteEdge = conduit_utils_1.firstStashEntry(node.inputs.parent);
@@ -118,18 +118,13 @@ exports.taskIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
                     conduit_utils_1.traceEventEnd(trc, 'hasNote');
                     return [false];
                 }
-                const parentCreated = await nodeFieldLookup(trc, { id: noteEdge.srcID, type: en_core_entity_types_1.CoreEntityTypes.Note }, 'created');
-                const result = [!conduit_utils_1.isNullish(parentCreated)];
+                const noteExists = await nodeFieldLookup(trc, { id: noteEdge.srcID, type: en_core_entity_types_1.CoreEntityTypes.Note }, '*');
+                const result = [Boolean(noteExists)];
                 conduit_utils_1.traceEventEnd(trc, 'hasNote');
                 return result;
             },
             graphqlPath: ['hasNote'],
             isUnSyncedField: true,
-            propagatedFrom: {
-                srcType: en_data_model_1.EntityTypes.Note,
-                srcField: 'created',
-                traversalToDst: [{ edge: ['outputs', 'children'], type: en_data_model_1.EntityTypes.Task }],
-            },
         },
     },
     indexes: {},

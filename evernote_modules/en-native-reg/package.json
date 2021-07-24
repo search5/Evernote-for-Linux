@@ -29,6 +29,6 @@
     "typescript": "~3.7.3"
   },
   "publishConfig": {
-    "registry": "http://localhost:4873/"
+    "registry": "http://localhost:4873"
   }
 }
