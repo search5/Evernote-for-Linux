@@ -2,7 +2,7 @@
   "name": "en-conduit-electron",
   "version": "1.37.10",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
   },
   "description": "Conduit main process bridge for Electron",
   "main": "dist/index",

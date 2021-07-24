@@ -12,11 +12,7 @@ def main():
     # Node Modules Selection
     evernote_module_prefix = "../evernote_modules"
     npm_packages = glob.glob(f"{evernote_module_prefix}/*", recursive=False)
-    npm_packages.append(f"{evernote_module_prefix}/en-graph-types/node_modules/en-data-model")
-    npm_packages.append(f"{evernote_module_prefix}/en-tasks-data-model/node_modules/en-data-model")
-    npm_packages.append(f"{evernote_module_prefix}/en-core-data-model/node_modules/en-data-model")
-    npm_packages.append(f"{evernote_module_prefix}/conduit-utils/node_modules/en-ts-utils")
-    #print(npm_packages)
+    npm_packages.extend(open("evernote_nested_modules.txt").read().split("\n"))
 
     for idx, item in enumerate(npm_packages):
         if "/@" in item:
@@ -40,7 +36,6 @@ def main():
         os.chdir(entry)
         os.system("npm publish")
         os.chdir(current_dir)
-
 
 if __name__ == "__main__":
     main()

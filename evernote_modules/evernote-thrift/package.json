@@ -4,7 +4,7 @@
   "description": "The forked version of thrift we use at Evernote.",
   "main": "node/index.js",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
   },
   "author": "Evernote",
   "license": "UNLICENSED",

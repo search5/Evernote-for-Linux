@@ -27,8 +27,5 @@
     "prebuildify": "^3.0.4",
     "rimraf": "^3.0.0",
     "typescript": "~3.7.3"
-  },
-  "publishConfig": {
-    "registry": "http://localhost:4873"
   }
 }

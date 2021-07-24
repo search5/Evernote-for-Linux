@@ -3,7 +3,7 @@
   "version": "1.37.10",
   "description": "Plugin for cross promotions",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
   },
   "main": "dist/index",
   "files": [

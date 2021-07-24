@@ -2,7 +2,7 @@
   "name": "conduit-ipc-messages",
   "version": "1.37.10",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
   },
   "description": "Common Conduit IPC messages",
   "main": "dist/index",

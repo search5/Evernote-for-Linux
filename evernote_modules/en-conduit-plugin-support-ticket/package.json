@@ -2,7 +2,7 @@
   "name": "en-conduit-plugin-support-ticket",
   "version": "1.37.10",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
   },
   "description": "Conduit plugin for business card scans.",
   "main": "dist/index",

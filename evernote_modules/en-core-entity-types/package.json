@@ -2,7 +2,7 @@
   "name": "en-core-entity-types",
   "version": "1.37.10",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
   },
   "description": "Node types, schemas, and mutators for Evernote-secific domain logic.",
   "main": "dist/index",

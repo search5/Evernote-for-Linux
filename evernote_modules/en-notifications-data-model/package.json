@@ -2,7 +2,7 @@
   "name": "en-notifications-data-model",
   "version": "3.6.0",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
   },
   "files": [
     "dist"

@@ -2,7 +2,7 @@
   "name": "en-ts-utils",
   "version": "5.1.0",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
   },
   "description": "Typscript Utils",
   "main": "dist/index",

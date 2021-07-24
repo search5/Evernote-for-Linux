@@ -45,8 +45,5 @@
   "files": [
     "dist",
     "lib"
-  ],
-  "publishConfig": {
-    "registry": "http://localhost:4873"
-  }
+  ]
 }

@@ -2,7 +2,7 @@
   "name": "en-conduit-plugin-analytics-measurement-protocol",
   "version": "1.37.10",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
   },
   "description": "Plugin for setting up a conduit-core TelemetryDestination for record events on Google Analytics through the Measurement Protocol API",
   "main": "dist/index",

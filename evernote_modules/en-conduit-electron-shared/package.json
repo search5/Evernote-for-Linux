@@ -2,7 +2,7 @@
   "name": "en-conduit-electron-shared",
   "version": "1.37.10",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
   },
   "description": "Common code and types for Electron conduit Integration",
   "main": "dist/index",

@@ -4,7 +4,7 @@
   "main": "dist/index",
   "version": "17.0.1",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
   },
   "files": [
     "dist",

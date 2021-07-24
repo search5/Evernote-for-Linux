@@ -2,7 +2,7 @@
   "name": "en-conduit-electron-renderer",
   "version": "1.37.10",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
   },
   "description": "Conduit integration for Electron Renderer process",
   "main": "dist/index",

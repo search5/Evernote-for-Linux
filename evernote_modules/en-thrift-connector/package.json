@@ -2,7 +2,7 @@
   "name": "en-thrift-connector",
   "version": "1.37.10",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
   },
   "description": "New API to Thrift API translation layer",
   "main": "dist/index",

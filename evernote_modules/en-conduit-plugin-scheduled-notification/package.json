@@ -2,7 +2,7 @@
   "name": "en-conduit-plugin-scheduled-notification",
   "version": "1.37.10",
   "publishConfig": {
-    "registry": "http://localhost:4873"
+    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
   },
   "description": "Plugin for the Evernote Scheduled Notification, from Notifications Service",
   "main": "dist/index",
