@@ -16,6 +16,9 @@ class NotificationManager {
         this.notificationCache = {};
         this.schedulingCompleteOrUnstarted = Promise.resolve();
     }
+    async destructor(trc, graphDB) {
+        await this.unschedulePendingNotifications(trc, graphDB);
+    }
     async scheduleExistingScheduledNotifications(trc, graphDB) {
         return this.schedulingCompleteOrUnstarted = new Promise(async (res) => {
             try {

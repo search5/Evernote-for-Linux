@@ -1,8 +1,8 @@
 {
   "name": "conduit-auth-shared",
-  "version": "1.37.10",
+  "version": "1.37.11",
   "publishConfig": {
-    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+    "registry": "http://localhost:4873"
   },
   "description": "Shared auth functions and types between worker and main process modules",
   "main": "dist/index",
@@ -19,8 +19,8 @@
     "sinon-chai": "^3.3.0"
   },
   "dependencies": {
-    "conduit-utils": "1.37.10",
-    "conduit-view-types": "1.37.10",
+    "conduit-utils": "1.37.11",
+    "conduit-view-types": "1.37.11",
     "js-base64": "^3.5.2",
     "simply-immutable": "^2.1.1"
   }

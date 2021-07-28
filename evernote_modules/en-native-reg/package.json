@@ -1,7 +1,7 @@
 {
   "name": "en-native-reg",
   "description": "Native in-process low-level windows registry access.  Added multiple search paths for webpack.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "repository": "ssh://git@source.build.etonreve.com:7999/np/en-native-reg.git",
   "license": "MIT",
   "os": [
@@ -27,5 +27,8 @@
     "prebuildify": "^3.0.4",
     "rimraf": "^3.0.0",
     "typescript": "~3.7.3"
+  },
+  "publishConfig": {
+    "registry": "http://localhost:4873"
   }
 }

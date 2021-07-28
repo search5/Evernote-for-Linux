@@ -25,6 +25,8 @@ var _eventEmitter = _interopRequireDefault(require("event-emitter"));
 
 var _hook = _interopRequireDefault(require("../utils/hook"));
 
+var _breakTokenHistory = _interopRequireDefault(require("./breakTokenHistory"));
+
 var MAX_CHARS_PER_BREAK = 1500;
 /**
  * Layout
@@ -70,6 +72,8 @@ var Layout = /*#__PURE__*/function () {
             newBreakToken,
             length,
             prevBreakToken,
+            breakTokenHistory,
+            breakTokenDataRef,
             imgs,
             _imgs,
             shallow,
@@ -90,10 +94,25 @@ var Layout = /*#__PURE__*/function () {
                 hasRenderedContent = false;
                 length = 0;
                 prevBreakToken = breakToken || new _breaktoken["default"](start);
+                breakTokenHistory = new _breakTokenHistory["default"]();
+                breakTokenDataRef = (0, _dom.extractDataRef)(prevBreakToken.node);
 
-              case 6:
+                if (!breakTokenHistory.isUniqueBreakToken(breakTokenDataRef)) {
+                  _context.next = 12;
+                  break;
+                }
+
+                breakTokenHistory.setHistory(breakTokenDataRef);
+                _context.next = 14;
+                break;
+
+              case 12:
+                console.warn("Infinite loop protection. This node has already been rendered", breakTokenDataRef, prevBreakToken.node);
+                return _context.abrupt("return", undefined);
+
+              case 14:
                 if (!(!done && !newBreakToken)) {
-                  _context.next = 69;
+                  _context.next = 78;
                   break;
                 }
 
@@ -103,7 +122,7 @@ var Layout = /*#__PURE__*/function () {
                 done = next.done;
 
                 if (node) {
-                  _context.next = 22;
+                  _context.next = 30;
                   break;
                 }
 
@@ -111,32 +130,32 @@ var Layout = /*#__PURE__*/function () {
                 imgs = wrapper.querySelectorAll("img");
 
                 if (!imgs.length) {
-                  _context.next = 17;
+                  _context.next = 25;
                   break;
                 }
 
-                _context.next = 17;
+                _context.next = 25;
                 return this.waitForImages(imgs);
 
-              case 17:
+              case 25:
                 newBreakToken = this.findBreakToken(wrapper, source, bounds, prevBreakToken);
 
                 if (!(newBreakToken && newBreakToken.equals(prevBreakToken))) {
-                  _context.next = 21;
+                  _context.next = 29;
                   break;
                 }
 
                 console.warn("Unable to layout item: ", prevNode);
                 return _context.abrupt("return", undefined);
 
-              case 21:
+              case 29:
                 return _context.abrupt("return", newBreakToken);
 
-              case 22:
+              case 30:
                 this.hooks && this.hooks.layoutNode.trigger(node); // Check if the rendered element has a break set
 
                 if (!(hasRenderedContent && this.shouldBreak(node))) {
-                  _context.next = 36;
+                  _context.next = 44;
                   break;
                 }
 
@@ -144,14 +163,14 @@ var Layout = /*#__PURE__*/function () {
                 _imgs = wrapper.querySelectorAll("img");
 
                 if (!_imgs.length) {
-                  _context.next = 29;
+                  _context.next = 37;
                   break;
                 }
 
-                _context.next = 29;
+                _context.next = 37;
                 return this.waitForImages(_imgs);
 
-              case 29:
+              case 37:
                 newBreakToken = this.findBreakToken(wrapper, source, bounds, prevBreakToken);
 
                 if (!newBreakToken) {
@@ -159,20 +178,22 @@ var Layout = /*#__PURE__*/function () {
                 }
 
                 if (!(newBreakToken && newBreakToken.equals(prevBreakToken))) {
-                  _context.next = 34;
+                  _context.next = 42;
                   break;
                 }
 
                 console.warn("Unable to layout item: ", node);
                 return _context.abrupt("return", undefined);
 
-              case 34:
+              case 42:
                 length = 0;
-                return _context.abrupt("break", 69);
+                return _context.abrupt("break", 78);
 
-              case 36:
+              case 44:
                 // Should the Node be a shallow or deep clone
-                shallow = (0, _dom.isContainer)(node);
+                shallow = (0, _dom.isContainer)(node); // FIXME This is hack for bad html case, because polyfill can't handle cases when element position is too far beyond the page content size
+
+                (0, _dom.overflowContentValidation)(node, this.bounds);
                 rendered = this.append(node, wrapper, breakToken, shallow);
                 addedLength = rendered.textContent && rendered.textContent.length;
                 renderedLengthHooks = this.hooks.onRenderedLength.triggerSync(rendered, node, addedLength, this);
@@ -193,7 +214,7 @@ var Layout = /*#__PURE__*/function () {
                 }
 
                 if (!this.forceRenderBreak) {
-                  _context.next = 51;
+                  _context.next = 60;
                   break;
                 }
 
@@ -206,11 +227,11 @@ var Layout = /*#__PURE__*/function () {
 
                 length = 0;
                 this.forceRenderBreak = false;
-                return _context.abrupt("break", 69);
+                return _context.abrupt("break", 78);
 
-              case 51:
+              case 60:
                 if (!(length >= this.maxChars)) {
-                  _context.next = 67;
+                  _context.next = 76;
                   break;
                 }
 
@@ -218,14 +239,14 @@ var Layout = /*#__PURE__*/function () {
                 _imgs2 = wrapper.querySelectorAll("img");
 
                 if (!_imgs2.length) {
-                  _context.next = 57;
+                  _context.next = 66;
                   break;
                 }
 
-                _context.next = 57;
+                _context.next = 66;
                 return this.waitForImages(_imgs2);
 
-              case 57:
+              case 66:
                 newBreakToken = this.findBreakToken(wrapper, source, bounds, prevBreakToken);
 
                 if (newBreakToken) {
@@ -233,7 +254,7 @@ var Layout = /*#__PURE__*/function () {
                 }
 
                 if (!(newBreakToken && newBreakToken.equals(prevBreakToken))) {
-                  _context.next = 67;
+                  _context.next = 76;
                   break;
                 }
 
@@ -252,7 +273,7 @@ var Layout = /*#__PURE__*/function () {
                 }
 
                 if (!(currentNoteNode && currentNoteNode.nextElementSibling)) {
-                  _context.next = 66;
+                  _context.next = 75;
                   break;
                 }
 
@@ -260,19 +281,19 @@ var Layout = /*#__PURE__*/function () {
                   node: currentNoteNode.nextElementSibling,
                   offset: 0
                 };
-                return _context.abrupt("break", 69);
+                return _context.abrupt("break", 78);
 
-              case 66:
+              case 75:
                 return _context.abrupt("return", undefined);
 
-              case 67:
-                _context.next = 6;
+              case 76:
+                _context.next = 14;
                 break;
 
-              case 69:
+              case 78:
                 return _context.abrupt("return", newBreakToken);
 
-              case 70:
+              case 79:
               case "end":
                 return _context.stop();
             }
@@ -342,6 +363,7 @@ var Layout = /*#__PURE__*/function () {
             parent,
             fragment,
             imgHeight,
+            imgWidth,
             nodeHooks,
             _args2 = arguments;
         return _regenerator["default"].wrap(function _callee2$(_context2) {
@@ -379,7 +401,7 @@ var Layout = /*#__PURE__*/function () {
                 }
 
                 if (!(clone.tagName === "IMG")) {
-                  _context2.next = 9;
+                  _context2.next = 11;
                   break;
                 }
 
@@ -388,9 +410,17 @@ var Layout = /*#__PURE__*/function () {
 
               case 7:
                 imgHeight = clone.height;
-                clone.style.maxHeight = "".concat(imgHeight, "px");
+                imgWidth = clone.naturalWidth;
 
-              case 9:
+                if (imgWidth) {
+                  clone.style.maxWidth = "".concat(imgWidth, "px");
+                }
+
+                if (imgHeight) {
+                  clone.style.maxHeight = "".concat(imgHeight, "px");
+                }
+
+              case 11:
                 nodeHooks = this.hooks.renderNode.triggerSync(clone, node, this);
                 nodeHooks.forEach(function (newNode) {
                   if (typeof newNode != "undefined") {
@@ -399,7 +429,7 @@ var Layout = /*#__PURE__*/function () {
                 });
                 return _context2.abrupt("return", clone);
 
-              case 12:
+              case 14:
               case "end":
                 return _context2.stop();
             }

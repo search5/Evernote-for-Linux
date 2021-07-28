@@ -1782,6 +1782,53 @@
 	var utils_9 = utils.CSSValueToString;
 	var utils_10 = utils.requestIdleCallback;
 
+	function _arrayWithHoles(arr) {
+	  if (Array.isArray(arr)) return arr;
+	}
+
+	var arrayWithHoles = _arrayWithHoles;
+
+	function _iterableToArrayLimit(arr, i) {
+	  if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
+	  var _arr = [];
+	  var _n = true;
+	  var _d = false;
+	  var _e = undefined;
+
+	  try {
+	    for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+	      _arr.push(_s.value);
+
+	      if (i && _arr.length === i) break;
+	    }
+	  } catch (err) {
+	    _d = true;
+	    _e = err;
+	  } finally {
+	    try {
+	      if (!_n && _i["return"] != null) _i["return"]();
+	    } finally {
+	      if (_d) throw _e;
+	    }
+	  }
+
+	  return _arr;
+	}
+
+	var iterableToArrayLimit = _iterableToArrayLimit;
+
+	function _nonIterableRest() {
+	  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	}
+
+	var nonIterableRest = _nonIterableRest;
+
+	function _slicedToArray(arr, i) {
+	  return arrayWithHoles(arr) || iterableToArrayLimit(arr, i) || unsupportedIterableToArray(arr, i) || nonIterableRest();
+	}
+
+	var slicedToArray = _slicedToArray;
+
 	var dom = createCommonjsModule(function (module, exports) {
 
 
@@ -1830,6 +1877,9 @@
 	exports.nextSignificantNode = nextSignificantNode;
 	exports.getNextSibling = getNextSibling;
 	exports.filterTree = filterTree;
+	exports.overflowContentValidation = overflowContentValidation;
+
+	var _slicedToArray2 = interopRequireDefault(slicedToArray);
 
 	var _regenerator = interopRequireDefault(regenerator);
 
@@ -2673,6 +2723,50 @@
 	    node = treeWalker.nextNode();
 	    current.parentNode.removeChild(current);
 	  }
+	} // HTML validation for block positions
+
+
+	function overflowContentValidation(node, contentSizes) {
+	  if (!node || !node.style || !contentSizes) {
+	    return null;
+	  }
+
+	  var width = contentSizes.width,
+	      height = contentSizes.height;
+	  var safePositionValue = 0;
+	  var positionLimitsMap = {
+	    top: height,
+	    bottom: height,
+	    left: width,
+	    right: width
+	  }; // if clipped note (foreignContentView) have minHeight === "100vh" -> it would overlap the content of the note below (on same page)
+
+	  if (node.style.minHeight === "100vh") {
+	    var parentNode = node.parentElement;
+
+	    while (parentNode) {
+	      if (parentNode.dataset && parentNode.dataset.testid === "foreignContentView") {
+	        node.style.minHeight = "auto";
+	        break;
+	      }
+
+	      parentNode = parentNode.parentElement;
+	    }
+	  }
+
+	  for (var _i = 0, _Object$entries = Object.entries(positionLimitsMap); _i < _Object$entries.length; _i++) {
+	    var _Object$entries$_i = (0, _slicedToArray2["default"])(_Object$entries[_i], 2),
+	        key = _Object$entries$_i[0],
+	        value = _Object$entries$_i[1];
+
+	    var position = node.style[key] && Math.abs(Number.parseInt(node.style[key])); //position > value - signal that the element has went out of the page content size
+
+	    if (position > value) {
+	      var dataRef = extractDataRef(node);
+	      node.style[key] = safePositionValue;
+	      console.warn("This node has go out of the page content size. (".concat(key, " is ").concat(position, ")"), dataRef);
+	    }
+	  }
 	}
 	});
 
@@ -2718,6 +2812,7 @@
 	var dom_39 = dom.nextSignificantNode;
 	var dom_40 = dom.getNextSibling;
 	var dom_41 = dom.filterTree;
+	var dom_42 = dom.overflowContentValidation;
 
 	var breaktoken = createCommonjsModule(function (module, exports) {
 
@@ -2770,6 +2865,63 @@
 
 	unwrapExports(breaktoken);
 
+	var breakTokenHistory = createCommonjsModule(function (module, exports) {
+
+
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports["default"] = void 0;
+
+	var _classCallCheck2 = interopRequireDefault(classCallCheck);
+
+	var _createClass2 = interopRequireDefault(createClass);
+
+	/**
+	 * BreakTokenHistory
+	 * @class
+	 */
+	var BreakTokenHistory = /*#__PURE__*/function () {
+	  function BreakTokenHistory() {
+	    (0, _classCallCheck2["default"])(this, BreakTokenHistory);
+
+	    // class should be Singleton
+	    if (BreakTokenHistory._instance) {
+	      return BreakTokenHistory._instance;
+	    }
+
+	    BreakTokenHistory._instance = this;
+	    this._history = [];
+	  }
+
+	  (0, _createClass2["default"])(BreakTokenHistory, [{
+	    key: "setHistory",
+	    value: function setHistory(newBreakTokenNodeRef) {
+	      if (typeof newBreakTokenNodeRef === "string") {
+	        this._history.push(newBreakTokenNodeRef);
+	      }
+	    }
+	  }, {
+	    key: "isUniqueBreakToken",
+	    value: function isUniqueBreakToken(token) {
+	      return !this._history.includes(token);
+	    }
+	  }, {
+	    key: "history",
+	    get: function get() {
+	      return this._history;
+	    }
+	  }]);
+	  return BreakTokenHistory;
+	}();
+
+	var _default = BreakTokenHistory;
+	exports["default"] = _default;
+	});
+
+	unwrapExports(breakTokenHistory);
+
 	var layout = createCommonjsModule(function (module, exports) {
 
 
@@ -2796,6 +2948,8 @@
 	var _eventEmitter = interopRequireDefault(eventEmitter);
 
 	var _hook = interopRequireDefault(hook);
+
+	var _breakTokenHistory = interopRequireDefault(breakTokenHistory);
 
 	var MAX_CHARS_PER_BREAK = 1500;
 	/**
@@ -2842,6 +2996,8 @@
 	            newBreakToken,
 	            length,
 	            prevBreakToken,
+	            breakTokenHistory,
+	            breakTokenDataRef,
 	            imgs,
 	            _imgs,
 	            shallow,
@@ -2862,10 +3018,25 @@
 	                hasRenderedContent = false;
 	                length = 0;
 	                prevBreakToken = breakToken || new _breaktoken["default"](start);
+	                breakTokenHistory = new _breakTokenHistory["default"]();
+	                breakTokenDataRef = (0, dom.extractDataRef)(prevBreakToken.node);
 
-	              case 6:
+	                if (!breakTokenHistory.isUniqueBreakToken(breakTokenDataRef)) {
+	                  _context.next = 12;
+	                  break;
+	                }
+
+	                breakTokenHistory.setHistory(breakTokenDataRef);
+	                _context.next = 14;
+	                break;
+
+	              case 12:
+	                console.warn("Infinite loop protection. This node has already been rendered", breakTokenDataRef, prevBreakToken.node);
+	                return _context.abrupt("return", undefined);
+
+	              case 14:
 	                if (!(!done && !newBreakToken)) {
-	                  _context.next = 69;
+	                  _context.next = 78;
 	                  break;
 	                }
 
@@ -2875,7 +3046,7 @@
 	                done = next.done;
 
 	                if (node) {
-	                  _context.next = 22;
+	                  _context.next = 30;
 	                  break;
 	                }
 
@@ -2883,32 +3054,32 @@
 	                imgs = wrapper.querySelectorAll("img");
 
 	                if (!imgs.length) {
-	                  _context.next = 17;
+	                  _context.next = 25;
 	                  break;
 	                }
 
-	                _context.next = 17;
+	                _context.next = 25;
 	                return this.waitForImages(imgs);
 
-	              case 17:
+	              case 25:
 	                newBreakToken = this.findBreakToken(wrapper, source, bounds, prevBreakToken);
 
 	                if (!(newBreakToken && newBreakToken.equals(prevBreakToken))) {
-	                  _context.next = 21;
+	                  _context.next = 29;
 	                  break;
 	                }
 
 	                console.warn("Unable to layout item: ", prevNode);
 	                return _context.abrupt("return", undefined);
 
-	              case 21:
+	              case 29:
 	                return _context.abrupt("return", newBreakToken);
 
-	              case 22:
+	              case 30:
 	                this.hooks && this.hooks.layoutNode.trigger(node); // Check if the rendered element has a break set
 
 	                if (!(hasRenderedContent && this.shouldBreak(node))) {
-	                  _context.next = 36;
+	                  _context.next = 44;
 	                  break;
 	                }
 
@@ -2916,14 +3087,14 @@
 	                _imgs = wrapper.querySelectorAll("img");
 
 	                if (!_imgs.length) {
-	                  _context.next = 29;
+	                  _context.next = 37;
 	                  break;
 	                }
 
-	                _context.next = 29;
+	                _context.next = 37;
 	                return this.waitForImages(_imgs);
 
-	              case 29:
+	              case 37:
 	                newBreakToken = this.findBreakToken(wrapper, source, bounds, prevBreakToken);
 
 	                if (!newBreakToken) {
@@ -2931,20 +3102,22 @@
 	                }
 
 	                if (!(newBreakToken && newBreakToken.equals(prevBreakToken))) {
-	                  _context.next = 34;
+	                  _context.next = 42;
 	                  break;
 	                }
 
 	                console.warn("Unable to layout item: ", node);
 	                return _context.abrupt("return", undefined);
 
-	              case 34:
+	              case 42:
 	                length = 0;
-	                return _context.abrupt("break", 69);
+	                return _context.abrupt("break", 78);
 
-	              case 36:
+	              case 44:
 	                // Should the Node be a shallow or deep clone
-	                shallow = (0, dom.isContainer)(node);
+	                shallow = (0, dom.isContainer)(node); // FIXME This is hack for bad html case, because polyfill can't handle cases when element position is too far beyond the page content size
+
+	                (0, dom.overflowContentValidation)(node, this.bounds);
 	                rendered = this.append(node, wrapper, breakToken, shallow);
 	                addedLength = rendered.textContent && rendered.textContent.length;
 	                renderedLengthHooks = this.hooks.onRenderedLength.triggerSync(rendered, node, addedLength, this);
@@ -2965,7 +3138,7 @@
 	                }
 
 	                if (!this.forceRenderBreak) {
-	                  _context.next = 51;
+	                  _context.next = 60;
 	                  break;
 	                }
 
@@ -2978,11 +3151,11 @@
 
 	                length = 0;
 	                this.forceRenderBreak = false;
-	                return _context.abrupt("break", 69);
+	                return _context.abrupt("break", 78);
 
-	              case 51:
+	              case 60:
 	                if (!(length >= this.maxChars)) {
-	                  _context.next = 67;
+	                  _context.next = 76;
 	                  break;
 	                }
 
@@ -2990,14 +3163,14 @@
 	                _imgs2 = wrapper.querySelectorAll("img");
 
 	                if (!_imgs2.length) {
-	                  _context.next = 57;
+	                  _context.next = 66;
 	                  break;
 	                }
 
-	                _context.next = 57;
+	                _context.next = 66;
 	                return this.waitForImages(_imgs2);
 
-	              case 57:
+	              case 66:
 	                newBreakToken = this.findBreakToken(wrapper, source, bounds, prevBreakToken);
 
 	                if (newBreakToken) {
@@ -3005,7 +3178,7 @@
 	                }
 
 	                if (!(newBreakToken && newBreakToken.equals(prevBreakToken))) {
-	                  _context.next = 67;
+	                  _context.next = 76;
 	                  break;
 	                }
 
@@ -3024,7 +3197,7 @@
 	                }
 
 	                if (!(currentNoteNode && currentNoteNode.nextElementSibling)) {
-	                  _context.next = 66;
+	                  _context.next = 75;
 	                  break;
 	                }
 
@@ -3032,19 +3205,19 @@
 	                  node: currentNoteNode.nextElementSibling,
 	                  offset: 0
 	                };
-	                return _context.abrupt("break", 69);
+	                return _context.abrupt("break", 78);
 
-	              case 66:
+	              case 75:
 	                return _context.abrupt("return", undefined);
 
-	              case 67:
-	                _context.next = 6;
+	              case 76:
+	                _context.next = 14;
 	                break;
 
-	              case 69:
+	              case 78:
 	                return _context.abrupt("return", newBreakToken);
 
-	              case 70:
+	              case 79:
 	              case "end":
 	                return _context.stop();
 	            }
@@ -3114,6 +3287,7 @@
 	            parent,
 	            fragment,
 	            imgHeight,
+	            imgWidth,
 	            nodeHooks,
 	            _args2 = arguments;
 	        return _regenerator["default"].wrap(function _callee2$(_context2) {
@@ -3151,7 +3325,7 @@
 	                }
 
 	                if (!(clone.tagName === "IMG")) {
-	                  _context2.next = 9;
+	                  _context2.next = 11;
 	                  break;
 	                }
 
@@ -3160,9 +3334,17 @@
 
 	              case 7:
 	                imgHeight = clone.height;
-	                clone.style.maxHeight = "".concat(imgHeight, "px");
+	                imgWidth = clone.naturalWidth;
 
-	              case 9:
+	                if (imgWidth) {
+	                  clone.style.maxWidth = "".concat(imgWidth, "px");
+	                }
+
+	                if (imgHeight) {
+	                  clone.style.maxHeight = "".concat(imgHeight, "px");
+	                }
+
+	              case 11:
 	                nodeHooks = this.hooks.renderNode.triggerSync(clone, node, this);
 	                nodeHooks.forEach(function (newNode) {
 	                  if (typeof newNode != "undefined") {
@@ -3171,7 +3353,7 @@
 	                });
 	                return _context2.abrupt("return", clone);
 
-	              case 12:
+	              case 14:
 	              case "end":
 	                return _context2.stop();
 	            }
@@ -4099,7 +4281,7 @@
 	 * @class
 	 */
 	var ContentParser = /*#__PURE__*/function () {
-	  function ContentParser(content, cb) {
+	  function ContentParser(content) {
 	    (0, _classCallCheck2["default"])(this, ContentParser);
 
 	    if (content && content.nodeType) {
@@ -4531,10 +4713,6 @@
 	          while (1) {
 	            switch (_context.prev = _context.next) {
 	              case 0:
-	                _context.next = 2;
-	                return this.hooks.beforeParsed.trigger(content, this);
-
-	              case 2:
 	                parsed = new _parser["default"](content);
 	                this.hooks.filter.triggerSync(parsed);
 	                this.source = parsed;
@@ -4548,46 +4726,46 @@
 	                }
 
 	                this.emit("rendering", parsed);
-	                _context.next = 10;
+	                _context.next = 8;
 	                return this.hooks.afterParsed.trigger(parsed, this);
+
+	              case 8:
+	                _context.next = 10;
+	                return this.loadFonts();
 
 	              case 10:
 	                _context.next = 12;
-	                return this.loadFonts();
-
-	              case 12:
-	                _context.next = 14;
 	                return this.render(parsed, this.breakToken);
 
-	              case 14:
+	              case 12:
 	                rendered = _context.sent;
 
-	              case 15:
+	              case 13:
 	                if (!rendered.canceled) {
-	                  _context.next = 22;
+	                  _context.next = 20;
 	                  break;
 	                }
 
 	                this.start();
-	                _context.next = 19;
+	                _context.next = 17;
 	                return this.render(parsed, this.breakToken);
 
-	              case 19:
+	              case 17:
 	                rendered = _context.sent;
-	                _context.next = 15;
+	                _context.next = 13;
 	                break;
 
-	              case 22:
+	              case 20:
 	                this.rendered = true;
 	                this.pagesArea.style.setProperty("--pagedjs-page-count", this.total);
-	                _context.next = 26;
+	                _context.next = 24;
 	                return this.hooks.afterRendered.trigger(this.pages, this);
 
-	              case 26:
+	              case 24:
 	                this.emit("rendered", this.pages);
 	                return _context.abrupt("return", this);
 
-	              case 28:
+	              case 26:
 	              case "end":
 	                return _context.stop();
 	            }

@@ -19,5 +19,8 @@
   },
   "author": "Mathias Buus (@mafintosh)",
   "license": "MIT",
-  "homepage": "https://source.build.etonreve.com/projects/NP/repos/en-node-gyp-build"
+  "homepage": "https://source.build.etonreve.com/projects/NP/repos/en-node-gyp-build",
+  "publishConfig": {
+    "registry": "http://localhost:4873"
+  }
 }

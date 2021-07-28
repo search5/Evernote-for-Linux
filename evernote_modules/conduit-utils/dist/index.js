@@ -183,6 +183,8 @@ class MemLogger {
 }
 exports.MemLogger = MemLogger;
 const MAX_SET_TIMEOUT_DELAY_MS = 0x7FFFFFFF;
+const MIN_SET_TIMEOUT_DELAY_MS = en_ts_utils_1.MILLIS_IN_ONE_MINUTE;
+const TIMEOUT_STEP = 0.5;
 /**
  * Utility function for executing a function at an arbitrary timestamp.  Intended
  * for uses where setTimeout is insufficient due to limit of signed int32 max (ms)
@@ -208,7 +210,17 @@ function setTimeoutForTimestampHelper(fn, unixTimeMs, mutableTimeoutId) {
     const timeUntilExecution = unixTimeMs - now;
     const timeout = Math.max(timeUntilExecution, 0);
     if (timeout > MAX_SET_TIMEOUT_DELAY_MS) {
-        mutableTimeoutId.value = setTimeout(() => setTimeoutForTimestampHelper(fn, unixTimeMs, mutableTimeoutId), MAX_SET_TIMEOUT_DELAY_MS);
+        mutableTimeoutId.value = setTimeout(() => setTimeoutForTimestampHelper(fn, unixTimeMs, mutableTimeoutId), MAX_SET_TIMEOUT_DELAY_MS * TIMEOUT_STEP);
+    }
+    else if (timeout > MIN_SET_TIMEOUT_DELAY_MS) {
+        // Slowly (but not too slowly) walk towards desired timeout.
+        // This is being done to mitigate issues with setTimeout timers
+        // being throttled. This approach gives timeout a chance to self-adjust
+        // to the correct time due to now being update to the correct value above.
+        // Example: Assuming TIMEOUT_STEP = 0.5, and MIN_SET_TIMEOUT_DELAY_MS = 1 minute
+        // 10 hours -> 5h -> 2.5h -> 1.25h -> 0.62h -> 31m -> 16m -> 8m -> 4m -> 2m -> Final timeout
+        const stepTimeout = Math.ceil(timeout * TIMEOUT_STEP);
+        mutableTimeoutId.value = setTimeout(() => setTimeoutForTimestampHelper(fn, unixTimeMs, mutableTimeoutId), stepTimeout);
     }
     else {
         mutableTimeoutId.value = setTimeout(fn, timeout);

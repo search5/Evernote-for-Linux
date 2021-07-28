@@ -95,10 +95,6 @@ var Chunker = /*#__PURE__*/function () {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                _context.next = 2;
-                return this.hooks.beforeParsed.trigger(content, this);
-
-              case 2:
                 parsed = new _parser["default"](content);
                 this.hooks.filter.triggerSync(parsed);
                 this.source = parsed;
@@ -112,46 +108,46 @@ var Chunker = /*#__PURE__*/function () {
                 }
 
                 this.emit("rendering", parsed);
-                _context.next = 10;
+                _context.next = 8;
                 return this.hooks.afterParsed.trigger(parsed, this);
+
+              case 8:
+                _context.next = 10;
+                return this.loadFonts();
 
               case 10:
                 _context.next = 12;
-                return this.loadFonts();
-
-              case 12:
-                _context.next = 14;
                 return this.render(parsed, this.breakToken);
 
-              case 14:
+              case 12:
                 rendered = _context.sent;
 
-              case 15:
+              case 13:
                 if (!rendered.canceled) {
-                  _context.next = 22;
+                  _context.next = 20;
                   break;
                 }
 
                 this.start();
-                _context.next = 19;
+                _context.next = 17;
                 return this.render(parsed, this.breakToken);
 
-              case 19:
+              case 17:
                 rendered = _context.sent;
-                _context.next = 15;
+                _context.next = 13;
                 break;
 
-              case 22:
+              case 20:
                 this.rendered = true;
                 this.pagesArea.style.setProperty("--pagedjs-page-count", this.total);
-                _context.next = 26;
+                _context.next = 24;
                 return this.hooks.afterRendered.trigger(this.pages, this);
 
-              case 26:
+              case 24:
                 this.emit("rendered", this.pages);
                 return _context.abrupt("return", this);
 
-              case 28:
+              case 26:
               case "end":
                 return _context.stop();
             }

@@ -1,8 +1,8 @@
 {
   "name": "en-conduit-plugin-scheduled-notification",
-  "version": "1.37.10",
+  "version": "1.37.11",
   "publishConfig": {
-    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+    "registry": "http://localhost:4873"
   },
   "description": "Plugin for the Evernote Scheduled Notification, from Notifications Service",
   "main": "dist/index",
@@ -10,12 +10,12 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-core": "1.37.10",
-    "conduit-storage": "1.37.10",
-    "conduit-utils": "1.37.10",
-    "en-conduit-plugin-scheduled-notification-shared": "1.37.10",
-    "en-conduit-plugin-task": "1.37.10",
-    "en-core-entity-types": "1.37.10",
+    "conduit-core": "1.37.11",
+    "conduit-storage": "1.37.11",
+    "conduit-utils": "1.37.11",
+    "en-conduit-plugin-scheduled-notification-shared": "1.37.11",
+    "en-conduit-plugin-task": "1.37.11",
+    "en-core-entity-types": "1.37.11",
     "en-data-model": "^3.6.2",
     "en-notifications-data-model": "^3.4.4",
     "en-notifications-templates": "0.3.2",

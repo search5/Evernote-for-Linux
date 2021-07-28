@@ -220,6 +220,9 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
                 await this.memKeyValStorage.destructor();
                 await this.remoteStorageOverlay.destructor(trc);
                 await this.remoteSyncedGraphStorage.destructor(trc);
+                if (this.notificationManager) {
+                    await this.notificationManager.destructor(trc, this);
+                }
             });
             this.activeAuthRevalidations = {};
             this.authBackoff = {};
@@ -385,6 +388,9 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
             return await this.flushRemoteMutations();
         }
         return Object.assign({ completed: 0, pending: 0 }, this.mutationManager.getOptimisticMutationInfo());
+    }
+    async forceNSyncFlush(trc) {
+        await this.syncEngine.forceNSyncFlush(trc);
     }
     async forceStopDownsync(trc) {
         await this.syncEngine.disableSyncing(trc);

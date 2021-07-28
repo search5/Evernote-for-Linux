@@ -78,6 +78,11 @@ async function forceDownsyncResolver(_, args, context) {
     }
     return { success: true, mutationCount, optimisticCount };
 }
+async function forceNSyncFlushResolver(_, args, context) {
+    ResolverHelpers_1.validateDB(context);
+    await context.db.forceNSyncFlush(context.trc);
+    return true;
+}
 async function pauseDownsyncResolver(_, args, context) {
     const res = { success: true };
     if (!context || !context.db) {
@@ -198,6 +203,10 @@ function getGraphMutators() {
         }),
         type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.Struct({ success: 'boolean', mutationCount: 'number' }, 'ForceDownsyncResult')),
         resolve: forceDownsyncResolver,
+    };
+    out.ForceNSyncFlush = {
+        type: DataSchemaGQL_1.schemaToGraphQLType('boolean'),
+        resolve: forceNSyncFlushResolver,
     };
     out.PauseSync = {
         args: DataSchemaGQL_1.schemaToGraphQLArgs({}),

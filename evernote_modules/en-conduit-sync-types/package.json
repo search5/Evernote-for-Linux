@@ -1,8 +1,8 @@
 {
   "name": "en-conduit-sync-types",
-  "version": "1.37.10",
+  "version": "1.37.11",
   "publishConfig": {
-    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+    "registry": "http://localhost:4873"
   },
   "description": "Shared types between conduit-core and conduit-view",
   "main": "dist/index",
@@ -10,11 +10,11 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-auth-shared": "1.37.10",
-    "conduit-core": "1.37.10",
-    "conduit-storage": "1.37.10",
-    "conduit-utils": "1.37.10",
-    "conduit-view-types": "1.37.10",
+    "conduit-auth-shared": "1.37.11",
+    "conduit-core": "1.37.11",
+    "conduit-storage": "1.37.11",
+    "conduit-utils": "1.37.11",
+    "conduit-view-types": "1.37.11",
     "en-data-model": "^3.6.2",
     "en-graph-types": "2.0.0",
     "en-thrift-internal": "2.7.18"

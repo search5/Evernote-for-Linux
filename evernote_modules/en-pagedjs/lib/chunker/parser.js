@@ -18,7 +18,7 @@ var _utils = require("../utils/utils");
  * @class
  */
 var ContentParser = /*#__PURE__*/function () {
-  function ContentParser(content, cb) {
+  function ContentParser(content) {
     (0, _classCallCheck2["default"])(this, ContentParser);
 
     if (content && content.nodeType) {

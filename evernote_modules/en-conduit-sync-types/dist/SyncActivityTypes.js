@@ -38,6 +38,7 @@ var SyncActivityType;
     SyncActivityType["NSyncInitActivity"] = "NSyncInitActivity";
     SyncActivityType["NSyncInitialDownsyncActivity"] = "NSyncInitialDownsyncActivity";
     SyncActivityType["FeatureRolloutSyncActivity"] = "FeatureRolloutSyncActivity";
+    SyncActivityType["FlushNSyncActivity"] = "NSyncFlushActivity";
 })(SyncActivityType = exports.SyncActivityType || (exports.SyncActivityType = {}));
 exports.INITIAL_DOWNSYNC_PROGRESS_TABLE = 'InitialSyncProgress';
 exports.BACKGROUND_SYNC_PROGRESS_TABLE = 'BackgroundSyncProgress';

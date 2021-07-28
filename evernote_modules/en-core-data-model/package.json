@@ -2,7 +2,7 @@
   "name": "en-core-data-model",
   "version": "3.8.0",
   "publishConfig": {
-    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+    "registry": "http://localhost:4873"
   },
   "files": [
     "dist"

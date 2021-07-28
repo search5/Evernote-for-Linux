@@ -266,6 +266,9 @@ class ThriftSyncEngine extends conduit_core_1.SyncEngine {
     async forceDownsyncUpdate(trc, timeout) {
         await this.syncManager.forceDownsyncUpdate(trc, timeout);
     }
+    async forceNSyncFlush(trc) {
+        return await this.syncManager.forceNSyncFlush(trc);
+    }
     async disableSyncing(trc) {
         await this.syncManager.disableSyncing(trc);
     }

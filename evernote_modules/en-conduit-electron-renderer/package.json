@@ -1,8 +1,8 @@
 {
   "name": "en-conduit-electron-renderer",
-  "version": "1.37.10",
+  "version": "1.37.11",
   "publishConfig": {
-    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+    "registry": "http://localhost:4873"
   },
   "description": "Conduit integration for Electron Renderer process",
   "main": "dist/index",
@@ -10,9 +10,9 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-utils": "1.37.10",
-    "conduit-view": "1.37.10",
-    "conduit-view-types": "1.37.10",
-    "en-conduit-electron-shared": "1.37.10"
+    "conduit-utils": "1.37.11",
+    "conduit-view": "1.37.11",
+    "conduit-view-types": "1.37.11",
+    "en-conduit-electron-shared": "1.37.11"
   }
 }

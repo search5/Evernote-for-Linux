@@ -1,8 +1,8 @@
 {
   "name": "en-conduit-plugin-search",
-  "version": "1.37.10",
+  "version": "1.37.11",
   "publishConfig": {
-    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+    "registry": "http://localhost:4873"
   },
   "description": "Plugin for the evernote search service",
   "main": "dist/index",
@@ -10,16 +10,16 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-core": "1.37.10",
-    "conduit-storage": "1.37.10",
-    "conduit-utils": "1.37.10",
-    "conduit-view-types": "1.37.10",
-    "en-conduit-plugin-task": "1.37.10",
-    "en-conduit-sync-types": "1.37.10",
-    "en-core-entity-types": "1.37.10",
+    "conduit-core": "1.37.11",
+    "conduit-storage": "1.37.11",
+    "conduit-utils": "1.37.11",
+    "conduit-view-types": "1.37.11",
+    "en-conduit-plugin-task": "1.37.11",
+    "en-conduit-sync-types": "1.37.11",
+    "en-core-entity-types": "1.37.11",
     "en-data-model": "^3.6.2",
     "en-search-engine-shared": "^17.0.1",
-    "en-thrift-connector": "1.37.10",
+    "en-thrift-connector": "1.37.11",
     "js-base64": "^3.5.2"
   },
   "peerDependencies": {

@@ -46,6 +46,9 @@ exports.parentOf = parentOf;
 exports.nextSignificantNode = nextSignificantNode;
 exports.getNextSibling = getNextSibling;
 exports.filterTree = filterTree;
+exports.overflowContentValidation = overflowContentValidation;
+
+var _slicedToArray2 = _interopRequireDefault(require("@babel/runtime/helpers/slicedToArray"));
 
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
 
@@ -888,5 +891,49 @@ function filterTree(content, func, what) {
     current = node;
     node = treeWalker.nextNode();
     current.parentNode.removeChild(current);
+  }
+} // HTML validation for block positions
+
+
+function overflowContentValidation(node, contentSizes) {
+  if (!node || !node.style || !contentSizes) {
+    return null;
+  }
+
+  var width = contentSizes.width,
+      height = contentSizes.height;
+  var safePositionValue = 0;
+  var positionLimitsMap = {
+    top: height,
+    bottom: height,
+    left: width,
+    right: width
+  }; // if clipped note (foreignContentView) have minHeight === "100vh" -> it would overlap the content of the note below (on same page)
+
+  if (node.style.minHeight === "100vh") {
+    var parentNode = node.parentElement;
+
+    while (parentNode) {
+      if (parentNode.dataset && parentNode.dataset.testid === "foreignContentView") {
+        node.style.minHeight = "auto";
+        break;
+      }
+
+      parentNode = parentNode.parentElement;
+    }
+  }
+
+  for (var _i = 0, _Object$entries = Object.entries(positionLimitsMap); _i < _Object$entries.length; _i++) {
+    var _Object$entries$_i = (0, _slicedToArray2["default"])(_Object$entries[_i], 2),
+        key = _Object$entries$_i[0],
+        value = _Object$entries$_i[1];
+
+    var position = node.style[key] && Math.abs(Number.parseInt(node.style[key])); //position > value - signal that the element has went out of the page content size
+
+    if (position > value) {
+      var dataRef = extractDataRef(node);
+      node.style[key] = safePositionValue;
+      console.warn("This node has go out of the page content size. (".concat(key, " is ").concat(position, ")"), dataRef);
+    }
   }
 }

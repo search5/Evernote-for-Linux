@@ -43,6 +43,7 @@ const ContentFetchSyncActivity_1 = require("./ContentFetchSyncActivity");
 const FeatureRolloutSyncActivity_1 = require("./FeatureRolloutSyncActivity");
 const HybridInitialDownsyncActivity_1 = require("./HybridInitialDownsyncActivity");
 const IncrementalSyncActivity_1 = require("./IncrementalSyncActivity");
+const NSyncFlushActivity_1 = require("./NSyncFlushActivity");
 const NSyncInitActivity_1 = require("./NSyncInitActivity");
 const OfflineSearchIndexActivity_1 = require("./OfflineSearchIndexActivity");
 const ReindexActivity_1 = require("./ReindexActivity");
@@ -272,6 +273,9 @@ class ENSyncManager extends conduit_core_1.SyncManager {
     }
     async forceDownsyncUpdate(trc, timeout) {
         await this.addImmediateActivity(trc, new IncrementalSyncActivity_1.IncrementalSyncActivity(this.di, this.activityContext, en_conduit_sync_types_1.SyncActivityPriority.IMMEDIATE), timeout);
+    }
+    async forceNSyncFlush(trc) {
+        await this.addImmediateActivity(trc, new NSyncFlushActivity_1.NSyncFlushActivity(this.di, this.activityContext, en_conduit_sync_types_1.SyncActivityPriority.IMMEDIATE), null);
     }
     async needImmediateNotesDownsync(trc, args) {
         const existingActivity = this.findActivity(trc, en_conduit_sync_types_1.SyncActivityType.NotesFetchActivity);

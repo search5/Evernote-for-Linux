@@ -31,6 +31,7 @@ const ContentFetchSyncActivity_1 = require("./ContentFetchSyncActivity");
 const FeatureRolloutSyncActivity_1 = require("./FeatureRolloutSyncActivity");
 const HybridDownsync = __importStar(require("./HybridInitialDownsyncActivity"));
 const IncrementalSyncActivity_1 = require("./IncrementalSyncActivity");
+const NSyncFlushActivity_1 = require("./NSyncFlushActivity");
 const NSyncInitActivity_1 = require("./NSyncInitActivity");
 const OfflineSearchIndexActivity_1 = require("./OfflineSearchIndexActivity");
 const ReindexActivity_1 = require("./ReindexActivity");
@@ -62,6 +63,7 @@ const gSyncActivityHydrators = {
     [en_conduit_sync_types_1.SyncActivityType.NSyncInitActivity]: NSyncInitActivity_1.nsyncInitActivityHydrator,
     [en_conduit_sync_types_1.SyncActivityType.NSyncInitialDownsyncActivity]: HybridDownsync.nsyncInitialDownsyncActivityHydrator,
     [en_conduit_sync_types_1.SyncActivityType.FeatureRolloutSyncActivity]: FeatureRolloutSyncActivity_1.featureRolloutActivityHydrator,
+    [en_conduit_sync_types_1.SyncActivityType.FlushNSyncActivity]: NSyncFlushActivity_1.nsyncFlushActivityHydrator,
 };
 function hydrateActivity(di, context, p, timeout) {
     const hydrator = gSyncActivityHydrators[p.type];

@@ -1,5 +1,5 @@
 /**
- * @license Paged.js v1.0.14 | MIT | https://gitlab.pagedmedia.org/tools/pagedjs
+ * @license Paged.js v1.0.19 | MIT | https://gitlab.pagedmedia.org/tools/pagedjs
  */
 
 (function (global, factory) {
@@ -1238,6 +1238,50 @@
 		}
 	}
 
+
+	// HTML validation for block positions
+	function overflowContentValidation(node, contentSizes) {
+		if (!node || !node.style || !contentSizes) {
+			return null;
+		}
+
+		const { width, height } = contentSizes;
+		const safePositionValue = 0;
+		const positionLimitsMap = {
+			top: height,
+			bottom: height,
+			left: width,
+			right: width,
+		};
+
+		// if clipped note (foreignContentView) have minHeight === "100vh" -> it would overlap the content of the note below (on same page)
+		if (node.style.minHeight === "100vh") {
+			let parentNode = node.parentElement;
+
+			while(parentNode) {
+				if (parentNode.dataset && parentNode.dataset.testid === "foreignContentView") {
+					node.style.minHeight = "auto";
+
+					break;
+				}
+
+				parentNode = parentNode.parentElement;
+			}
+		}
+
+		for (const [key, value] of Object.entries(positionLimitsMap)) {
+			const position = node.style[key] && Math.abs(Number.parseInt(node.style[key]));
+
+			//position > value - signal that the element has went out of the page content size
+			if (position > value) {
+				const dataRef = extractDataRef(node);
+				node.style[key] = safePositionValue;
+
+				console.warn(`This node has go out of the page content size. (${key} is ${position})`, dataRef);
+			}
+		}
+	}
+
 	/**
 	 * Layout
 	 * @class
@@ -1264,6 +1308,36 @@
 			return true;
 		}
 
+	}
+
+	/**
+	 * BreakTokenHistory
+	 * @class
+	 */
+	class BreakTokenHistory {
+		constructor() {
+			// class should be Singleton
+			if (BreakTokenHistory._instance) {
+				return BreakTokenHistory._instance;
+			}
+			BreakTokenHistory._instance = this;
+
+			this._history = [];
+		}
+
+		get history() {
+			return this._history;
+		}
+
+		setHistory(newBreakTokenNodeRef) {
+			if (typeof newBreakTokenNodeRef === "string") {
+				this._history.push(newBreakTokenNodeRef);
+			}
+		}
+
+		isUniqueBreakToken(token) {
+			return !this._history.includes(token);
+		}
 	}
 
 	const MAX_CHARS_PER_BREAK = 1500;
@@ -1313,6 +1387,15 @@
 			let length = 0;
 
 			let prevBreakToken = breakToken || new BreakToken(start);
+
+			let breakTokenHistory = new BreakTokenHistory;
+			const breakTokenDataRef = extractDataRef(prevBreakToken.node);
+			if (breakTokenHistory.isUniqueBreakToken(breakTokenDataRef)){
+				breakTokenHistory.setHistory(breakTokenDataRef);
+			} else {
+				console.warn("Infinite loop protection. This node has already been rendered", breakTokenDataRef, prevBreakToken.node);
+				return undefined;
+			}
 
 			while (!done && !newBreakToken) {
 				next = walker.next();
@@ -1366,6 +1449,9 @@
 
 				// Should the Node be a shallow or deep clone
 				let shallow = isContainer(node);
+
+				// FIXME This is hack for bad html case, because polyfill can't handle cases when element position is too far beyond the page content size
+				overflowContentValidation(node, this.bounds);
 
 				let rendered = this.append(node, wrapper, breakToken, shallow);
 
@@ -1529,7 +1615,13 @@
 			if (clone.tagName === "IMG") {
 				await this.waitForImages(clone);
 				const imgHeight = clone.height;
-				clone.style.maxHeight = `${imgHeight}px`;
+				const imgWidth = clone.naturalWidth;
+				if (imgWidth) {
+					clone.style.maxWidth = `${imgWidth}px`;
+				}
+				if (imgHeight) {
+					clone.style.maxHeight = `${imgHeight}px`;
+				}
 			}
 
 			let nodeHooks = this.hooks.renderNode.triggerSync(clone, node, this);
@@ -2276,7 +2368,7 @@
 	 */
 	class ContentParser {
 
-		constructor(content, cb) {
+		constructor(content) {
 			if (content && content.nodeType) {
 				// handle dom
 				this.dom = this.add(content);
@@ -2679,8 +2771,6 @@
 
 		async flow(content, renderTo) {
 			let parsed;
-
-			await this.hooks.beforeParsed.trigger(content, this);
 
 			parsed = new ContentParser(content);
 

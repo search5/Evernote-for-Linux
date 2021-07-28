@@ -1,8 +1,8 @@
 {
   "name": "conduit-utils",
-  "version": "1.37.10",
+  "version": "1.37.11",
   "publishConfig": {
-    "registry": "https://maven.vpn.etonreve.com/api/npm/npm"
+    "registry": "http://localhost:4873"
   },
   "description": "Utils",
   "main": "dist/index",

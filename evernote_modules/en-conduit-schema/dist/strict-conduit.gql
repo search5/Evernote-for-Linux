@@ -3066,6 +3066,7 @@ type RootMutationType {
   EventsRecord(propertiesJsonStr: String!, selectiveDestinations: String): GenericMutationResult!
   ExceptionRecord(message: String!, fatal: Boolean, callstack: String): GenericMutationResult!
   ForceDownsync(wait: Boolean!, flushMutations: Boolean, waitForRoundtrip: Boolean, retry: Int): ForceDownsyncResult!
+  ForceNSyncFlush: Boolean!
   ForceUpsync(retry: Int): GenericMutationResult!
   ImmediateContentFetchSync(wait: Boolean, maxTime: Int, maxResources: Int): StartContentFetchResult!
   ImmediateNotesDownsync(wait: Boolean, maxNotes: Int, notesPerFetch: Int, maxTime: Int): ImmediateNotesDownsyncResult!
