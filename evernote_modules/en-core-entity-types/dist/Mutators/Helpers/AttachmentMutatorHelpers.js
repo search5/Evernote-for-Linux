@@ -73,6 +73,7 @@ async function genAttachmentCreateOps(trc, ctx, data, plan, noteRef, owner, isAc
         stagedBlobID: data.stagedBlobID,
         id: attachmentGenID,
         remoteFields: {
+            parentID: noteRef.id,
             filename: data.filename,
             mimeType: data.mime,
             hash: data.hash,

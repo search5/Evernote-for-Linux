@@ -2,7 +2,7 @@
   "name": "en-search-engine-shared",
   "description": "",
   "main": "dist/index",
-  "version": "17.0.1",
+  "version": "19.1.0",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },

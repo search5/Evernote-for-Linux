@@ -98,9 +98,8 @@ class L10N {
         return l10n;
     }
     static toSupportedLocale(proposedLocale, logger) {
-        const lowerCaseLocale = proposedLocale.toLowerCase();
-        if (const_1.supportedLocales.includes(lowerCaseLocale)) {
-            return lowerCaseLocale;
+        if (const_1.supportedLocales.includes(proposedLocale)) {
+            return proposedLocale;
         }
         logger === null || logger === void 0 ? void 0 : logger.warn(`Locale ${proposedLocale} is not supported.  Defaulting to english`);
         return 'en';

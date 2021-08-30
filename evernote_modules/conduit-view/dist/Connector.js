@@ -184,6 +184,7 @@ query ($attachmentID: String!) {
 }
 `;
 async function waitForAttachmentUpload(attachmentID) {
+    conduit_utils_1.logger.debug('waitForAttachmentUpload is deprecated. Please use MutationStatus query with UploadResult.uploadTracker');
     return ViewTracing_1.traceUserEvent('waitForAttachmentUpload', { attachmentID }, async () => {
         await Query_1.execute(FlushAttachmentMutations);
         const res = await Query_1.execute(GetAttachmentInfo, { attachmentID });

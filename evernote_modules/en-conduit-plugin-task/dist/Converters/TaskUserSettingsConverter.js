@@ -7,9 +7,9 @@ exports.getTaskUserSettingsNodeAndEdges = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
-const en_nsync_connector_1 = require("en-nsync-connector");
+const en_quasar_connector_1 = require("en-quasar-connector");
 const getTaskUserSettingsNodeAndEdges = async (trc, instance, context) => {
-    const taskUserSettings = en_nsync_connector_1.convertNsyncEntityToNode(instance, context);
+    const taskUserSettings = en_quasar_connector_1.convertNsyncEntityToNode(instance, context);
     if (!taskUserSettings) {
         return null;
     }

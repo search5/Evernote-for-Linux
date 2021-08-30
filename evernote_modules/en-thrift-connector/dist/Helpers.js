@@ -2,11 +2,62 @@
 /*
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.shouldBufferMutation = exports.getBestSyncContextForNode = void 0;
+exports.shouldBufferMutation = exports.getBestSyncContextForNode = exports.linkedNotebookSyncContext = exports.createSharedNotebookSyncContextMetadata = exports.EmptySyncStateWithTurbo = exports.EmptySyncState = exports.TURBO_SYNC_DEFAULTS = exports.DEFAULT_POLL_INTERVAL = void 0;
 const conduit_core_1 = require("conduit-core");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
+const SimplyImmutable = __importStar(require("simply-immutable"));
+exports.DEFAULT_POLL_INTERVAL = 30000;
+exports.TURBO_SYNC_DEFAULTS = {
+    NOTE_EDIT_BUFFER: 6 * 1000,
+    NOTE_IDLE_BUFFER: 3 * 1000,
+};
+exports.EmptySyncState = SimplyImmutable.deepFreeze({
+    lastUpdateCount: 0,
+    syncInterval: exports.DEFAULT_POLL_INTERVAL,
+});
+exports.EmptySyncStateWithTurbo = SimplyImmutable.deepFreeze(Object.assign(Object.assign({}, exports.EmptySyncState), { turboSyncNoteIdleUpdateBuffer: exports.TURBO_SYNC_DEFAULTS.NOTE_IDLE_BUFFER, turboSyncNoteEditUpdateBuffer: exports.TURBO_SYNC_DEFAULTS.NOTE_EDIT_BUFFER }));
+async function createSharedNotebookSyncContextMetadata(trc, graphTransaction, syncContext, ownerID, encodedAuth, sharedNotebookGlobalID, noteStoreUrl, syncStatePath) {
+    await graphTransaction.createSyncContext(trc, syncContext, {
+        userID: ownerID,
+        authToken: encodedAuth,
+        isUser: false,
+        isVaultUser: false,
+        sharedNotebookGlobalID,
+        sharedNotebookNoteStoreUrl: noteStoreUrl,
+        turboSyncNoteEditUpdateBuffer: exports.TURBO_SYNC_DEFAULTS.NOTE_EDIT_BUFFER,
+        turboSyncNoteIdleUpdateBuffer: exports.TURBO_SYNC_DEFAULTS.NOTE_IDLE_BUFFER,
+        sharedNoteID: null,
+    });
+    if (syncStatePath) {
+        await graphTransaction.replaceSyncState(trc, syncStatePath, exports.EmptySyncStateWithTurbo);
+    }
+}
+exports.createSharedNotebookSyncContextMetadata = createSharedNotebookSyncContextMetadata;
+function linkedNotebookSyncContext(linkedNotebookGuid) {
+    return `LinkedNotebook:${linkedNotebookGuid}`;
+}
+exports.linkedNotebookSyncContext = linkedNotebookSyncContext;
 async function getSyncContextMetadata(trc, syncContextMetadataProvider, storageDB, syncContext) {
     if (syncContextMetadataProvider) {
         return await syncContextMetadataProvider.getSyncContextMetadata(trc, syncContext);

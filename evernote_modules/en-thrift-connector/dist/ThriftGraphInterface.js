@@ -27,7 +27,7 @@ const conduit_core_1 = require("conduit-core");
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
-const Auth = __importStar(require("./Auth"));
+const Auth_1 = require("./Auth");
 const BlobConverter = __importStar(require("./Converters/BlobConverter"));
 const Converters_1 = require("./Converters/Converters");
 const Helpers_1 = require("./Converters/Helpers");
@@ -361,7 +361,7 @@ class ThriftGraphInterface {
         var _a;
         let errWithCleanup;
         const authCache = {};
-        const personalAuth = await Auth.getAuthFromSyncContext(trc, this.config.graphStorage, conduit_core_1.PERSONAL_USER_CONTEXT);
+        const personalAuth = await Auth_1.getAuthFromSyncContext(trc, this.config.graphStorage, conduit_core_1.PERSONAL_USER_CONTEXT);
         authCache[conduit_core_1.PERSONAL_USER_CONTEXT] = personalAuth;
         const vaultUserId = ((_a = personalAuth.vaultAuth) === null || _a === void 0 ? void 0 : _a.userID) || conduit_utils_1.NullUserID;
         let result = null;

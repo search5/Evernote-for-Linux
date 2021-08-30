@@ -198,7 +198,7 @@ function getUserPathFromID(userID) {
     // windows doesn't allow : in path.
     return userID.replace(':', '');
 }
-async function deleteCacheForUser(userID) {
+async function deleteCacheForUser(userID, resourceFallbackPath) {
     const cachePath = path_1.default.join(resourceCacheFolderPath, getUserPathFromID(userID));
     try {
         if (await fs_extra_1.default.pathExists(cachePath)) {
@@ -206,6 +206,9 @@ async function deleteCacheForUser(userID) {
         }
         if (await fs_extra_1.default.pathExists(oldResourceCacheFolderPath)) {
             await fs_extra_1.default.remove(oldResourceCacheFolderPath);
+        }
+        if (resourceFallbackPath && await fs_extra_1.default.pathExists(resourceFallbackPath)) {
+            await fs_extra_1.default.remove(resourceFallbackPath);
         }
     }
     catch (err) {

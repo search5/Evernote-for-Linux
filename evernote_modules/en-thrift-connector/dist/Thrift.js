@@ -327,29 +327,8 @@ class AsyncUserStore {
         this.authenticateLongSessionV2 = (trc, authParams) => {
             return ThriftRpc_1.wrapThriftCall(trc, '', 'authenticateLongSessionV2', this.userStore, this.userStore.authenticateLongSessionV2, authParams);
         };
-        this.authenticateToBusiness = (trc, authenticationToken) => {
-            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'authenticateToBusiness', this.userStore, this.userStore.authenticateToBusiness, authenticationToken);
-        };
-        this.createSessionAuthenticationToken = (trc, authenticationToken) => {
-            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'createSessionAuthenticationToken', this.userStore, this.userStore.createSessionAuthenticationToken, authenticationToken);
-        };
         this.completeTwoFactorAuthentication = (trc, authenticationToken, oneTimeCode, deviceIdentifier, deviceDescription) => {
             return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'completeTwoFactorAuthentication', this.userStore, this.userStore.completeTwoFactorAuthentication, authenticationToken, oneTimeCode, deviceIdentifier, deviceDescription);
-        };
-        this.getUser = (trc, authenticationToken) => {
-            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'getUser', this.userStore, this.userStore.getUser, authenticationToken);
-        };
-        this.getUserUrls = (trc, authenticationToken) => {
-            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'getUserUrls', this.userStore, this.userStore.getUserUrls, authenticationToken);
-        };
-        this.getSubscriptionInfo = (trc, authenticationToken) => {
-            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'getSubscriptionInfo', this.userStore, this.userStore.getSubscriptionInfo, authenticationToken);
-        };
-        this.revokeLongSession = (trc, authenticationToken) => {
-            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'revokeLongSession', this.userStore, this.userStore.revokeLongSession, authenticationToken);
-        };
-        this.listBusinessUsers = (trc, authenticationToken, filter) => {
-            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'listBusinessUsers', this.userStore, this.userStore.listBusinessUsers, authenticationToken, filter);
         };
         this.getLoginInfo = (trc, infoRequest) => {
             return ThriftRpc_1.wrapThriftCall(trc, '', 'getLoginInfo', this.userStore, this.userStore.getLoginInfo, infoRequest);
@@ -357,14 +336,8 @@ class AsyncUserStore {
         this.checkVersion = (trc, clientName) => {
             return ThriftRpc_1.wrapThriftCall(trc, '', 'checkVersion', this.userStore, this.userStore.checkVersion, clientName, UserStore_1.EDAM_VERSION_MAJOR, UserStore_1.EDAM_VERSION_MINOR);
         };
-        this.getConnectedIdentities = (trc, authenticationToken, identityIds) => {
-            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'getConnectedIdentities', this.userStore, this.userStore.getConnectedIdentities, authenticationToken, identityIds);
-        };
         this.authenticateOpenID = (trc, credential, consumerKey, consumerSecret, deviceIdentifier, deviceDescription, authLongSession, supportsTwoFactor) => {
             return ThriftRpc_1.wrapThriftCall(trc, '', 'authenticateOpenID', this.userStore, this.userStore.authenticateOpenID, credential, consumerKey, consumerSecret, deviceIdentifier, deviceDescription, authLongSession, supportsTwoFactor);
-        };
-        this.getNAPAccessJWT = (trc, authenticationToken, request) => {
-            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'getNAPAccessJWT', this.userStore, this.userStore.getNAPAccessJWT, authenticationToken, request);
         };
     }
 }
@@ -482,6 +455,33 @@ class AsyncUtilityStore {
         };
         this.revokeSession = (trc, request) => {
             return ThriftRpc_1.wrapThriftCall(trc, request.authenticationToken, 'revokeSession', this.utilityStore, this.utilityStore.revokeSession, request);
+        };
+        this.authenticateToBusiness = (trc, authenticationToken) => {
+            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'authenticateToBusiness', this.utilityStore, this.utilityStore.authenticateToBusiness, authenticationToken);
+        };
+        this.createSessionAuthenticationToken = (trc, authenticationToken) => {
+            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'createSessionAuthenticationToken', this.utilityStore, this.utilityStore.createSessionAuthenticationToken, authenticationToken);
+        };
+        this.getUser = (trc, authenticationToken) => {
+            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'getUser', this.utilityStore, this.utilityStore.getUser, authenticationToken);
+        };
+        this.getUserUrls = (trc, authenticationToken) => {
+            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'getUserUrls', this.utilityStore, this.utilityStore.getUserUrls, authenticationToken);
+        };
+        this.getSubscriptionInfo = (trc, authenticationToken) => {
+            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'getSubscriptionInfo', this.utilityStore, this.utilityStore.getSubscriptionInfo, authenticationToken);
+        };
+        this.revokeLongSession = (trc, authenticationToken) => {
+            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'revokeLongSession', this.utilityStore, this.utilityStore.revokeLongSession, authenticationToken);
+        };
+        this.listBusinessUsers = (trc, authenticationToken, filter) => {
+            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'listBusinessUsers', this.utilityStore, this.utilityStore.listBusinessUsers, authenticationToken, filter);
+        };
+        this.getConnectedIdentities = (trc, authenticationToken, identityIds) => {
+            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'getConnectedIdentities', this.utilityStore, this.utilityStore.getConnectedIdentities, authenticationToken, identityIds);
+        };
+        this.getNAPAccessJWT = (trc, authenticationToken, request) => {
+            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'getNAPAccessJWT', this.utilityStore, this.utilityStore.getNAPAccessJWT, authenticationToken, request);
         };
     }
 }

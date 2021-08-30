@@ -3,7 +3,7 @@
  * Copyright 2018 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.diffError = exports.deserializeError = exports.serializeError = exports.replaceCircular = exports.AccessBlockedError = exports.ServiceNotActiveError = exports.InvalidOperationError = exports.ServiceError = exports.RetryErrorReason = exports.PermissionError = exports.NotFoundError = exports.MissingParameterError = exports.InternalError = exports.CachedQueryError = exports.NoUserError = exports.PartialCreationError = exports.NoAccessError = exports.ConflictError = exports.GraphNodeError = exports.MultiError = exports.SignupError = exports.SignupErrorCode = exports.NAPAuthError = exports.NAPAuthErrorCode = exports.AuthError = exports.GWAuthError = exports.hashTokenForAuthError = exports.AuthErrorCode = void 0;
+exports.diffError = exports.deserializeError = exports.serializeError = exports.replaceCircular = exports.ResourceUploadError = exports.LimitExceededError = exports.AccessBlockedError = exports.ServiceNotActiveError = exports.InvalidOperationError = exports.ServiceError = exports.RetryErrorReason = exports.PermissionError = exports.NotFoundError = exports.MissingParameterError = exports.InternalError = exports.CachedQueryError = exports.NoUserError = exports.PartialCreationError = exports.NoAccessError = exports.ConflictError = exports.GraphNodeError = exports.MultiError = exports.SignupError = exports.SignupErrorCode = exports.NAPAuthError = exports.NAPAuthErrorCode = exports.AuthError = exports.GWAuthError = exports.hashTokenForAuthError = exports.AuthErrorCode = void 0;
 const en_ts_utils_1 = require("en-ts-utils");
 const index_1 = require("./index");
 var AuthErrorCode;
@@ -254,6 +254,27 @@ class AccessBlockedError extends Error {
     }
 }
 exports.AccessBlockedError = AccessBlockedError;
+class LimitExceededError extends Error {
+    constructor(field, message, maxLimit = -1, errorType = 'LIMIT_REACHED') {
+        super(`LIMIT_REACHED : ${message || ''}`);
+        this.name = 'LimitExceededError';
+        this.field = field;
+        this.errorType = errorType;
+        this.maxLimit = maxLimit;
+    }
+}
+exports.LimitExceededError = LimitExceededError;
+class ResourceUploadError extends Error {
+    constructor(parentID, parentLabel, parentSource, resourceFilename) {
+        super(`ResourceUploadError: For entity ${parentID} label ${parentLabel} source ${parentSource} resource filename ${resourceFilename}`);
+        this.name = 'ResourceUploadError';
+        this.parentID = parentID;
+        this.parentLabel = parentLabel;
+        this.parentSource = parentSource;
+        this.resourceFilename = resourceFilename;
+    }
+}
+exports.ResourceUploadError = ResourceUploadError;
 const commonProps = ['code', 'name', 'message', 'parameter', 'stack'];
 const knownErrors = {
     AccessBlockedError,
@@ -275,6 +296,8 @@ const knownErrors = {
     ServiceError,
     SignupError,
     UnloggableError: en_ts_utils_1.UnloggableError,
+    LimitExceededError,
+    ResourceUploadError,
 };
 const SkipSymbol = Symbol('SkipSymbol');
 // code inspired by github.com/sindresorhus/serialize-error

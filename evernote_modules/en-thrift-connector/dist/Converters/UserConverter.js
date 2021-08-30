@@ -283,8 +283,8 @@ class UserConverterClass {
                 const updateParams = commandRun.params;
                 const noteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
                 await noteStore.updateUserSetting(trc, auth.token, en_conduit_sync_types_1.TUserSetting.RECEIVE_REMINDER_EMAIL, updateParams.setting);
-                const userStore = params.thriftComm.getUserStore(auth.urls.userStoreUrl);
-                const user = await userStore.getUser(trc, auth.token);
+                const utilityStore = params.thriftComm.getUtilityStore(auth.urls.utilityUrl);
+                const user = await utilityStore.getUser(trc, auth.token);
                 const isVaultUser = Boolean(auth.vaultAuth);
                 await convertUserFromService(trc, params, conduit_core_1.PERSONAL_USER_CONTEXT, user, isVaultUser);
                 return null;

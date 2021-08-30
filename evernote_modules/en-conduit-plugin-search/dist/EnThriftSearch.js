@@ -4,6 +4,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.onlineMessageSearch = exports.sendLogRequest = exports.onlineSearchEx = exports.onlineRelatedWithExArgs = exports.onlineSuggest = exports.onlineSearch = exports.searchLogInfoEncodeBase64 = void 0;
+const conduit_auth_shared_1 = require("conduit-auth-shared");
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_search_engine_shared_1 = require("en-search-engine-shared");
@@ -170,7 +171,7 @@ async function onlineRelatedWithExArgs(trc, thriftComm, authData, args) {
         includeContainingNotebooks: true,
         includeDebugInfo: false,
     };
-    const isBusiness = authData.serviceLevel === en_thrift_connector_1.AuthServiceLevel.BUSINESS;
+    const isBusiness = authData.serviceLevel === conduit_auth_shared_1.AuthServiceLevel.BUSINESS;
     const defaultMaxResults = 5;
     for (const spec of args.param.resultSpec) {
         switch (spec.type) {
@@ -294,6 +295,7 @@ async function onlineRelatedWithExArgs(trc, thriftComm, authData, args) {
 }
 exports.onlineRelatedWithExArgs = onlineRelatedWithExArgs;
 async function onlineSearchEx(trc, thriftComm, authData, args, setSearchShareMetadata) {
+    var _a, _b;
     const searchStr = SearchExUtil_1.getSearchString(args);
     // We perform suggestion request to monolith and then unpack required searchExResult fields from customAttributes
     const contextFilter = {
@@ -318,6 +320,10 @@ async function onlineSearchEx(trc, thriftComm, authData, args, setSearchShareMet
                     }
                     if (resultEx.meta) {
                         searchExRet.meta = resultEx.meta;
+                        const exceptionMessage = (_b = (_a = resultEx.meta) === null || _a === void 0 ? void 0 : _a.searchInfo) === null || _b === void 0 ? void 0 : _b.exceptionMessage;
+                        if (exceptionMessage) {
+                            throw new SearchExUtil_1.OnlineSearchExError(exceptionMessage);
+                        }
                     }
                     if (resultEx.custom) {
                         searchExRet.custom = resultEx.custom;

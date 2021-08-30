@@ -27,7 +27,7 @@ function transformActionName(inputActionName) {
     }
     return actionName;
 }
-function transformToConduitNotificationData(data) {
+function transformToConduitNotificationData(data, metadata) {
     var _a;
     const inputActionName = data.clickNotificationActionName;
     const actionName = transformActionName(inputActionName);
@@ -35,7 +35,8 @@ function transformToConduitNotificationData(data) {
             target: button.action.target,
             name: transformActionName(button.action.name),
         } })))) || [];
-    return Object.assign(Object.assign({}, data), { buttons, clickNotificationActionName: actionName });
+    return Object.assign(Object.assign({}, data), { metadata,
+        buttons, clickNotificationActionName: actionName });
 }
 exports.transformToConduitNotificationData = transformToConduitNotificationData;
 //# sourceMappingURL=notificationTemplateUtils.js.map

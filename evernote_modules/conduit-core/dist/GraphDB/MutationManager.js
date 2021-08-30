@@ -410,6 +410,7 @@ class MutationManager {
                 mutation: m.name,
                 waitingFor: results.deps,
             });
+            this.di.onMutationRoundtripTimeout(m.name);
             return true;
         }
         conduit_utils_1.logger[VERBOSE_LEVEL]('waiting for roundtrip', m.mutationID, m.name, results.deps);

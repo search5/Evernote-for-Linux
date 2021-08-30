@@ -105,7 +105,7 @@ class ENSearchIndexCommandHelper {
         searchCommand['order'] = order !== null && order !== void 0 ? order : ENSearchTypes_1.ENSortType.RELEVANCE;
         searchCommand['reverseOrder'] = (ascending !== undefined && ascending !== null) ? !ascending : false;
         searchCommand['from'] = offset !== null && offset !== void 0 ? offset : 0;
-        searchCommand['size'] = maxNotes !== null && maxNotes !== void 0 ? maxNotes : -1;
+        searchCommand['size'] = maxNotes !== null && maxNotes !== void 0 ? maxNotes : 128;
         if (storedFields) {
             searchCommand['stored_fields'] = storedFields;
         }

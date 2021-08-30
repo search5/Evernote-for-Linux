@@ -12,7 +12,7 @@ class ENSearchIndexManagerElectron {
         this.indicesMetaInfo = new Map();
         this.logger = logger;
         this.clucene = new ENElectronClucene_1.CLuceneWrapper(this.logger);
-        this.searchEngine = new ENSearchEngineElectron_1.ENSearchEngineElectron(this.clucene);
+        this.searchEngine = new ENSearchEngineElectron_1.ENSearchEngineElectron(logger, this.clucene);
         this.indicesMetaInfo.set(en_search_engine_shared_1.ENIndexName.Note, { version: this.searchEngine.getVersion(), isModified: false });
         // notebook
         const notebookScheme = en_search_engine_shared_1.getNotebookIndexSchema();
@@ -53,19 +53,19 @@ class ENSearchIndexManagerElectron {
         this.searchEngine.destructor();
     }
     // Search operations
-    async search(query, documentType, offset, maxNotes, order, ascending) {
-        if (documentType) {
-            if (en_search_engine_shared_1.ENSearchUtils.OTHER_INDEX_DOCUMENT_TYPES.has(documentType)) {
-                return await this.searchOtherTypes(query, documentType, offset, maxNotes, order, ascending);
+    async search(params) {
+        if (params.documentType) {
+            if (en_search_engine_shared_1.ENSearchUtils.OTHER_INDEX_DOCUMENT_TYPES.has(params.documentType)) {
+                return await this.searchOtherTypes(params);
             }
         }
-        return await this.searchEngine.search(query, documentType, offset, maxNotes, order, ascending);
+        return await this.searchEngine.search(params);
     }
-    async suggest(query, documentType, optimization) {
-        return await this.searchEngine.suggest(query, documentType, optimization);
+    async suggest(query, params) {
+        return await this.searchEngine.suggest(query, params);
     }
-    async searchOtherTypes(query, documentType, offset, maxNotes, order, ascending) {
-        const pquery = en_search_engine_shared_1.QueryStringParser.parse(query);
+    async searchOtherTypes(params) {
+        const pquery = en_search_engine_shared_1.QueryStringParser.parse(params.query);
         const queryBuilder = new en_search_engine_shared_1.ESQueryStringBuilder(pquery.fullQuery);
         queryBuilder.dontPrintAnd = false;
         const parsedQuery = queryBuilder.build();
@@ -73,16 +73,16 @@ class ENSearchIndexManagerElectron {
         if (parsedQuery === null) {
             return en_search_engine_shared_1.ENCLuceneHelper.emptySearchResultGroup();
         }
-        const indexName = en_search_engine_shared_1.ENSearchUtils.DOCUMENT_TYPE_TO_INDEX_NAME.get(documentType);
-        const labelField = en_search_engine_shared_1.ENSearchUtils.DOCUMENT_TYPE_TO_LABEL.get(documentType);
-        const searchCommand = en_search_engine_shared_2.ENSearchIndexCommandHelper.getSearchIndexCommand(parsedQuery, indexName, offset, maxNotes, order, ascending, [labelField]);
+        const indexName = en_search_engine_shared_1.ENSearchUtils.DOCUMENT_TYPE_TO_INDEX_NAME.get(params.documentType);
+        const labelField = en_search_engine_shared_1.ENSearchUtils.DOCUMENT_TYPE_TO_LABEL.get(params.documentType);
+        const searchCommand = en_search_engine_shared_2.ENSearchIndexCommandHelper.getSearchIndexCommand(parsedQuery, indexName, params.offset, params.maxNotes, params.order, params.ascending, [labelField]);
         const results = this.clucene.execute(searchCommand);
         const error = en_search_engine_shared_1.ENCLuceneHelper.getError(results);
         if (error) {
             this.logger.error(`ENSearchIndexManagerElectron: searchOtherTypes: failed to perform search; reason: ${error}`);
             return en_search_engine_shared_1.ENCLuceneHelper.emptySearchResultGroup();
         }
-        const resultGroup = en_search_engine_shared_1.ENCLuceneHelper.createSearchResultsForOtherIndices(results, documentType, labelField);
+        const resultGroup = en_search_engine_shared_1.ENCLuceneHelper.createSearchResultsForOtherIndices(results, params.documentType, labelField);
         return resultGroup;
     }
     // CRUD operations

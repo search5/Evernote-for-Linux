@@ -85,12 +85,14 @@ async function noteImportResolver(parent, args, context, info) {
     return {
         noteID: mutation.results.result,
         attachmentHashes: attachmentDatas.map(attachment => attachment.hash),
+        mutationID: mutation.mutationID,
     };
 }
 exports.noteImport = {
     type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableStruct({
         noteID: 'ID',
         attachmentHashes: conduit_utils_1.ListOf('string'),
+        mutationID: conduit_utils_1.NullableString,
     }, 'noteImportResult')),
     resolve: noteImportResolver,
     args: conduit_core_1.schemaToGraphQLArgs({

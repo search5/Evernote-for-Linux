@@ -40,7 +40,7 @@ class SearchEventJournal {
         this.consumerLocalOffset = 0;
         // maximum number of records that could be truncated per one truncate call
         this.truncateBatchSize = 1000;
-        this.batchSize = 1000;
+        this.batchSize = 100;
         // maximum number of records in the journal
         this.maxJournalSize = 128000;
         this.localKeyValueStorageProvider = localKeyValueStorageProvider;
@@ -177,8 +177,7 @@ class SearchEventJournal {
                 discardedEventsAccumulator += 1;
                 continue;
             }
-            if (this.index.has(event)
-                && (event.indexationType !== SearchProcessor_1.SearchStorageIndexationType.INITIAL_INDEXATION_EVENT && event.indexationType !== SearchProcessor_1.SearchStorageIndexationType.LAST_INITIAL_INDEXATION_EVENT)) {
+            if (this.index.has(event) && (event.indexationType === SearchProcessor_1.SearchStorageIndexationType.LIVE_INDEXATION_EVENT)) {
                 conduit_utils_1.logger.trace(`SearchEventJournal: event with id ${event.nodeRef.id} discarded: reason: it's already in the index`);
                 discardedEventsAccumulator += 1;
                 continue;

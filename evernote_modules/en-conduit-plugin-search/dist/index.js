@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getENSearchPlugin = exports.getShareAcceptMetadataForNote = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_sync_1 = require("en-conduit-sync");
 const en_thrift_connector_1 = require("en-thrift-connector");
 const EnThriftSearch_1 = require("./EnThriftSearch");
 const Searcher_1 = require("./offline/Searcher");
@@ -17,6 +18,7 @@ const SearchSchemaTypes_1 = require("./SearchSchemaTypes");
 // Cache to store metadata for shared note(book)s that help conduit demand fetch unsynced shared notes.
 const SEARCH_SHARE_METADATA_TABLE = 'SearchShareMetadata';
 const gSearchShareMetadata = new conduit_utils_1.CacheManager({ softCap: 800, hardCap: 1000 });
+const SEARCH_EX_PROMISE_TIMEOUT = 5000;
 // **WARNING**: the offline search WON'T work correctly in the case of multiple conduit instances
 // due to the offline search global variables (the same state will be shared accross all instances)
 let gSearchStorageChangeReceiver;
@@ -28,7 +30,7 @@ let gSearchIndexManager;
  */
 function clean() {
     gSearchStorageChangeReceiver = undefined;
-    en_thrift_connector_1.OfflineSearchIndexActivity.setupIndexation(undefined);
+    en_conduit_sync_1.OfflineSearchIndexActivity.setupIndexation(undefined);
     gSearchStorageProcessor = undefined;
     gSearcher = undefined;
     gSearchIndexManager === null || gSearchIndexManager === void 0 ? void 0 : gSearchIndexManager.destructor();
@@ -53,7 +55,7 @@ function getShareAcceptMetadataForNote(id) {
     return gSearchShareMetadata.get(SEARCH_SHARE_METADATA_TABLE, id) || null;
 }
 exports.getShareAcceptMetadataForNote = getShareAcceptMetadataForNote;
-function getENSearchPlugin(provideSearchEngine, di) {
+function getENSearchPlugin(provideSearchEngine, di, offlineSearchIndexingConfig) {
     async function searchResolver(parent, args, context) {
         if (args.searchStr === null || args.searchStr === undefined) {
             throw new Error('Missing searchStr for searchResolver');
@@ -64,7 +66,7 @@ function getENSearchPlugin(provideSearchEngine, di) {
             authData = authData.vaultAuth;
         }
         try {
-            return await EnThriftSearch_1.onlineSearch(context.trc, context.thriftComm, authData, args);
+            return await EnThriftSearch_1.onlineSearch(context.trc, context.comm, authData, args);
         }
         catch (err) {
             if (err instanceof conduit_utils_1.RetryError) { // offline mode
@@ -83,7 +85,7 @@ function getENSearchPlugin(provideSearchEngine, di) {
             authData = authData.vaultAuth;
         }
         try {
-            return await EnThriftSearch_1.onlineSuggest(context.trc, context.thriftComm, authData, args);
+            return await EnThriftSearch_1.onlineSuggest(context.trc, context.comm, authData, args);
         }
         catch (err) {
             if (err instanceof conduit_utils_1.RetryError) {
@@ -93,28 +95,46 @@ function getENSearchPlugin(provideSearchEngine, di) {
             throw err;
         }
     }
+    async function promiseWithTimeout(promise, ms) {
+        const timeoutPromise = new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                clearTimeout(timeout);
+                return reject(new SearchExUtil_1.OnlineSearchExError(`SearchEx took longer than ${ms} ms`));
+            }, ms);
+        });
+        return Promise.race([promise, timeoutPromise]);
+    }
+    ;
     async function searchExResolver(parent, args, context) {
         const authorizedToken = await conduit_core_1.retrieveAuthorizedToken(context);
         const authData = en_thrift_connector_1.decodeAuthData(authorizedToken);
+        let switchToOffline = false;
         if (SearchExUtil_1.getLocalSearchMode(args) === "Strict" /* STRICT */) {
-            // strictly offline
-            if (gSearcher) {
-                return await offlineModeSearchEx(args, authData);
-            }
-            else {
-                return SearchExUtil_1.emptySearchExResult();
+            switchToOffline = true;
+        }
+        else { // AUTO
+            const searchExArgs = SearchExUtil_1.selectResultGroups(args, searchExTypes);
+            if (gSearcher && searchExArgs && await gSearcher.isLocallyProcessedQuery(searchExArgs) && gSearchStorageProcessor &&
+                gSearchStorageProcessor.isInitialIndexationFinished() && gSearchStorageProcessor.isMetadataSyncFinished()) {
+                switchToOffline = true;
             }
         }
-        else {
-            // auto - prefer online
+        if (switchToOffline) {
+            conduit_utils_1.logger.debug(`searchExResolver: offlineModeSearchEx call.`);
+            return gSearcher ? await offlineModeSearchEx(args, authData) : SearchExUtil_1.emptySearchExResult();
+        }
+        else { // prefer online
             try {
-                return await onlineModeSearchEx(args, context, authData);
+                conduit_utils_1.logger.debug(`searchExResolver: onlineModeSearchEx call.`);
+                const onlineSearchExPromise = onlineModeSearchEx(args, context, authData);
+                return await promiseWithTimeout(onlineSearchExPromise, SEARCH_EX_PROMISE_TIMEOUT);
             }
-            catch (err) {
-                if (err instanceof conduit_utils_1.RetryError) { // we are offline
-                    if (gSearcher) {
-                        return await offlineModeSearchEx(args, authData);
-                    }
+            catch (err) { // AIS is unavailable or the response is slow
+                // TODO: send cec event if err instanceof OnlineSearchExError
+                if (err instanceof conduit_utils_1.RetryError || err instanceof conduit_utils_1.ServiceError || err instanceof SearchExUtil_1.OnlineSearchExError) {
+                    conduit_utils_1.logger.debug(`searchExResolver: There was an error: ${err.message}, call offlineModeSearchEx instead.`);
+                    // TODO: search by local cache if gSearcher is unavailable as well
+                    return gSearcher ? await offlineModeSearchEx(args, authData) : SearchExUtil_1.emptySearchExResult();
                 }
                 throw err;
             }
@@ -130,26 +150,19 @@ function getENSearchPlugin(provideSearchEngine, di) {
             authData = authData.vaultAuth;
         }
         if (args.queryContext && (args.queryContext.text || args.queryContext.url || args.queryContext.noteID)) { // related notes mode is not supported by onlineSearchEx now
-            return await EnThriftSearch_1.onlineRelatedWithExArgs(context.trc, context.thriftComm, authData, args);
+            return await EnThriftSearch_1.onlineRelatedWithExArgs(context.trc, context.comm, authData, args);
         }
         else {
             const searchExArgs = SearchExUtil_1.selectResultGroups(args, searchExTypes);
             const messageArgs = SearchExUtil_1.selectResultGroup(args, SearchSchemaTypes_1.SearchExResultType.MESSAGE);
             const resultPromises = [];
             if (searchExArgs) {
-                if (gSearcher && await gSearcher.isLocallyProcessedQuery(searchExArgs) &&
-                    gSearchStorageProcessor && gSearchStorageProcessor.isInitialIndexationFinished()) {
-                    // offline search is enough
-                    resultPromises.push(offlineModeSearchEx(searchExArgs, authData));
-                }
-                else {
-                    resultPromises.push(EnThriftSearch_1.onlineSearchEx(context.trc, context.thriftComm, authData, searchExArgs, setShareAcceptMetadataForNote));
-                }
+                resultPromises.push(EnThriftSearch_1.onlineSearchEx(context.trc, context.comm, authData, searchExArgs, setShareAcceptMetadataForNote));
             }
             if (messageArgs) {
                 // for messages we prefer offline results whenever they are available
                 const messageRes = gSearcher ?
-                    gSearcher.searchExOneType(messageArgs, SearchSchemaTypes_1.SearchExResultType.MESSAGE) : EnThriftSearch_1.onlineMessageSearch(context.trc, context.thriftComm, personalAuthData, messageArgs);
+                    gSearcher.searchExOneType(messageArgs, SearchSchemaTypes_1.SearchExResultType.MESSAGE) : EnThriftSearch_1.onlineMessageSearch(context.trc, context.comm, personalAuthData, messageArgs);
                 resultPromises.push(messageRes);
             }
             return await SearchExUtil_1.combineResults(args, resultPromises);
@@ -188,7 +201,7 @@ function getENSearchPlugin(provideSearchEngine, di) {
         if (authData.vaultAuth) {
             authData = authData.vaultAuth;
         }
-        const success = await EnThriftSearch_1.sendLogRequest(context.trc, context.thriftComm, authData, args);
+        const success = await EnThriftSearch_1.sendLogRequest(context.trc, context.comm, authData, args);
         return { success };
     }
     return {
@@ -248,9 +261,9 @@ function getENSearchPlugin(provideSearchEngine, di) {
                     conduit_utils_1.logger.info(`SearchEngine: type:${gSearchIndexManager.getEngineType()}; indices: ${indicesInfo.join('; ')}`);
                     gSearcher = new Searcher_1.Searcher(gSearchIndexManager);
                     // creates search processor and injects the search engine
-                    gSearchStorageProcessor = new SearchProcessor_1.SearchProcessor(graphDB, gSearchIndexManager);
+                    gSearchStorageProcessor = new SearchProcessor_1.SearchProcessor(graphDB, gSearchIndexManager, offlineSearchIndexingConfig || {});
                     // injects indexation hook in the activity
-                    en_thrift_connector_1.OfflineSearchIndexActivity.setupIndexation(process);
+                    en_conduit_sync_1.OfflineSearchIndexActivity.setupIndexation(process);
                     // injects search processor in the storage event receiver
                     gSearchStorageChangeReceiver = new SearchStorageChangeReceiver_1.SearchStorageChangeReceiver(gSearchStorageProcessor);
                     // adds subscription to the GraphDB events for storage event receiver.

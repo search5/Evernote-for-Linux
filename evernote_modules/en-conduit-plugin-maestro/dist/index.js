@@ -33,7 +33,7 @@ function getENMaestroPlugin() {
                 user,
             });
             gMaestroProps = {
-                props: await EnMaestroServiceRequest_1.maestroRequest(context.thriftComm, 'getProps2', { clientType, overridingArmIds, userInfo }, context),
+                props: await EnMaestroServiceRequest_1.maestroRequest(context.comm, 'getProps2', { clientType, overridingArmIds, userInfo }, context),
                 user,
                 timestamp: currentTime,
                 overridingArmIds: JSON.stringify(overridingArmIds),
@@ -52,7 +52,7 @@ function getENMaestroPlugin() {
     const maestroServiceStateResolver = async (parent, args, context) => {
         EnMaestroServiceRequest_1.validateResolverArgs(['clientType'], args);
         return {
-            serviceState: EnMaestroServiceRequest_1.maestroRequest(context.thriftComm, 'getServiceState2', args, context),
+            serviceState: EnMaestroServiceRequest_1.maestroRequest(context.comm, 'getServiceState2', args, context),
         };
     };
     const clearMaestroPropsCache = async () => {

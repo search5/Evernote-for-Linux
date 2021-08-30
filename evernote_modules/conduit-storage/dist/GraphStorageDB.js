@@ -1198,7 +1198,7 @@ class GraphTransactionContext extends GraphStorageBase {
         });
     }
     async deleteNode(trc, syncContext, nodeRef, deleteDummy = false, timestamp) {
-        return this.deleteNodeInternal(trc, syncContext, nodeRef, false, deleteDummy, timestamp);
+        return this.deleteNodeInternal(trc, syncContext, nodeRef, {}, deleteDummy, timestamp);
     }
     async hasAccessToNode(trc, node, typeConfig, propagatedFrom) {
         /* TODO need to get access to the personal UserID
@@ -1253,7 +1253,7 @@ class GraphTransactionContext extends GraphStorageBase {
         }
         return false;
     }
-    async propagateNodeDelete(trc, syncContext, node, typeConfig, isAccessLoss, deleteDummy, timestamp, propagatedFrom, originalSyncSource) {
+    async propagateNodeDelete(trc, syncContext, node, typeConfig, accessLookup, deleteDummy, timestamp, propagatedFrom, originalSyncSource) {
         for (const port in typeConfig.inputs) {
             const inputConfig = typeConfig.inputs[port];
             // Is this a hack? Yeah, sort of. It presumes that any membership has a recipientIsMe field;
@@ -1266,7 +1266,17 @@ class GraphTransactionContext extends GraphStorageBase {
                         // caller is already deleting it
                         continue;
                     }
-                    await this.deleteNodeInternal(trc, syncContext, { id: edge.srcID, type: edge.srcType }, true, deleteDummy, timestamp, node, originalSyncSource);
+                    const deleted = await this.deleteNodeInternal(trc, syncContext, { id: edge.srcID, type: edge.srcType }, accessLookup, deleteDummy, timestamp, node, originalSyncSource);
+                    if (!deleted) {
+                        if (!accessLookup[edge.srcType]) {
+                            accessLookup[edge.srcType] = {
+                                [edge.srcID]: true,
+                            };
+                        }
+                        else {
+                            accessLookup[edge.srcType][edge.srcID] = true;
+                        }
+                    }
                 }
             }
         }
@@ -1280,24 +1290,34 @@ class GraphTransactionContext extends GraphStorageBase {
                         // caller is already deleting it
                         continue;
                     }
-                    await this.deleteNodeInternal(trc, syncContext, { id: edge.dstID, type: edge.dstType }, isAccessLoss, deleteDummy, timestamp, node, originalSyncSource);
+                    const deleted = await this.deleteNodeInternal(trc, syncContext, { id: edge.dstID, type: edge.dstType }, accessLookup, deleteDummy, timestamp, node, originalSyncSource);
+                    if (!deleted) {
+                        if (!accessLookup[edge.dstType]) {
+                            accessLookup[edge.dstType] = {
+                                [edge.dstID]: true,
+                            };
+                        }
+                        else {
+                            accessLookup[edge.dstType][edge.dstID] = true;
+                        }
+                    }
                 }
             }
         }
     }
-    async deleteNodeInternal(trc, syncContext, nodeRef, isAccessLoss, deleteDummy = false, timestamp, propagatedFrom, originalSyncSource) {
+    async deleteNodeInternal(trc, syncContext, nodeRef, accessLookup, deleteDummy = false, timestamp, propagatedFrom, originalSyncSource) {
         var _a;
         if (syncContext !== '*' && !await this.assertSyncContext(trc, syncContext)) {
             return false;
         }
-        let node = await this.getNodeInternal(trc, nodeRef);
+        const node = await this.getNodeInternal(trc, nodeRef);
         if (!node) {
             return false;
         }
         const typeConfig = (_a = this.config.nodeTypes) === null || _a === void 0 ? void 0 : _a[nodeRef.type];
         async function propagate(self) {
             if (typeConfig) {
-                await self.propagateNodeDelete(trc, syncContext, node, typeConfig, isAccessLoss, deleteDummy, timestamp, propagatedFrom, originalSyncSource);
+                await self.propagateNodeDelete(trc, syncContext, node, typeConfig, accessLookup, deleteDummy, timestamp, propagatedFrom, originalSyncSource);
             }
         }
         const syncSource = typeConfig === null || typeConfig === void 0 ? void 0 : typeConfig.syncSource;
@@ -1309,7 +1329,7 @@ class GraphTransactionContext extends GraphStorageBase {
         if (isDummyNode && !deleteDummy) {
             return false;
         }
-        if (typeConfig && isAccessLoss && propagatedFrom && syncContext === exports.NSYNC_CONTEXT && await this.hasAccessToNode(trc, node, typeConfig, propagatedFrom)) {
+        if (typeConfig && propagatedFrom && syncContext === exports.NSYNC_CONTEXT && await this.hasAccessToNode(trc, node, typeConfig, propagatedFrom)) {
             return false;
         }
         if (!isDummyNode && syncContext !== '*') {
@@ -1327,11 +1347,6 @@ class GraphTransactionContext extends GraphStorageBase {
             }
         }
         if (!isDummyNode) {
-            // update indexes
-            node = await this.getNodeInternal(trc, nodeRef);
-            if (!node) {
-                return false;
-            }
             await this.reindexNode(trc, node, null);
         }
         await propagate(this);
@@ -1348,6 +1363,9 @@ class GraphTransactionContext extends GraphStorageBase {
                     // caller will delete this edge
                     continue;
                 }
+                if (accessLookup[edge.srcType] && accessLookup[edge.srcType][edge.srcID]) {
+                    continue; // The node is still accessible, don't delete the edge
+                }
                 removedEdges.push(edge);
             }
         }
@@ -1358,6 +1376,9 @@ class GraphTransactionContext extends GraphStorageBase {
                 if (propagatedFrom && edge.dstID === propagatedFrom.id && edge.dstType === propagatedFrom.type) {
                     // caller will delete this edge
                     continue;
+                }
+                if (accessLookup[edge.dstType] && accessLookup[edge.dstType][edge.dstID]) {
+                    continue; // The node is still accessible, don't delete the edge
                 }
                 removedEdges.push(edge);
             }

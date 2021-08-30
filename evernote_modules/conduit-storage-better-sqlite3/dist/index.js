@@ -56,6 +56,10 @@ class SqliteDB {
         const rows = (args === null || args === void 0 ? void 0 : args.length) ? stmt.all(args) : stmt.all();
         return [{ rows: new ResultSet(rows) }];
     }
+    async runSql(sql, args) {
+        const stmt = this.db.prepare(sql);
+        (args === null || args === void 0 ? void 0 : args.length) ? stmt.run(args) : stmt.run();
+    }
     async close() {
         this.db.close();
     }
@@ -126,6 +130,10 @@ class ConduitSQLiteStorage extends conduit_storage_1.SqlStorage {
         if (res.quick_check !== 'ok') {
             throw new Error(`Corrupted db: ${JSON.stringify(res)}`);
         }
+    }
+    async repack() {
+        var _a;
+        await ((_a = this.database) === null || _a === void 0 ? void 0 : _a.runSql('VACUUM;'));
     }
     checkFatalErrorCallback(err) {
         // sqlite specific error

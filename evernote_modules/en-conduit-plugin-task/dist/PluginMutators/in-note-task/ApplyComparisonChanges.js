@@ -21,7 +21,7 @@ async function applyTaskComparisonChanges(context, comparisonResult, sourceOfCha
             const result = comparisonResult_1_1.value;
             switch (result.status) {
                 case Types_1.ComparisonStatus.deleted: {
-                    await context.db.runMutator(context.trc, 'taskDelete', { task: result.graphDbNode.id });
+                    await context.db.runMutator(context.trc, 'taskDelete', { task: result.graphDbNode.id, sourceOfChange });
                     break;
                 }
                 case Types_1.ComparisonStatus.added: {

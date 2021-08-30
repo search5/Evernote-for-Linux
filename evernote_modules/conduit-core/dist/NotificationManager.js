@@ -20,7 +20,7 @@ class NotificationManager {
         await this.unschedulePendingNotifications(trc, graphDB);
     }
     async scheduleExistingScheduledNotifications(trc, graphDB) {
-        return this.schedulingCompleteOrUnstarted = new Promise(async (res) => {
+        return (this.schedulingCompleteOrUnstarted = new Promise(async (res) => {
             try {
                 await graphDB.waitUntilReady(trc);
                 conduit_utils_1.logger.debug('NotificationManager -- Scheduling all found ScheduledNotifications');
@@ -33,6 +33,7 @@ class NotificationManager {
                         await this.deleteNotification(trc, snID);
                     }
                     for (const sn of scheduled.active) {
+                        conduit_utils_1.logger.info(`NotificationManager -- Attempting to upsert notification entity with id ${sn.id}`);
                         await this.upsertNotification(trc, graphDB, sn);
                     }
                 }
@@ -41,7 +42,7 @@ class NotificationManager {
                 // Always resolve so that unschedulePendingNotifications method is not stuck awaiting this.
                 res();
             }
-        });
+        }));
     }
     async unschedulePendingNotifications(trc, graphDB) {
         await this.schedulingCompleteOrUnstarted;
@@ -58,12 +59,11 @@ class NotificationManager {
         const notificationData = await this.di.getNotificationData(trc, graphDB, notificationEntity);
         const cachedData = this.notificationCache[notificationEntity.id] || null;
         if (!notificationData) {
-            conduit_utils_1.logger.warn('Cannot extract notification data. Aborting upsert.');
-            return;
+            return { warn: 'Cannot extract notification data. Aborting upsert.' };
         }
         if (cachedData && cachedData.updated === notificationData.updated) {
             // Notification or deps haven't changed since we cached the data.
-            conduit_utils_1.logger.debug(`Notification '${notificationEntity.id}' has not changed since last upserted. Aborting upsert`);
+            conduit_utils_1.logger.info(`NotificationManager -- Notification has not changed since last upserted. Aborting upsert.`, `-- id: '${notificationEntity.id}`, `-- updated: ${notificationData.updated}`, `-- sendAt: ${notificationData.sendAt}`);
             return;
         }
         if (this.di.getNotificationIsMute(notificationEntity)) {

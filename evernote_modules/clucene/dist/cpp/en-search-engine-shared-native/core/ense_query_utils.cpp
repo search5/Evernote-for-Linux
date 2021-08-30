@@ -17,10 +17,10 @@ namespace core {
 
     SearchParams getSearchParamsFromJson(const json &jQueryWithParams) {
         SearchParams searchParams;
-        searchParams.from = ((jQueryWithParams.contains("from") && jQueryWithParams["from"].is_number())) ? 
-            jQueryWithParams["from"].get<int>() : 0;
-        searchParams.size = ((jQueryWithParams.contains("size") && jQueryWithParams["size"].is_number())) ? 
-            jQueryWithParams["size"].get<int>() : -1;
+        searchParams.from = ((jQueryWithParams.contains("from") && jQueryWithParams["from"].is_number_unsigned())) ? 
+            jQueryWithParams["from"].get<size_t>() : 0;
+        searchParams.size = ((jQueryWithParams.contains("size") && jQueryWithParams["size"].is_number_unsigned())) ? 
+            jQueryWithParams["size"].get<size_t>() : 128;
         searchParams.sortType = ((jQueryWithParams.contains("sortType") && jQueryWithParams["sortType"].is_number())) ? 
             static_cast<SortType>(jQueryWithParams["sortType"].get<int>()) : SortType::RELEVANCE;
         searchParams.reverseOrder = ((jQueryWithParams.contains("reverseOrder") && jQueryWithParams["reverseOrder"].is_boolean())) ? 

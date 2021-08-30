@@ -14,6 +14,7 @@
   var NoteStore = require('./NoteStore');
   var AuthenticationTypes = require('./AuthenticationTypes');
   var SpaceService = require('./SpaceService');
+  var UserStore = require('./UserStore');
 
 
   module.exports.MarketingEmailType = {
@@ -161,9 +162,15 @@
 
   module.exports.OAUTH_CREDENTIAL_SCOPE_GOOGLE_CONTACTS = '/m8/feeds';
 
+  module.exports.OAUTH_CREDENTIAL_FULL_SCOPE_GOOGLE_CONTACTS = 'https://www.google.com/m8/feeds';
+
   module.exports.OAUTH_CREDENTIAL_SCOPE_GOOGLE_DRIVE = '/auth/drive';
 
+  module.exports.OAUTH_CREDENTIAL_FULL_SCOPE_GOOGLE_DRIVE = 'https://www.googleapis.com/auth/drive';
+
   module.exports.OAUTH_CREDENTIAL_SCOPE_GOOGLE_CALENDAR = '/auth/calendar';
+
+  module.exports.OAUTH_CREDENTIAL_FULL_SCOPE_GOOGLE_CALENDAR = 'https://www.googleapis.com/auth/calendar';
 
   module.exports.OPENID_SCOPE_GOOGLE_OPENID = 'openid';
 
@@ -171,7 +178,7 @@
 
   module.exports.OPENID_SCOPE_GOOGLE_PROFILE = 'profile';
 
-  module.exports.OAUTH_CREDENTIAL_GOOGLE_SCOPES = ['/m8/feeds','/auth/drive','/auth/calendar'];
+  module.exports.OAUTH_CREDENTIAL_GOOGLE_SCOPES = ['/m8/feeds','https://www.google.com/m8/feeds','/auth/drive','https://www.googleapis.com/auth/drive','/auth/calendar','https://www.googleapis.com/auth/calendar'];
 
   module.exports.OPENID_SCOPES_GOOGLE = ['openid','email','profile'];
 
@@ -2210,6 +2217,117 @@
     })
   });
 
+  Utility.authenticateToBusiness = Thrift.Method.define({
+    alias: 'authenticateToBusiness',
+    args: Thrift.Struct.define('authenticateToBusinessArgs', {
+      1: { alias: 'authenticationToken', type: Thrift.Type.STRING, index: 0 }
+    }),
+    result: Thrift.Struct.define('authenticateToBusinessResult', {
+      0: { alias: 'returnValue',type: Thrift.Type.STRUCT, def: UserStore.AuthenticationResult },
+      1: { alias: 'userException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMUserException },
+      2: { alias: 'systemException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMSystemException }
+    })
+  });
+
+  Utility.createSessionAuthenticationToken = Thrift.Method.define({
+    alias: 'createSessionAuthenticationToken',
+    args: Thrift.Struct.define('createSessionAuthenticationTokenArgs', {
+      1: { alias: 'authenticationToken', type: Thrift.Type.STRING, index: 0 }
+    }),
+    result: Thrift.Struct.define('createSessionAuthenticationTokenResult', {
+      0: { alias: 'returnValue',type: Thrift.Type.STRING },
+      1: { alias: 'userException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMUserException },
+      2: { alias: 'systemException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMSystemException },
+      3: { alias: 'notFoundException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMNotFoundException }
+    })
+  });
+
+  Utility.getUser = Thrift.Method.define({
+    alias: 'getUser',
+    args: Thrift.Struct.define('getUserArgs', {
+      1: { alias: 'authenticationToken', type: Thrift.Type.STRING, index: 0 }
+    }),
+    result: Thrift.Struct.define('getUserResult', {
+      0: { alias: 'returnValue',type: Thrift.Type.STRUCT, def: Types.User },
+      1: { alias: 'userException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMUserException },
+      2: { alias: 'systemException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMSystemException }
+    })
+  });
+
+  Utility.getUserUrls = Thrift.Method.define({
+    alias: 'getUserUrls',
+    args: Thrift.Struct.define('getUserUrlsArgs', {
+      1: { alias: 'authenticationToken', type: Thrift.Type.STRING, index: 0 }
+    }),
+    result: Thrift.Struct.define('getUserUrlsResult', {
+      0: { alias: 'returnValue',type: Thrift.Type.STRUCT, def: UserStore.UserUrls },
+      1: { alias: 'userException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMUserException },
+      2: { alias: 'systemException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMSystemException }
+    })
+  });
+
+  Utility.getSubscriptionInfo = Thrift.Method.define({
+    alias: 'getSubscriptionInfo',
+    args: Thrift.Struct.define('getSubscriptionInfoArgs', {
+      1: { alias: 'authenticationToken', type: Thrift.Type.STRING, index: 0 }
+    }),
+    result: Thrift.Struct.define('getSubscriptionInfoResult', {
+      0: { alias: 'returnValue',type: Thrift.Type.STRUCT, def: Types.SubscriptionInfo },
+      1: { alias: 'userException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMUserException },
+      2: { alias: 'systemException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMSystemException }
+    })
+  });
+
+  Utility.revokeLongSession = Thrift.Method.define({
+    alias: 'revokeLongSession',
+    args: Thrift.Struct.define('revokeLongSessionArgs', {
+      1: { alias: 'authenticationToken', type: Thrift.Type.STRING, index: 0 }
+    }),
+    result: Thrift.Struct.define('revokeLongSessionResult', {
+      1: { alias: 'userException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMUserException },
+      2: { alias: 'systemException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMSystemException }
+    })
+  });
+
+  Utility.listBusinessUsers = Thrift.Method.define({
+    alias: 'listBusinessUsers',
+    args: Thrift.Struct.define('listBusinessUsersArgs', {
+      1: { alias: 'authenticationToken', type: Thrift.Type.STRING, index: 0 },
+      2: { alias: 'businessUserFilter', type: Thrift.Type.STRUCT, def: Types.BusinessUserFilter, index: 1 }
+    }),
+    result: Thrift.Struct.define('listBusinessUsersResult', {
+      0: { alias: 'returnValue',type: Thrift.Type.LIST, def: Thrift.List.define(Thrift.Type.STRUCT, Types.UserProfile)  },
+      1: { alias: 'userException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMUserException },
+      2: { alias: 'systemException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMSystemException }
+    })
+  });
+
+  Utility.getConnectedIdentities = Thrift.Method.define({
+    alias: 'getConnectedIdentities',
+    args: Thrift.Struct.define('getConnectedIdentitiesArgs', {
+      1: { alias: 'authenticationToken', type: Thrift.Type.STRING, index: 0 },
+      2: { alias: 'identityIds', type: Thrift.Type.LIST, def: Thrift.List.define(Thrift.Type.I64) , index: 1 }
+    }),
+    result: Thrift.Struct.define('getConnectedIdentitiesResult', {
+      0: { alias: 'returnValue',type: Thrift.Type.MAP, def: Thrift.Map.define(Thrift.Type.I64, Thrift.Type.STRUCT, Types.Identity)  },
+      1: { alias: 'userException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMUserException },
+      2: { alias: 'systemException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMSystemException }
+    })
+  });
+
+  Utility.getNAPAccessJWT = Thrift.Method.define({
+    alias: 'getNAPAccessJWT',
+    args: Thrift.Struct.define('getNAPAccessJWTArgs', {
+      1: { alias: 'authenticationToken', type: Thrift.Type.STRING, index: 0 },
+      2: { alias: 'request', type: Thrift.Type.STRUCT, def: UserStore.GetNAPAccessJWTRequest, index: 1 }
+    }),
+    result: Thrift.Struct.define('getNAPAccessJWTResult', {
+      0: { alias: 'returnValue',type: Thrift.Type.STRING },
+      1: { alias: 'userException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMUserException },
+      2: { alias: 'systemException', type: Thrift.Type.EXCEPTION, def: Errors.EDAMSystemException }
+    })
+  });
+
   // Define Utility Client
 
   function UtilityClient(output) {
@@ -3186,6 +3304,72 @@
   UtilityClient.prototype.revokeSession = function(request, callback) {
     var mdef = Utility.revokeSession;
     var args = new mdef.args();
+    args.request = request;
+    mdef.sendRequest(this.output, this.seqid++, args, callback);
+  };
+
+  UtilityClient.prototype.authenticateToBusiness = function(authenticationToken, callback) {
+    var mdef = Utility.authenticateToBusiness;
+    var args = new mdef.args();
+    args.authenticationToken = authenticationToken;
+    mdef.sendRequest(this.output, this.seqid++, args, callback);
+  };
+
+  UtilityClient.prototype.createSessionAuthenticationToken = function(authenticationToken, callback) {
+    var mdef = Utility.createSessionAuthenticationToken;
+    var args = new mdef.args();
+    args.authenticationToken = authenticationToken;
+    mdef.sendRequest(this.output, this.seqid++, args, callback);
+  };
+
+  UtilityClient.prototype.getUser = function(authenticationToken, callback) {
+    var mdef = Utility.getUser;
+    var args = new mdef.args();
+    args.authenticationToken = authenticationToken;
+    mdef.sendRequest(this.output, this.seqid++, args, callback);
+  };
+
+  UtilityClient.prototype.getUserUrls = function(authenticationToken, callback) {
+    var mdef = Utility.getUserUrls;
+    var args = new mdef.args();
+    args.authenticationToken = authenticationToken;
+    mdef.sendRequest(this.output, this.seqid++, args, callback);
+  };
+
+  UtilityClient.prototype.getSubscriptionInfo = function(authenticationToken, callback) {
+    var mdef = Utility.getSubscriptionInfo;
+    var args = new mdef.args();
+    args.authenticationToken = authenticationToken;
+    mdef.sendRequest(this.output, this.seqid++, args, callback);
+  };
+
+  UtilityClient.prototype.revokeLongSession = function(authenticationToken, callback) {
+    var mdef = Utility.revokeLongSession;
+    var args = new mdef.args();
+    args.authenticationToken = authenticationToken;
+    mdef.sendRequest(this.output, this.seqid++, args, callback);
+  };
+
+  UtilityClient.prototype.listBusinessUsers = function(authenticationToken, businessUserFilter, callback) {
+    var mdef = Utility.listBusinessUsers;
+    var args = new mdef.args();
+    args.authenticationToken = authenticationToken;
+    args.businessUserFilter = businessUserFilter;
+    mdef.sendRequest(this.output, this.seqid++, args, callback);
+  };
+
+  UtilityClient.prototype.getConnectedIdentities = function(authenticationToken, identityIds, callback) {
+    var mdef = Utility.getConnectedIdentities;
+    var args = new mdef.args();
+    args.authenticationToken = authenticationToken;
+    args.identityIds = identityIds;
+    mdef.sendRequest(this.output, this.seqid++, args, callback);
+  };
+
+  UtilityClient.prototype.getNAPAccessJWT = function(authenticationToken, request, callback) {
+    var mdef = Utility.getNAPAccessJWT;
+    var args = new mdef.args();
+    args.authenticationToken = authenticationToken;
     args.request = request;
     mdef.sendRequest(this.output, this.seqid++, args, callback);
   };

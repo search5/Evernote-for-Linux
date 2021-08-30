@@ -5,10 +5,10 @@ exports.populateBaseEventProperties = void 0;
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 const conduit_utils_1 = require("conduit-utils");
-function populateBaseEventProperties() {
-    const timestampUtc = Date.now();
+function populateBaseEventProperties(eventDate) {
+    const timestampUtc = eventDate ? eventDate.getTime() : Date.now();
     const offsetMin = new Date().getTimezoneOffset();
-    const timestampLocal = timestampUtc + offsetMin * conduit_utils_1.MILLIS_IN_ONE_MINUTE;
+    const timestampLocal = timestampUtc - (offsetMin * conduit_utils_1.MILLIS_IN_ONE_MINUTE);
     const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     return {
         eventId: conduit_utils_1.uuid(),

@@ -332,6 +332,9 @@ class SearchExtractor {
         }
         return { idsByType, allIds };
     }
+    isBackgroundSyncFinished(trc) {
+        return this.graphDB.isBackgroundNoteSyncFinished(trc);
+    }
 }
 exports.SearchExtractor = SearchExtractor;
 SearchExtractor.maxRecognitionFilesPerNote = 10;

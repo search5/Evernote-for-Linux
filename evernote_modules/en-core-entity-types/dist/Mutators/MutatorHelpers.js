@@ -38,7 +38,7 @@ exports.getNoteSize = getNoteSize;
 function validateMaxNoteSize(accountLimits, noteSize) {
     const noteSizeMax = accountLimits.NodeFields.Limits.noteSizeMax;
     if (noteSize > noteSizeMax) {
-        throw new conduit_utils_1.ServiceError('LIMIT_REACHED', 'noteSizeMax', 'type=LIMIT_REACHED thriftExceptionParameter=Note.size limit=noteSizeMax');
+        throw new conduit_utils_1.LimitExceededError('noteSizeMax', 'thriftExceptionParameter=Note.size limit=noteSizeMax', noteSizeMax);
     }
 }
 exports.validateMaxNoteSize = validateMaxNoteSize;
@@ -46,7 +46,7 @@ function validateNoteTagsCount(accountLimits, noteTagsCount) {
     throwIfAccountLimitsNull(accountLimits);
     const noteTagCountMax = accountLimits.NodeFields.Limits.noteTagCountMax;
     if (conduit_utils_1.isNotNullish(noteTagsCount) && noteTagsCount > noteTagCountMax) {
-        throw new conduit_utils_1.ServiceError('LIMIT_REACHED', 'Note.tagGuids', 'type=LIMIT_REACHED thriftExceptionParameter=Note.tagGuids limit=noteTagCountMax');
+        throw new conduit_utils_1.LimitExceededError('Note.tagGuids', 'thriftExceptionParameter=Note.tagGuids limit=noteTagCountMax', noteTagCountMax);
     }
 }
 exports.validateNoteTagsCount = validateNoteTagsCount;
@@ -67,7 +67,7 @@ function validateAccountLimits(currentAccountLimits, diff) {
 exports.validateAccountLimits = validateAccountLimits;
 function throwIfLimitReached(limit, currentValue, diff, errorKey, limitName) {
     if (conduit_utils_1.isNotNullish(diff) && currentValue + diff > limit) {
-        throw new conduit_utils_1.ServiceError('LIMIT_REACHED', errorKey, `type=LIMIT_REACHED thriftExceptionParameter=${errorKey} limitName=${limitName} limit=${limit}`);
+        throw new conduit_utils_1.LimitExceededError(errorKey, `thriftExceptionParameter=${errorKey} limitName=${limitName} limit=${limit}`, limit);
     }
 }
 function throwIfAccountLimitsNull(accountLimits) {
@@ -86,12 +86,12 @@ function validateAndCalculateSizeLimits(accountLimits, accountLimitsValidationPa
     const uploadLimit = accountLimits.NodeFields.Limits.uploadLimit;
     const uploaded = accountLimits.NodeFields.Counts.userUploadedAmount + totalUploadSize;
     if (uploaded > uploadLimit) {
-        throw new conduit_utils_1.ServiceError('LIMIT_REACHED', 'userUploadedLimit', 'type=LIMIT_REACHED thriftExceptionParameter=Accounting.uploadLimit limit=userUploadedLimit');
+        throw new conduit_utils_1.LimitExceededError('userUploadedLimit', `thriftExceptionParameter=Accounting.uploadLimit limit=userUploadedLimit`, uploadLimit);
     }
     if (uploadResourceSize) {
         const resourceLimit = accountLimits.NodeFields.Limits.resourceSizeMax;
         if (uploadResourceSize > resourceLimit) {
-            throw new conduit_utils_1.ServiceError('LIMIT_REACHED', 'resourceSizeMax', 'type=LIMIT_REACHED thriftExceptionParameter=Resource.data.size limit=resourceSizeMax');
+            throw new conduit_utils_1.LimitExceededError('resourceSizeMax', `thriftExceptionParameter=Resource.data.size limit=resourceSizeMax`, resourceLimit);
         }
     }
     const newNoteSize = (newNoteContentSize !== null && newNoteContentSize !== void 0 ? newNoteContentSize : prevNoteContentSize) + prevNoteResourceSize + (uploadResourceSize !== null && uploadResourceSize !== void 0 ? uploadResourceSize : 0);

@@ -145,8 +145,12 @@ CL_NS_DEF(search)
   }
 
   void BooleanQuery::add(BooleanClause* clause) {
-    if (clauses->size() >= getMaxClauseCount())
-      _CLTHROWA(CL_ERR_TooManyClauses,"Too Many Clauses");
+    if (clauses->size() >= getMaxClauseCount()) {
+        // https://evernote.jira.com/browse/SEARCH-788
+        // don't try to add more than getMaxClauseCount() clause but don't throw an exception
+        // _CLTHROWA(CL_ERR_TooManyClauses,"Too Many Clauses"); 
+        return;
+    }
 
     clauses->push_back(clause);
   }

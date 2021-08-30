@@ -8,11 +8,11 @@ const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
-const en_nsync_connector_1 = require("en-nsync-connector");
+const en_quasar_connector_1 = require("en-quasar-connector");
 const ScheduledNotificationConverter_1 = require("./ScheduledNotificationConverter");
 const getReminderNodeAndEdges = async (trc, instance, context) => {
     var _a, _b;
-    const reminder = en_nsync_connector_1.convertNsyncEntityToNode(instance, context);
+    const reminder = en_quasar_connector_1.convertNsyncEntityToNode(instance, context);
     if (!reminder) {
         return null;
     }
@@ -45,7 +45,7 @@ const getReminderNodeAndEdges = async (trc, instance, context) => {
     }
     const parentRef = parentID && parentType ? { id: parentID, type: parentType } : null;
     const snNodesAndEdges = await ScheduledNotificationConverter_1.getSnNodeAndEdgesForReminder(trc, reminder, parentRef, Boolean(instance.deleted), context);
-    return en_nsync_connector_1.mergeNodesAndEdges(reminderNodesAndEdges, snNodesAndEdges);
+    return en_quasar_connector_1.mergeNodesAndEdges(reminderNodesAndEdges, snNodesAndEdges);
 };
 exports.getReminderNodeAndEdges = getReminderNodeAndEdges;
 //# sourceMappingURL=ReminderConverter.js.map

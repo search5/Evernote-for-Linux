@@ -13,8 +13,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.stackedNotebookListPlugin = exports.stackedNotebookList = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_sync_1 = require("en-conduit-sync");
 const en_core_entity_types_1 = require("en-core-entity-types");
-const en_thrift_connector_1 = require("en-thrift-connector");
 const graphql_1 = require("graphql");
 /** GraphQL object types from the result list. */
 const GraphQLStackType = conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableStruct({
@@ -58,13 +58,13 @@ async function resolveNotebook(context, indexItem, nbFields, noteIndexTree, note
         if (!noteIndexTree || !noteIndex) {
             throw new conduit_utils_1.InternalError(`Expected an index tree for getting the children notes sorted by updated`);
         }
-        const filters = en_thrift_connector_1.getLastUpdatedNoteFilters(notebook);
+        const filters = en_conduit_sync_1.getLastUpdatedNoteFilters(notebook);
         const updatedIndexPos = noteIndex.index.findIndex(e => e.field === 'updated');
         if (updatedIndexPos < 0) {
             throw new conduit_utils_1.InternalError(`StackedNotebookList chose the wrong index for last updated`);
         }
         const notebookRes = [nbFields.updated, { id: notebook.id, type: notebook.type }];
-        notebook.lastUpdated = (await en_thrift_connector_1.containerLastUpdated(context, noteIndexTree, noteIndex, filters, updatedIndexPos, notebookRes))[0];
+        notebook.lastUpdated = (await en_conduit_sync_1.containerLastUpdated(context, noteIndexTree, noteIndex, filters, updatedIndexPos, notebookRes))[0];
         notebook.updated = notebook.lastUpdated;
     }
     return notebook;

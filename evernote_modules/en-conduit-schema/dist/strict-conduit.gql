@@ -245,7 +245,7 @@ enum AuthStateEnum {
 type AutoMutatorRes {
   success: Boolean!
   result: String
-  mutationID: String!
+  mutationID: String
 }
 
 type AuxSchema {
@@ -958,6 +958,16 @@ enum FeatureRolloutClientType {
   desktop
 }
 
+input Filter {
+  creator: String
+  dueDate: FilterDueDate
+}
+
+input FilterDueDate {
+  max: Float!
+  min: Float!
+}
+
 input FilteredNotesQueryInput {
   query: String!
   resultSpec: WidgetSearchResultSpecInput!
@@ -982,6 +992,210 @@ type FolderCommandPolicy {
 type ForceDownsyncResult {
   success: Boolean!
   mutationCount: Float!
+}
+
+type GamificationGoal {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  goal: Float!
+  level: Float!
+  created: Float!
+  updated: Float!
+}
+
+input GamificationGoalFilter {
+  field: GamificationGoalFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum GamificationGoalFilterField {
+  id
+  goal
+  level
+  created
+  updated
+  label
+}
+
+type GamificationGoalListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [GamificationGoal!]!
+}
+
+input GamificationGoalSort {
+  field: GamificationGoalSortField!
+  order: IndexOrderType!
+}
+
+enum GamificationGoalSortField {
+  id
+  goal
+  level
+  created
+  updated
+  label
+}
+
+type GamificationGoalsResultFields {
+  id: String!
+  type: String!
+  unindexed: GamificationGoal!
+}
+
+type GamificationGoalsResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [GamificationGoalsResultFields!]!
+}
+
+type GamificationMilestone {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  milestoneKey: Float!
+  complete: Boolean!
+  progress: Float!
+  created: Float!
+  updated: Float!
+}
+
+input GamificationMilestoneFilter {
+  field: GamificationMilestoneFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum GamificationMilestoneFilterField {
+  id
+  milestoneKey
+  complete
+  progress
+  created
+  updated
+  label
+}
+
+type GamificationMilestoneListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [GamificationMilestone!]!
+}
+
+input GamificationMilestoneSort {
+  field: GamificationMilestoneSortField!
+  order: IndexOrderType!
+}
+
+enum GamificationMilestoneSortField {
+  id
+  milestoneKey
+  complete
+  progress
+  created
+  updated
+  label
+}
+
+type GamificationMilestonesResultFields {
+  id: String!
+  type: String!
+  unindexed: GamificationMilestone!
+}
+
+type GamificationMilestonesResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [GamificationMilestonesResultFields!]!
+}
+
+type GamificationSummariesResultFields {
+  id: String!
+  type: String!
+  unindexed: GamificationSummary!
+}
+
+type GamificationSummariesResults {
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [GamificationSummariesResultFields!]!
+}
+
+type GamificationSummary {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  selectedGoal: Float!
+  created: Float!
+  updated: Float!
+}
+
+input GamificationSummaryFilter {
+  field: GamificationSummaryFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum GamificationSummaryFilterField {
+  id
+  selectedGoal
+  created
+  updated
+  label
+}
+
+type GamificationSummaryListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [GamificationSummary!]!
+}
+
+input GamificationSummarySort {
+  field: GamificationSummarySortField!
+  order: IndexOrderType!
+}
+
+enum GamificationSummarySortField {
+  id
+  selectedGoal
+  created
+  updated
+  label
 }
 
 type GenericMutationResult {
@@ -2273,6 +2487,7 @@ enum NoteHistoryLayout {
 type NoteImportResult {
   noteID: String!
   attachmentHashes: [String!]!
+  mutationID: String
 }
 
 type NoteListResults {
@@ -2297,11 +2512,14 @@ type Notelock {
 type NoteMergeResult {
   mergedNoteID: String!
   failedNotes: [String!]!
+  mutationID: String
 }
 
 union NoteOrNotebook = Note | Notebook
 
 union NoteOrNotebookOrTaskOrWorkspace = Note | Notebook | Task | Workspace
+
+union NoteOrTask = Note | Task
 
 enum NoteOwnMembershipsOrderBy {
   created
@@ -2850,9 +3068,9 @@ input PromotionFilter {
 
 enum PromotionFilterField {
   shownCount
+  timeLastShown
   id
   optedOut
-  timeLastShown
   label
 }
 
@@ -2873,9 +3091,9 @@ input PromotionSort {
 
 enum PromotionSortField {
   shownCount
+  timeLastShown
   id
   optedOut
-  timeLastShown
   label
 }
 
@@ -2884,6 +3102,7 @@ type PromotionsResultFields {
   type: String!
   unindexed: Promotion!
   shownCount: Float!
+  timeLastShown: Float!
 }
 
 type PromotionsResults {
@@ -3112,6 +3331,10 @@ type RootMutationType {
 
   """fill the support ticket"""
   fileSupportTicket(subject: String!, body: String!, logUri: String, applicationVersion: String, carrierInfo: String, osInfo: String, connectionInfo: String, contactEmail: String, deviceInfo: String, tags: [String!]): GenericMutationResult!
+  gamificationInitialize(goal: Float!): AutoMutatorRes!
+  gamificationMilestoneMarkComplete(milestoneKey: Float!): AutoMutatorRes!
+  gamificationMilestoneMarkIncement(milestoneKey: Float!): AutoMutatorRes!
+  gamificationSelectGoal(goal: Float!): AutoMutatorRes!
   inNoteTaskApplyChanges(noteID: String!, taskGroupList: [TaskGroupInput!]!, loadedTaskGroupList: [TaskGroupInput!]!, sourceOfChange: String): GenericMutationResult!
   invitationAccept(invitation: String!): AutoMutatorRes!
   membershipDelete(membership: String!): AutoMutatorRes!
@@ -3119,7 +3342,7 @@ type RootMutationType {
   messageSendToThread(thread: String!, content: String!): AutoMutatorRes!
   newUserSignUp(serviceHost: String!, email: String!, password: String!): LoginResult!
   newUserSignUpWithOAuth(serviceHost: String!, tokenPayload: String!, oAuthProvider: ServiceProvider!): LoginResult!
-  noteCheckForUpdates(id: String!, fetchContent: Boolean): NoteCheckForUpdatesResult!
+  noteCheckForUpdates(id: String!, fetchContent: Boolean, flushNSync: Boolean): NoteCheckForUpdatesResult!
   noteClearReminder(note: String!): AutoMutatorRes!
   noteCopy(note: String!, container: String!, label: String): AutoMutatorRes!
   noteCreate(untitledNoteLabel: String!, noteContent: String, container: String, label: String, tags: [String!], created: Float, updated: Float, subjectDate: Float, contentClass: String, latitude: Float, longitude: Float, altitude: Float, placeName: String, reminderTime: Float, reminderDoneTime: Float, reminderOrder: Float, author: String, source: String, sourceUrl: String, sourceApplication: String, attachmentHashes: [String!], applicationData: Map_string): AutoMutatorRes!
@@ -3277,6 +3500,12 @@ type RootQueryType {
   CrossPromotionsInfo: CrossPromotionInfo!
   DashboardsData: DashboardsData!
   DataForQualtrics: DataForQualtrics!
+  GamificationGoal(id: String!): GamificationGoal
+  GamificationGoals(reverseOrder: Boolean, pageInfo: PageInfo): GamificationGoalsResults!
+  GamificationMilestone(id: String!): GamificationMilestone
+  GamificationMilestones(reverseOrder: Boolean, pageInfo: PageInfo): GamificationMilestonesResults!
+  GamificationSummaries(reverseOrder: Boolean, pageInfo: PageInfo): GamificationSummariesResults!
+  GamificationSummary(id: String!): GamificationSummary
   HasPendingMutations: HasPendingMutationsResult!
   HomeBoards(reverseOrder: Boolean, pageInfo: PageInfo): HomeBoardsResults!
   Invitation(id: String!): Invitation
@@ -3347,6 +3576,7 @@ type RootQueryType {
   TaskNotesNotInTrash(hasCompletedAllTasks: Boolean, isShared: Boolean, orderBy: TaskNotesNotInTrashOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TaskNotesNotInTrashResults!
   TaskUserSettings(id: String!): TaskUserSettings
   Tasks(assignee: String, creator: String, dueDate: TasksDueDate, flag: Boolean, status: TaskStatus, orderBy: TasksOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TasksResults!
+  TasksAndNotes(includeNotesWithAllCompleted: Boolean!, includeCompletedTasks: Boolean!, includeSharedNotes: Boolean!, pinDefaultNoteToTop: Boolean, showCompletedAtBottom: Boolean, filter: Filter, orderBy: TaskNotesSort!, pageInfo: PageInfo): TasksAndNotes!
   TasksInNote(parent: String!, creator: String, dueDate: TasksInNoteDueDate, status: TaskStatus, orderBy: TasksInNoteOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TasksInNoteResults!
   TasksWithoutNote(creator: String, dueDate: TasksWithoutNoteDueDate, status: TaskStatus, orderBy: TasksWithoutNoteOrderBy!, reverseOrder: Boolean, pageInfo: PageInfo): TasksWithoutNoteResults!
   Thread(id: String!): Thread
@@ -4407,6 +4637,12 @@ type TaskNotesNotInTrashResults {
   list: [TaskNotesNotInTrashResultFields!]!
 }
 
+enum TaskNotesSort {
+  label
+  updated
+  created
+}
+
 enum TaskOwnMembershipsOrderBy {
   created
   label
@@ -4423,6 +4659,11 @@ type TaskOwnMembershipsResultFields {
 type TaskOwnMembershipsResults {
   count: Int!
   list: [TaskOwnMembershipsResultFields!]!
+}
+
+type TasksAndNotes {
+  count: Int
+  list: [NoteOrTask!]
 }
 
 input TasksDueDate {

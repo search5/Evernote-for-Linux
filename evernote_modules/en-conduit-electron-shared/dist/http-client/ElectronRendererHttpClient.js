@@ -21,7 +21,7 @@ class ElectronRendererHttpClient extends conduit_view_types_1.HttpTransport {
         super();
         this.customHeaders = customHeaders;
     }
-    async request(trc, params) {
+    async requestImpl(trc, params) {
         const resp = await fetch(this.buildUrl(params), this.transformParams(params));
         const result = await resp.text();
         const headers = {};
@@ -48,6 +48,6 @@ class ElectronRendererHttpClient extends conduit_view_types_1.HttpTransport {
 }
 __decorate([
     conduit_utils_1.traceAsync('HttpClient')
-], ElectronRendererHttpClient.prototype, "request", null);
+], ElectronRendererHttpClient.prototype, "requestImpl", null);
 exports.ElectronRendererHttpClient = ElectronRendererHttpClient;
 //# sourceMappingURL=ElectronRendererHttpClient.js.map

@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NoteAllMembershipsOrderBy = exports.NapMigrationStateType = exports.MonetizationClientType = exports.MessageSortField = exports.MessageFilterField = exports.MembershipSortField = exports.MembershipsInParentOrderBy = exports.MembershipsForMeOrderBy = exports.MembershipsForMeInParentOrderBy = exports.MembershipRecipientType = exports.MembershipPrivilege = exports.MembershipFilterField = exports.MarketingEmailType = exports.MaestroRequestingEnvironment = exports.MaestroPlatform = exports.MaestroClientType = exports.LoginStatus = exports.InvitationType = exports.InvitationSortField = exports.InvitationsForMeOrderBy = exports.InvitationFilterField = exports.IndexOrderType = exports.GoogleScopesEnum = exports.FeatureRolloutClientType = exports.CommEngineEventType = exports.CommEngineClientType = exports.ClientPlatform = exports.CalendarProvider = exports.CalendarNotificationOptions = exports.CalendarEventUriType = exports.CalendarEventStatus = exports.CalendarEventAttendeeStatus = exports.BusinessUserType = exports.BusinessUserRole = exports.BoardType = exports.BoardSortField = exports.BoardServiceLevels = exports.BoardPlatformWidgetsPlatform = exports.BoardMutableWidgetTypes = exports.BoardMobileLayout = exports.BoardFormFactor = exports.BoardFilterField = exports.BoardDesktopLayout = exports.BoardBackgroundMode = exports.BetaFeatureSortField = exports.BetaFeatureFilterField = exports.AuthStateEnum = exports.AttachmentSortField = exports.AttachmentFilterField = exports.AdaptiveDownsyncTypeEnum = void 0;
-exports.ShortcutFilterField = exports.SharedWithMeMembershipField = exports.SharedWithMeInvitationsField = exports.ServiceProvider = exports.SearchLogEventTypeProperty = exports.SearchExTextField = exports.SearchExSortOrder = exports.SearchExResultType = exports.SearchExLocalSearchMode = exports.ScheduledNotificationType = exports.ScheduledNotificationSortField = exports.ScheduledNotificationFilterField = exports.SavedSearchSortField = exports.SavedSearchFilterField = exports.ReminderStatus = exports.ReminderSortField = exports.ReminderFilterField = exports.ReminderDateUiOption = exports.PublishedNotebooksSortField = exports.PublishedNotebooksFilterField = exports.PublishedNotebookAccessStatus = exports.PromotionSortField = exports.PromotionFilterField = exports.ProfileTasksWithoutNoteOrderBy = exports.ProfileTasksOrderBy = exports.ProfileStatus = exports.ProfileSortField = exports.ProfileFilterField = exports.ProfileDescendentTasksOrderBy = exports.PremiumOrderStatus = exports.NotesWithRemindersOrderBy = exports.NoteSortField = exports.NotesNotInTrashOrderBy = exports.NotesInWorkspaceOrderBy = exports.NotesInTrashOrderBy = exports.NotesInParentOrderBy = exports.NoteOwnMembershipsOrderBy = exports.NoteHistoryLayout = exports.NoteFilterField = exports.NoteDescendentTasksOrderBy = exports.NoteContentInfoSortField = exports.NoteContentInfoFilterField = exports.NotebookSortField = exports.NotebooksOrderBy = exports.NotebooksInWorkspaceOrderBy = exports.NotebookReminderNotesOrderBy = exports.NotebookOwnMembershipsOrderBy = exports.NotebookFilterField = exports.NotebookChildNotesOrderBy = exports.NotebookAllMembershipsOrderBy = void 0;
-exports.WorkspaceChildNotesOrderBy = exports.WorkspaceChildNotebooksOrderBy = exports.WorkspaceAllMembershipsOrderBy = exports.WorkspaceAccessStatus = exports.WidgetType = exports.WidgetTabs = exports.WidgetSortFields = exports.WidgetSortField = exports.WidgetsInBoardPlatform = exports.WidgetSearchTypes = exports.WidgetSearchTextFields = exports.WidgetFilterField = exports.WidgetContentConflictSortField = exports.WidgetContentConflictFilterField = exports.UserSortField = exports.UserServiceLevelV2 = exports.UserServiceLevel = exports.UserReminderEmailConfig = exports.UserPrivilegeLevel = exports.UserFilterField = exports.TsdVariation = exports.TsdType = exports.ThreadSortField = exports.ThreadFilterField = exports.TaskUserSettingsSortField = exports.TaskUserSettingsFilterField = exports.TasksWithoutNoteOrderBy = exports.TaskStatus = exports.TaskSortField = exports.TasksOrderBy = exports.TasksInNoteOrderBy = exports.TaskOwnMembershipsOrderBy = exports.TaskNotesNotInTrashOrderBy = exports.TaskFilterField = exports.TaskDueDateUiOption = exports.TaskAllMembershipsOrderBy = exports.TagSortField = exports.TagsOrderBy = exports.TagsAllowedField = exports.TagHierarchySortField = exports.TagHierarchyFilterField = exports.TagFilterField = exports.TagChildTagsOrderBy = exports.SyncProgressTypeEnum = exports.SupportedPlacement = exports.StackSortField = exports.StackFilterField = exports.StackedNotebookSortField = exports.SignInMethod = exports.ShortcutSortField = void 0;
-exports.WorkspaceType = exports.WorkspaceSortField = exports.WorkspaceReminderNotesOrderBy = exports.WorkspaceOwnMembershipsOrderBy = exports.WorkspaceLayoutStyle = exports.WorkspaceFilterField = exports.WorkspaceDirectorySortField = exports.WorkspaceDirectoryFilterField = exports.WorkspaceDescendentNotesOrderBy = void 0;
+exports.MembershipsInParentOrderBy = exports.MembershipsForMeOrderBy = exports.MembershipsForMeInParentOrderBy = exports.MembershipRecipientType = exports.MembershipPrivilege = exports.MembershipFilterField = exports.MarketingEmailType = exports.MaestroRequestingEnvironment = exports.MaestroPlatform = exports.MaestroClientType = exports.LoginStatus = exports.InvitationType = exports.InvitationSortField = exports.InvitationsForMeOrderBy = exports.InvitationFilterField = exports.IndexOrderType = exports.GoogleScopesEnum = exports.GamificationSummarySortField = exports.GamificationSummaryFilterField = exports.GamificationMilestoneSortField = exports.GamificationMilestoneFilterField = exports.GamificationGoalSortField = exports.GamificationGoalFilterField = exports.FeatureRolloutClientType = exports.CommEngineEventType = exports.CommEngineClientType = exports.ClientPlatform = exports.CalendarProvider = exports.CalendarNotificationOptions = exports.CalendarEventUriType = exports.CalendarEventStatus = exports.CalendarEventAttendeeStatus = exports.BusinessUserType = exports.BusinessUserRole = exports.BoardType = exports.BoardSortField = exports.BoardServiceLevels = exports.BoardPlatformWidgetsPlatform = exports.BoardMutableWidgetTypes = exports.BoardMobileLayout = exports.BoardFormFactor = exports.BoardFilterField = exports.BoardDesktopLayout = exports.BoardBackgroundMode = exports.BetaFeatureSortField = exports.BetaFeatureFilterField = exports.AuthStateEnum = exports.AttachmentSortField = exports.AttachmentFilterField = exports.AdaptiveDownsyncTypeEnum = void 0;
+exports.SearchExSortOrder = exports.SearchExResultType = exports.SearchExLocalSearchMode = exports.ScheduledNotificationType = exports.ScheduledNotificationSortField = exports.ScheduledNotificationFilterField = exports.SavedSearchSortField = exports.SavedSearchFilterField = exports.ReminderStatus = exports.ReminderSortField = exports.ReminderFilterField = exports.ReminderDateUiOption = exports.PublishedNotebooksSortField = exports.PublishedNotebooksFilterField = exports.PublishedNotebookAccessStatus = exports.PromotionSortField = exports.PromotionFilterField = exports.ProfileTasksWithoutNoteOrderBy = exports.ProfileTasksOrderBy = exports.ProfileStatus = exports.ProfileSortField = exports.ProfileFilterField = exports.ProfileDescendentTasksOrderBy = exports.PremiumOrderStatus = exports.NotesWithRemindersOrderBy = exports.NoteSortField = exports.NotesNotInTrashOrderBy = exports.NotesInWorkspaceOrderBy = exports.NotesInTrashOrderBy = exports.NotesInParentOrderBy = exports.NoteOwnMembershipsOrderBy = exports.NoteHistoryLayout = exports.NoteFilterField = exports.NoteDescendentTasksOrderBy = exports.NoteContentInfoSortField = exports.NoteContentInfoFilterField = exports.NotebookSortField = exports.NotebooksOrderBy = exports.NotebooksInWorkspaceOrderBy = exports.NotebookReminderNotesOrderBy = exports.NotebookOwnMembershipsOrderBy = exports.NotebookFilterField = exports.NotebookChildNotesOrderBy = exports.NotebookAllMembershipsOrderBy = exports.NoteAllMembershipsOrderBy = exports.NapMigrationStateType = exports.MonetizationClientType = exports.MessageSortField = exports.MessageFilterField = exports.MembershipSortField = void 0;
+exports.WidgetSortField = exports.WidgetsInBoardPlatform = exports.WidgetSearchTypes = exports.WidgetSearchTextFields = exports.WidgetFilterField = exports.WidgetContentConflictSortField = exports.WidgetContentConflictFilterField = exports.UserSortField = exports.UserServiceLevelV2 = exports.UserServiceLevel = exports.UserReminderEmailConfig = exports.UserPrivilegeLevel = exports.UserFilterField = exports.TsdVariation = exports.TsdType = exports.ThreadSortField = exports.ThreadFilterField = exports.TaskUserSettingsSortField = exports.TaskUserSettingsFilterField = exports.TasksWithoutNoteOrderBy = exports.TaskStatus = exports.TaskSortField = exports.TasksOrderBy = exports.TasksInNoteOrderBy = exports.TaskOwnMembershipsOrderBy = exports.TaskNotesSort = exports.TaskNotesNotInTrashOrderBy = exports.TaskFilterField = exports.TaskDueDateUiOption = exports.TaskAllMembershipsOrderBy = exports.TagSortField = exports.TagsOrderBy = exports.TagsAllowedField = exports.TagHierarchySortField = exports.TagHierarchyFilterField = exports.TagFilterField = exports.TagChildTagsOrderBy = exports.SyncProgressTypeEnum = exports.SupportedPlacement = exports.StackSortField = exports.StackFilterField = exports.StackedNotebookSortField = exports.SignInMethod = exports.ShortcutSortField = exports.ShortcutFilterField = exports.SharedWithMeMembershipField = exports.SharedWithMeInvitationsField = exports.ServiceProvider = exports.SearchLogEventTypeProperty = exports.SearchExTextField = void 0;
+exports.WorkspaceType = exports.WorkspaceSortField = exports.WorkspaceReminderNotesOrderBy = exports.WorkspaceOwnMembershipsOrderBy = exports.WorkspaceLayoutStyle = exports.WorkspaceFilterField = exports.WorkspaceDirectorySortField = exports.WorkspaceDirectoryFilterField = exports.WorkspaceDescendentNotesOrderBy = exports.WorkspaceChildNotesOrderBy = exports.WorkspaceChildNotebooksOrderBy = exports.WorkspaceAllMembershipsOrderBy = exports.WorkspaceAccessStatus = exports.WidgetType = exports.WidgetTabs = exports.WidgetSortFields = void 0;
 var AdaptiveDownsyncTypeEnum;
 (function (AdaptiveDownsyncTypeEnum) {
     AdaptiveDownsyncTypeEnum["None"] = "NONE";
@@ -307,6 +307,60 @@ var FeatureRolloutClientType;
     FeatureRolloutClientType["Mobile"] = "mobile";
     FeatureRolloutClientType["Desktop"] = "desktop";
 })(FeatureRolloutClientType = exports.FeatureRolloutClientType || (exports.FeatureRolloutClientType = {}));
+var GamificationGoalFilterField;
+(function (GamificationGoalFilterField) {
+    GamificationGoalFilterField["Id"] = "id";
+    GamificationGoalFilterField["Goal"] = "goal";
+    GamificationGoalFilterField["Level"] = "level";
+    GamificationGoalFilterField["Created"] = "created";
+    GamificationGoalFilterField["Updated"] = "updated";
+    GamificationGoalFilterField["Label"] = "label";
+})(GamificationGoalFilterField = exports.GamificationGoalFilterField || (exports.GamificationGoalFilterField = {}));
+var GamificationGoalSortField;
+(function (GamificationGoalSortField) {
+    GamificationGoalSortField["Id"] = "id";
+    GamificationGoalSortField["Goal"] = "goal";
+    GamificationGoalSortField["Level"] = "level";
+    GamificationGoalSortField["Created"] = "created";
+    GamificationGoalSortField["Updated"] = "updated";
+    GamificationGoalSortField["Label"] = "label";
+})(GamificationGoalSortField = exports.GamificationGoalSortField || (exports.GamificationGoalSortField = {}));
+var GamificationMilestoneFilterField;
+(function (GamificationMilestoneFilterField) {
+    GamificationMilestoneFilterField["Id"] = "id";
+    GamificationMilestoneFilterField["MilestoneKey"] = "milestoneKey";
+    GamificationMilestoneFilterField["Complete"] = "complete";
+    GamificationMilestoneFilterField["Progress"] = "progress";
+    GamificationMilestoneFilterField["Created"] = "created";
+    GamificationMilestoneFilterField["Updated"] = "updated";
+    GamificationMilestoneFilterField["Label"] = "label";
+})(GamificationMilestoneFilterField = exports.GamificationMilestoneFilterField || (exports.GamificationMilestoneFilterField = {}));
+var GamificationMilestoneSortField;
+(function (GamificationMilestoneSortField) {
+    GamificationMilestoneSortField["Id"] = "id";
+    GamificationMilestoneSortField["MilestoneKey"] = "milestoneKey";
+    GamificationMilestoneSortField["Complete"] = "complete";
+    GamificationMilestoneSortField["Progress"] = "progress";
+    GamificationMilestoneSortField["Created"] = "created";
+    GamificationMilestoneSortField["Updated"] = "updated";
+    GamificationMilestoneSortField["Label"] = "label";
+})(GamificationMilestoneSortField = exports.GamificationMilestoneSortField || (exports.GamificationMilestoneSortField = {}));
+var GamificationSummaryFilterField;
+(function (GamificationSummaryFilterField) {
+    GamificationSummaryFilterField["Id"] = "id";
+    GamificationSummaryFilterField["SelectedGoal"] = "selectedGoal";
+    GamificationSummaryFilterField["Created"] = "created";
+    GamificationSummaryFilterField["Updated"] = "updated";
+    GamificationSummaryFilterField["Label"] = "label";
+})(GamificationSummaryFilterField = exports.GamificationSummaryFilterField || (exports.GamificationSummaryFilterField = {}));
+var GamificationSummarySortField;
+(function (GamificationSummarySortField) {
+    GamificationSummarySortField["Id"] = "id";
+    GamificationSummarySortField["SelectedGoal"] = "selectedGoal";
+    GamificationSummarySortField["Created"] = "created";
+    GamificationSummarySortField["Updated"] = "updated";
+    GamificationSummarySortField["Label"] = "label";
+})(GamificationSummarySortField = exports.GamificationSummarySortField || (exports.GamificationSummarySortField = {}));
 var GoogleScopesEnum;
 (function (GoogleScopesEnum) {
     GoogleScopesEnum["Drive"] = "DRIVE";
@@ -816,17 +870,17 @@ var ProfileTasksWithoutNoteOrderBy;
 var PromotionFilterField;
 (function (PromotionFilterField) {
     PromotionFilterField["ShownCount"] = "shownCount";
+    PromotionFilterField["TimeLastShown"] = "timeLastShown";
     PromotionFilterField["Id"] = "id";
     PromotionFilterField["OptedOut"] = "optedOut";
-    PromotionFilterField["TimeLastShown"] = "timeLastShown";
     PromotionFilterField["Label"] = "label";
 })(PromotionFilterField = exports.PromotionFilterField || (exports.PromotionFilterField = {}));
 var PromotionSortField;
 (function (PromotionSortField) {
     PromotionSortField["ShownCount"] = "shownCount";
+    PromotionSortField["TimeLastShown"] = "timeLastShown";
     PromotionSortField["Id"] = "id";
     PromotionSortField["OptedOut"] = "optedOut";
-    PromotionSortField["TimeLastShown"] = "timeLastShown";
     PromotionSortField["Label"] = "label";
 })(PromotionSortField = exports.PromotionSortField || (exports.PromotionSortField = {}));
 var PublishedNotebookAccessStatus;
@@ -1144,6 +1198,12 @@ var TaskNotesNotInTrashOrderBy;
     TaskNotesNotInTrashOrderBy["UpdatedDtnPinned"] = "updatedDTNPinned";
     TaskNotesNotInTrashOrderBy["UpdatedDtnPinnedCompletedAtBottom"] = "updatedDTNPinnedCompletedAtBottom";
 })(TaskNotesNotInTrashOrderBy = exports.TaskNotesNotInTrashOrderBy || (exports.TaskNotesNotInTrashOrderBy = {}));
+var TaskNotesSort;
+(function (TaskNotesSort) {
+    TaskNotesSort["Label"] = "label";
+    TaskNotesSort["Updated"] = "updated";
+    TaskNotesSort["Created"] = "created";
+})(TaskNotesSort = exports.TaskNotesSort || (exports.TaskNotesSort = {}));
 var TaskOwnMembershipsOrderBy;
 (function (TaskOwnMembershipsOrderBy) {
     TaskOwnMembershipsOrderBy["Created"] = "created";

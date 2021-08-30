@@ -11,10 +11,13 @@ exports.defaultQueryWithParams = {
     sortType: en_search_engine_shared_1.ENSortType.RELEVANCE,
     reverseOrder: false,
     from: 0,
-    size: -1
+    size: en_search_engine_shared_1.PAGE_SIZE,
 };
+exports.defaultResultSpec = [{ type: en_search_engine_shared_1.ENSuggestResultType.HISTORY, maxResults: 5 }, { type: en_search_engine_shared_1.ENSuggestResultType.TITLE, maxResults: 5 },
+    { type: en_search_engine_shared_1.ENSuggestResultType.NOTEBOOK, maxResults: 5 }, { type: en_search_engine_shared_1.ENSuggestResultType.SPACE, maxResults: 5 }, { type: en_search_engine_shared_1.ENSuggestResultType.TAG, maxResults: 5 },
+    { type: en_search_engine_shared_1.ENSuggestResultType.AUTHOR, maxResults: 5 }, { type: en_search_engine_shared_1.ENSuggestResultType.STACK, maxResults: 5 }];
 class ENSearchEngineElectron {
-    constructor(clucene) {
+    constructor(logger, clucene) {
         this.clucene = clucene;
     }
     async init() {
@@ -35,9 +38,14 @@ class ENSearchEngineElectron {
     async deleteDocument(guid) {
         await this.clucene.deleteDocumentAsync(guid);
     }
-    async search(query, documentType, offset, maxNotes, order, ascending) {
-        const pquery = en_search_engine_shared_1.QueryStringParser.parse(query);
-        const queryBuilder = new en_search_engine_shared_1.ESQueryStringBuilder(pquery.fullQuery);
+    async search(params) {
+        var _a, _b, _c;
+        const param = new en_search_engine_shared_1.QueryStringParserParam();
+        if (params.isFullBooleanSearch) {
+            param.booleanOperatorsEnabled = true;
+        }
+        const pquery = en_search_engine_shared_1.QueryStringParser.parseWithParams(params.query, param);
+        const queryBuilder = new en_search_engine_shared_1.ESQueryStringBuilder(pquery.fullQueryWithoutStopWords);
         queryBuilder.dontPrintAnd = false;
         const parsedQuery = queryBuilder.build();
         // console.log('parsedQuery: ', parsedQuery);
@@ -47,20 +55,21 @@ class ENSearchEngineElectron {
         const searchWordsBuilder = new en_search_engine_shared_1.ESQueryStringBuilder(pquery.searchWords);
         searchWordsBuilder.dontPrintAnd = false;
         const parsedSearchWords = searchWordsBuilder.build();
-        const luceneQuery = en_search_engine_shared_1.ENCLuceneHelper.createLuceneQuery(parsedQuery, true, documentType);
+        const luceneQuery = en_search_engine_shared_1.ENCLuceneHelper.createLuceneQuery(parsedQuery, true, params.documentType);
         const queryWithParams = {
             filterString: luceneQuery,
             queryString: parsedSearchWords !== null && parsedSearchWords !== void 0 ? parsedSearchWords : en_search_engine_shared_1.EMPTY_QUERY,
-            sortType: order !== null && order !== void 0 ? order : en_search_engine_shared_1.ENSortType.RELEVANCE,
-            reverseOrder: (ascending !== undefined && ascending !== null) ? !ascending : false,
-            from: offset !== null && offset !== void 0 ? offset : 0,
-            size: maxNotes !== null && maxNotes !== void 0 ? maxNotes : -1,
+            sortType: (_a = params.order) !== null && _a !== void 0 ? _a : en_search_engine_shared_1.ENSortType.RELEVANCE,
+            reverseOrder: (params.ascending !== undefined && params.ascending !== null) ? !params.ascending : false,
+            from: (_b = params.offset) !== null && _b !== void 0 ? _b : 0,
+            size: (_c = params.maxNotes) !== null && _c !== void 0 ? _c : en_search_engine_shared_1.PAGE_SIZE,
         };
         const result = await this.clucene.search(queryWithParams);
         return en_search_engine_shared_1.ENCLuceneHelper.setResultFlags(result, pquery);
     }
-    async suggest(query, documentType, optimization) {
-        const suggestOptimization = optimization !== null && optimization !== void 0 ? optimization : ENSearchEngineElectron.defaultSuggestOptimization;
+    async suggest(query, params) {
+        var _a;
+        const suggestOptimization = (_a = params.optimization) !== null && _a !== void 0 ? _a : ENSearchEngineElectron.defaultSuggestOptimization;
         // console.log('query: ', query);
         const param = new en_search_engine_shared_1.QueryStringParserParam();
         // while parsing query string for suggestions mustn't ignore stopwords, set stop word list as empty
@@ -68,71 +77,73 @@ class ENSearchEngineElectron {
         const queryBuilderFilters = new en_search_engine_shared_1.ESQueryStringBuilder(pquery.filter);
         queryBuilderFilters.dontPrintAnd = false;
         const filters = queryBuilderFilters.build();
+        const resultSpec = params.resultSpec.length > 0 ? params.resultSpec : exports.defaultResultSpec;
         // modify query
         let suggestResult = new Array();
+        let searchTokens = [];
         if (pquery.firstSearchWords && pquery.firstSearchWords.length > 0) {
-            // there is string begining, we want to search it in entities fields
-            const searchTokens = pquery.firstSearchWords.map(firstSearchWord => firstSearchWord.token);
-            const suggestTypes = ['notebookText', 'spaceText', 'tagText', 'authorText', 'title', 'stackText'];
-            for (const suggestType of suggestTypes) {
-                const conditions = new Array();
-                for (const searchToken of searchTokens) {
-                    const escapedToken = en_search_engine_shared_1.ESQueryStringBuilder.escapeReservedChars(searchToken);
-                    if (en_search_engine_shared_1.ENCLuceneHelper.primaryToAltFields.has(suggestType)) {
-                        const singleConditionWithAlts = [`${suggestType}:${escapedToken}*`];
-                        const altSuggestTypes = en_search_engine_shared_1.ENCLuceneHelper.primaryToAltFields.get(suggestType);
-                        for (const altSuggestType of altSuggestTypes) {
-                            if (altSuggestType.type === en_search_engine_shared_1.ENSearchAlternativeFieldType.SUFFIX) {
-                                const suffixConditions = new Array();
-                                const tokens = en_search_engine_shared_1.ENCLuceneHelper.nGramTokenize(searchToken, 3);
-                                for (const token of tokens) {
-                                    const truncatedEscapedToken = en_search_engine_shared_1.ESQueryStringBuilder.escapeReservedChars(token);
-                                    suffixConditions.push(`${altSuggestType.name}:${truncatedEscapedToken}*^0.1`);
-                                }
-                                singleConditionWithAlts.push(`(${suffixConditions.join(' AND ')})`);
-                            }
-                            else {
-                                singleConditionWithAlts.push(`${altSuggestType.name}:${escapedToken}*^0.5`);
-                            }
-                        }
-                        const condition = `(${singleConditionWithAlts.join(' OR ')})`;
-                        conditions.push(condition);
-                    }
-                    else {
-                        conditions.push(`${suggestType}:${escapedToken}*`);
+            searchTokens = pquery.firstSearchWords.map(firstSearchWord => en_search_engine_shared_1.ESQueryStringBuilder.removeSurroundingPunctuation(firstSearchWord.token)).filter(token => token.length !== 0);
+        }
+        for (const suggestResultSpec of resultSpec) {
+            const suggestFieldName = en_search_engine_shared_1.ENCLuceneHelper.suggestTypeToFieldName.get(suggestResultSpec.type);
+            if (suggestFieldName) {
+                let suggestQueryString = '';
+                const queryWithParams = Object.assign({}, exports.defaultQueryWithParams);
+                if (searchTokens.length > 0) {
+                    // there is string begining, we want to search it in entities fields
+                    const conditions = en_search_engine_shared_1.ENCLuceneHelper.getConditionsForSuggestType(suggestFieldName, searchTokens);
+                    suggestQueryString = conditions.join(" AND ");
+                }
+                else {
+                    // zero suggest returns all entities from recently updated notes
+                    const suggestBaseFieldName = en_search_engine_shared_1.ENCLuceneHelper.suggestTypeToMainFieldName.get(suggestResultSpec.type);
+                    if (suggestBaseFieldName) {
+                        suggestQueryString = en_search_engine_shared_1.ENCLuceneHelper.exists + ':' + suggestBaseFieldName;
+                        queryWithParams.sortType = en_search_engine_shared_1.ENSortType.UPDATED;
+                        queryWithParams.reverseOrder = true;
                     }
                 }
-                const suggestQueryString = conditions.join(" AND ");
-                const suggestFilterString = (filters ? (filters + ' AND ') : '') + suggestQueryString;
-                const queryWithParams = Object.assign({}, exports.defaultQueryWithParams);
-                queryWithParams.filterString = en_search_engine_shared_1.ENCLuceneHelper.createLuceneQuery(suggestFilterString, true, documentType);
-                queryWithParams.queryString = suggestQueryString;
-                queryWithParams.size = 128;
-                suggestResult = suggestResult.concat(await this.clucene.suggest(queryWithParams, searchTokens, suggestType));
+                if (suggestQueryString.length > 0) {
+                    const suggestFilterString = (filters ? (filters + ' AND ') : '') + suggestQueryString;
+                    queryWithParams.filterString = en_search_engine_shared_1.ENCLuceneHelper.createLuceneQuery(suggestFilterString, true, params.documentType);
+                    queryWithParams.queryString = suggestQueryString;
+                    queryWithParams.stored_fields = ['nbGuid', 'notebook', 'spaceGuid', 'space', 'tagGuid', 'tag', 'creatorId', 'author', 'title', 'stack'];
+                    queryWithParams.from = 0;
+                    let fieldSuggestResult = new Array();
+                    const maxPages = 1; // increase this value for pagination
+                    while (queryWithParams.from < en_search_engine_shared_1.PAGE_SIZE * maxPages) {
+                        // console.log('queryWithParams: ', queryWithParams);
+                        let pageSuggestResult = await this.clucene.suggest(queryWithParams, searchTokens, suggestFieldName);
+                        if (pageSuggestResult.length === 0) {
+                            break;
+                        }
+                        if (suggestOptimization === en_search_engine_shared_1.ENSuggestOptimization.O3 && filters) {
+                            // filter results only if searchString contains filters
+                            pageSuggestResult = await this.filterOutUselessSuggests(pageSuggestResult, filters, suggestResultSpec.maxResults - fieldSuggestResult.length);
+                        }
+                        for (const suggest of pageSuggestResult) {
+                            if (fieldSuggestResult.find(result => (result.type === suggest.type && result.guid === suggest.guid)) === undefined) {
+                                fieldSuggestResult.push(suggest);
+                            }
+                        }
+                        queryWithParams.from += en_search_engine_shared_1.PAGE_SIZE;
+                        if (fieldSuggestResult.length >= suggestResultSpec.maxResults) {
+                            fieldSuggestResult = fieldSuggestResult.slice(0, suggestResultSpec.maxResults);
+                            break;
+                        }
+                    }
+                    suggestResult = suggestResult.concat(fieldSuggestResult);
+                }
             }
-        }
-        else {
-            // zero suggest returns all entities from recently updated notes
-            const queryWithParams = {
-                filterString: en_search_engine_shared_1.ENCLuceneHelper.createLuceneQuery(filters !== null && filters !== void 0 ? filters : en_search_engine_shared_1.EMPTY_QUERY, true, documentType),
-                queryString: en_search_engine_shared_1.EMPTY_QUERY,
-                sortType: en_search_engine_shared_1.ENSortType.UPDATED,
-                reverseOrder: true,
-                from: 0,
-                size: 128,
-            };
-            suggestResult = await this.clucene.suggest(queryWithParams, [], null);
-        }
-        if (suggestOptimization === en_search_engine_shared_1.ENSuggestOptimization.O3) {
-            return await this.filterOutUselessSuggests(suggestResult, filters);
         }
         return suggestResult;
     }
-    async filterOutUselessSuggests(suggestResults, filters, documentType) {
+    async filterOutUselessSuggests(suggestResults, filters, maxResults, documentType) {
         // remove suggests which don't narrow current results
         const filteredSuggestResult = new Array();
         const queryWithParams = Object.assign({}, exports.defaultQueryWithParams);
         queryWithParams.filterString = en_search_engine_shared_1.ENCLuceneHelper.createLuceneQuery(filters !== null && filters !== void 0 ? filters : en_search_engine_shared_1.EMPTY_QUERY, true, documentType);
+        queryWithParams.size = 0;
         const currentResults = await this.clucene.search(queryWithParams);
         for (const suggest of suggestResults) {
             // console.log('escapeReservedChars: ', ESQueryStringBuilder.escapeReservedChars(suggest.value));
@@ -140,8 +151,11 @@ class ENSearchEngineElectron {
             const queryWithNewFilter = (filters ? (filters + ' AND ') : '') + suggestFilter;
             queryWithParams.filterString = en_search_engine_shared_1.ENCLuceneHelper.createLuceneQuery(queryWithNewFilter, true, documentType);
             const filterResults = await this.clucene.search(queryWithParams);
-            if (filterResults.results.length < currentResults.results.length) {
+            if (filterResults.totalResultCount < currentResults.totalResultCount) {
                 filteredSuggestResult.push(suggest);
+                if (filteredSuggestResult.length === maxResults) {
+                    break;
+                }
             }
         }
         return filteredSuggestResult;

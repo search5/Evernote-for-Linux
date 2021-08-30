@@ -246,7 +246,7 @@ class QSPRemoveGlobalOperators {
     }
 }
 /**
-* Performs token postprocessing. Includes changes such as stop word removal, quotation and wildcard manipulations.
+* Performs token postprocessing. Includes changes such as quotation and wildcard manipulations.
 * Some of these operations may seem to be specific for Elasticsearch index structure. But we need the changes
 * to bee visible to end clients, so they are performed here.
 */
@@ -254,15 +254,9 @@ class QSPPostProcessor {
     process(node) {
         const token = node.token;
         if (token.type === QueryToken_1.QSPTokenType.ARGUMENT) {
-            // 1. remove stop words
-            if (!token.isFieldOperator() && !token.quoted) {
-                if (QueryStringParser.ENGLISH_STOP_WORDS.has(token.token.toLowerCase())) {
-                    return QSPActionType.DELETE_NODE;
-                }
-            }
             // search will be performed on a field with text tokenization
             const fieldWithTokenization = !token.isFieldOperator() || (token.fieldOperator && FieldOperator_1.QSPFieldOperatorContext.TOKENIZATION_REQUIRED_OPERATORS.has(token.fieldOperator));
-            // 2. add quotation for words with delimiters
+            // 1. add quotation for words with delimiters
             if (!token.quoted) {
                 // If text has punctuation between normal characters, we should put it in quotes and ignore 'prefixed' parameter.
                 // This is a patch to deal with 'PG&E'-like queries. Lucene removes '&' and transforms the query to 'PG E'.
@@ -276,11 +270,24 @@ class QSPPostProcessor {
                     token.prefixed = false;
                 }
             }
-            // 3. Add wildcard operator to enforce prefix search (S2 of "Evernote Search Technical Specification")
+            // 2. Add wildcard operator to enforce prefix search (S2 of "Evernote Search Technical Specification")
             const negated = node.parent !== null && node.parent.token.type === QueryToken_1.QSPTokenType.NOT;
             if (!token.quoted && fieldWithTokenization && !negated) {
                 token.prefixed = true;
             }
+        }
+        return QSPActionType.CONTINUE;
+    }
+}
+/**
+* Removes stop words from the query
+*/
+class QSPRemoveStopWords {
+    process(node) {
+        const token = node.token;
+        if (token.type === QueryToken_1.QSPTokenType.ARGUMENT && !token.isFieldOperator() && !token.quoted &&
+            QueryStringParser.ENGLISH_STOP_WORDS.has(token.token.toLowerCase())) {
+            return QSPActionType.DELETE_NODE;
         }
         return QSPActionType.CONTINUE;
     }
@@ -346,6 +353,7 @@ class QueryStringParser {
         result.fullQuery = QueryStringParser.modifyTree(result.fullQuery, globalOps);
         result.globalOperators = globalOps.exportOperators();
         result.fullQuery = QueryStringParser.modifyTree(result.fullQuery, postproc);
+        result.fullQueryWithoutStopWords = QueryStringParser.modifyTree(QueryStringParser.copyTree(result.fullQuery), new QSPRemoveStopWords());
         result.filter = QueryStringParser.toTree(QueryStringParser.toPostfix(filterTokens));
         result.filter = QueryStringParser.modifyTree(result.filter, postproc);
         result.firstSearchWords = searchWordTokens.filter(x => x.type === QueryToken_1.QSPTokenType.ARGUMENT);

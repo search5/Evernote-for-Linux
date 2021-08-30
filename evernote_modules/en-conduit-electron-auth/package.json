@@ -1,6 +1,6 @@
 {
   "name": "en-conduit-electron-auth",
-  "version": "1.37.11",
+  "version": "1.38.1",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -18,8 +18,8 @@
     "electron": "^11.3.0"
   },
   "dependencies": {
-    "conduit-nap": "1.37.11",
-    "conduit-view-types": "1.37.11",
+    "conduit-nap": "1.38.1",
+    "conduit-view-types": "1.38.1",
     "en-node-appauth-js": "1.3.1-remove-types-jquery.0"
   }
 }

@@ -72,7 +72,7 @@ function messageFromService(serviceData) {
     return message;
 }
 exports.messageFromService = messageFromService;
-function validateAndCreateMessageBody(message) {
+function validateAndCreateMessageBody(message = '') {
     const messageBody = `<msg>${message}</msg>`;
     if (messageBody.length > en_core_entity_types_1.WORKCHAT_MESSAGE_BODY_LEN_MAX) {
         throw new conduit_utils_1.MalformedDataError('Validation Failed: message too long');

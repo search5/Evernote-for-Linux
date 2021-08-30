@@ -12,7 +12,7 @@ function setupENCrossPromotionPlugin() {
     async function crossPromotionInfoResolver(_, args, context) {
         const authorizedToken = await conduit_core_1.retrieveAuthorizedToken(context);
         const authData = en_thrift_connector_1.decodeAuthData(authorizedToken);
-        return ENThriftCrossPromotionInfo_1.getCrossPromotionsInfo(context.trc, context.thriftComm, authData);
+        return ENThriftCrossPromotionInfo_1.getCrossPromotionsInfo(context.trc, context.comm, authData);
     }
     const responseType = conduit_core_1.schemaToGraphQLType(conduit_utils_1.Struct({
         usesEvernoteWindows: 'boolean',

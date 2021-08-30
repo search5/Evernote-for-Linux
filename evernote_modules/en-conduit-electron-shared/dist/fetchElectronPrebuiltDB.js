@@ -58,6 +58,8 @@ async function fetchPrebuiltDatabase(trc, request, cookieStr, url, fetchProgress
             });
             pipeStream.on('finish', () => {
                 conduit_utils_1.logger.debug(`Finished writing downloaded prebuilt binary to disk at ${filePath}`);
+                const builderVersion = response.headers['conduit-version'];
+                conduit_utils_1.logger.info(`Binary built by conduit ${builderVersion !== null && builderVersion !== void 0 ? builderVersion : '<unknown>'}`);
                 resolve(filePath);
             });
         });

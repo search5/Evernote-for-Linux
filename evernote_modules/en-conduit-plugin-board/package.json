@@ -1,6 +1,6 @@
 {
   "name": "en-conduit-plugin-board",
-  "version": "1.37.11",
+  "version": "1.38.1",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -10,14 +10,14 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-core": "1.37.11",
-    "conduit-storage": "1.37.11",
-    "conduit-utils": "1.37.11",
-    "conduit-view-types": "1.37.11",
-    "en-core-entity-types": "1.37.11",
-    "en-data-model": "^3.6.2",
-    "en-home-data-model": "^3.6.2",
-    "en-nsync-connector": "1.37.11"
+    "conduit-core": "1.38.1",
+    "conduit-storage": "1.38.1",
+    "conduit-utils": "1.38.1",
+    "conduit-view-types": "1.38.1",
+    "en-core-entity-types": "1.38.1",
+    "en-data-model": "^3.10.0",
+    "en-home-data-model": "^3.10.0",
+    "en-quasar-connector": "1.38.1"
   },
   "peerDependencies": {
     "graphql": "^14.0.2",

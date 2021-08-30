@@ -181,7 +181,7 @@ async function resolveWorkspaceDirectory(parent, args, context) {
         includedWorkspaceGuids,
         sorts,
     };
-    const list = await getList(context.thriftComm, context, filters, params);
+    const list = await getList(context.comm, context, filters, params);
     if (!sorts) {
         sorts = [];
     }

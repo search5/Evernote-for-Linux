@@ -134,7 +134,7 @@ exports.shortcutCreate = {
         }
         const res = await ctx.queryGraph(trc, EntityConstants_1.CoreEntityTypes.Shortcut, 'Shortcuts', {});
         if (res.length >= SHORTCUT_MAX_COUNT) {
-            throw new Error(`Too many shortcuts`);
+            throw new conduit_utils_1.LimitExceededError('shortcut', 'Too many shortcuts', SHORTCUT_MAX_COUNT);
         }
         const shortcutGenID = await ctx.generateCustomID(trc, ctx.userID, EntityConstants_1.CoreEntityTypes.Shortcut, null, source);
         if (!shortcutGenID) {

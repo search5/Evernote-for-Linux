@@ -84,10 +84,11 @@ async function taskCreatePlan(trc, ctx, params) {
     ctx.updateAnalytics({
         taskCreate: {
             category: 'task',
-            action: 'create',
+            action: 'create-task',
             label: params.creationEventLabel,
             dimensions: {
-                ['task_id']: taskID,
+                ['taskGuid']: taskID,
+                ['noteGuid']: params.container,
             },
         },
     });

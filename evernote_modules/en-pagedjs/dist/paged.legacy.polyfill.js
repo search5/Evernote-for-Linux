@@ -3425,7 +3425,7 @@
 	              case 0:
 	                return _context5.abrupt("return", new Promise(function (resolve) {
 	                  if (!image.src) {
-	                    console.warn('There is no src in img!');
+	                    console.warn("There is no src in img!");
 	                  }
 
 	                  if (image.src && image.complete !== true) {
@@ -3493,7 +3493,7 @@
 	    }
 	  }, {
 	    key: "createBreakToken",
-	    value: function createBreakToken(overflow, rendered, source) {
+	    value: function createBreakToken(overflow, rendered, source, prevBreakToken) {
 	      var container = overflow.startContainer;
 	      var offset = overflow.startOffset;
 	      var node, renderedNode, parent, index, temp;
@@ -3569,7 +3569,10 @@
 	        }
 
 	        node = (0, dom.child)(parent, index);
-	        offset += node.textContent.indexOf(container.textContent);
+
+	        if (prevBreakToken && prevBreakToken.node === node) {
+	          offset += prevBreakToken.offset;
+	        }
 	      }
 
 	      if (!node) {
@@ -3594,7 +3597,7 @@
 	      });
 
 	      if (overflow) {
-	        breakToken = this.createBreakToken(overflow, rendered, source); // breakToken is nullable
+	        breakToken = this.createBreakToken(overflow, rendered, source, prevBreakToken); // breakToken is nullable
 
 	        var breakHooks = this.hooks.onBreakToken.triggerSync(breakToken, overflow, rendered, this);
 	        breakHooks.forEach(function (newToken) {

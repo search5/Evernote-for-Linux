@@ -8,14 +8,14 @@ const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
-const en_nsync_connector_1 = require("en-nsync-connector");
+const en_quasar_connector_1 = require("en-quasar-connector");
 const ScheduledNotificationConverter_1 = require("./ScheduledNotificationConverter");
 const getTaskNodeAndEdges = async (trc, instance, context) => {
     var _a, _b;
     const nodesToUpsert = [];
     const edgesToCreate = [];
     const edgesToDelete = [];
-    const task = en_nsync_connector_1.convertNsyncEntityToNode(instance, context);
+    const task = en_quasar_connector_1.convertNsyncEntityToNode(instance, context);
     if (!task) {
         return null;
     }
@@ -109,7 +109,7 @@ const getTaskNodeAndEdges = async (trc, instance, context) => {
     }
     const taskNodesAndEdges = { nodes: { nodesToUpsert, nodesToDelete: [] }, edges: { edgesToDelete, edgesToCreate } };
     const snNodesAndEdges = await ScheduledNotificationConverter_1.getSnNodeAndEdgesForTask(trc, task, context);
-    return en_nsync_connector_1.mergeNodesAndEdges(taskNodesAndEdges, snNodesAndEdges);
+    return en_quasar_connector_1.mergeNodesAndEdges(taskNodesAndEdges, snNodesAndEdges);
 };
 exports.getTaskNodeAndEdges = getTaskNodeAndEdges;
 // based on workspaces/shared/en-thrift-connector/src/Converters/Converters.ts

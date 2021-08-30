@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getGoogleServicesPlugin = exports.transformOAuthToServiceCredential = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
-const en_thrift_connector_1 = require("en-thrift-connector");
+const en_conduit_sync_1 = require("en-conduit-sync");
 const GoogleDrive_1 = require("./GoogleDrive");
 const GoogleServicesTypes_1 = require("./GoogleServicesTypes");
 function transformOAuthToServiceCredential(credential) {
@@ -61,7 +61,7 @@ function getGoogleServicesPlugin(httpClient) {
         //   API Keys to Conduit.
         // Get EN Auth Token, then ask Thrift for scoped OAuth credentials.
         const authToken = await conduit_core_1.retrieveAuthorizedToken(context);
-        const googleOAuth = await en_thrift_connector_1.getScopedGoogleOAuthCredential(context.trc, context.thriftComm, authToken || '', thriftService);
+        const googleOAuth = await en_conduit_sync_1.getScopedGoogleOAuthCredential(context.trc, context.comm, authToken || '', thriftService);
         const gapiCredential = transformOAuthToServiceCredential(googleOAuth);
         return gapiCredential;
     }
@@ -76,7 +76,7 @@ function getGoogleServicesPlugin(httpClient) {
         const googleFileIds = args.resourceIds;
         // Get EN Auth Token, then ask Thrift for scoped OAuth credentials.
         const authToken = await conduit_core_1.retrieveAuthorizedToken(context);
-        const googleOAuth = await en_thrift_connector_1.getScopedGoogleOAuthCredential(context.trc, context.thriftComm, authToken || '', GoogleServicesTypes_1.GoogleScopes.drive.scope);
+        const googleOAuth = await en_conduit_sync_1.getScopedGoogleOAuthCredential(context.trc, context.comm, authToken || '', GoogleServicesTypes_1.GoogleScopes.drive.scope);
         const gapiCredential = transformOAuthToServiceCredential(googleOAuth);
         // Make Google Drive API Request
         const driveFiles = await GoogleDrive_1.getFiles(context.trc, httpClient, gapiCredential.accessToken, googleFileIds);

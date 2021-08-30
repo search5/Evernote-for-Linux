@@ -440,7 +440,6 @@ class CLuceneWrapper {
             throw new Error('CLucene: unsupported on this platform');
         }
         // console.log('suggest query: ', queryWithParams);
-        queryWithParams.stored_fields = ['nbGuid', 'notebook', 'spaceGuid', 'space', 'tagGuid', 'tag', 'creatorId', 'author', 'title', 'stack'];
         const { error, result } = this.cl.search('', JSON.stringify(queryWithParams));
         if (error) {
             this.logger.error(en_search_engine_shared_1.formatSearchEngineException('CLuceneWrapper', 'suggest', error));

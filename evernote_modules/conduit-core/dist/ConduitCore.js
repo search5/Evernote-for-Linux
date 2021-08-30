@@ -61,6 +61,24 @@ class ResourceManager {
     constructFileRemoteURL(authHost, path) {
         return `${this.di.getFileServiceHost(authHost)}${path}`;
     }
+    async getFallbackPath(trc) {
+        const fallbackPath = this.di.resourceUploadFailFallbackPath;
+        if (fallbackPath) {
+            const resp = await conduit_utils_1.withError(this.di.getCurrentUsername(trc));
+            if (resp.err || !resp.data) {
+                conduit_utils_1.logger.error('ResourceManager getCurrentUsername failed ', resp.err);
+                return null;
+            }
+            return [fallbackPath, resp.data];
+        }
+        return null;
+    }
+    async copyResourceToFallbackPath(trc, params) {
+        const fallbackPath = await this.getFallbackPath(trc);
+        if (fallbackPath) {
+            return await this.copyResourceToPath(trc, params, [...fallbackPath, params.destFilename]);
+        }
+    }
 }
 exports.ResourceManager = ResourceManager;
 class ConduitCore {
@@ -80,6 +98,15 @@ class ConduitCore {
         this.getCurrentUserID = async (trc, watcher) => {
             var _a, _b;
             return (_b = (await ((_a = this.multiUserManager) === null || _a === void 0 ? void 0 : _a.getCurrentUserID(trc, watcher)))) !== null && _b !== void 0 ? _b : null;
+        };
+        this.getCurrentUser = async (trc) => {
+            if (!this.graph) {
+                throw new Error('Conduit not initialized');
+            }
+            if (await this.getCurrentUserID(trc, null)) {
+                return await this.graph.getUserNodeWithoutGraphQLContext(trc);
+            }
+            return null;
         };
         if (config.noFreezeImmutable) {
             SimplyImmutable.freezeImmutableStructures(false);
@@ -499,6 +526,11 @@ function conduitDIProxy(getConduit, eventCallback) {
             var _a;
             const conduit = getConduit();
             return (_a = (await (conduit === null || conduit === void 0 ? void 0 : conduit.getCurrentUserID(trc, watcher)))) !== null && _a !== void 0 ? _a : null;
+        },
+        getCurrentUser: async (trc) => {
+            var _a;
+            const conduit = getConduit();
+            return (_a = (await (conduit === null || conduit === void 0 ? void 0 : conduit.getCurrentUser(trc)))) !== null && _a !== void 0 ? _a : null;
         },
         getNsyncAssociation: (srcType, dstType, associationType) => {
             var _a;

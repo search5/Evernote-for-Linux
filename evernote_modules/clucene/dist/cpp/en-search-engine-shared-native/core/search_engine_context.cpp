@@ -8,6 +8,7 @@
 #include "search_engine_context.h"
 
 #include "CLucene/search/QueryFilter.h"
+#include "CLucene/search/_FieldDocSortedHitQueue.h"
 
 namespace en_search {
 
@@ -181,27 +182,31 @@ namespace en_search {
             });
 
             auto searcher = std::make_unique<IndexSearcher>(reader.get());
-            auto hits = util::cst_del_unique_ptr<Hits>(
-                searcher->search(queryStringQuery.get(), filter.get(), sort.get()),
-                [](Hits* hits) {
-                    _CLLDELETE(hits);
+            auto limit = searchParams.from + searchParams.size;
+            auto topDocs = util::cst_del_unique_ptr<TopFieldDocs>(
+                searcher->_search(queryStringQuery.get(), filter.get(), limit, sort.get()),
+                [](TopFieldDocs* topDocs) {
+                    _CLLDELETE(topDocs);
                 });
 
-            auto maxHitsCount = hits->length();
-            auto startIndex = std::min((size_t)std::max(searchParams.from, 0), maxHitsCount);
-            maxHitsCount -= startIndex;
-            auto maxResults = (searchParams.size >= 0 && (size_t)searchParams.size < maxHitsCount) ? (size_t)searchParams.size : maxHitsCount;
-
+            auto startIndex = searchParams.from;
+            auto scoreDocsLength = static_cast<size_t>(topDocs->scoreDocsLength);
+            auto maxResults = scoreDocsLength > startIndex ? scoreDocsLength - startIndex : 0;
+            
             std::vector<SInterimResults> interimResults;
             auto needRescoring = searchParams.sortType == evernote::cosm::core::SortType::RELEVANCE;
             if (needRescoring && maxResults > 0) {
                 interimResults.resize(maxResults);
                 for (auto i = startIndex; i < startIndex + maxResults; ++i) {
                     // todo:: change this to document version
-                    auto updatedStr = getStringFromField(hits->doc(i), L"updated");
-                    auto updated = std::stoll(updatedStr.c_str());
-                    interimResults[i - startIndex].index = i;
-                    interimResults[i - startIndex].score = hits->score(i) * smarttiming2plain(updated);
+                    const auto &scoreDoc = topDocs->scoreDocs[i];
+                    Document hitDoc;
+                    if (searcher.get()->doc(scoreDoc.doc, hitDoc)) {
+                        auto updatedStr = getStringFromField(hitDoc, L"updated");
+                        auto updated = std::stoll(updatedStr.c_str());
+                        interimResults[i - startIndex].index = scoreDoc.doc;
+                        interimResults[i - startIndex].score = scoreDoc.score * smarttiming2plain(updated);
+                    }
                 }
 
                 std::sort(interimResults.begin(), interimResults.end(), [](const SInterimResults &lhs, const SInterimResults &rhs) {
@@ -210,34 +215,36 @@ namespace en_search {
             }
 
             for (auto i = startIndex; i < startIndex + maxResults; ++i) {
-                auto index = needRescoring ? interimResults[i - startIndex].index : i;
-                auto interimScore = needRescoring ? interimResults[i - startIndex].score : hits->score(i);
-                auto &hitDoc = hits->doc(index);
+                auto index = needRescoring ? interimResults[i - startIndex].index : topDocs->scoreDocs[i].doc;
+                auto interimScore = needRescoring ? interimResults[i - startIndex].score : topDocs->scoreDocs[i].score;
+                Document hitDoc;
+                if (searcher.get()->doc(index, hitDoc)) {
+                    // ids/guids can only contain ascii symbols
+                    auto wide_guid = std::wstring(hitDoc.get(_T("_id")));
+                    std::string guid(wide_guid.begin(), wide_guid.end());
+                    auto wide_type = std::wstring(hitDoc.get(_T("type")));
+                    auto wide_version = std::wstring(hitDoc.get(_T("version")));
+                    auto score = util::sigmoid(interimScore);
 
-                // ids/guids can only contain ascii symbols
-                auto wide_guid = std::wstring(hitDoc.get(_T("_id")));
-                std::string guid(wide_guid.begin(), wide_guid.end());
-                auto wide_type = std::wstring(hitDoc.get(_T("type")));
-                auto wide_version = std::wstring(hitDoc.get(_T("version")));
-                auto score = util::sigmoid(interimScore);
-
-                auto doc = json::object();
-                doc["guid"] = guid;
-                doc["type"] = std::stol(wide_type.c_str());
-                doc["version"] = std::stol(wide_version.c_str());
-                doc["score"] = score;
-                for (const auto &field: storedFields) {
-                    if (field == "tag" || field == "tagGuid") {
-                        doc[field] = getArrayOfStringFromField(hitDoc, std::wstring(field.begin(), field.end()).c_str());
-                    } else {
-                        doc[field] = getStringFromField(hitDoc, std::wstring(field.begin(), field.end()).c_str());
+                    auto doc = json::object();
+                    doc["guid"] = guid;
+                    doc["type"] = std::stol(wide_type.c_str());
+                    doc["version"] = std::stol(wide_version.c_str());
+                    doc["score"] = score;
+                    for (const auto &field: storedFields) {
+                        if (field == "tag" || field == "tagGuid") {
+                            doc[field] = getArrayOfStringFromField(hitDoc, std::wstring(field.begin(), field.end()).c_str());
+                        } else {
+                            doc[field] = getStringFromField(hitDoc, std::wstring(field.begin(), field.end()).c_str());
+                        }
                     }
+                    searchResultGroup["documents"].emplace_back(doc);
                 }
-                searchResultGroup["documents"].emplace_back(doc);
             }
 
             searchResultGroup["startIndex"] = startIndex;
-            searchResultGroup["totalResultCount"] = hits->length();
+            searchResultGroup["totalResultCount"] = topDocs->totalHits;
+
         } catch (CLuceneError& exception) {
             if (exception.number() == CL_ERR_OutOfMemory) {
                 throw;

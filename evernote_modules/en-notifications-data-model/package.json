@@ -1,6 +1,6 @@
 {
   "name": "en-notifications-data-model",
-  "version": "3.6.0",
+  "version": "3.10.1",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -9,7 +9,7 @@
   ],
   "main": "dist/index",
   "dependencies": {
-    "en-data-model": "3.6.0",
+    "en-data-model": "3.10.1",
     "en-ts-utils": "^5.1.0"
   },
   "devDependencies": {

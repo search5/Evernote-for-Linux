@@ -16,7 +16,7 @@ function getENCommEnginePlugin() {
         }
         const authorizedToken = await conduit_core_1.retrieveAuthorizedToken(context);
         const authData = en_thrift_connector_1.decodeAuthData(authorizedToken);
-        const results = await EnThriftCommEngine_1.syncMessages(context.trc, context.thriftComm, authData, args);
+        const results = await EnThriftCommEngine_1.syncMessages(context.trc, context.comm, authData, args);
         // Message content is deprecated, remove on next breaking change
         if (results && results.messages) {
             results.messages = results.messages.map(m => (Object.assign(Object.assign({}, m), { messageContent: m.content })));

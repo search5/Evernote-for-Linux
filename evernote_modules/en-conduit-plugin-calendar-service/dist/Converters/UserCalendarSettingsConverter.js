@@ -7,10 +7,10 @@ exports.getUserCalendarSettingsNodeAndEdges = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_data_model_1 = require("en-data-model");
-const en_nsync_connector_1 = require("en-nsync-connector");
+const en_quasar_connector_1 = require("en-quasar-connector");
 const getUserCalendarSettingsNodeAndEdges = async (trc, instance, context) => {
     var _a, _b;
-    const userCalendarSettings = en_nsync_connector_1.convertNsyncEntityToNode(instance, context);
+    const userCalendarSettings = en_quasar_connector_1.convertNsyncEntityToNode(instance, context);
     if (!userCalendarSettings) {
         return {};
     }

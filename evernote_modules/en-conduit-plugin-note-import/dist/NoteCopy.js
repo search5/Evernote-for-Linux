@@ -78,6 +78,7 @@ async function noteCopyResolver(parent, args, context, info) {
     return {
         result: mutation.results.result,
         success: true,
+        mutationID: mutation.mutationID,
     };
 }
 async function noteMoveResolver(parent, args, context, info) {
@@ -93,10 +94,11 @@ async function noteMoveResolver(parent, args, context, info) {
         }, context, info);
     }
     // regular noteMove (change parent)
-    await context.db.runMutator(context.trc, 'noteMoveInternal', { note: args.note, targetContainer: args.targetContainer });
+    const noteMoveMutation = await context.db.runMutator(context.trc, 'noteMoveInternal', { note: args.note, targetContainer: args.targetContainer });
     return {
         result: args.note,
         success: true,
+        mutationID: noteMoveMutation.mutationID,
     };
 }
 exports.noteCopyMutations = {

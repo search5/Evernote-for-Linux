@@ -305,8 +305,8 @@ function getCalendarServicePlugin(httpClient) {
         }
         if (graphDBevent) {
             try {
-                await context.db.runMutator(context.trc, 'calendarEventLinkInternal', Object.assign({ noteID: args.noteID, eventID: args.eventID, noteOwnerID: noteOwnerMetadata.userID }, graphDBevent.NodeFields));
-                return { success: true, result: graphDBevent.id };
+                const { mutationID } = await context.db.runMutator(context.trc, 'calendarEventLinkInternal', Object.assign({ noteID: args.noteID, eventID: args.eventID, noteOwnerID: noteOwnerMetadata.userID }, graphDBevent.NodeFields));
+                return { success: true, result: graphDBevent.id, mutationID };
             }
             catch (err) {
                 conduit_utils_1.logger.debug('Could not run mutation with GraphDB event.', err);
@@ -315,8 +315,8 @@ function getCalendarServicePlugin(httpClient) {
         const ephemeralEvent = await context.db.getMemoryStorage().getValue(context.trc, null, CalendarConstants_1.EPHEMERAL_EVENTS_BY_ID_TABLE_NAME, args.eventID);
         if (ephemeralEvent) {
             try {
-                await context.db.runMutator(context.trc, 'calendarEventLinkInternal', Object.assign({ noteID: args.noteID, eventID: args.eventID, noteOwnerID: noteOwnerMetadata.userID }, ephemeralEvent));
-                return { success: true, result: args.eventID };
+                const { mutationID } = await context.db.runMutator(context.trc, 'calendarEventLinkInternal', Object.assign({ noteID: args.noteID, eventID: args.eventID, noteOwnerID: noteOwnerMetadata.userID }, ephemeralEvent));
+                return { success: true, result: args.eventID, mutationID };
             }
             catch (err) {
                 conduit_utils_1.logger.debug('Could not run mutation with cached event.', err);
@@ -326,14 +326,14 @@ function getCalendarServicePlugin(httpClient) {
         if ((_b = (_a = qsEvent.result) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.calendarEvent) {
             try {
                 const _c = qsEvent.result.data.calendarEvent, { id } = _c, eventWithoutID = __rest(_c, ["id"]);
-                await context.db.runMutator(context.trc, 'calendarEventLinkInternal', Object.assign({ noteID: args.noteID, eventID: args.eventID, noteOwnerID: noteOwnerMetadata.userID }, eventWithoutID));
-                return { success: true, result: qsEvent.id };
+                const { mutationID } = await context.db.runMutator(context.trc, 'calendarEventLinkInternal', Object.assign({ noteID: args.noteID, eventID: args.eventID, noteOwnerID: noteOwnerMetadata.userID }, eventWithoutID));
+                return { success: true, result: qsEvent.id, mutationID };
             }
             catch (err) {
                 conduit_utils_1.logger.debug('Could not run mutation with QS event.', err);
             }
         }
-        return { success: false, result: 'Could not fetch event from Ephemeral DB nor Query Service' };
+        return { success: false, result: 'Could not fetch event from Ephemeral DB nor Query Service', mutationID: null };
     }
     async function userCalendarSettingsUpdateMutationResolver(parent, args, context) {
         if (!args) {
@@ -341,15 +341,15 @@ function getCalendarServicePlugin(httpClient) {
         }
         conduit_core_1.validateDB(context);
         try {
-            await context.db.runMutator(context.trc, 'calendarUserCalendarSettingsUpdate', args);
+            const { mutationID } = await context.db.runMutator(context.trc, 'calendarUserCalendarSettingsUpdate', args);
             await context.db.getMemoryStorage().transact(context.trc, 'SetUpdatedCalendarTime', async (tx) => {
                 await tx.setValue(context.trc, CalendarConstants_1.CALENDAR_UPDATES_TABLE_NAME, CalendarConstants_1.CALENDAR_UPDATES_ROW_NAME, Date.now());
             });
             await Utilities_1.expireEventsByDayCache(context);
-            return { success: true, result: args.userCalendarSettingsId };
+            return { success: true, result: args.userCalendarSettingsId, mutationID };
         }
         catch (error) {
-            return { success: false, result: error };
+            return { success: false, result: error, mutationID: null };
         }
     }
     const initCalendarPlugin = async () => {

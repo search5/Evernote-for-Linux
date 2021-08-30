@@ -1,6 +1,6 @@
 {
   "name": "evernote-thrift",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "The forked version of thrift we use at Evernote.",
   "main": "node/index.js",
   "publishConfig": {

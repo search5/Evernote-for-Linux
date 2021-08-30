@@ -21,7 +21,7 @@ async function sendVerificationEmailResolver(parent, args, context) {
         throw new conduit_utils_1.NotFoundError(user.id, 'Sync context metadata not found');
     }
     const auth = en_thrift_connector_1.decodeAuthData(metadata.authToken);
-    const utilityStore = context.thriftComm.getUtilityStore(auth.urls.utilityUrl);
+    const utilityStore = context.comm.getUtilityStore(auth.urls.utilityUrl);
     await utilityStore.sendVerificationEmail(context.trc, auth.token);
     return { success: true };
 }

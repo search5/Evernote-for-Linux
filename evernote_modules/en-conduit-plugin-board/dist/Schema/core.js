@@ -47,13 +47,6 @@ exports.coreFeatureVersionOne = {
         };
         // We must compare this against a user's current Board values to get the most accurate value.
         let isCustomized = false;
-        /*
-         * This was the only Board level customization before this launch;
-         *  it is worth noting that headerBGPreviousUpload can happen with an actual apply customization.
-         */
-        if (board && board.NodeFields.headerBG.size > 0) {
-            isCustomized = true;
-        }
         const widgetMutationsRet = [];
         if (widgets) {
             // It is possible due to release schedules we catch the Board Service Level ahead of this upgrade, so lets use it if it exists.

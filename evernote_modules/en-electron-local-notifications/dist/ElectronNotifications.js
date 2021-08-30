@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ElectronNotifications = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const electron_1 = require("electron");
-const analytics_1 = require("./analytics");
+const en_conduit_plugin_scheduled_notification_shared_1 = require("en-conduit-plugin-scheduled-notification-shared");
 /**
  * Class responsible for handling Electron Notifications,
  */
@@ -25,8 +25,10 @@ class ElectronNotifications {
         this.removePendingNotification(notificationData.id);
         const notification = this.createElectronNotificationFromData(notificationData);
         const mutableTimeoutId = conduit_utils_1.setTimeoutForTimestamp(() => {
-            analytics_1.recordOpenEvent();
-            notification.show();
+            if (!en_conduit_plugin_scheduled_notification_shared_1.shouldDropNotification(notificationData.id, notificationData.metadata, sendAt, Date.now(), 'desktop')) {
+                en_conduit_plugin_scheduled_notification_shared_1.recordOpenEvent(notificationData.metadata);
+                notification.show();
+            }
             delete this.pendingNotifications[notificationData.id];
         }, sendAt);
         this.pendingNotifications[notificationData.id] = {
@@ -82,8 +84,9 @@ class ElectronNotifications {
             timeoutType: 'default',
             icon: notificationData.iconPath ? electron_1.nativeImage.createFromDataURL(notificationData.iconPath) : undefined,
         });
+        let isClosedFromNotificationAction = false; // this flag to check whether close event originated from notification's action event handling;
         notification.on('click', conduit_utils_1.once(() => {
-            analytics_1.recordBodyClickEvent();
+            en_conduit_plugin_scheduled_notification_shared_1.recordBodyClickEvent(notificationData.metadata);
             const callback = notificationData.onClick;
             this.removePendingNotification(notificationData.id);
             notification.close();
@@ -94,10 +97,12 @@ class ElectronNotifications {
             conduit_utils_1.logger.info('No onClick callback defined for ElectronNotification');
         }));
         notification.on('action', (_, actionIdx) => {
-            var _a;
-            // TODO: add analytics
+            var _a, _b;
             const callback = (_a = notificationData.buttons) === null || _a === void 0 ? void 0 : _a[actionIdx].onClick;
+            const actionType = (_b = notificationData.buttons) === null || _b === void 0 ? void 0 : _b[actionIdx].actionType;
+            en_conduit_plugin_scheduled_notification_shared_1.recordActionClickEvent(notificationData.metadata, actionType);
             this.removePendingNotification(notificationData.id);
+            isClosedFromNotificationAction = true;
             notification.close();
             if (callback) {
                 callback();
@@ -106,7 +111,9 @@ class ElectronNotifications {
             conduit_utils_1.logger.info(`No onClick callback defined for button index num: '${actionIdx}'`);
         });
         notification.on('close', () => {
-            analytics_1.recordCloseEvent();
+            if (!isClosedFromNotificationAction) {
+                en_conduit_plugin_scheduled_notification_shared_1.recordCloseEvent(notificationData.metadata);
+            }
             const callback = notificationData.onClose;
             this.removePendingNotification(notificationData.id);
             if (callback) {

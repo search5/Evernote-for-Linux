@@ -15,7 +15,7 @@ const SearchUtils_1 = require("../SearchUtils");
  */
 class SearchEventBootstrapper {
     constructor(localKeyValueStorageProvider) {
-        this.batchSize = 1000;
+        this.batchSize = 100;
         this.searchIndexIds = new Map();
         this.events = [];
         this.localKeyValueStorageProvider = localKeyValueStorageProvider;

@@ -27,13 +27,15 @@ var NSyncEntityType;
     NSyncEntityType[NSyncEntityType["TASK_USER_SETTINGS"] = 17] = "TASK_USER_SETTINGS";
     NSyncEntityType[NSyncEntityType["WIDGET_CONTENT_CONFLICT"] = 18] = "WIDGET_CONTENT_CONFLICT";
     NSyncEntityType[NSyncEntityType["SCHEDULED_NOTIFICATION"] = 19] = "SCHEDULED_NOTIFICATION";
-    NSyncEntityType[NSyncEntityType["GAMIFICATION_DATA"] = 20] = "GAMIFICATION_DATA";
+    NSyncEntityType[NSyncEntityType["GAMIFICATION_SUMMARY"] = 20] = "GAMIFICATION_SUMMARY";
     NSyncEntityType[NSyncEntityType["GAMIFICATION_MILESTONE"] = 21] = "GAMIFICATION_MILESTONE";
     NSyncEntityType[NSyncEntityType["GAMIFICATION_GOAL"] = 22] = "GAMIFICATION_GOAL";
     NSyncEntityType[NSyncEntityType["CALENDAR_SETTINGS"] = 23] = "CALENDAR_SETTINGS";
     NSyncEntityType[NSyncEntityType["CALENDAR_ACCOUNT"] = 24] = "CALENDAR_ACCOUNT";
     NSyncEntityType[NSyncEntityType["USER_CALENDAR_SETTINGS"] = 25] = "USER_CALENDAR_SETTINGS";
     NSyncEntityType[NSyncEntityType["CALENDAR_EVENT"] = 26] = "CALENDAR_EVENT";
+    NSyncEntityType[NSyncEntityType["EXAMPLE_PARENT"] = 998] = "EXAMPLE_PARENT";
+    NSyncEntityType[NSyncEntityType["EXAMPLE"] = 999] = "EXAMPLE";
 })(NSyncEntityType = exports.NSyncEntityType || (exports.NSyncEntityType = {}));
 exports.EntityTypes = {
     // Core entities
@@ -55,11 +57,18 @@ exports.EntityTypes = {
     Reminder: 'Reminder',
     Task: 'Task',
     TaskUserSettings: 'TaskUserSettings',
+    // Gamification
+    GamificationSummary: 'GamificationSummary',
+    GamificationMilestone: 'GamificationMilestone',
+    GamificationGoal: 'GamificationGoal',
     // Calendar 
     CalendarSettings: 'CalendarSettings',
     CalendarAccount: 'CalendarAccount',
     UserCalendarSettings: 'UserCalendarSettings',
     CalendarEvent: 'CalendarEvent',
+    // Sample
+    ExampleParent: 'ExampleParent',
+    Example: 'Example',
 };
 exports.EntityTypeToNsync = new Map([
     // Core entities
@@ -81,11 +90,18 @@ exports.EntityTypeToNsync = new Map([
     [exports.EntityTypes.Reminder, NSyncEntityType.REMINDER],
     [exports.EntityTypes.Task, NSyncEntityType.TASK],
     [exports.EntityTypes.TaskUserSettings, NSyncEntityType.TASK_USER_SETTINGS],
+    // Gamification
+    [exports.EntityTypes.GamificationSummary, NSyncEntityType.GAMIFICATION_SUMMARY],
+    [exports.EntityTypes.GamificationMilestone, NSyncEntityType.GAMIFICATION_MILESTONE],
+    [exports.EntityTypes.GamificationGoal, NSyncEntityType.GAMIFICATION_GOAL],
     // Calendar
     [exports.EntityTypes.CalendarSettings, NSyncEntityType.CALENDAR_SETTINGS],
     [exports.EntityTypes.CalendarAccount, NSyncEntityType.CALENDAR_ACCOUNT],
     [exports.EntityTypes.UserCalendarSettings, NSyncEntityType.USER_CALENDAR_SETTINGS],
     [exports.EntityTypes.CalendarEvent, NSyncEntityType.CALENDAR_EVENT],
+    // Sample
+    [exports.EntityTypes.ExampleParent, NSyncEntityType.EXAMPLE_PARENT],
+    [exports.EntityTypes.Example, NSyncEntityType.EXAMPLE],
 ]);
 exports.EntityTypeFromNsync = new Map(Array.from(exports.EntityTypeToNsync, entry => [entry[1], entry[0]]));
 //# sourceMappingURL=EntityTypes.js.map

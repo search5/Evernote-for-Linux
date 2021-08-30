@@ -27,6 +27,7 @@ class SearchExporter {
     constructor(searchEngine, localStorageProvider) {
         this.reindexationState = ReindexationState.REQUIRED;
         this.initialEventProcessingState = InitialEventsProcessingState.REQUIRED;
+        this.isMetadataSyncFinished = false;
         this.localStorageProvider = localStorageProvider;
         this.searchIndexExporter = new SearchIndexExporter_1.SearchIndexExporter(searchEngine, this.localStorageProvider);
         this.searchEventJournal = new SearchEventJournal_1.SearchEventJournal(this.localStorageProvider);
@@ -41,6 +42,9 @@ class SearchExporter {
     }
     getInitialEventsProcessingStateKey() {
         return 'initial_events_processing_state';
+    }
+    getIsMetadataSyncFinishedKey() {
+        return 'is_metadata_sync_finished';
     }
     setUserID(userID) {
         this.userID = userID;
@@ -68,6 +72,7 @@ class SearchExporter {
     async init(trc) {
         await this.searchEventJournal.init(trc);
         this.initialEventProcessingState = await this.getInitialEventsProcessingState(trc);
+        this.isMetadataSyncFinished = await this.getIsMetadataSyncFinishedPersistent(trc);
     }
     async setupReindexation(trc, source) {
         await this.searchEventBootstrapper.init(trc, source);
@@ -123,6 +128,27 @@ class SearchExporter {
     isInitialIndexationFinished() {
         return this.initialEventProcessingState === InitialEventsProcessingState.FINISHED;
     }
+    setIsMetadataSyncFinishedLocal(isMetadataSyncFinished) {
+        this.isMetadataSyncFinished = isMetadataSyncFinished;
+    }
+    async saveIsMetadataSyncFinishedPersistent(trc) {
+        await this.localStorageProvider().transact(trc, `GraphDB.${SearchExporter.name}`, async (db) => {
+            await db.setValue(trc, this.getMetaTableName(), this.getIsMetadataSyncFinishedKey(), this.isMetadataSyncFinished);
+        });
+    }
+    async setIsMetadataSyncFinishedLocalAndPersistent(trc, db, isMetadataSyncFinished) {
+        this.isMetadataSyncFinished = isMetadataSyncFinished;
+        await db.setValue(trc, this.getMetaTableName(), this.getIsMetadataSyncFinishedKey(), this.isMetadataSyncFinished);
+    }
+    async getIsMetadataSyncFinishedPersistent(trc) {
+        return await this.localStorageProvider().transact(trc, `GraphDB.${SearchExporter.name}`, async (db) => {
+            var _a;
+            return (_a = await db.getValue(trc, null, this.getMetaTableName(), this.getIsMetadataSyncFinishedKey())) !== null && _a !== void 0 ? _a : false;
+        });
+    }
+    getIsMetadataSyncFinishedLocal() {
+        return this.isMetadataSyncFinished;
+    }
     /**
      * Checks if reindexation is required
      * @param entryTypes
@@ -142,6 +168,7 @@ class SearchExporter {
             if (indexationRequired) {
                 await this.setReindexationState(trc, db, ReindexationState.REQUIRED);
                 await this.setInitialIndexationStateLocalAndPersistent(trc, db, InitialEventsProcessingState.REQUIRED);
+                await this.setIsMetadataSyncFinishedLocalAndPersistent(trc, db, false);
                 await this.cleanInternal(trc, db);
             }
         });
@@ -182,6 +209,7 @@ class SearchExporter {
      */
     async acknowledge(trc, processedEvents) {
         await this.saveInitialEventsProcessingStatePersistent(trc);
+        await this.saveIsMetadataSyncFinishedPersistent(trc);
         await this.searchEventJournal.acknowledge(trc, processedEvents);
     }
     async truncate(trc) {

@@ -52,15 +52,26 @@ class SearchTypeConversions {
         return searchExResultTypeToDocumentType;
     }
     static initializeSuggestTypeToSearchExResultType() {
-        const searchExResultTypeToDocumentType = new Map();
-        searchExResultTypeToDocumentType.set(en_search_engine_shared_1.ENSuggestResultType.TITLE, SearchSchemaTypes_1.SearchExResultType.NOTE);
-        searchExResultTypeToDocumentType.set(en_search_engine_shared_1.ENSuggestResultType.NOTEBOOK, SearchSchemaTypes_1.SearchExResultType.NOTEBOOK);
-        searchExResultTypeToDocumentType.set(en_search_engine_shared_1.ENSuggestResultType.SPACE, SearchSchemaTypes_1.SearchExResultType.WORKSPACE);
-        searchExResultTypeToDocumentType.set(en_search_engine_shared_1.ENSuggestResultType.TAG, SearchSchemaTypes_1.SearchExResultType.TAG);
-        searchExResultTypeToDocumentType.set(en_search_engine_shared_1.ENSuggestResultType.AUTHOR, SearchSchemaTypes_1.SearchExResultType.AUTHOR);
-        searchExResultTypeToDocumentType.set(en_search_engine_shared_1.ENSuggestResultType.HISTORY, SearchSchemaTypes_1.SearchExResultType.HISTORY);
-        searchExResultTypeToDocumentType.set(en_search_engine_shared_1.ENSuggestResultType.STACK, SearchSchemaTypes_1.SearchExResultType.STACK);
-        return searchExResultTypeToDocumentType;
+        const suggestResultTypeToSearchExResultType = new Map();
+        suggestResultTypeToSearchExResultType.set(en_search_engine_shared_1.ENSuggestResultType.TITLE, SearchSchemaTypes_1.SearchExResultType.NOTE);
+        suggestResultTypeToSearchExResultType.set(en_search_engine_shared_1.ENSuggestResultType.NOTEBOOK, SearchSchemaTypes_1.SearchExResultType.NOTEBOOK);
+        suggestResultTypeToSearchExResultType.set(en_search_engine_shared_1.ENSuggestResultType.SPACE, SearchSchemaTypes_1.SearchExResultType.WORKSPACE);
+        suggestResultTypeToSearchExResultType.set(en_search_engine_shared_1.ENSuggestResultType.TAG, SearchSchemaTypes_1.SearchExResultType.TAG);
+        suggestResultTypeToSearchExResultType.set(en_search_engine_shared_1.ENSuggestResultType.AUTHOR, SearchSchemaTypes_1.SearchExResultType.AUTHOR);
+        suggestResultTypeToSearchExResultType.set(en_search_engine_shared_1.ENSuggestResultType.HISTORY, SearchSchemaTypes_1.SearchExResultType.HISTORY);
+        suggestResultTypeToSearchExResultType.set(en_search_engine_shared_1.ENSuggestResultType.STACK, SearchSchemaTypes_1.SearchExResultType.STACK);
+        return suggestResultTypeToSearchExResultType;
+    }
+    static initializeSearchExResultTypeToSuggestType() {
+        const searchExResultTypeToSuggestResultType = new Map();
+        searchExResultTypeToSuggestResultType.set(SearchSchemaTypes_1.SearchExResultType.NOTE, en_search_engine_shared_1.ENSuggestResultType.TITLE);
+        searchExResultTypeToSuggestResultType.set(SearchSchemaTypes_1.SearchExResultType.NOTEBOOK, en_search_engine_shared_1.ENSuggestResultType.NOTEBOOK);
+        searchExResultTypeToSuggestResultType.set(SearchSchemaTypes_1.SearchExResultType.WORKSPACE, en_search_engine_shared_1.ENSuggestResultType.SPACE);
+        searchExResultTypeToSuggestResultType.set(SearchSchemaTypes_1.SearchExResultType.TAG, en_search_engine_shared_1.ENSuggestResultType.TAG);
+        searchExResultTypeToSuggestResultType.set(SearchSchemaTypes_1.SearchExResultType.AUTHOR, en_search_engine_shared_1.ENSuggestResultType.AUTHOR);
+        searchExResultTypeToSuggestResultType.set(SearchSchemaTypes_1.SearchExResultType.HISTORY, en_search_engine_shared_1.ENSuggestResultType.HISTORY);
+        searchExResultTypeToSuggestResultType.set(SearchSchemaTypes_1.SearchExResultType.STACK, en_search_engine_shared_1.ENSuggestResultType.STACK);
+        return searchExResultTypeToSuggestResultType;
     }
     static initializeSearchStorageEventTypeToStorageChangeType() {
         const searchStorageEventTypeTostorageChangeType = new Map();
@@ -91,6 +102,7 @@ SearchTypeConversions.NODE_TYPE_TO_DOCUMENT_TYPE = SearchTypeConversions.initial
 SearchTypeConversions.SEARCH_EX_RESULT_TYPE_TO_DOCUMENT_TYPE = SearchTypeConversions.initializeSearchExResultTypeToDocumentType();
 SearchTypeConversions.DOCUMENT_TYPE_TO_SEARCH_EX_RESULT_TYPE = SearchTypeConversions.initializeDocumentTypeToSearchExResultType();
 SearchTypeConversions.SUGGEST_TYPE_TO_SEARCH_EX_RESULT_TYPE = SearchTypeConversions.initializeSuggestTypeToSearchExResultType();
+SearchTypeConversions.SEARCH_EX_RESULT_TYPE_TO_SUGGEST_TYPE = SearchTypeConversions.initializeSearchExResultTypeToSuggestType();
 SearchTypeConversions.SEARCH_STORAGE_EVENT_TYPE_TO_STORAGE_CHANGE_TYPE = SearchTypeConversions.initializeSearchStorageEventTypeToStorageChangeType();
 SearchTypeConversions.STORAGE_CHANGE_TYPE_TO_SEARCH_STORAGE_EVENT_TYPE = SearchTypeConversions.initializeStorageChangeTypToSearchStorageEventType();
 SearchTypeConversions.SEARCH_EX_SORT_ORDER_TO_SORT_TYPE = SearchTypeConversions.initializeSearchExSortOrderToSortType();

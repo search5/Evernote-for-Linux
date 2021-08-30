@@ -10,7 +10,6 @@
  "timeRange": "{START_TIME} - {END_TIME}",
  "allDay": "All day",
  "close": "Close",
- "dueAtDate": "Due {DATE}",
- "dueAtDateTime": "Due {DATE} at {TIME}",
+ "dueAtTime": "Due {TIME}",
  "untitledTask": "Untitled task"
 }

@@ -1,4 +1,1 @@
-../evernote_modules/en-core-data-model/node_modules/en-data-model
 ../evernote_modules/conduit-utils/node_modules/en-ts-utils
-../evernote_modules/en-calendar-data-model/node_modules/en-data-model
-../evernote_modules/en-graph-types/node_modules/en-data-model

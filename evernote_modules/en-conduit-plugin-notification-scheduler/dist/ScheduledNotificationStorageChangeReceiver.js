@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ScheduledNotificationStorageChangeReceiver = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_plugin_scheduled_notification_shared_1 = require("en-conduit-plugin-scheduled-notification-shared");
 const en_data_model_1 = require("en-data-model");
 const gTrcPool = new conduit_utils_1.AsyncTracePool('ScheduledNotificationStorageChangeReceiver');
 /**
@@ -25,8 +26,22 @@ class ScheduledNotificationStorageChangeReceiver {
      * @param events StorageChangeEvents[]
      */
     handleChangeEvents(events, onCompletion = () => undefined) {
-        this.handleChangeEventsAsync(events).then(onCompletion).catch(e => {
+        this.handleChangeEventsAsync(events)
+            .then(onCompletion)
+            .catch(async (e) => {
             conduit_utils_1.logger.error('ScheduledNotificationStorageChangeReceiver -- Error occurred during async handling of change events', e);
+            await gTrcPool.runTraced(null, async (trc) => {
+                const notificationLogsEnabled = await en_conduit_plugin_scheduled_notification_shared_1.getNotificationLogsEnabledFlag(trc, this.graphDB);
+                if (notificationLogsEnabled) {
+                    conduit_utils_1.recordMetric({
+                        name: 'LOCAL_NOTIFICATION_LOG',
+                        date: Date.now(),
+                        duration: 0,
+                        error: `ScheduledNotificationStorageChangeReceiver -- Error occurred during async handling of change events`,
+                        errorMessage: e.message,
+                    });
+                }
+            });
         });
     }
     async handleChangeEventsAsync(events) {
@@ -54,7 +69,21 @@ class ScheduledNotificationStorageChangeReceiver {
             }
             else {
                 // Use latest data to perform an upsert
-                await this.notificationManager.upsertNotification(trc, this.graphDB, sn);
+                conduit_utils_1.logger.info(`ScheduledNotificationStorageChangeReceiver -- Attempting to upsert notification entity with id ${sn.id}`);
+                const data = await this.notificationManager.upsertNotification(trc, this.graphDB, sn);
+                if (data && data.warn) {
+                    const message = data.warn;
+                    conduit_utils_1.logger.warn(message);
+                    const notificationLogsEnabled = await en_conduit_plugin_scheduled_notification_shared_1.getNotificationLogsEnabledFlag(trc, this.graphDB);
+                    if (notificationLogsEnabled) {
+                        conduit_utils_1.recordMetric({
+                            name: 'LOCAL_NOTIFICATION_LOG',
+                            date: Date.now(),
+                            duration: 0,
+                            error: message,
+                        });
+                    }
+                }
             }
         });
     }

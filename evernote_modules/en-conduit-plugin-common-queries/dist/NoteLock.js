@@ -87,7 +87,7 @@ function getNoteLockPlugin() {
     const notelockAcquireResolver = toNotelockResolver(async (authData, noteGuid, syncContext, context) => {
         await checkNoteUpsyncStatus(context, en_thrift_connector_1.convertGuidFromService(noteGuid, en_core_entity_types_1.CoreEntityTypes.Note));
         // TODO need to check canEditContent permission on the note before passing this through to the service
-        const noteStore = context.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
+        const noteStore = context.comm.getNoteStore(authData.urls.noteStoreUrl);
         const lockStatusRes = await conduit_utils_1.withError(noteStore.acquireNoteLock(context.trc, authData.token, noteGuid));
         if (lockStatusRes.err) {
             if (lockStatusRes.err instanceof conduit_utils_1.AuthError && lockStatusRes.err.errorCode === conduit_utils_1.AuthErrorCode.PERMISSION_DENIED && lockStatusRes.err.parameter === 'lock') {
@@ -101,12 +101,12 @@ function getNoteLockPlugin() {
         if (context.db) {
             await conduit_utils_1.withError(context.db.flushRemoteMutations());
         }
-        const noteStore = context.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
+        const noteStore = context.comm.getNoteStore(authData.urls.noteStoreUrl);
         return toNotelock(await noteStore.releaseNoteLock(context.trc, authData.token, noteGuid), syncContext, context, noteGuid, context.offlineContentStrategy);
     });
     const notelockStatusResolver = toNotelockResolver(async (authData, noteGuid, syncContext, context) => {
         await checkNoteUpsyncStatus(context, en_thrift_connector_1.convertGuidFromService(noteGuid, en_core_entity_types_1.CoreEntityTypes.Note));
-        const noteStore = context.thriftComm.getNoteStore(authData.urls.noteStoreUrl);
+        const noteStore = context.comm.getNoteStore(authData.urls.noteStoreUrl);
         return toNotelock(await noteStore.getNoteLockStatus(context.trc, authData.token, noteGuid), syncContext, context, noteGuid, context.offlineContentStrategy);
     });
     return {

@@ -10,17 +10,14 @@ function getBody(dueDate, l10n, dueDateUIOption) {
     if (!dueDate) {
         return '';
     }
-    const addDueDateCopy = (dueDateString, l10n) => {
-        return l10n.l('dueAtDate', { DATE: dueDateString });
-    };
-    const addDueDateTimeCopy = (dueDateString, timeString, l10n) => {
-        return l10n.l('dueAtDateTime', { DATE: dueDateString, TIME: timeString });
+    const addDueCopy = (dueDateString, l10n) => {
+        return l10n.l('dueAtTime', { TIME: dueDateString });
     };
     switch (dueDateUIOption) {
         case __1.DueDateUIOption.Date:
-            return addDueDateCopy(l10n.t(dueDate, 'YearMonthDay'), l10n);
+            return addDueCopy(l10n.t(dueDate, 'YearMonthDay'), l10n);
         case __1.DueDateUIOption.DateTime:
-            return addDueDateTimeCopy(l10n.t(dueDate, 'YearMonthDay'), l10n.t(dueDate, 'HourMinute'), l10n);
+            return addDueCopy(l10n.t(dueDate, 'Full'), l10n);
         case null:
         case undefined:
         default:

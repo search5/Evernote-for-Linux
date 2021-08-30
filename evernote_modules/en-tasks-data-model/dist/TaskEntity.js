@@ -3,7 +3,7 @@
  * Copyright 2021-present Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TaskEntitySchema = void 0;
+exports.TASK_TITLE_MAX_LENGTH = exports.TaskEntitySchema = void 0;
 const en_ts_utils_1 = require("en-ts-utils");
 const TaskTypes_1 = require("./TaskTypes");
 exports.TaskEntitySchema = {
@@ -42,4 +42,5 @@ exports.TaskEntitySchema = {
         },
     },
 };
+exports.TASK_TITLE_MAX_LENGTH = 300;
 //# sourceMappingURL=TaskEntity.js.map

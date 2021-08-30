@@ -74,13 +74,13 @@ function handleEdamErrorCode(errorCode, authenticationToken, fnName, parameter, 
             // 'businessUserStatus' is passed as parameter here like PERMISSION_DENIED.
             return new conduit_utils_1.AuthError(conduit_utils_1.AuthErrorCode.BUSINESS_ACCOUNT_DEACTIVATED, authenticationToken, parameter || undefined);
         case en_conduit_sync_types_1.EDAMErrorCode.LIMIT_REACHED:
-            return new conduit_utils_1.ServiceError('LIMIT_REACHED', parameter || '', message || undefined, errorCode);
+            return new conduit_utils_1.LimitExceededError(parameter || '', message || undefined);
         case en_conduit_sync_types_1.EDAMErrorCode.QUOTA_REACHED:
             return new conduit_utils_1.ServiceError('QUOTA_REACHED', parameter || '', message || undefined, errorCode);
         case en_conduit_sync_types_1.EDAMErrorCode.RATE_LIMIT_REACHED:
             return new conduit_utils_1.RetryError('RATE_LIMIT_REACHED', (rateLimitDuration || 1) * 1000);
         case en_conduit_sync_types_1.EDAMErrorCode.DEVICE_LIMIT_REACHED:
-            return new conduit_utils_1.ServiceError('DEVICE_LIMIT_REACHED', parameter || '', message || undefined, errorCode);
+            return new conduit_utils_1.LimitExceededError(parameter || '', message || undefined, -1, 'DEVICE_LIMIT_REACHED');
         case en_conduit_sync_types_1.EDAMErrorCode.DATA_CONFLICT:
             return new conduit_utils_1.ServiceError('DATA_CONFLICT', parameter || '', message || undefined, errorCode);
         case en_conduit_sync_types_1.EDAMErrorCode.DATA_REQUIRED:

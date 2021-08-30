@@ -189,14 +189,14 @@ async function checkUserConnection(trc, params, contact) {
     if (idns.length === 0) {
         return false; // no way to check connections without identity ids.
     }
-    const userStore = params.thriftComm.getUserStore(params.personalAuth.urls.userStoreUrl);
+    const utilityStore = params.thriftComm.getUtilityStore(params.personalAuth.urls.utilityUrl);
     let connected = false;
     const chunkedArray = conduit_utils_1.chunkArray(idns, en_conduit_sync_types_1.EDAM_CONNECTED_IDENTITY_REQUEST_MAX);
     for (const chunk of chunkedArray) {
         if (chunk.length === 0) {
             continue;
         }
-        const validIdns = await userStore.getConnectedIdentities(trc, params.personalAuth.token, chunk);
+        const validIdns = await utilityStore.getConnectedIdentities(trc, params.personalAuth.token, chunk);
         connected = Object.keys(validIdns).length > 0;
         if (connected) {
             break;

@@ -19,6 +19,7 @@ const electron_1 = require("electron");
 const en_conduit_electron_1 = require("en-conduit-electron");
 const en_conduit_electron_shared_1 = require("en-conduit-electron-shared");
 const fs_extra_1 = __importDefault(require("fs-extra"));
+const path_1 = __importDefault(require("path"));
 const hashFile_1 = require("./hashFile");
 class ElectronResourceManager extends conduit_core_1.ResourceManager {
     async fetchResource(trc, res, fetchFromService) {
@@ -90,6 +91,33 @@ class ElectronResourceManager extends conduit_core_1.ResourceManager {
         await fs_extra_1.default.ensureFile(toResourceFilePath);
         await fs_extra_1.default.copyFile(fromResourceFilePath, toResourceFilePath);
     }
+    async copyResourceToPath(trc, params, toPath) {
+        const toFilePath = path_1.default.join(...toPath);
+        if (params.resourceRef || params.filePath) {
+            let sourceFilePath;
+            if (params.resourceRef) {
+                const fromUrl = await this.getResourceUrl(trc, params.resourceRef);
+                const { resourceFilePath } = en_conduit_electron_1.decodeResourceUrl(fromUrl);
+                if (await fs_extra_1.default.pathExists(resourceFilePath)) {
+                    sourceFilePath = resourceFilePath;
+                }
+            }
+            if (!sourceFilePath && params.filePath && await fs_extra_1.default.pathExists(params.filePath)) {
+                sourceFilePath = params.filePath;
+            }
+            if (sourceFilePath) {
+                await fs_extra_1.default.ensureFile(toFilePath);
+                await fs_extra_1.default.copyFile(sourceFilePath, toFilePath);
+                return;
+            }
+        }
+        if (params.fileData) {
+            await fs_extra_1.default.ensureFile(toFilePath);
+            await fs_extra_1.default.writeFile(toFilePath, params.fileData);
+            return;
+        }
+        conduit_utils_1.logger.warn(`copyResourceToPath source data not present: ${conduit_utils_1.safeStringify(params)}`);
+    }
     // move or save the resource to resourceFilePath and write the mimeType into mimeFilePath
     // returns the encoded url
     async stageResourceForUpload(trc, params) {
@@ -126,8 +154,9 @@ class ElectronResourceManager extends conduit_core_1.ResourceManager {
     async resourceUploadDone(trc, res, isMarkedForOffline) {
         // noop
     }
-    async deleteCacheForUser(trc, userID) {
-        await en_conduit_electron_1.deleteCacheForUser(userID);
+    async deleteCacheForUser(trc, userID, fallback) {
+        const fallbackPath = fallback ? path_1.default.join(...fallback) : null;
+        await en_conduit_electron_1.deleteCacheForUser(userID, fallbackPath);
     }
     async downloadUrl(trc, url) {
         const message = { fileUrl: url };

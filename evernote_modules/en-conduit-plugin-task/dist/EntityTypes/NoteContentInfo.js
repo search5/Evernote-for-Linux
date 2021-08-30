@@ -3,11 +3,15 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.noteContentInfoIndexConfig = exports.noteContentInfoTypeDef = void 0;
+exports.noteContentInfoIndexConfig = exports.noteContentInfoTypeDef = exports.getContentInfoID = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
 const en_tasks_data_model_1 = require("en-tasks-data-model");
+function getContentInfoID(noteID) {
+    return `${noteID}_NoteContentInfo`;
+}
+exports.getContentInfoID = getContentInfoID;
 exports.noteContentInfoTypeDef = {
     name: en_data_model_1.EntityTypes.NoteContentInfo,
     syncSource: conduit_storage_1.SyncSource.NSYNC,

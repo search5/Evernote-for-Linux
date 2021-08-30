@@ -144,41 +144,48 @@ class FileUploader {
         if (override) {
             return await override.doFileUpload(trc, this.graphDB, this.stagedBlobManager, params, hash, size);
         }
-        const blobRef = params.blobRef;
-        if (!blobRef) {
-            throw new conduit_utils_1.MissingParameterError(`blobRef is a required field for file uploads to the file service (parentType=${params.parentType})`);
-        }
-        const blobDef = this.di.getFileUploaderBlobDef(params.parentType, blobRef);
-        if (!blobDef) {
-            throw new conduit_utils_1.NotFoundError(`${params.parentType}.${blobRef}`, 'No blob upload definition found for the requested parentType and blobRef');
-        }
         const stagedBlobID = await this.stagedBlobManager.allocStagedBlobID(trc, params.parentType);
-        const res = await this.graphDB.runMutator(trc, 'uploadFileInternal', {
-            parentType: node.type,
-            parentID: node.id,
-            blobRef,
-            mime: params.mime,
-            hash,
-            size,
-            stagedBlobID,
-            fileLocation: params.filename,
-            blobDef,
-        });
-        await this.stagedBlobManager.stageBlobForUpload(trc, stagedBlobID, {
-            parentType: node.type,
-            parentID: node.id,
-            hash,
-            remoteUrl: res.results.result,
-            mimeType: params.mime,
-            fileData: params.data,
-            filePath: params.path,
-            owner: node.owner,
-            takeFileOwnership: Boolean(params.url),
-        });
-        return {
-            uploadedHash: hash,
-            uploadedUrl: res.results.result || undefined,
-        };
+        try {
+            const blobRef = params.blobRef;
+            if (!blobRef) {
+                throw new conduit_utils_1.MissingParameterError(`blobRef is a required field for file uploads to the file service (parentType=${params.parentType})`);
+            }
+            const blobDef = this.di.getFileUploaderBlobDef(params.parentType, blobRef);
+            if (!blobDef) {
+                throw new conduit_utils_1.NotFoundError(`${params.parentType}.${blobRef}`, 'No blob upload definition found for the requested parentType and blobRef');
+            }
+            const res = await this.graphDB.runMutator(trc, 'uploadFileInternal', {
+                parentType: node.type,
+                parentID: node.id,
+                blobRef,
+                mime: params.mime,
+                hash,
+                size,
+                stagedBlobID,
+                fileLocation: params.filename,
+                blobDef,
+            });
+            await this.stagedBlobManager.stageBlobForUpload(trc, stagedBlobID, {
+                parentType: node.type,
+                parentID: node.id,
+                hash,
+                remoteUrl: res.results.result,
+                mimeType: params.mime,
+                fileData: params.data,
+                filePath: params.path,
+                owner: node.owner,
+                takeFileOwnership: Boolean(params.url),
+            });
+            return {
+                uploadedHash: hash,
+                uploadedUrl: res.results.result || undefined,
+                uploadTracker: res.mutationID,
+            };
+        }
+        catch (err) {
+            err = await this.stagedBlobManager.handleResourceUploadError(trc, stagedBlobID, params, err);
+            throw err;
+        }
     }
     async uploadFile(upload) {
         var _a;

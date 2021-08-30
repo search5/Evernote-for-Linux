@@ -1,6 +1,6 @@
 {
   "name": "en-conduit-plugin-scheduled-notification-shared",
-  "version": "1.37.11",
+  "version": "1.38.1",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -10,9 +10,14 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-storage": "1.37.11",
-    "conduit-utils": "1.37.11",
-    "en-data-model": "^3.6.2",
-    "en-notifications-data-model": "^3.4.4"
+    "conduit-core": "1.38.1",
+    "conduit-storage": "1.38.1",
+    "conduit-utils": "1.38.1",
+    "en-data-model": "^3.10.0",
+    "en-notifications-data-model": "^3.10.0",
+    "en-notifications-templates": "0.3.1"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0"
   }
 }

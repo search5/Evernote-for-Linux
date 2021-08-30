@@ -37,7 +37,7 @@ function getSupportTicketPlugin(filesystemClient) {
         }
         const authorizedToken = await conduit_core_1.retrieveAuthorizedToken(context);
         const authData = en_thrift_connector_1.decodeAuthData(authorizedToken);
-        const utilityStore = context.thriftComm.getUtilityStore(authData.urls.utilityUrl);
+        const utilityStore = context.comm.getUtilityStore(authData.urls.utilityUrl);
         const logData = await readLogFile(context.trc, args.logUri);
         await utilityStore.fileSupportTicket(context.trc, authData.token, {
             logFile: logData,

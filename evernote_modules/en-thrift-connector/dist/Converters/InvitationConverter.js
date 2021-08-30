@@ -33,10 +33,12 @@ const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const Auth = __importStar(require("../Auth"));
+const Helpers_1 = require("../Helpers");
 const ThriftGraphInterface_1 = require("../ThriftGraphInterface");
 const Converters_1 = require("./Converters");
 const LinkedNotebookHelpers_1 = require("./LinkedNotebookHelpers");
-async function acceptSharedNotebook(trc, params, syncContext, acceptParams) {
+const NotebookConverter_1 = require("./NotebookConverter");
+async function acceptSharedNotebook(trc, params, syncContext, acceptParams, runningInTransaction = true) {
     const auth = params.personalAuth;
     if (!auth) {
         throw new Error('missing auth');
@@ -52,8 +54,9 @@ async function acceptSharedNotebook(trc, params, syncContext, acceptParams) {
             // cleanup partial notebook.
             await LinkedNotebookHelpers_1.removePartialNotebook(trc, params, syncContext, acceptParams.shareKey, true);
         }
+        const err = new conduit_utils_1.NoAccessError(acceptParams.shareKey);
         // throw ErrorWithCleanup so that graph cleanup changes above go through.
-        throw new ThriftGraphInterface_1.ErrorWithCleanup(new conduit_utils_1.NoAccessError(acceptParams.shareKey));
+        throw runningInTransaction ? new ThriftGraphInterface_1.ErrorWithCleanup(err) : err;
     }
     const personalNoteStore = params.thriftComm.getNoteStore(auth.urls.noteStoreUrl);
     const linkedNotebook = await personalNoteStore.getOrCreateLinkedNotebook(trc, auth.token, {
@@ -63,11 +66,13 @@ async function acceptSharedNotebook(trc, params, syncContext, acceptParams) {
         sharedNotebookGlobalId: sharedNotebook.globalId,
     });
     const shareGuid = sharedNotebook.globalId;
+    const serviceNotebookGuid = sharedNotebook.notebookGuid;
+    const notebookGuid = Converters_1.convertGuidFromService(serviceNotebookGuid, en_core_entity_types_1.CoreEntityTypes.Notebook);
     let shareState = await params.graphTransaction.getSyncState(trc, null, ['sharing', 'sharedNotebooks', shareGuid]);
     if (!shareState) {
         shareState = {
             guid: shareGuid,
-            notebookGuid: Converters_1.convertGuidFromService(sharedNotebook.notebookGuid, en_core_entity_types_1.CoreEntityTypes.Notebook),
+            notebookGuid,
             noteStoreUrl: acceptParams.noteStoreUrl,
             authStr: sharedNotebook.authStr,
             sharedNotebookId: sharedNotebook.id || null,
@@ -80,6 +85,21 @@ async function acceptSharedNotebook(trc, params, syncContext, acceptParams) {
     }
     // cleanup any partial notebook for shared nb.
     await LinkedNotebookHelpers_1.removePartialNotebook(trc, params, syncContext, shareGuid, false);
+    // fetch the notebook if it doesn't exist and write it to DB, fixes notfound in CON-1829, CON-2383.
+    const notebook = await params.graphTransaction.getNode(trc, null, { id: notebookGuid, type: en_core_entity_types_1.CoreEntityTypes.Notebook });
+    if (!notebook) {
+        const lnbSyncContext = Helpers_1.linkedNotebookSyncContext(shareState.linkedNotebook.guid);
+        const syncStatePath = [lnbSyncContext, 'notestore'];
+        await Helpers_1.createSharedNotebookSyncContextMetadata(trc, params.graphTransaction, lnbSyncContext, shareState.ownerId, shareState.authStr, shareState.guid, shareState.noteStoreUrl, syncStatePath);
+        const shareAuth = Auth.decodeAuthData(shareState.authStr);
+        const shareNoteStore = params.thriftComm.getNoteStore(shareAuth.urls.noteStoreUrl);
+        const serviceData = await shareNoteStore.getNotebook(trc, shareAuth.token, serviceNotebookGuid);
+        const update = {
+            lastUpdateCount: 0,
+        };
+        await params.graphTransaction.updateSyncState(trc, syncStatePath, update);
+        await NotebookConverter_1.NotebookConverter.convertFromService(trc, params, lnbSyncContext, serviceData);
+    }
     return {
         notebookID: sharedNotebook.notebookGuid || null,
         shareState,

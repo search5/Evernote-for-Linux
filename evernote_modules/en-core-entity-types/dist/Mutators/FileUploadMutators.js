@@ -65,7 +65,7 @@ exports.uploadFileInternal = {
         }
         if (params.size > blobDef.maxSize) {
             // TODO: make errors use actual fields once conduit errors are fully separated from thrift errors
-            throw new conduit_utils_1.ServiceError('LIMIT_REACHED', `${params.blobRef}ContentSizeMax`, `type=LIMIT_REACHED commandServiceExceptionParameter=${params.blobRef}Content.size limit=${params.blobRef}ContentSizeMax`);
+            throw new conduit_utils_1.LimitExceededError(`${params.blobRef}ContentSizeMax`, `commandServiceExceptionParameter=${params.blobRef}Content.size limit=${params.blobRef}ContentSizeMax`, blobDef.maxSize);
         }
         const plan = {
             ops: [
@@ -76,6 +76,8 @@ exports.uploadFileInternal = {
                         parentID: params.parentID,
                         parentType: params.parentType,
                         parentOwnerID: await ctx.resolveOwnerRef(trc, parentRef),
+                        mime: params.mime,
+                        filename: params.fileLocation,
                     },
                     remoteLocation: optimisticUrl,
                 },

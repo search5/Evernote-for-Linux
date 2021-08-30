@@ -20,14 +20,14 @@ function getENMonetizationPlugin() {
         const authData = en_thrift_connector_1.decodeAuthData(await conduit_core_1.retrieveAuthorizedToken(context));
         const { clientType } = args;
         return {
-            state: await EnMonetizationService_1.getPaywallState(context.trc, context.thriftComm, authData, { clientType }),
+            state: await EnMonetizationService_1.getPaywallState(context.trc, context.comm, authData, { clientType }),
         };
     };
     const createDeviceSyncResolver = async (parent, args, context) => {
         conduit_core_1.validateDB(context);
         const authData = en_thrift_connector_1.decodeAuthData(await conduit_core_1.retrieveAuthorizedToken(context));
         return {
-            state: await EnMonetizationService_1.createDeviceSync(context.trc, context.thriftComm, authData),
+            state: await EnMonetizationService_1.createDeviceSync(context.trc, context.comm, authData),
         };
     };
     return {

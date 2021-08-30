@@ -20,6 +20,7 @@ var SearchStorageIndexationType;
     SearchStorageIndexationType[SearchStorageIndexationType["INITIAL_INDEXATION_EVENT"] = 0] = "INITIAL_INDEXATION_EVENT";
     SearchStorageIndexationType[SearchStorageIndexationType["LAST_INITIAL_INDEXATION_EVENT"] = 1] = "LAST_INITIAL_INDEXATION_EVENT";
     SearchStorageIndexationType[SearchStorageIndexationType["LIVE_INDEXATION_EVENT"] = 2] = "LIVE_INDEXATION_EVENT";
+    SearchStorageIndexationType[SearchStorageIndexationType["METADATA_SYNC_FINISHED"] = 3] = "METADATA_SYNC_FINISHED";
 })(SearchStorageIndexationType = exports.SearchStorageIndexationType || (exports.SearchStorageIndexationType = {}));
 /**
  * ETL manager class.
@@ -27,13 +28,14 @@ var SearchStorageIndexationType;
  * Performs extract/transform/load steps for the each input database event.
  */
 class SearchProcessor {
-    constructor(graphDB, searchEngine) {
+    constructor(graphDB, searchEngine, offlineSearchIndexingConfig) {
+        var _a, _b;
         this.supportedStreamingEventTypes = [en_core_entity_types_1.CoreEntityTypes.Attachment, en_core_entity_types_1.CoreEntityTypes.Message, en_core_entity_types_1.CoreEntityTypes.Note,
             en_data_model_1.EntityTypes.Task, en_core_entity_types_1.CoreEntityTypes.Tag, en_core_entity_types_1.CoreEntityTypes.Notebook, en_core_entity_types_1.CoreEntityTypes.Workspace, en_core_entity_types_1.CoreEntityTypes.Stack];
         // maximum time for the processing pipeline
-        this.maxProcessingTime = 200;
+        this.defaultMaxProcessingTime = 200;
         // maximum intervals between two flushes
-        this.maxFlushInterval = 2 * 60 * 1000;
+        this.defaultMaxFlushInterval = 2 * 60 * 1000;
         // current event batch
         this.batch = [];
         // required in order to defer the events export up to the first process function call
@@ -49,6 +51,7 @@ class SearchProcessor {
         this.requiresInitialization = true;
         this.latestFlush = Date.now();
         this.processedEvents = 0;
+        this.shouldGenerateMetadataSyncFinishedEvent = true;
         this.supportedReindexationTypes = new Array();
         this.supportedReindexationTypes.push(en_core_entity_types_1.CoreEntityTypes.Message);
         this.supportedReindexationTypes.push(en_core_entity_types_1.CoreEntityTypes.Note);
@@ -56,6 +59,8 @@ class SearchProcessor {
         this.supportedReindexationTypes.push(en_core_entity_types_1.CoreEntityTypes.Notebook);
         this.supportedReindexationTypes.push(en_core_entity_types_1.CoreEntityTypes.Stack);
         this.supportedReindexationTypes.push(en_core_entity_types_1.CoreEntityTypes.Workspace);
+        this.maxProcessingTime = (_a = offlineSearchIndexingConfig.maxTimePerPollMilliseconds) !== null && _a !== void 0 ? _a : this.defaultMaxProcessingTime;
+        this.maxFlushInterval = (_b = offlineSearchIndexingConfig.maxFlushIntervalMilliseconds) !== null && _b !== void 0 ? _b : this.defaultMaxFlushInterval;
         this.searchEngine = searchEngine;
         this.searchExtractor = new SearchExtractor_1.SearchExtractor(graphDB);
         this.searchLoader = new SearchLoader_1.SearchLoader(searchEngine);
@@ -80,6 +85,7 @@ class SearchProcessor {
      * Generates required events and loads them to them main queue.
      */
     async init(trc) {
+        this.shouldGenerateMetadataSyncFinishedEvent = true;
         await this.searchEngine.init();
         await this.searchExporter.init(trc);
         conduit_utils_1.logger.debug(`SearchProcessor: deferred queue size: ${this.deferredEventsForExport.length}`);
@@ -152,6 +158,14 @@ class SearchProcessor {
             // to handle potential race
             await this.exportDeferredEvents(trc);
         }
+        if (!this.searchExporter.getIsMetadataSyncFinishedLocal()) {
+            if (this.shouldGenerateMetadataSyncFinishedEvent && this.searchExtractor.isBackgroundSyncFinished(trc)) {
+                conduit_utils_1.logger.debug(`SearchProcessor: generate metadata sync finished event.`);
+                const metadataSyncFinishedEvent = SearchUtils_1.SearchRenamingEventsUtils.createNoteEvent('NA', SearchStorageIndexationType.METADATA_SYNC_FINISHED);
+                await this.processEvents(trc, [metadataSyncFinishedEvent]);
+                this.shouldGenerateMetadataSyncFinishedEvent = false;
+            }
+        }
         const timestamp = Date.now();
         await this.getEvents(trc);
         // eslint-disable-next-line max-len
@@ -170,13 +184,20 @@ class SearchProcessor {
             const event = this.batch.shift();
             const shouldProcessEvent = await this.shouldProcessEvent(trc, event);
             if (!event.isDuplicate && shouldProcessEvent) {
-                const extractionResults = await this.searchExtractor.process(trc, [event.searchStorageChangeEvent]);
-                const transformationResults = await this.searchTransformer.process(extractionResults);
-                if (transformationResults[0] && SearchUtils_1.SearchRenamingEventsUtils.RENAMING_EVENT_NODE_TYPES.has(event.searchStorageChangeEvent.nodeRef.type)) {
-                    await this.processSecondaryIndexEvent(trc, transformationResults[0]);
+                if (event.searchStorageChangeEvent.indexationType === SearchStorageIndexationType.METADATA_SYNC_FINISHED) {
+                    this.searchExporter.setIsMetadataSyncFinishedLocal(true);
+                    const indexInfo = await this.searchEngine.search({ query: 'intitle:*', documentType: en_search_engine_shared_1.ENDocumentType.NOTE });
+                    conduit_utils_1.logger.info(`SearchProcessor: finished processing all note metadata sync info. total active notes in index: ${indexInfo.totalResultCount}`);
                 }
                 else {
-                    indexUpdated = (await this.searchLoader.process(transformationResults)) || indexUpdated;
+                    const extractionResults = await this.searchExtractor.process(trc, [event.searchStorageChangeEvent]);
+                    const transformationResults = await this.searchTransformer.process(extractionResults);
+                    if (transformationResults[0] && SearchUtils_1.SearchRenamingEventsUtils.RENAMING_EVENT_NODE_TYPES.has(event.searchStorageChangeEvent.nodeRef.type)) {
+                        await this.processSecondaryIndexEvent(trc, transformationResults[0]);
+                    }
+                    else {
+                        indexUpdated = (await this.searchLoader.process(transformationResults)) || indexUpdated;
+                    }
                 }
             }
             this.processedEvents += 1;
@@ -216,7 +237,8 @@ class SearchProcessor {
             else {
                 // live indexation event case - check if the update / reindexation is required
                 const searchGuidRequest = en_search_engine_shared_1.ENSearchQueryUtils.getSearchGuidRequest(event.guid);
-                const searchGuidResults = await this.searchEngine.search(searchGuidRequest, event.documentType);
+                const searchParams = { query: searchGuidRequest, documentType: event.documentType };
+                const searchGuidResults = await this.searchEngine.search(searchParams);
                 if (searchGuidResults.totalResultCount > 1) {
                     conduit_utils_1.logger.error(`SearchProcessor: secondary index is corrupted: it contains more than one entry with the specified guid: ${event.guid}; type: ${event.documentType}`);
                     return;
@@ -299,6 +321,7 @@ class SearchProcessor {
         if (!this.searchExporter.isInitialIndexationFinished()) {
             switch (event.searchStorageChangeEvent.indexationType) {
                 case SearchStorageIndexationType.LIVE_INDEXATION_EVENT:
+                case SearchStorageIndexationType.METADATA_SYNC_FINISHED:
                     await this.processEvents(trc, [event.searchStorageChangeEvent]);
                     conduit_utils_1.logger.trace(`SearchProcessor: shouldProcessEvent: guid: ${event.searchStorageChangeEvent.nodeRef.id}. event is deferred until initial indexation is finished.`);
                     shouldProcessEvent = false;
@@ -388,6 +411,9 @@ class SearchProcessor {
     }
     isInitialIndexationFinished() {
         return this.searchExporter.isInitialIndexationFinished();
+    }
+    isMetadataSyncFinished() {
+        return this.searchExporter.getIsMetadataSyncFinishedLocal();
     }
 }
 exports.SearchProcessor = SearchProcessor;

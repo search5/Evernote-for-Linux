@@ -71,6 +71,14 @@ BinaryHttpTransport.prototype.flush = function(callback) {
     }
   };
 
+  // sometimes react native emits timeout instead error on network exceptions.
+  xhr.ontimeout = function (evt) {
+    if (callback) {
+      callback(new Exceptions.TransportException(
+        'XHR error event. Timeout.', new Exceptions.NetworkException('XHR error event. Timeout.', url)));
+    }
+  };
+
   this.input.flush();
   /**
    * Older browsers (CEF 1 in the win-client) XHR don't support send(ArrayBufferView)

@@ -32,7 +32,8 @@ class Searcher {
         const startTime = new Date().getTime();
         let guids = new Array();
         // search api by design does not support entry types except note
-        guids = (await this.searchEngine.search(query, en_search_engine_shared_1.ENDocumentType.NOTE)).results.map(entry => entry.guid);
+        const searchParams = { query, documentType: en_search_engine_shared_1.ENDocumentType.NOTE };
+        guids = (await this.searchEngine.search(searchParams)).results.map(entry => entry.guid);
         const results = [];
         for (const guid of guids) {
             results.push({
@@ -118,7 +119,17 @@ class Searcher {
         const maxNotes = resSpec.maxResults || 128;
         const sortOrder = resSpec.sort || 3 /* RELEVANCE */;
         const ascending = resSpec.ascending || false;
-        const engineResultGroup = await this.searchEngine.search(searchStr, SearchUtils_1.SearchTypeConversions.SEARCH_EX_RESULT_TYPE_TO_DOCUMENT_TYPE.get(requestedType), offset, maxNotes, SearchUtils_1.SearchTypeConversions.SEARCH_EX_SORT_ORDER_TO_SORT_TYPE.get(sortOrder), ascending);
+        const isBooleanSearch = SearchExUtil_1.isFullBooleanSearch(args);
+        const searchParams = {
+            query: searchStr,
+            documentType: SearchUtils_1.SearchTypeConversions.SEARCH_EX_RESULT_TYPE_TO_DOCUMENT_TYPE.get(requestedType),
+            offset,
+            maxNotes,
+            order: SearchUtils_1.SearchTypeConversions.SEARCH_EX_SORT_ORDER_TO_SORT_TYPE.get(sortOrder),
+            ascending,
+            isFullBooleanSearch: isBooleanSearch,
+        };
+        const engineResultGroup = await this.searchEngine.search(searchParams);
         const resGroup = SearchExUtil_1.emptyResultGroup(requestedType);
         for (const searchResult of engineResultGroup.results) {
             const res = requestedType === SearchSchemaTypes_1.SearchExResultType.NOTE ? this.getSearchExNote(searchResult) : this.getSearchExBaseResult(searchResult, requestedType);
@@ -159,15 +170,24 @@ class Searcher {
         return true;
     }
     async suggest(args, authData) {
+        var _a;
         const searchExRet = SearchExUtil_1.emptySearchExResult();
         const searchStr = SearchExUtil_1.getSearchString(args);
-        let engineResults = new Array();
-        if (await this.isQuickSwitcherRequest(args)) {
-            engineResults = await this.searchEngine.suggest(searchStr, en_search_engine_shared_1.ENDocumentType.NOTE, en_search_engine_shared_1.ENSuggestOptimization.NONE);
+        const params = {
+            resultSpec: [],
+            documentType: en_search_engine_shared_1.ENDocumentType.NOTE,
+            optimization: await this.isQuickSwitcherRequest(args) ? en_search_engine_shared_1.ENSuggestOptimization.NONE : en_search_engine_shared_1.ENSuggestOptimization.O3,
+        };
+        for (const spec of args.param.resultSpec) {
+            const suggestType = SearchUtils_1.SearchTypeConversions.SEARCH_EX_RESULT_TYPE_TO_SUGGEST_TYPE.get(spec.type);
+            if (suggestType) {
+                params.resultSpec.push({
+                    type: suggestType,
+                    maxResults: (_a = spec.maxResults) !== null && _a !== void 0 ? _a : 5,
+                });
+            }
         }
-        else {
-            engineResults = await this.searchEngine.suggest(searchStr, en_search_engine_shared_1.ENDocumentType.NOTE);
-        }
+        const engineResults = await this.searchEngine.suggest(searchStr, params);
         // TODO: resotre this when full sync for large buiness acoounts is enabled
         // in case of empty request in business account we should limit note scope for suggest
         // if (searchStr.length === 0 && authData.vaultAuth) {

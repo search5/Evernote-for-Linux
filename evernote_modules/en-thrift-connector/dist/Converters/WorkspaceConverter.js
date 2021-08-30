@@ -35,7 +35,7 @@ const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const SimplyImmutable = __importStar(require("simply-immutable"));
 const Auth = __importStar(require("../Auth"));
-const WorkspaceUIPreferencesResolver_1 = require("../Resolvers/WorkspaceUIPreferencesResolver");
+const WorkspaceUIPreferences_1 = require("../WorkspaceUIPreferences");
 const Converters_1 = require("./Converters");
 const Helpers_1 = require("./Helpers");
 const MembershipConverter_1 = require("./MembershipConverter");
@@ -197,10 +197,10 @@ async function updateWorkspaceUiPreferencesToService(trc, params, syncContext, n
     if (!wsNode) {
         throw new conduit_utils_1.NotFoundError(wsId, 'Workspace not found in graph');
     }
-    const lastFetch = WorkspaceUIPreferencesResolver_1.getWsPreferencesLastFetch(wsId);
+    const lastFetch = WorkspaceUIPreferences_1.getWsPreferencesLastFetch(wsId);
     if (!lastFetch || lastFetch + WS_PREF_REFETCH_INTERVAL < Date.now()) {
         // downsync ws preferences before upsyncing changes if fetch interval elapsed before last fetch.
-        await WorkspaceUIPreferencesResolver_1.asyncFetchandCacheWsPreferences(trc, null, params.graphTransaction, params.thriftComm, wsNode, syncContext);
+        await WorkspaceUIPreferences_1.asyncFetchandCacheWsPreferences(trc, null, params.graphTransaction, params.thriftComm, wsNode, syncContext);
     }
     const auth = await Helpers_1.getAuthForSyncContext(trc, params.graphTransaction, params.authCache, syncContext);
     if (fields.layoutStyle) {

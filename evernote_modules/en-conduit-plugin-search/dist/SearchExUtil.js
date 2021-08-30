@@ -3,7 +3,7 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getLocalSearchMode = exports.getSearchString = exports.emptyResultGroup = exports.emptySearchExResult = exports.combineResults = exports.findResultSpec = exports.selectResultGroup = exports.selectResultGroups = exports.setDefaults = exports.composeSearchFilterString = exports.escapeLabel = exports.objectIDToServiceGuid = exports.serviceGuidToObjectID = void 0;
+exports.OnlineSearchExError = exports.getLocalSearchMode = exports.getSearchString = exports.emptyResultGroup = exports.emptySearchExResult = exports.combineResults = exports.isFullBooleanSearch = exports.findResultSpec = exports.selectResultGroup = exports.selectResultGroups = exports.setDefaults = exports.composeSearchFilterString = exports.escapeLabel = exports.objectIDToServiceGuid = exports.serviceGuidToObjectID = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_thrift_connector_1 = require("en-thrift-connector");
@@ -135,10 +135,17 @@ function findResultSpec(args, requiredType, requiredTextField) {
     return args.param.resultSpec[idx];
 }
 exports.findResultSpec = findResultSpec;
+function isFullBooleanSearch(args) {
+    if (args.param.processingSpec && args.param.processingSpec.fullBooleanSearch) {
+        return true;
+    }
+    return false;
+}
+exports.isFullBooleanSearch = isFullBooleanSearch;
 // multiple groups of one type are not supported
 async function combineResults(args, resultPromises) {
     const resultsToMerge = (await conduit_utils_1.allSettled(resultPromises)).filter(x => x !== null);
-    if (!resultsToMerge) {
+    if (!resultsToMerge || resultsToMerge.length === 0) {
         return emptySearchExResult();
     }
     const type2result = {}; // maps type to result group
@@ -191,4 +198,11 @@ function getLocalSearchMode(args) {
         "Auto" /* AUTO */;
 }
 exports.getLocalSearchMode = getLocalSearchMode;
+class OnlineSearchExError extends Error {
+    constructor(msg) {
+        super(msg);
+        this.name = 'OnlineSearchExError';
+    }
+}
+exports.OnlineSearchExError = OnlineSearchExError;
 //# sourceMappingURL=SearchExUtil.js.map

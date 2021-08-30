@@ -4,6 +4,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const ENSearchTypes_1 = require("./ENSearchTypes");
+const ESQueryStringBuilder_1 = require("./parsers/advanced/ESQueryStringBuilder");
 class ENCLuceneHelper {
     static initializePrimaryToAltFields() {
         const result = new Map();
@@ -13,6 +14,28 @@ class ENCLuceneHelper {
         result.set(ENCLuceneHelper.stackText, [{ name: ENCLuceneHelper.stackTextAlt, type: ENSearchTypes_1.ENSearchAlternativeFieldType.ALTERNATIVE }, { name: ENCLuceneHelper.stackTextSuffix, type: ENSearchTypes_1.ENSearchAlternativeFieldType.SUFFIX }]);
         result.set(ENCLuceneHelper.title, [{ name: ENCLuceneHelper.titleAlt, type: ENSearchTypes_1.ENSearchAlternativeFieldType.ALTERNATIVE }, { name: ENCLuceneHelper.titleSuffix, type: ENSearchTypes_1.ENSearchAlternativeFieldType.SUFFIX }]);
         return result;
+    }
+    static initializeSuggestTypeToFieldName() {
+        const suggestTypeToFieldName = new Map();
+        suggestTypeToFieldName.set(ENSearchTypes_1.ENSuggestResultType.TITLE, ENCLuceneHelper.title);
+        suggestTypeToFieldName.set(ENSearchTypes_1.ENSuggestResultType.NOTEBOOK, ENCLuceneHelper.notebookTextField);
+        suggestTypeToFieldName.set(ENSearchTypes_1.ENSuggestResultType.SPACE, ENCLuceneHelper.spaceTextField);
+        suggestTypeToFieldName.set(ENSearchTypes_1.ENSuggestResultType.TAG, ENCLuceneHelper.tagTextField);
+        suggestTypeToFieldName.set(ENSearchTypes_1.ENSuggestResultType.AUTHOR, ENCLuceneHelper.authorText);
+        // suggestTypeToFieldName.set(ENSuggestResultType.HISTORY);
+        suggestTypeToFieldName.set(ENSearchTypes_1.ENSuggestResultType.STACK, ENCLuceneHelper.stackText);
+        return suggestTypeToFieldName;
+    }
+    static initializeSuggestTypeToMainFieldName() {
+        const suggestTypeToFieldName = new Map();
+        suggestTypeToFieldName.set(ENSearchTypes_1.ENSuggestResultType.TITLE, ENCLuceneHelper.title);
+        suggestTypeToFieldName.set(ENSearchTypes_1.ENSuggestResultType.NOTEBOOK, ENCLuceneHelper.notebookField);
+        suggestTypeToFieldName.set(ENSearchTypes_1.ENSuggestResultType.SPACE, ENCLuceneHelper.spaceField);
+        suggestTypeToFieldName.set(ENSearchTypes_1.ENSuggestResultType.TAG, ENCLuceneHelper.tagField);
+        suggestTypeToFieldName.set(ENSearchTypes_1.ENSuggestResultType.AUTHOR, ENCLuceneHelper.author);
+        // suggestTypeToFieldName.set(ENSuggestResultType.HISTORY);
+        suggestTypeToFieldName.set(ENSearchTypes_1.ENSuggestResultType.STACK, ENCLuceneHelper.stack);
+        return suggestTypeToFieldName;
     }
     static truncateField(value, limit) {
         let truncatedValue = value;
@@ -30,6 +53,36 @@ class ENCLuceneHelper {
             luceneQuery += ` AND ${ENCLuceneHelper.activeField}:1`;
         }
         return luceneQuery;
+    }
+    static getConditionsForSuggestType(suggestFieldName, searchTokens) {
+        const conditions = new Array();
+        for (const searchToken of searchTokens) {
+            const escapedToken = ESQueryStringBuilder_1.ESQueryStringBuilder.escapeReservedChars(searchToken);
+            if (ENCLuceneHelper.primaryToAltFields.has(suggestFieldName)) {
+                const singleConditionWithAlts = [`${suggestFieldName}:${escapedToken}*`];
+                const altSuggestTypes = ENCLuceneHelper.primaryToAltFields.get(suggestFieldName);
+                for (const altSuggestType of altSuggestTypes) {
+                    if (altSuggestType.type === ENSearchTypes_1.ENSearchAlternativeFieldType.SUFFIX) {
+                        const suffixConditions = new Array();
+                        const tokens = ENCLuceneHelper.nGramTokenize(searchToken, 3);
+                        for (const token of tokens) {
+                            const truncatedEscapedToken = ESQueryStringBuilder_1.ESQueryStringBuilder.escapeReservedChars(token);
+                            suffixConditions.push(`${altSuggestType.name}:${truncatedEscapedToken}*^0.1`);
+                        }
+                        singleConditionWithAlts.push(`(${suffixConditions.join(' AND ')})`);
+                    }
+                    else {
+                        singleConditionWithAlts.push(`${altSuggestType.name}:${escapedToken}*^0.5`);
+                    }
+                }
+                const condition = `(${singleConditionWithAlts.join(' OR ')})`;
+                conditions.push(condition);
+            }
+            else {
+                conditions.push(`${suggestFieldName}:${escapedToken}*`);
+            }
+        }
+        return conditions;
     }
     static nGramTokenize(searchWord, nGramSize) {
         const result = new Array();
@@ -337,4 +390,6 @@ ENCLuceneHelper.maxNotePlainTextLength = 1048576;
 ENCLuceneHelper.maxFieldSize = 255;
 ENCLuceneHelper.maxTaskSize = 300;
 ENCLuceneHelper.maxTasksPerNote = 1000;
+ENCLuceneHelper.suggestTypeToFieldName = ENCLuceneHelper.initializeSuggestTypeToFieldName();
+ENCLuceneHelper.suggestTypeToMainFieldName = ENCLuceneHelper.initializeSuggestTypeToMainFieldName();
 //# sourceMappingURL=ENCLuceneHelper.js.map

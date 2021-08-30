@@ -18,10 +18,14 @@ exports.promotionTypeDef = {
 exports.promotionIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.promotionTypeDef, {
     indexResolvers: {
         shownCount: conduit_storage_1.getIndexByResolverForPrimitives(exports.promotionTypeDef, ['NodeFields', 'shownCount']),
+        timeLastShown: conduit_storage_1.getIndexByResolverForPrimitives(exports.promotionTypeDef, ['NodeFields', 'timeLastShown']),
     },
     queries: {
         Promotions: {
-            sort: [{ field: 'shownCount', order: 'ASC' }],
+            sort: [
+                { field: 'shownCount', order: 'ASC' },
+                { field: 'timeLastShown', order: 'ASC' },
+            ],
             params: {},
         },
     },

@@ -25,8 +25,8 @@ namespace core {
   {
     SortType sortType;
     bool reverseOrder;
-    int from;
-    int size;
+    size_t from;
+    size_t size;
   };
 
   std::string getFilterStringFromJson(const json &jQueryWithParams);

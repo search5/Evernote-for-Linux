@@ -1,5 +1,5 @@
 /**
- * @license Paged.js v1.0.19 | MIT | https://gitlab.pagedmedia.org/tools/pagedjs
+ * @license Paged.js v1.0.20 | MIT | https://gitlab.pagedmedia.org/tools/pagedjs
  */
 
 function getBoundingClientRect(element) {
@@ -1456,7 +1456,7 @@ class Layout {
 					addedLength = newRenderedLength;
 				}
 			});
-			
+
 			length += addedLength;
 
 			// Check if layout has content yet
@@ -1513,7 +1513,7 @@ class Layout {
 					} else if (node.parentElement) {
 						currentNoteNode = node.parentElement.closest("div.html-note");
 					}
-					 
+
 					if (currentNoteNode && currentNoteNode.nextElementSibling) {
 						newBreakToken = {
 							node: currentNoteNode.nextElementSibling,
@@ -1638,7 +1638,7 @@ class Layout {
 	async awaitImageLoaded(image) {
 		return new Promise((resolve) => {
 			if (!image.src) {
-				console.warn('There is no src in img!');
+				console.warn("There is no src in img!");
 			}
 			if (image.src && image.complete !== true) {
 				image.onload = function () {
@@ -1679,7 +1679,7 @@ class Layout {
 		return breakNode;
 	}
 
-	createBreakToken(overflow, rendered, source) {
+	createBreakToken(overflow, rendered, source, prevBreakToken) {
 		let container = overflow.startContainer;
 		let offset = overflow.startOffset;
 		let node, renderedNode, parent, index, temp;
@@ -1753,7 +1753,9 @@ class Layout {
 
 			node = child(parent, index);
 
-			offset += node.textContent.indexOf(container.textContent);
+			if (prevBreakToken && prevBreakToken.node === node) {
+				offset += prevBreakToken.offset;
+			}
 		}
 
 		if (!node) {
@@ -1779,7 +1781,7 @@ class Layout {
 		});
 
 		if (overflow) {
-			breakToken = this.createBreakToken(overflow, rendered, source);
+			breakToken = this.createBreakToken(overflow, rendered, source, prevBreakToken);
 			// breakToken is nullable
 			let breakHooks = this.hooks.onBreakToken.triggerSync(breakToken, overflow, rendered, this);
 			breakHooks.forEach((newToken) => {
@@ -1838,7 +1840,7 @@ class Layout {
 				let pos = getBoundingClientRect(node);
 				let left = Math.round(pos.left);
 				let right = Math.floor(pos.right);
-			
+
 				if (!range && left >= end) {
 
 					if (node.tagName === "IMG") {
@@ -1849,12 +1851,12 @@ class Layout {
 						if (dataRef === prevTokenDataRef) {
 							continue;
 						}
-					}	
+					}
 
 					if (areElementsInSameTableRow(node, prevBreakToken.node, rendered) &&
 						isAvoidingBreakInsideRow(node, rendered)) {
 						continue;
-					}	
+					}
 
 					// Check if it is a float
 					let isFloat = false;
@@ -1893,16 +1895,16 @@ class Layout {
 						break;
 					}
 
-				}				
+				}
 
 				if (!range && isText(node) &&
 					node.textContent.trim().length &&
 					!breakInsideAvoidParentNode(node.parentNode)) {
-					
+
 					if (areElementsInSameTableRow(node, prevBreakToken.node, rendered) &&
 						isAvoidingBreakInsideRow(node, rendered)) {
 						continue;
-					}	
+					}
 
 					let rects = getClientRects(node);
 					let rect;

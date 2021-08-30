@@ -31,6 +31,7 @@ var ENSortType;
     ENSortType[ENSortType["TITLE"] = 5] = "TITLE";
 })(ENSortType = exports.ENSortType || (exports.ENSortType = {}));
 exports.EMPTY_QUERY = '*:*';
+exports.PAGE_SIZE = 128;
 var ENSuggestOptimization;
 (function (ENSuggestOptimization) {
     ENSuggestOptimization[ENSuggestOptimization["NONE"] = 0] = "NONE";

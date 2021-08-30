@@ -260,11 +260,9 @@ namespace core {
               _CLLDELETE(hits);
           });
 
-      auto maxHitsCount = hits->length();
-      auto startIndex = std::min((size_t)std::max(searchParams.from, 0), maxHitsCount);
-      maxHitsCount -= startIndex;
-      auto maxResults = (searchParams.size >= 0 && (size_t)searchParams.size < maxHitsCount) ? (size_t)searchParams.size : maxHitsCount;
-
+      auto startIndex = searchParams.from;
+      auto scoreDocsLength = static_cast<size_t>(hits->length());
+      auto maxResults = scoreDocsLength > startIndex ? scoreDocsLength - startIndex : 0;
       for (auto i = startIndex; i < startIndex + maxResults; ++i) {
           // ids/guids can only contain ascii symbols
         auto wide_guid = std::wstring(hits->doc(i).get(util::toWstring(kId).c_str()));

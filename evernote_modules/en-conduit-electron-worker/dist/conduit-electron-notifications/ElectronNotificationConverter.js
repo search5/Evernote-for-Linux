@@ -24,9 +24,11 @@ function getElectronNotificationConverter(di) {
                 iconPath: di.getIconPath(),
                 buttons: (_a = data.buttons) === null || _a === void 0 ? void 0 : _a.map(button => ({
                     text: button.text,
+                    actionType: button.action.name,
                     onClick: getOnClickHandler(button.action),
                 })),
                 closeButtonText: data.closeButtonText,
+                metadata: en_conduit_plugin_scheduled_notification_shared_1.extractNotificationMetadata(data),
             };
         },
     };

@@ -118,7 +118,7 @@ class ESQueryPrinter {
             }
         }
     }
-    removeSurroundingPunctuation(text) {
+    static removeSurroundingPunctuation(text) {
         return text.replace(ESQueryPrinter.PUNCT_REGEX_START, '').replace(ESQueryPrinter.PUNCT_REGEX_END, '');
     }
     removeLeadingWildcards(text) {
@@ -127,7 +127,7 @@ class ESQueryPrinter {
     processText(token) {
         let text = token.isFieldOperator() ? token.fieldValue : token.token;
         if (!token.quoted && !token.isFieldOperator()) {
-            text = this.removeSurroundingPunctuation(text);
+            text = ESQueryPrinter.removeSurroundingPunctuation(text);
         }
         else {
             text = this.removeLeadingWildcards(text);
@@ -160,8 +160,8 @@ class ESQueryPrinter {
             && FieldOperator_1.QSPFieldOperatorContext.isCoordinateOperator(token.fieldOperator) && !(token.fieldValue.length === 0);
     }
 }
-ESQueryPrinter.PUNCT_REGEX_START = new RegExp("^[^" + QueryStringParser_1.QueryStringParser.WORD_SYMBOL + "]+", "mu"); // punctuation symbol at word start
-ESQueryPrinter.PUNCT_REGEX_END = new RegExp("[^" + QueryStringParser_1.QueryStringParser.WORD_SYMBOL + "]+$", "mu"); // punctuation symbol at word end
+ESQueryPrinter.PUNCT_REGEX_START = new RegExp("^([^" + QueryStringParser_1.QueryStringParser.WORD_SYMBOL + "]|[" + QueryStringParser_1.QueryStringParser.SPECIAL_PUNCT_SYMBOLS + "])+", "mu"); // punctuation symbol at word start
+ESQueryPrinter.PUNCT_REGEX_END = new RegExp("([^" + QueryStringParser_1.QueryStringParser.WORD_SYMBOL + "]|[" + QueryStringParser_1.QueryStringParser.SPECIAL_PUNCT_SYMBOLS + "])+$", "mu"); // punctuation symbol at word end
 ESQueryPrinter.LEADING_WILDCARD = new RegExp("^[*]+", "mu"); // wildcards at word start (deadly for Lucene)
 // strings that are actually stored in elasticsearch index as contains field values
 var Contains;
@@ -282,6 +282,9 @@ class ESQueryStringBuilder {
     }
     static fromStr(localeStr) {
         return ESQueryStringBuilder.str2enum.get(localeStr);
+    }
+    static removeSurroundingPunctuation(token) {
+        return ESQueryPrinter.removeSurroundingPunctuation(token);
     }
 }
 exports.ESQueryStringBuilder = ESQueryStringBuilder;

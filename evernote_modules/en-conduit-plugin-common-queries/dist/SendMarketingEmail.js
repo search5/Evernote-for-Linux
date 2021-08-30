@@ -14,7 +14,7 @@ async function sendMarketingEmailResolver(parent, args, context) {
         throw new conduit_utils_1.NotFoundError(conduit_core_1.PERSONAL_USER_CONTEXT, 'Sync context metadata not found');
     }
     const auth = en_thrift_connector_1.decodeAuthData(metadata.authToken);
-    const utilityStore = context.thriftComm.getUtilityStore(auth.urls.utilityUrl);
+    const utilityStore = context.comm.getUtilityStore(auth.urls.utilityUrl);
     await utilityStore.sendMarketingEmail(context.trc, auth.token, args);
     return { success: true };
 }

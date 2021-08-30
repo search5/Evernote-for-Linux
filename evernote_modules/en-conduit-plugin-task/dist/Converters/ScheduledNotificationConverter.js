@@ -5,6 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getSnNodeAndEdgesForReminder = exports.getSnNodeAndEdgesForTask = exports.createSnEntity = void 0;
 const conduit_utils_1 = require("conduit-utils");
+const en_conduit_plugin_scheduled_notification_shared_1 = require("en-conduit-plugin-scheduled-notification-shared");
 const en_data_model_1 = require("en-data-model");
 const en_tasks_data_model_1 = require("en-tasks-data-model");
 const simply_immutable_1 = require("simply-immutable");
@@ -59,6 +60,16 @@ async function getSnNodeAndEdgesForReminder(trc, reminder, taskRef, deleted, con
     let nodesAndEdges = { nodes: { nodesToDelete, nodesToUpsert }, edges: { edgesToDelete: [], edgesToCreate: [] } };
     if (!taskRef) {
         conduit_utils_1.logger.error(`Error processing ScheduledNotification changes for Reminder sync: ${reminder.id} -- parentEntity for synced reminders must not be null`);
+        const notificationLogsEnabled = await en_conduit_plugin_scheduled_notification_shared_1.getNotificationLogsEnabledFlag(trc, context);
+        if (notificationLogsEnabled) {
+            conduit_utils_1.recordMetric({
+                name: 'LOCAL_NOTIFICATION_LOG',
+                date: Date.now(),
+                duration: 0,
+                error: `Error processing ScheduledNotification changes for Reminder sync: ${reminder.id} -- parentEntity for synced reminders must not be null`,
+                reminder_id: reminder.id,
+            });
+        }
         return nodesAndEdges;
     }
     const isMute = reminder.NodeFields.status === en_tasks_data_model_1.ReminderStatus.muted;
@@ -99,12 +110,20 @@ async function getScheduledNotificationCreateNodeAndEdges(trc, schedulingEntityR
     const sn = createSnEntity(schedulingEntityRef, dataSourceEntityRef, context.currentUserID, isMute);
     nodesToUpsert.push(sn);
     edgesToCreate.push({
-        srcID: schedulingEntityRef.id, srcType: schedulingEntityRef.type, srcPort: 'scheduledNotification',
-        dstID: snID, dstType: en_data_model_1.EntityTypes.ScheduledNotification, dstPort: 'scheduling',
+        srcID: schedulingEntityRef.id,
+        srcType: schedulingEntityRef.type,
+        srcPort: 'scheduledNotification',
+        dstID: snID,
+        dstType: en_data_model_1.EntityTypes.ScheduledNotification,
+        dstPort: 'scheduling',
     });
     edgesToCreate.push({
-        srcID: snID, srcType: en_data_model_1.EntityTypes.ScheduledNotification, srcPort: 'dataSource',
-        dstID: dataSourceEntityRef.id, dstType: dataSourceEntityRef.type, dstPort: null,
+        srcID: snID,
+        srcType: en_data_model_1.EntityTypes.ScheduledNotification,
+        srcPort: 'dataSource',
+        dstID: dataSourceEntityRef.id,
+        dstType: dataSourceEntityRef.type,
+        dstPort: null,
     });
     return { nodes: { nodesToDelete: [], nodesToUpsert }, edges: { edgesToDelete: [], edgesToCreate } };
 }

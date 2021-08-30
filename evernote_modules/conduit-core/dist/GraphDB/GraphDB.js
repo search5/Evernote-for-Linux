@@ -155,6 +155,9 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
             await this.initInternal(trc, startSync, recoverFailedMutationsOnStart, update);
         });
     }
+    getLocalSettings() {
+        return this.di.getLocalSettings();
+    }
     async initInternal(trc, startSync, recoverFailedMutationsOnStart, update) {
         conduit_utils_1.logger.info('Initializing GraphDB');
         this.remoteSyncedGraphStorage = await this.di.GraphStorageDB(trc, GraphDB.DB_NAMES.RemoteGraph, exports.SYNC_DB_VERSION),
@@ -193,12 +196,18 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
     }
     async destructor() {
         if (this.destructorPromise) {
-            return this.destructorPromise;
+            const res = await conduit_utils_1.withError(this.destructorPromise);
+            if (res.err) {
+                this.destructorPromise = null;
+                throw res.err;
+            }
+            return;
         }
         conduit_utils_1.logger.info('GraphDB.destructor');
         this.isDestroyed = true;
         super.destructor();
         this.destructorPromise = conduit_utils_1.logIfSlow('GraphDB:destructor', 5000, async (loggerArgs) => {
+            await this.remoteMutationConsumer.stopConsumer(); // early stop upsync.
             await gTrcPool.runTraced(this.di.getTestEventTracker(), async (trc) => {
                 await this.orchestratorMutex.runInMutex(trc, 'stopSyncing', async () => {
                     this.syncEngine && await conduit_utils_1.logAndDiscardError(this.syncEngine.stopSyncing(trc));
@@ -413,6 +422,9 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
     async immediateContentFetchSync(trc, args) {
         return await this.syncEngine.immediateContentFetchSync(trc, args);
     }
+    async immediateDemandFetchNote(trc, args) {
+        return await this.syncEngine.immediateDemandFetchNote(trc, args);
+    }
     async cancelContentFetchSync(trc) {
         return await this.syncEngine.cancelContentFetchSync(trc);
     }
@@ -472,6 +484,8 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
         if (!userID) {
             throw new conduit_utils_1.InternalError('Unable to clear graph associated to no user');
         }
+        const resourceManager = this.di.getResourceManager();
+        const fallback = await (resourceManager === null || resourceManager === void 0 ? void 0 : resourceManager.getFallbackPath(trc));
         await this.orchestratorMutex.runInMutex(trc, 'clear', async () => {
             var _a;
             await this.syncEngine.stopSyncing(trc);
@@ -489,9 +503,8 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
                 await db.clearAll(trc);
             });
             // clear resource-cache if present
-            const resourceManager = this.di.getResourceManager();
             if (resourceManager) {
-                await resourceManager.deleteCacheForUser(trc, conduit_utils_1.keyStringForUserID(userID));
+                await resourceManager.deleteCacheForUser(trc, conduit_utils_1.keyStringForUserID(userID), fallback || null);
             }
             await this.syncEngine.onDBClear(trc);
             await conduit_storage_1.flushBackgroundWrites(trc);
@@ -546,6 +559,12 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
         // This convenience function assumes a type "User" exists, but since conduit-core is type-agnostic it needs to
         // cast to NodeType instead of using a constant.
         return await this.getNode(context, {
+            id: index_1.PERSONAL_USER_ID,
+            type: 'User',
+        });
+    }
+    async getUserNodeWithoutGraphQLContext(trc) {
+        return await this.getNodeWithoutGraphQLContext(trc, {
             id: index_1.PERSONAL_USER_ID,
             type: 'User',
         });
@@ -986,6 +1005,9 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
     }
     destructed() {
         return this.isDestroyed;
+    }
+    isBackgroundNoteSyncFinished(trc) {
+        return this.syncEngine.isBackgroundNoteSyncFinished(trc);
     }
 }
 GraphDB.DB_NAMES = {

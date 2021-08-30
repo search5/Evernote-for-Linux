@@ -46,6 +46,7 @@ const NoteUpdateContainmentRules_1 = require("./Rules/NoteUpdateContainmentRules
 const ScheduledNotificationRules_1 = require("./Rules/ScheduledNotificationRules");
 const TaskExpungeContainmentRules_1 = require("./Rules/TaskExpungeContainmentRules");
 const TaskGroupResolver_1 = require("./TaskGroupResolver");
+const TasksAndNotes_1 = require("./TasksAndNotes");
 var NoteContentInfo_2 = require("./Mutators/Helpers/NoteContentInfo");
 Object.defineProperty(exports, "getNoteContentInfoIDByNoteID", { enumerable: true, get: function () { return NoteContentInfo_2.getNoteContentInfoIDByNoteID; } });
 var NoteContentInfo_3 = require("./Mutators/Helpers/NoteContentInfo");
@@ -88,6 +89,7 @@ function getENTaskPlugin() {
                 },
                 ['Note.taskGroups']: TaskGroupResolver_1.TaskGroupResolver,
                 ['NoteContentInfo.taskGroups']: TaskGroupResolver_1.NoteContentInfoTaskGroupsResolver,
+                TasksAndNotes: TasksAndNotes_1.tasksAndNotesPlugin,
             };
             return queries;
         },

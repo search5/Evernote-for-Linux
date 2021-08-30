@@ -51,7 +51,7 @@ function getENNsvcAuthzToken() {
         const tokenStorageKey = `${userId}:${tokenType}`;
         results = tokenStorage.load(tokenStorageKey);
         if (!tokenStorage.valid(results)) {
-            results = await EnTokenThrift_1.getToken(context.trc, context.thriftComm, authorizedToken, tokenType);
+            results = await EnTokenThrift_1.getToken(context.trc, context.comm, authorizedToken, tokenType);
             tokenStorage.save(results, tokenStorageKey);
         }
         return results;

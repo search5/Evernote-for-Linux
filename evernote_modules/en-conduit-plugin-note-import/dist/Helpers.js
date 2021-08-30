@@ -7,6 +7,7 @@ exports.getInfoFromNote = exports.getSyncContextForContainer = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_plugin_task_1 = require("en-conduit-plugin-task");
+const en_conduit_sync_1 = require("en-conduit-sync");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_thrift_connector_1 = require("en-thrift-connector");
 const CONTAINER_TYPES = [en_core_entity_types_1.CoreEntityTypes.Notebook, en_core_entity_types_1.CoreEntityTypes.Workspace];
@@ -39,7 +40,7 @@ async function stageAttachmentUploadsForNote(context, sourceAuth, sourceNote, so
     var _a, _b;
     conduit_core_1.validateDB(context);
     const fileUploader = context.db.getFileUploader();
-    const sourceNoteStore = context.thriftComm.getNoteStore(sourceAuth.urls.noteStoreUrl);
+    const sourceNoteStore = context.comm.getNoteStore(sourceAuth.urls.noteStoreUrl);
     const sourceAttachmentIDs = Object.values(sourceNote.outputs.attachments).map(edge => edge.dstID);
     const sourceAttachments = await context.db.batchGetNodes(context, en_core_entity_types_1.CoreEntityTypes.Attachment, sourceAttachmentIDs);
     const attachmentDatas = [];
@@ -84,8 +85,8 @@ async function stageAttachmentUploadsForNote(context, sourceAuth, sourceNote, so
 }
 async function getInfoFromNote(context, sourceAuth, sourceNote, sourceSyncContextMetadata, sourceSyncContext, userID, newNoteID, destSyncContext, fetchNoteApplicationData, info) {
     conduit_core_1.validateDB(context);
-    const sourceNoteStore = context.thriftComm.getNoteStore(sourceAuth.urls.noteStoreUrl);
-    const noteContent = await en_thrift_connector_1.resolveContent(context, info, sourceNote, 'content');
+    const sourceNoteStore = context.comm.getNoteStore(sourceAuth.urls.noteStoreUrl);
+    const noteContent = await en_conduit_sync_1.resolveContent(context, info, sourceNote, 'content');
     if (!noteContent) {
         throw new conduit_utils_1.NotFoundError(sourceNote.id, 'Failed to fetch source note content');
     }

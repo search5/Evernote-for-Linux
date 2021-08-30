@@ -110,7 +110,7 @@ function getPublishedNotebookPlugin() {
         conduit_core_1.validateDB(context);
         const sort = args.sort;
         const filters = args.filters || [];
-        const list = await getList(context.thriftComm, context, filters, args === null || args === void 0 ? void 0 : args.limit);
+        const list = await getList(context.comm, context, filters, args === null || args === void 0 ? void 0 : args.limit);
         if (sort) {
             return sortPublishedNotebooks(list, sort);
         }

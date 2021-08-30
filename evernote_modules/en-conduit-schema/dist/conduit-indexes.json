@@ -99,6 +99,51 @@
     },
     "lookups": []
   },
+  "GamificationGoal": {
+    "indexes": {
+      "8f6be171da8e884b3e4353bed53d91c2": {
+        "index": [
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      }
+    },
+    "lookups": []
+  },
+  "GamificationMilestone": {
+    "indexes": {
+      "8f6be171da8e884b3e4353bed53d91c2": {
+        "index": [
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      }
+    },
+    "lookups": []
+  },
+  "GamificationSummary": {
+    "indexes": {
+      "8f6be171da8e884b3e4353bed53d91c2": {
+        "index": [
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      }
+    },
+    "lookups": []
+  },
   "Invitation": {
     "indexes": {
       "created": {
@@ -5402,12 +5447,17 @@
   },
   "Promotion": {
     "indexes": {
-      "ebb2cd855abdfe10382bbccf3ccf7974": {
+      "d59dd100c1b686a0f72081975ba2b21d": {
         "index": [
           {
             "field": "shownCount",
             "order": "ASC",
             "type": "number"
+          },
+          {
+            "field": "timeLastShown",
+            "order": "ASC",
+            "type": "timestamp"
           },
           {
             "field": "id",

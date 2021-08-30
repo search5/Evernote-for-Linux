@@ -9,8 +9,8 @@ const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_thrift_connector_1 = require("en-thrift-connector");
 const Helpers_1 = require("./Helpers");
-const NOTE_CONTENT_START_MARKER = '<en-note>';
-const NOTE_CONTENT_END_MARKER = '</en-note>';
+const NOTE_CONTENT_START_MARKER = '<en-note';
+const NOTE_CONTENT_END_MARKER = '</en-note';
 function getSanitizedLabel(label) {
     return label
         .replace(/&/g, '&amp;')
@@ -22,13 +22,14 @@ function getCombinedInnerContent(notes, separateContent, keepLabels) {
     let combinedContent = '';
     notes.forEach((note, noteIndex) => {
         if (note.content) {
-            const startIndex = note.content.indexOf(NOTE_CONTENT_START_MARKER);
-            const endIndex = note.content.indexOf(NOTE_CONTENT_END_MARKER);
-            if (startIndex === -1 || endIndex === -1) {
+            const noteStartIndex = note.content.indexOf(NOTE_CONTENT_START_MARKER);
+            const startIndex = note.content.indexOf('>', noteStartIndex) + 1; // end of <en-note> tag.
+            const endIndex = note.content.lastIndexOf(NOTE_CONTENT_END_MARKER);
+            if (startIndex === 0 || endIndex === -1) {
                 conduit_utils_1.logger.warn(`Note content in unexpected format for note ${note.label}`);
                 return;
             }
-            let content = note.content.slice(startIndex + NOTE_CONTENT_START_MARKER.length, endIndex);
+            let content = note.content.slice(startIndex, endIndex);
             if (keepLabels) {
                 content = `<h1><b>${getSanitizedLabel(note.label)}</b></h1><div><br /></div>${content}`;
             }
@@ -167,7 +168,7 @@ async function noteMergeResolver(parent, args, context, info) {
         notesToTrash: !args.keepOriginalNotes ? args.noteIDs.filter(id => !(failedNotes.includes(id))) : undefined,
     };
     const mutation = await context.db.runMutator(context.trc, 'noteImportInternal', mutatorParams);
-    return { mergedNoteID: mutation.results.result, failedNotes };
+    return { mergedNoteID: mutation.results.result, failedNotes, mutationID: mutation.mutationID };
 }
 exports.noteMerge = {
     args: conduit_core_1.schemaToGraphQLArgs({
@@ -181,6 +182,7 @@ exports.noteMerge = {
     type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableStruct({
         mergedNoteID: 'string',
         failedNotes: conduit_utils_1.ListOf('ID'),
+        mutationID: conduit_utils_1.NullableString,
     }, 'noteMergeResult')),
     resolve: noteMergeResolver,
 };
