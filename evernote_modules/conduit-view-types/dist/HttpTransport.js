@@ -14,7 +14,7 @@ function isRestMethod(str) {
 exports.isRestMethod = isRestMethod;
 class HttpTransport {
     request(trc, httpParams, timebox = 20000, retryAfter = 5000) {
-        return conduit_utils_1.timeboxExecution(this.requestImpl(trc, httpParams), timebox, 'request not responding', retryAfter);
+        return conduit_utils_1.timeboxExecution(this.requestImpl(trc, httpParams), timebox, new conduit_utils_1.RetryError('request not responding', retryAfter));
     }
     uploadFile(trc, httpParams, filePath) {
         throw new conduit_utils_1.InternalError('NOT IMPLEMENTED');

@@ -1,17 +1,16 @@
 "use strict";
 /*
  * Copyright 2021 Evernote Corporation. All rights reserved.
- * 0_NKGKB|21
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.milestoneCreateForLevel = exports.gamificaionNotebookIncrement = exports.gamificaionTagIncrement = exports.gamificaionNoteIncrement = exports.incrementMilesone = exports.milestoneComplete = exports.milestoneCreate = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_data_model_1 = require("en-data-model");
+const en_gamification_data_model_1 = require("en-gamification-data-model");
+const GamificationMilestone_1 = require("../EntityTypes/GamificationMilestone");
 const GamificationGoalHelpers_1 = require("./GamificationGoalHelpers");
 async function milestoneCreate(trc, ctx, plan, milestoneKey) {
-    const gamificationMilestoneGenId = await ctx.generateDeterministicID(trc, ctx.userID, en_data_model_1.EntityTypes.GamificationMilestone, en_data_model_1.DefaultDeterministicIdGenerator, [{
-            parts: [milestoneKey],
-        }]);
+    const gamificationMilestoneGenId = await GamificationMilestone_1.generateGamificationMilestoneId(trc, ctx, milestoneKey);
     const gamificationMilestoneId = gamificationMilestoneGenId[1];
     const milestoneRef = { type: en_data_model_1.EntityTypes.GamificationMilestone, id: gamificationMilestoneId };
     const existingMilestone = await ctx.fetchEntity(trc, milestoneRef);
@@ -33,9 +32,7 @@ async function milestoneCreate(trc, ctx, plan, milestoneKey) {
 }
 exports.milestoneCreate = milestoneCreate;
 async function milestoneComplete(trc, ctx, plan, milestoneKey) {
-    const gamificationMilestoneGenId = await ctx.generateDeterministicID(trc, ctx.userID, en_data_model_1.EntityTypes.GamificationMilestone, en_data_model_1.DefaultDeterministicIdGenerator, [{
-            parts: [milestoneKey],
-        }]);
+    const gamificationMilestoneGenId = await GamificationMilestone_1.generateGamificationMilestoneId(trc, ctx, milestoneKey);
     const gamificationMilestoneId = gamificationMilestoneGenId[1];
     const milestoneRef = { type: en_data_model_1.EntityTypes.GamificationMilestone, id: gamificationMilestoneId };
     const existingMilestone = await ctx.fetchEntity(trc, milestoneRef);
@@ -76,8 +73,9 @@ async function gamificaionNotebookIncrement(trc, ctx, plan, milestoneKey) {
 }
 exports.gamificaionNotebookIncrement = gamificaionNotebookIncrement;
 async function milestoneCreateForLevel(trc, ctx, plan, goal, level) {
-    // const milestoneKeys =
-    // TO-DO create all milestones for the required level
+    var _a, _b;
+    const milestoneKeys = (_b = (_a = en_gamification_data_model_1.GamificaitonLevelsMilestones.get(goal)) === null || _a === void 0 ? void 0 : _a.get(level)) !== null && _b !== void 0 ? _b : [];
+    await conduit_utils_1.allSettled(milestoneKeys.map(milestone => milestoneCreate(trc, ctx, plan, milestone)));
 }
 exports.milestoneCreateForLevel = milestoneCreateForLevel;
 //# sourceMappingURL=GamificationMilestoneHelpers.js.map

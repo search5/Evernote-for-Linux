@@ -3,10 +3,9 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ConduitRendererIPC = exports.ConduitMainIPC = exports.getId = void 0;
+exports.ConduitRendererIPC = exports.ConduitElectronIPC = exports.getId = void 0;
 const conduit_ipc_messages_1 = require("conduit-ipc-messages");
 const conduit_utils_1 = require("conduit-utils");
-const electron_1 = require("electron");
 const graphql_1 = require("graphql");
 const _1 = require("./");
 const callbacks = {};
@@ -21,10 +20,11 @@ function isResponseToMain(initialSenderID) {
     return initialSenderID === -1;
 }
 class ConduitElectronIPC {
-    constructor(sender, receiver, isMain) {
+    constructor(sender, receiver, isMain, webContents) {
         this.sender = sender;
         this.receiver = receiver;
         this.isMain = isMain;
+        this.webContents = webContents;
         this.dataWatcherCallbacks = {};
         this.emitter = new conduit_utils_1.ConduitEventEmitter();
         this.setupIPC();
@@ -235,7 +235,7 @@ class ConduitElectronIPC {
         this.assertNotPaused(this.sender);
         this.sender.send(_1.ElectronIPCChannel, { action: conduit_ipc_messages_1.IPCMessageID.HELLO });
         this.receiver.on(_1.ElectronIPCChannel, ({ sender }, message) => {
-            var _a;
+            var _a, _b;
             if (message.action === conduit_ipc_messages_1.IPCMessageID.CONDUIT_EVENT) {
                 this.emitter.emitEvent(message.data.conduitEvent, message.data.conduitEventData);
                 // broadcast event to rendered process
@@ -245,7 +245,7 @@ class ConduitElectronIPC {
             if (this.isFromRenderer(sender)) {
                 if (isResponseToRenderer(message.initialSenderID)) {
                     // Forward response
-                    (_a = electron_1.webContents.fromId(message.initialSenderID)) === null || _a === void 0 ? void 0 : _a.send(_1.ElectronIPCChannel, message);
+                    (_b = (_a = this.webContents) === null || _a === void 0 ? void 0 : _a.fromId(message.initialSenderID)) === null || _b === void 0 ? void 0 : _b.send(_1.ElectronIPCChannel, message);
                 }
                 else if (isResponseToMain(message.initialSenderID)) {
                     this.handleResponse(message);
@@ -302,10 +302,11 @@ class ConduitElectronIPC {
         });
     }
     broadCastMessageToRenders(message, withWorker) {
+        var _a;
         if (!this.isMain) {
             return;
         }
-        const renders = electron_1.webContents.getAllWebContents();
+        const renders = (_a = this.webContents) === null || _a === void 0 ? void 0 : _a.getAllWebContents();
         if (renders && renders.length) {
             for (const r of renders) {
                 // dont sent to worker
@@ -329,22 +330,10 @@ class ConduitElectronIPC {
         }
     }
 }
-class ConduitMainIPC extends ConduitElectronIPC {
-    constructor(workerWin) {
-        super(workerWin.webContents, electron_1.ipcMain, true);
-    }
-    // FIXME should a paused ipc buffer up messages when waitng to be resumed with a new worker?
-    pause() {
-        this.sender = null;
-    }
-    resume(workerWin) {
-        this.sender = workerWin.webContents;
-    }
-}
-exports.ConduitMainIPC = ConduitMainIPC;
+exports.ConduitElectronIPC = ConduitElectronIPC;
 class ConduitRendererIPC extends ConduitElectronIPC {
-    constructor() {
-        super(electron_1.ipcRenderer, electron_1.ipcRenderer, false);
+    constructor(ipcRenderer) {
+        super(ipcRenderer, ipcRenderer, false);
     }
 }
 exports.ConduitRendererIPC = ConduitRendererIPC;

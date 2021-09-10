@@ -240,6 +240,7 @@ class MutationEngine {
             params,
             guids,
             results: {},
+            analyticEvents: {},
             timestamp,
             isRetry: false,
         };
@@ -255,8 +256,9 @@ class MutationEngine {
                 }
             }
         }
-        const { results } = await this.runMutatorInternal(trc, ctx, mutation);
+        const { results, analyticEvents } = await this.runMutatorInternal(trc, ctx, mutation);
         mutation.results = results;
+        mutation.analyticEvents = analyticEvents;
         return mutation;
     }
     async runMutation(trc, graphInterface, isOptimistic, userID, vaultUserID, mutation) {
@@ -299,13 +301,7 @@ class MutationEngine {
                 conduit_utils_1.validateSchemaType(mutatorDef.resultTypes[key], key, results[key]);
             }
         }
-        if (this.config.sendMutationMetrics && !ctx.isOptimistic && Object.keys(ctx.eventsToRecord).length) {
-            for (const key in ctx.eventsToRecord) {
-                const event = ctx.eventsToRecord[key];
-                this.config.recordEvent(event);
-            }
-        }
-        return { deps, results };
+        return { deps, results, analyticEvents: ctx.eventsToRecord };
     }
     async processOps(trc, ctx, mutatorDef, opsIn) {
         let lastEdgeModify;

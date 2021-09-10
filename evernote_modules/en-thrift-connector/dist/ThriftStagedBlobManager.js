@@ -348,7 +348,13 @@ class ThriftStagedBlobManager {
             const fullMap = !conduit_utils_1.isStashEmpty(applicationData) ? applicationData : undefined;
             if ((_b = this.resourceManager) === null || _b === void 0 ? void 0 : _b.uploadResource) {
                 conduit_utils_1.traceEventStart(trc, 'nativeUploadResource', { noteGuid, mimeType, hash });
-                res = await conduit_utils_1.traceEventEndWhenSettled(trc, 'nativeUploadResource', ThriftRpc_1.wrapThriftCall(trc, auth.token, 'uploadResource', this.resourceManager, this.resourceManager.uploadResource, trc, auth.urls.utilityUrl, auth.token, resourceRef, noteGuid, mimeType, size, hash, filename, serviceGuidSeed, fullMap, sourceURL));
+                const traceArgs = {
+                    hash,
+                    size,
+                    noteGuid,
+                    mimeType,
+                };
+                res = await conduit_utils_1.traceEventEndWhenSettled(trc, 'nativeUploadResource', ThriftRpc_1.wrapThriftCallWithTraceArgs(trc, auth.token, 'uploadResource', this.resourceManager, this.resourceManager.uploadResource, traceArgs, trc, auth.urls.utilityUrl, auth.token, resourceRef, noteGuid, mimeType, size, hash, filename, serviceGuidSeed, fullMap, sourceURL));
             }
             else {
                 if (!body) {

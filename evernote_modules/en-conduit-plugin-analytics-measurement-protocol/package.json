@@ -1,6 +1,6 @@
 {
   "name": "en-conduit-plugin-analytics-measurement-protocol",
-  "version": "1.38.1",
+  "version": "1.39.1",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -10,9 +10,9 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-core": "1.38.1",
-    "conduit-utils": "1.38.1",
-    "conduit-view-types": "1.38.1",
+    "conduit-core": "1.39.1",
+    "conduit-utils": "1.39.1",
+    "conduit-view-types": "1.39.1",
     "simply-immutable": "^2.1.1"
   },
   "devDependencies": {

@@ -158,6 +158,12 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
     getLocalSettings() {
         return this.di.getLocalSettings();
     }
+    getFSManager() {
+        return this.di.getFSManager();
+    }
+    async onBeforeLogout(trc, id, keepData) {
+        await this.di.onBeforeLogout(trc, id, keepData);
+    }
     async initInternal(trc, startSync, recoverFailedMutationsOnStart, update) {
         conduit_utils_1.logger.info('Initializing GraphDB');
         this.remoteSyncedGraphStorage = await this.di.GraphStorageDB(trc, GraphDB.DB_NAMES.RemoteGraph, exports.SYNC_DB_VERSION),
@@ -174,7 +180,7 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
         this.syncEngine = this.di.SyncEngine(this.remoteSyncedGraphStorage, this.ephemeralState, localSettings);
         this.stagedBlobManager = this.di.StagedBlobManager(this.remoteSyncedGraphStorage, this.localKeyValStorage, localSettings);
         this.fileUploader = new FileUploader_1.FileUploader(this.di, this, this.di.getResourceManager(), this.stagedBlobManager);
-        this.remoteMutationExecutor = this.di.RemoteMutationExecutor(this.remoteSyncedGraphStorage, this.di.sendMutationMetrics, localSettings, this.stagedBlobManager, this.syncEngine);
+        this.remoteMutationExecutor = this.di.RemoteMutationExecutor(this.remoteSyncedGraphStorage, localSettings, this.stagedBlobManager, this.syncEngine);
         this.remoteMutationConsumer = new conduit_utils_1.DataConsumer({
             debugName: 'Upsync',
             bufferTime: REMOTE_MUTATION_BUFFER,
@@ -304,6 +310,12 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
     async handleAuthErrorImpl(trc, err, tx) {
         if (!this.isInitialized) {
             return new conduit_utils_1.RetryError('Unable to handle auth error without a graph db', 500);
+        }
+        if (this.tokenUpdate) {
+            // force AuthError throwing functions to retry AFTER token update propagation.
+            // Reason: syncEngine.revalidateAuth will outright reject an AuthError created even moment before token update is propagated to it.
+            // Such AuthError should be treated as Retryable.
+            throw new conduit_utils_1.RetryError('Auth is being updated.', 100);
         }
         if (err.getAuthRevalidated()) {
             conduit_utils_1.logger.info('Auth already revalidated for err ', err);
@@ -823,6 +835,9 @@ class GraphDB extends conduit_storage_1.StorageEventEmitter {
             const mutation = mutationRes.data;
             const { mutationResults } = await this.runMutations(trc, auth.token, this.userID, vaultUserID, [mutation], { isFlush: true, stopConsumer: false });
             const res = mutationResults[mutation.mutationID];
+            if (GraphMutationTypes_1.isMutationUpsyncSuccess(res)) {
+                this.mutationManager.sendMutationsAnalytic(res.analyticEvents);
+            }
             const error = GraphMutationTypes_1.mutationUpsyncError(res);
             if (error) {
                 throw error;

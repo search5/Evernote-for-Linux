@@ -491,6 +491,7 @@ const createWidgetFeatureTrialEnableMutator = () => {
         type: conduit_core_1.MutatorRemoteExecutorType.CommandService,
         params: {
             widget: 'ID',
+            bi: types_1.WidgetBiCustomizeFieldsInput,
         },
         execute: async (trc, ctx, params) => {
             const { widget, } = params;
@@ -600,6 +601,7 @@ const createWidgetCustomizeVerIIMutator = () => {
             widget: 'ID',
             associations: types_1.WidgetCustomizeAssociationsInput,
             fields: types_1.WidgetCustomizeFieldsInput,
+            bi: types_1.WidgetBiCustomizeFieldsInput,
         },
         execute: async (trc, ctx, params) => {
             const { widget: widgetID, fields: fieldParams, associations: associationParams, } = params;

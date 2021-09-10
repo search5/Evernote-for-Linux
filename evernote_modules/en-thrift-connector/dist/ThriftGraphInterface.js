@@ -139,7 +139,7 @@ class ThriftGraphInterface {
                 }
             }
         }
-        Converters_1.initNodeConverters(localOnlyNodeTypes);
+        Converters_1.initNodeConverters(localOnlyNodeTypes, di.activateLESMode);
     }
     async updateBlobToGraph(trc, mutatorParams, nodeRef, syncContext, blobName, blob) {
         const nodeUpdate = {

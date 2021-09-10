@@ -4,6 +4,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerSchemaMigrations = void 0;
+const BoardWidgetMigrations_1 = require("./BoardWidgetMigrations");
 const MembershipMigrations_1 = require("./MembershipMigrations");
 const NoteContentInfoRenameTaskGroups_1 = require("./NoteContentInfoRenameTaskGroups");
 const ProfileMigrations_1 = require("./ProfileMigrations");
@@ -19,6 +20,7 @@ function registerSchemaMigrations() {
         ScheduledNotificationCachedFields_1.registerScheduledNotificationCachedFields();
         // registerTagMigrations();
         UserMigrations_1.registerUserMigrations();
+        BoardWidgetMigrations_1.registerBoardWidgetUntitledMigration();
         isMigrationRegistered = true;
     }
 }

@@ -21,9 +21,10 @@ const conduit_utils_1 = require("conduit-utils");
 const conduit_view_1 = require("conduit-view");
 const conduit_view_types_1 = require("conduit-view-types");
 const electron_1 = require("electron");
-const en_conduit_electron_shared_1 = require("en-conduit-electron-shared");
 const fs_extra_1 = __importDefault(require("fs-extra"));
+const ConduitMainIPC_1 = require("./ConduitMainIPC");
 const ElectronMainSecureStorage_1 = require("./ElectronMainSecureStorage");
+const fetchElectronPrebuiltDB_1 = require("./fetchElectronPrebuiltDB");
 const MainResourceProxy_1 = require("./MainResourceProxy");
 const MiscMainIPC_1 = require("./MiscMainIPC");
 const setupElectronLogger_1 = require("./setupElectronLogger");
@@ -38,7 +39,7 @@ let retries = 0;
  * Starts Conduit in a hidden window
  */
 async function init(config) {
-    en_conduit_electron_shared_1.setupElectronPrebuiltIPC(fs_extra_1.default);
+    fetchElectronPrebuiltDB_1.setupElectronPrebuiltIPC(fs_extra_1.default);
     ElectronMainSecureStorage_1.setupSecureStorageIPC();
     MainResourceProxy_1.setupContentFetchingIPC();
     MainResourceProxy_1.setupExternalUrlFetchingIPC();
@@ -115,7 +116,7 @@ async function initWorkerWindow(config) {
     // Conduit initialized successfully, reset the retry counter
     retries = 0;
     if (!gConduitIPC) {
-        gConduitIPC = new en_conduit_electron_shared_1.ConduitMainIPC(gConduitWindow);
+        gConduitIPC = new ConduitMainIPC_1.ConduitMainIPC(gConduitWindow);
     }
     else {
         gConduitIPC.resume(gConduitWindow);

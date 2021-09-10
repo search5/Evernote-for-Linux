@@ -1,6 +1,6 @@
 {
   "name": "en-conduit-plugin-search",
-  "version": "1.38.1",
+  "version": "1.39.1",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -10,18 +10,18 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-auth-shared": "1.38.1",
-    "conduit-core": "1.38.1",
-    "conduit-storage": "1.38.1",
-    "conduit-utils": "1.38.1",
-    "conduit-view-types": "1.38.1",
-    "en-conduit-plugin-task": "1.38.1",
-    "en-conduit-sync": "1.38.1",
-    "en-conduit-sync-types": "1.38.1",
-    "en-core-entity-types": "1.38.1",
-    "en-data-model": "^3.10.0",
+    "conduit-auth-shared": "1.39.1",
+    "conduit-core": "1.39.1",
+    "conduit-storage": "1.39.1",
+    "conduit-utils": "1.39.1",
+    "conduit-view-types": "1.39.1",
+    "en-conduit-plugin-task": "1.39.1",
+    "en-conduit-sync": "1.39.1",
+    "en-conduit-sync-types": "1.39.1",
+    "en-core-entity-types": "1.39.1",
+    "en-data-model": "^3.11.2",
     "en-search-engine-shared": "^19.1.0",
-    "en-thrift-connector": "1.38.1",
+    "en-thrift-connector": "1.39.1",
     "js-base64": "^3.5.2"
   },
   "peerDependencies": {

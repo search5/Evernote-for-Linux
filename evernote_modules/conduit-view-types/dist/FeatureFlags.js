@@ -16,6 +16,7 @@ class FeatureFlags {
         this.isMonetizationServiceEnabled = false;
         this.isCalendarServiceEnabled = false;
         this.boardPluginFeatures = undefined; // Must assign to undefined for hasOwnProperty to detect.
+        this.enableLESSync = false;
         if (overrides) {
             for (const property in overrides) {
                 if (this.hasOwnProperty(property)) {

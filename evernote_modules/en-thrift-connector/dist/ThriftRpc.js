@@ -22,7 +22,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateThriftBackoffManager = exports.wrapThriftCall = void 0;
+exports.updateThriftBackoffManager = exports.wrapThriftCallWithTraceArgs = exports.wrapThriftCall = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const ThriftExceptions = __importStar(require("evernote-thrift/node/transport/Exceptions"));
@@ -167,14 +167,18 @@ function wrapThriftError(err, fnName, authenticationToken, argAuthToken, args) {
     return new conduit_utils_1.ServiceError(errToString(err, 'Unknown Thrift error'), '', undefined, err.errorCode);
 }
 async function wrapThriftCall(trc, authenticationToken, fnName, self, fn, ...args) {
+    return wrapThriftCallWithTraceArgs(trc, authenticationToken, fnName, self, fn, undefined, ...args);
+}
+exports.wrapThriftCall = wrapThriftCall;
+async function wrapThriftCallWithTraceArgs(trc, authenticationToken, fnName, self, fn, traceArgs, ...args) {
     const delay = thriftBackoffManager.getDelayDuration();
     if (delay > 0) {
         throw new conduit_utils_1.RetryError('Slowing down request', delay);
     }
     const serviceAuthToken = Auth_1.toServiceToken(authenticationToken, args);
     const asyncTrc = gTrcPool.alloc(trc.testEventTracker);
-    conduit_utils_1.traceEventStart(asyncTrc, fnName);
-    conduit_utils_1.traceEventStart(trc, fnName);
+    conduit_utils_1.traceEventStart(asyncTrc, fnName, traceArgs);
+    conduit_utils_1.traceEventStart(trc, fnName, traceArgs);
     const res = await conduit_utils_1.withError(conduit_utils_1.promisifyCallUntyped(self, fn, args));
     conduit_utils_1.traceEventEnd(trc, fnName, res.err && errToString(res.err));
     conduit_utils_1.traceEventEnd(asyncTrc, fnName, res.err && errToString(res.err));
@@ -185,7 +189,7 @@ async function wrapThriftCall(trc, authenticationToken, fnName, self, fn, ...arg
     thriftBackoffManager.resetDelay();
     return res.data;
 }
-exports.wrapThriftCall = wrapThriftCall;
+exports.wrapThriftCallWithTraceArgs = wrapThriftCallWithTraceArgs;
 function updateThriftBackoffManager(maxBackoffTimeout) {
     if (maxBackoffTimeout < 1000) {
         conduit_utils_1.logger.debug('Max backoff timeout value is too small. Set to default');

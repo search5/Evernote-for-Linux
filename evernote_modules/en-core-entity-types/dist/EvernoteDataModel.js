@@ -28,6 +28,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getNSyncEntityFilter = exports.CoreMutationRules = exports.CoreMutatorDefs = exports.CoreEntityTypeDefs = exports.NoteConflictLogger = exports.WorkspaceLayoutStyleSchema = exports.WorkspaceLayoutStyle = exports.WorkspaceAccessStatusSchema = exports.WorkspaceAccessStatus = exports.PinnedContentTypeEnum = exports.pinnedContentDef = exports.isWorkspace = exports.UserReminderEmailConfig = exports.PremiumOrderStatus = exports.ProfileStatusEnum = exports.PROFILE_SOURCE = exports.isNotebook = exports.isNote = exports.DEFAULT_NOTE_CONTENT = exports.InvitationType = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
+const en_data_model_1 = require("en-data-model");
 const ProfileDataResolver_1 = require("./DataResolvers/ProfileDataResolver");
 const UserDataResolver_1 = require("./DataResolvers/UserDataResolver");
 const EntityConstants_1 = require("./EntityConstants");
@@ -98,6 +99,7 @@ exports.CoreEntityTypeDefs = {
     [EntityConstants_1.CoreEntityTypes.Attachment]: {
         typeDef: Attachment_1.attachmentTypeDef,
         indexConfig: Attachment_1.attachmentIndexConfig,
+        nsyncType: en_data_model_1.NSyncEntityType.ATTACHMENT,
     },
     [EntityConstants_1.CoreEntityTypes.BetaFeature]: {
         typeDef: BetaFeature_1.betaFeatureTypeDef,
@@ -120,10 +122,12 @@ exports.CoreEntityTypeDefs = {
     },
     [EntityConstants_1.CoreEntityTypes.Note]: {
         typeDef: Note_1.noteTypeDef,
+        nsyncType: en_data_model_1.NSyncEntityType.NOTE,
         indexConfig: Note_1.noteIndexConfig,
     },
     [EntityConstants_1.CoreEntityTypes.Notebook]: {
         typeDef: Notebook_1.notebookTypeDef,
+        nsyncType: en_data_model_1.NSyncEntityType.NOTEBOOK,
         indexConfig: Notebook_1.notebookIndexConfig,
     },
     [EntityConstants_1.CoreEntityTypes.Profile]: {
@@ -137,10 +141,12 @@ exports.CoreEntityTypeDefs = {
     },
     [EntityConstants_1.CoreEntityTypes.SavedSearch]: {
         typeDef: SavedSearch_1.savedSearchTypeDef,
+        nsyncType: en_data_model_1.NSyncEntityType.SAVED_SEARCH,
         indexConfig: SavedSearch_1.savedSearchIndexConfig,
     },
     [EntityConstants_1.CoreEntityTypes.Shortcut]: {
         typeDef: Shortcut_1.shortcutTypeDef,
+        nsyncType: en_data_model_1.NSyncEntityType.SHORTCUT,
         indexConfig: Shortcut_1.shortcutIndexConfig,
     },
     [EntityConstants_1.CoreEntityTypes.Stack]: {
@@ -149,6 +155,7 @@ exports.CoreEntityTypeDefs = {
     },
     [EntityConstants_1.CoreEntityTypes.Tag]: {
         typeDef: Tag_1.tagTypeDef,
+        nsyncType: en_data_model_1.NSyncEntityType.TAG,
         indexConfig: Tag_1.tagIndexConfig,
     },
     [EntityConstants_1.CoreEntityTypes.Thread]: {
@@ -163,17 +170,18 @@ exports.CoreEntityTypeDefs = {
     [EntityConstants_1.CoreEntityTypes.Workspace]: {
         typeDef: Workspace_1.workspaceTypeDef,
         indexConfig: Workspace_1.workspaceIndexConfig,
+        nsyncType: en_data_model_1.NSyncEntityType.WORKSPACE,
     },
 };
 exports.CoreMutatorDefs = Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({}, AttachmentMutators), FileUploadMutators), InvitationMutators), MembershipMutators), MessageMutators), NotebookMutators), NoteMutators), ProfileMutators), PromotionMutators), SavedSearchMutators), ShortcutMutators), StackMutators), TagMutators), TestMutators), ThreadMutators), UserMutators), WorkspaceMutators);
 exports.CoreMutationRules = [
     ...ShortcutRules_1.ShortcutRules,
 ];
-function getNSyncEntityFilter(nodeTypes, featureGroups) {
+function getNSyncEntityFilter(nodeTypes, featureGroups, allowHybrid) {
     const filter = [];
     for (const nodeType in nodeTypes) {
         const typeDef = nodeTypes[nodeType];
-        if (typeDef.syncSource === conduit_storage_1.SyncSource.NSYNC) {
+        if (typeDef.syncSource === conduit_storage_1.SyncSource.NSYNC || (allowHybrid && typeDef.syncSource === conduit_storage_1.SyncSource.HYBRID)) {
             if (featureGroups === '*' || typeDef.nsyncFeatureGroup === 'Core' || featureGroups.includes(typeDef.nsyncFeatureGroup)) {
                 filter.push(nodeType);
             }

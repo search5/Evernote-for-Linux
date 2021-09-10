@@ -1,6 +1,6 @@
 {
   "name": "en-conduit-plugin-gamification",
-  "version": "1.38.1",
+  "version": "1.39.1",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -10,10 +10,13 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-core": "1.38.1",
-    "conduit-storage": "1.38.1",
-    "conduit-utils": "1.38.1",
-    "conduit-view-types": "1.38.1",
-    "en-data-model": "^3.10.0"
+    "conduit-core": "1.39.1",
+    "conduit-storage": "1.39.1",
+    "conduit-utils": "1.39.1",
+    "conduit-view-types": "1.39.1",
+    "en-conduit-sync": "1.39.1",
+    "en-data-model": "^3.11.2",
+    "en-gamification-data-model": "^3.11.2",
+    "graphql": "^14.0.2"
   }
 }

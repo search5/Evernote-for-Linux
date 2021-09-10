@@ -42,7 +42,7 @@ class LocalSettings {
             await db.setValue(trc, tableName, key, value);
         });
     }
-    async getValue(trc, watcher, tableName, key, throwOnNoValue = true) {
+    async getValue(trc, watcher, tableName, key, allowEmpty = false) {
         if (!key) {
             throw new Error('No key given');
         }
@@ -50,7 +50,10 @@ class LocalSettings {
             throw new Error('Error initting the key value store');
         }
         const val = await this.localSettingsStore.getValue(trc, watcher, tableName, key);
-        if (val === undefined && throwOnNoValue) {
+        if (val === undefined) {
+            if (allowEmpty) {
+                return;
+            }
             throw new conduit_utils_1.NotFoundError(key, 'Key not found in local settings');
         }
         return val;
@@ -66,8 +69,8 @@ class LocalSettings {
             await db.removeValue(trc, tableName, key);
         });
     }
-    async getUserValue(trc, watcher, userID, key) {
-        return await this.getValue(trc, watcher, getTableName(userID), key);
+    async getUserValue(trc, watcher, userID, key, allowEmpty) {
+        return await this.getValue(trc, watcher, getTableName(userID), key, allowEmpty);
     }
     async setUserValue(trc, userID, key, value) {
         await this.setValue(trc, getTableName(userID), key, value);
@@ -75,8 +78,8 @@ class LocalSettings {
     async removeUserValue(trc, userID, key) {
         await this.removeValue(trc, getTableName(userID), key);
     }
-    async getSystemValue(trc, watcher, key) {
-        return await this.getValue(trc, watcher, getTableName(null), key);
+    async getSystemValue(trc, watcher, key, allowEmpty) {
+        return await this.getValue(trc, watcher, getTableName(null), key, allowEmpty);
     }
     async setSystemValue(trc, key, value) {
         await this.setValue(trc, getTableName(null), key, value);
@@ -85,7 +88,7 @@ class LocalSettings {
         await this.removeValue(trc, getTableName(null), key);
     }
     async getConduitValue(trc, userID, key) {
-        return await this.getValue(trc, null, getTableName(userID, true), key, false);
+        return await this.getValue(trc, null, getTableName(userID, true), key, true);
     }
     async setConduitValue(trc, userID, key, value) {
         await this.setValue(trc, getTableName(userID, true), key, value);

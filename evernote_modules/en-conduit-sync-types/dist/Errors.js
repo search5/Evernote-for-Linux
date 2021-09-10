@@ -3,7 +3,7 @@
  * Copyright 2021 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SchemaMigrationError = exports.CancelActivityError = void 0;
+exports.NSyncConnectionError = exports.SchemaMigrationError = exports.CancelActivityError = void 0;
 class CancelActivityError extends Error {
     constructor(message) {
         super(message);
@@ -16,4 +16,10 @@ class SchemaMigrationError extends Error {
     }
 }
 exports.SchemaMigrationError = SchemaMigrationError;
+class NSyncConnectionError extends Error {
+    constructor(message = 'NSync Connection error') {
+        super(message);
+    }
+}
+exports.NSyncConnectionError = NSyncConnectionError;
 //# sourceMappingURL=Errors.js.map

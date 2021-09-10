@@ -25,11 +25,12 @@ async function userSettingsGetResolver(_, args, context) {
     }
     ResolverHelpers_1.validateDB(context);
     const userID = await LocalSettingsMutations_1.getUserIDFromLocalSettingsArgs(context, args.userID);
-    return context.localSettings.getUserValue(context.trc, context.watcher, userID, args.key);
+    return context.localSettings.getUserValue(context.trc, context.watcher, userID, args.key, args.allowEmpty);
 }
 function genArgs(setType) {
     const args = {
         key: 'string',
+        allowEmpty: conduit_utils_1.NullableBoolean,
     };
     if (setType === conduit_view_types_1.LocalSettingsType.User) {
         args.userID = conduit_utils_1.NullableString;

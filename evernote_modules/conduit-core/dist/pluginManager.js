@@ -36,11 +36,29 @@ function initPlugins(di, plugins, out) {
                 if (def.deleteHook) {
                     copyOrCollide({ [entityType]: def.deleteHook }, out.deleteHooks, `${entityType}.deleteHook`);
                 }
-                if (def.nsyncConverters) {
-                    copyOrCollide(def.nsyncConverters, out.nsyncConverters, `${entityType}.nsyncConverters`);
-                    const nsyncType = Object.keys(def.nsyncConverters)[0];
-                    out.nodeTypeToNSyncType[entityType] = parseInt(nsyncType, 10);
-                    out.nsyncToNodeType[nsyncType] = entityType;
+                if (def.nsyncType !== undefined && def.nsyncType !== null) {
+                    out.nsyncToNodeType[def.nsyncType] = entityType;
+                    out.nodeTypeToNSyncType[entityType] = def.nsyncType;
+                }
+                if (def.edgeDefiners) {
+                    for (const nodeType in def.edgeDefiners) {
+                        if (!out.nsyncEdgeDefiners[nodeType]) {
+                            out.nsyncEdgeDefiners[nodeType] = def.edgeDefiners[nodeType];
+                        }
+                        else {
+                            copyOrCollide(def.edgeDefiners[nodeType], out.nsyncEdgeDefiners[nodeType], `${entityType}.edgeDefiners.${nodeType}`);
+                        }
+                    }
+                }
+                if (def.nsyncExtraNodesAndEdges) {
+                    for (const nodeType in def.nsyncExtraNodesAndEdges) {
+                        if (!out.nsyncExtraNodesAndEdges[nodeType]) {
+                            out.nsyncExtraNodesAndEdges[nodeType] = def.nsyncExtraNodesAndEdges[nodeType];
+                        }
+                        else {
+                            out.nsyncExtraNodesAndEdges[nodeType].push(...def.nsyncExtraNodesAndEdges[nodeType]);
+                        }
+                    }
                 }
                 if (def.blobUploadDefs) {
                     out.fileUploaderBlobDefs[entityType] = out.fileUploaderBlobDefs[entityType] || {};

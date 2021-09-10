@@ -90,7 +90,12 @@ class EvernoteIndexer {
                         const from = propagateFrom[srcType];
                         if (from) {
                             if (!propagateTo[propagateFromIndex]) {
-                                propagateTo[propagateFromIndex] = { srcField: from[propagateFromIndex].srcField, dstField: from[propagateFromIndex].dstField };
+                                propagateTo[propagateFromIndex] = {
+                                    srcField: from[propagateFromIndex].srcField,
+                                    dstField: from[propagateFromIndex].dstField,
+                                    dstType,
+                                    transform: from[propagateFromIndex].transform,
+                                };
                             }
                             if (!propagateTo[propagateFromIndex][dstType]) {
                                 propagateTo[propagateFromIndex][dstType] = {};

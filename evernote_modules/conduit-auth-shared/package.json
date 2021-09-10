@@ -1,6 +1,6 @@
 {
   "name": "conduit-auth-shared",
-  "version": "1.38.1",
+  "version": "1.39.1",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -19,8 +19,8 @@
     "sinon-chai": "^3.3.0"
   },
   "dependencies": {
-    "conduit-utils": "1.38.1",
-    "conduit-view-types": "1.38.1",
+    "conduit-utils": "1.39.1",
+    "conduit-view-types": "1.39.1",
     "js-base64": "^3.5.2",
     "simply-immutable": "^2.1.1"
   }

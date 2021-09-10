@@ -52,7 +52,8 @@ class ConduitUserCore {
         this.mutationRules = [];
         this.nodeTypeToNSyncType = {};
         this.nsyncToNodeType = {};
-        this.nsyncConverters = {};
+        this.nsyncEdgeDefiners = {};
+        this.nsyncExtraNodesAndEdges = {};
         this.associationOwners = {};
         this.fileUploaderOverrides = {};
         this.fileUploaderBlobDefs = {};

@@ -122,7 +122,7 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         this.firstMessageResolve = null;
         this.connectionInfo = null;
         const connInfo = await (usedPrebuilt ? this.updateConnectionInformation(trc, { connectionID: conduit_utils_1.uuid() }) : this.getConnectionInformation(trc));
-        this.nodeFilter = en_core_entity_types_1.getNSyncEntityFilter(this.di.getNodeTypeDefs(), this.di.nSyncEntityFilter);
+        this.nodeFilter = en_core_entity_types_1.getNSyncEntityFilter(this.di.getNodeTypeDefs(), this.di.nSyncEntityFilter, Boolean(this.di.activateLESMode));
         if (connInfo.lastFilter.length) {
             this.catchupFilter = buildCatchupFilter(this.nodeFilter, connInfo.lastFilter);
         }
@@ -482,14 +482,26 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
         const connectionID = this.catchupFilter ? this.di.uuid('NSyncEventManager') : connInfo.connectionID;
         const connectionEndpoint = this.di.realtimeMode ? 'connect' : 'download';
         const nsyncHost = await this.hostResolver.getServiceHost(trc, this.monolithHost, 'Sync');
-        this.eventSrc = this.di.newEventSource(`${nsyncHost}/v1/${connectionEndpoint}?lastConnection=${lastConnection}&connectionId=${connectionID}&encode=${false}${entityFilterParam}${mockExpirationParam}`, {
-            ['x-mono-authn-token']: `auth=${this.monolithToken}`,
-            Authorization: `Bearer ${this.jwt}`,
-            ['x-conduit-version']: conduit_core_1.CONDUIT_VERSION,
-            ['x-feature-version']: this.di.featureVersion,
-        });
+        try {
+            this.eventSrc = this.di.newEventSource(`${nsyncHost}/v1/${connectionEndpoint}?lastConnection=${lastConnection}&connectionId=${connectionID}&encode=${false}${entityFilterParam}${mockExpirationParam}`, {
+                ['x-mono-authn-token']: `auth=${this.monolithToken}`,
+                Authorization: `Bearer ${this.jwt}`,
+                ['x-conduit-version']: conduit_core_1.CONDUIT_VERSION,
+                ['x-feature-version']: this.di.featureVersion,
+            });
+        }
+        catch (err) {
+            // this is likely never used. Error will be on the async part of the connection.
+            conduit_utils_1.logger.error(err);
+            const e = {
+                type: 'error',
+                status: err.status || 0,
+                message: ('NSync Connect threw error: ' + err.message) || 'Empty Exception',
+            };
+            this.handleErrorEvent(e);
+        }
         if (!this.eventSrc) {
-            throw new Error('EventSource failed to connect');
+            throw new Error('Failed to connect to NSync, null eventsource returned');
         }
         const { resolve, promise } = conduit_utils_1.allocPromise();
         this.firstMessagePromise = promise;
@@ -635,6 +647,12 @@ class NSyncEventManager extends conduit_core_1.SyncEventManager {
             if (this.isPaused === false) {
                 conduit_utils_1.logger.warn(`Event source instance closed while sending.`);
             }
+        }
+        else if (errorEvent.message === 'NSync path invalid: empty' ||
+            errorEvent.message === 'NSync path invalid: null' ||
+            errorEvent.message === 'NSync path invalid') {
+            conduit_utils_1.logger.error(errorEvent.message);
+            this.enqueueErrorEvent(new Error(`${errorEvent.code}: ${errorEvent.message}`), 'Invalid NSync Path Error');
         }
         else {
             conduit_utils_1.logger.error(`Unhandled error: ${errorEvent.message}`);

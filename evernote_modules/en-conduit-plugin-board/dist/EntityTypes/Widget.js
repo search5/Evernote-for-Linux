@@ -122,7 +122,7 @@ const createWidgetIndexConfig = () => {
                         },
                     },
                 },
-                includeFields: ['widgetType', 'mutableWidgetType', 'isEnabled', 'selectedTab', 'contentProvider', 'mobile_sortWeight'],
+                includeFields: ['widgetType', 'mutableWidgetType', 'isEnabled', 'selectedTab', 'contentProvider'],
             },
         },
     });

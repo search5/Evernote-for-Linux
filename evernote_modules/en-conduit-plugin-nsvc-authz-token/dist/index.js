@@ -64,7 +64,7 @@ function getENNsvcAuthzToken() {
                     token: conduit_utils_1.NullableString,
                     expiresAt: conduit_utils_1.NullableTimestamp,
                 }, 'NsvcAuthzToken')),
-                args: conduit_core_1.schemaToGraphQLArgs({ tokenType: conduit_utils_1.NullableString }),
+                args: conduit_core_1.schemaToGraphQLArgs({ tokenType: conduit_utils_1.Enum(EnAuthzTokenService_1.TokenTypeValues, 'TokenTypeString') }),
                 resolve: tokenResolver,
             },
         }),

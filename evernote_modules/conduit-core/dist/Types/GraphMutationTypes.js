@@ -10,6 +10,7 @@ var MutatorRemoteExecutorType;
     MutatorRemoteExecutorType["Thrift"] = "Thrift";
     MutatorRemoteExecutorType["CommandService"] = "CommandService";
     MutatorRemoteExecutorType["Local"] = "Local";
+    MutatorRemoteExecutorType["Hybrid"] = "Hybrid";
 })(MutatorRemoteExecutorType = exports.MutatorRemoteExecutorType || (exports.MutatorRemoteExecutorType = {}));
 exports.GenericMutatorResultsSchema = {
     result: conduit_utils_1.NullableString,

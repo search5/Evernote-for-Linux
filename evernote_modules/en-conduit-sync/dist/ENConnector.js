@@ -54,11 +54,15 @@ const UrlResolver_1 = require("./Resolvers/UrlResolver");
 const WorkspacePinnedContentsResolver_1 = require("./Resolvers/WorkspacePinnedContentsResolver");
 const WorkspaceUIPreferencesResolver_1 = require("./Resolvers/WorkspaceUIPreferencesResolver");
 const SchemaMigrations_1 = require("./SchemaMigrations");
+const ChunkConversion_1 = require("./SyncFunctions/ChunkConversion");
 const UrlCacheEncoder = __importStar(require("./UrlCacheEncoder"));
 let gAuthTokenCacheLifetime = conduit_utils_1.registerDebugSetting('AuthTokenCacheLifetime', 30000, v => gAuthTokenCacheLifetime = v);
 const HOST_RESOLVER_URL = 'https://update.evernote.com/enclients/hostResolver.json';
 function init(di, configs) {
     var _a, _b, _c, _d;
+    if (di.activateLESMode) {
+        ChunkConversion_1.removeLESEntityConverters();
+    }
     en_thrift_connector_1.updateThriftBackoffManager((_a = configs.maxBackoffTimeout) !== null && _a !== void 0 ? _a : 16000);
     const thriftComm = new en_thrift_connector_1.ThriftComm(di);
     const hostResolver = new conduit_core_1.HostResolver(di.hostDefaults, di.hostResolverUrl || HOST_RESOLVER_URL, di.getHttpTransport);
@@ -77,6 +81,16 @@ function init(di, configs) {
             throw conduit_utils_1.absurd(proxyType, 'proxyType');
         }
     }
+    function emitEvent(event, data) {
+        di.emitEvent && di.emitEvent(event, data);
+    }
+    async function getCurrentUsername(trc) {
+        const user = await di.getCurrentUser(trc);
+        if (user) {
+            return user.NodeFields.username;
+        }
+        return null;
+    }
     const resourceManager = di.ResourceManager({
         getCurrentUserID: di.getCurrentUserID,
         urlEncoder,
@@ -87,14 +101,12 @@ function init(di, configs) {
             }
             return fileSerivce;
         },
-        getCurrentUsername: async (trc) => {
-            const user = await di.getCurrentUser(trc);
-            if (user) {
-                return user.NodeFields.username;
-            }
-            return null;
-        },
+        getCurrentUsername,
         resourceUploadFailFallbackPath: di.resourceUploadFailFallbackPath,
+    });
+    const fsManager = di.FSManager({
+        getCurrentUsername,
+        emitEvent,
     });
     const nSyncEventManager = new en_quasar_connector_1.NSyncEventManager(Object.assign(Object.assign({}, di), { featureVersion: conduit_view_types_1.FEATURE_VERSION }), hostResolver);
     function refreshAuthToken(trc, oldAuthData) {
@@ -129,10 +141,6 @@ function init(di, configs) {
             result.Notebook.deleteHook = async (trc, tx, notebookID) => {
                 await en_thrift_connector_1.NotebookConverter.onDelete(trc, tx, di.getLocalSettings(), notebookID);
             };
-            // inject nsync converters
-            for (const type in en_quasar_connector_1.CoreEntityNSyncConverters) {
-                result[type].nsyncConverters = en_quasar_connector_1.CoreEntityNSyncConverters[type];
-            }
             return result;
         },
         mutationRules: () => {
@@ -142,14 +150,12 @@ function init(di, configs) {
             return en_core_entity_types_1.CoreMutatorDefs;
         },
     };
-    function createMutationEngine(sendMutationMetrics) {
+    function createMutationEngine() {
         return new conduit_core_1.MutationEngine({
-            sendMutationMetrics,
             nodeTypeDefs: di.getNodeTypeDefs(),
             mutationRules: di.getMutationRules(),
             mutatorDefs: di.getMutatorDefs(),
             generateCustomID: en_thrift_connector_1.generateCustomID,
-            recordEvent: conduit_utils_1.recordEvent,
             md5: conduit_utils_1.md5,
             guidGenerator: conduit_core_1.GuidGenerator,
             userRef: { id: conduit_core_1.PERSONAL_USER_ID, type: en_core_entity_types_1.CoreEntityTypes.User },
@@ -166,12 +172,13 @@ function init(di, configs) {
             countUpdater: en_thrift_connector_1.updateNodeTypeCount,
             getBestSyncContextForNode: en_thrift_connector_1.getBestSyncContextForNode,
             MutationEngine: createMutationEngine,
-            RemoteMutationExecutor: (graphStorage, sendMutationMetrics, localSettings, stagedBlobManager, syncEngine) => {
-                const thriftConnector = new en_thrift_connector_1.ThriftRemoteMutationExecutor(Object.assign(Object.assign({}, di), { MutationEngine: createMutationEngine }), graphStorage, thriftComm, sendMutationMetrics, localSettings, offlineContentStrategy, stagedBlobManager, syncEngine, quasarConnector.dispatchCustomCommand);
+            RemoteMutationExecutor: (graphStorage, localSettings, stagedBlobManager, syncEngine) => {
+                const thriftConnector = new en_thrift_connector_1.ThriftRemoteMutationExecutor(Object.assign(Object.assign({}, di), { MutationEngine: createMutationEngine }), graphStorage, thriftComm, localSettings, offlineContentStrategy, stagedBlobManager, syncEngine, quasarConnector.dispatchCustomCommand);
                 return {
                     [conduit_core_1.MutatorRemoteExecutorType.Thrift]: thriftConnector,
                     [conduit_core_1.MutatorRemoteExecutorType.CommandService]: quasarConnector,
                     [conduit_core_1.MutatorRemoteExecutorType.Local]: thriftConnector,
+                    [conduit_core_1.MutatorRemoteExecutorType.Hybrid]: di.activateLESMode ? quasarConnector : thriftConnector,
                 };
             },
             SyncEngine: (graphStorage, ephemeralState, localSettings) => {
@@ -185,9 +192,10 @@ function init(di, configs) {
             getResourceManager: () => {
                 return resourceManager;
             },
-            emitEvent: (event, data) => {
-                di.emitEvent && di.emitEvent(event, data);
+            getFSManager: () => {
+                return fsManager;
             },
+            emitEvent,
             urlEncoder,
             uuid: di.uuid,
             invalidateAuthToken: async (trc, tokenAndState) => {
@@ -217,6 +225,7 @@ function init(di, configs) {
                 }
                 return timeReturn;
             },
+            recordEvent: conduit_utils_1.recordEvent,
             onMutationRoundtripTimeout: (mutationName) => {
                 conduit_utils_1.recordEvent({
                     'action': 'roundtrip-timeout',

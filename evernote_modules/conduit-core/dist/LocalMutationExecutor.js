@@ -190,7 +190,7 @@ class LocalGraphInterface {
 class LocalMutationExecutor {
     constructor(di) {
         this.di = di;
-        this.mutationEngine = di.MutationEngine(di.sendMutationMetrics);
+        this.mutationEngine = di.MutationEngine();
     }
     getMutators() {
         return this.mutationEngine.mutators;

@@ -39,7 +39,7 @@ function createSnEntity(schedulingEntityRef, dataSourceEntityRef, currentUserID,
     return sn;
 }
 exports.createSnEntity = createSnEntity;
-async function getSnNodeAndEdgesForTask(trc, task, context) {
+async function getSnNodeAndEdgesForTask(trc, task, instance, context) {
     const nodesToUpsert = [];
     await ScheduledNotificationUtils_1.forEachTaskReminderScheduledNotification(trc, ScheduledNotificationUtils_1.commonTraverseGraphAdapter(context.tx), { id: task.id, type: en_data_model_1.EntityTypes.Task }, async (snRef) => {
         const existingSn = snRef && (await context.tx.getNode(trc, null, snRef));
@@ -54,10 +54,12 @@ async function getSnNodeAndEdgesForTask(trc, task, context) {
     return { nodes: { nodesToDelete: [], nodesToUpsert }, edges: { edgesToDelete: [], edgesToCreate: [] } };
 }
 exports.getSnNodeAndEdgesForTask = getSnNodeAndEdgesForTask;
-async function getSnNodeAndEdgesForReminder(trc, reminder, taskRef, deleted, context) {
+async function getSnNodeAndEdgesForReminder(trc, reminder, instance, context) {
+    var _a;
     const nodesToUpsert = [];
     const nodesToDelete = [];
     let nodesAndEdges = { nodes: { nodesToDelete, nodesToUpsert }, edges: { edgesToDelete: [], edgesToCreate: [] } };
+    const taskRef = ((_a = instance.parentEntity) === null || _a === void 0 ? void 0 : _a.type) === en_data_model_1.NSyncEntityType.TASK ? { type: en_data_model_1.EntityTypes.Task, id: instance.parentEntity.id } : null;
     if (!taskRef) {
         conduit_utils_1.logger.error(`Error processing ScheduledNotification changes for Reminder sync: ${reminder.id} -- parentEntity for synced reminders must not be null`);
         const notificationLogsEnabled = await en_conduit_plugin_scheduled_notification_shared_1.getNotificationLogsEnabledFlag(trc, context);
@@ -76,7 +78,7 @@ async function getSnNodeAndEdgesForReminder(trc, reminder, taskRef, deleted, con
     await ScheduledNotificationUtils_1.forEachTaskReminderScheduledNotification(trc, ScheduledNotificationUtils_1.commonTraverseGraphAdapter(context.tx), reminder, async (snRef) => {
         // One SN per reminder ->
         const existingSn = snRef && (await context.tx.getNode(trc, null, snRef));
-        if (!deleted) {
+        if (!instance.deleted) {
             if (!existingSn) {
                 // create new scheduled notification
                 nodesAndEdges = await getScheduledNotificationCreateNodeAndEdges(trc, reminder, taskRef, context, isMute);

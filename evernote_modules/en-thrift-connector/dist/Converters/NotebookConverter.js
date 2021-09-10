@@ -344,6 +344,7 @@ function notebookObjectFromService(syncContext, serviceData, nbsMarkedOffline) {
             memberships: {},
             creator: {},
             shortcut: {},
+            localState: {},
         },
     };
     return notebook;
@@ -401,6 +402,7 @@ async function updateStackInGraph(trc, params, serviceData) {
             outputs: {
                 notebooks: {},
                 shortcut: {},
+                localState: {},
             },
         };
         await params.graphTransaction.replaceNodeAndEdges(trc, conduit_core_1.PERSONAL_USER_CONTEXT, stack);

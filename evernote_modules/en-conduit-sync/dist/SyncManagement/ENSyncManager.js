@@ -63,7 +63,7 @@ function cmpActivities(a1, a2) {
     if (d) {
         return d;
     }
-    return a2.params.runAfter - a1.params.runAfter;
+    return a1.params.runAfter - a2.params.runAfter;
 }
 class ENSyncManager extends conduit_core_1.SyncManager {
     constructor(di, thriftComm, syncEngine) {
@@ -508,8 +508,15 @@ class ENSyncManager extends conduit_core_1.SyncManager {
             for (const activity of activities) {
                 const idx = this.findActivityIndex(trc, activity.params.activityType);
                 if (idx >= 0) {
-                    // replace activity if already exists in queue.
-                    this.queue.splice(idx, 1, activity);
+                    // replace higher priority activity if already exists in queue.
+                    const existing = this.queue[idx];
+                    if (cmpActivities(existing, activity) > 0) {
+                        logger.debug(`addActivitiesOnInit replacing ${existing.dehydrate()} with higher priority activity ${activity.dehydrate()}`);
+                        this.queue.splice(idx, 1, activity);
+                    }
+                    else {
+                        logger.debug(`addActivitiesOnInit ignoring ${activity.dehydrate()} as a higher priority ${existing.dehydrate()} already exists in queue`);
+                    }
                 }
                 else {
                     this.queue.push(activity);

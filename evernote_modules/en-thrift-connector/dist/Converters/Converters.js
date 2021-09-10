@@ -31,7 +31,7 @@ function testOverrideConverters(nodeConverters) {
     };
 }
 exports.testOverrideConverters = testOverrideConverters;
-function initNodeConverters(localEntities) {
+function initNodeConverters(localEntities, activateLESMode) {
     gNodeConverters = {
         Attachment: ResourceConverter_1.ResourceConverter,
         BetaFeature: BetaFeatureConverter_1.BetaFeatureConverter,
@@ -42,7 +42,7 @@ function initNodeConverters(localEntities) {
         Notebook: NotebookConverter_1.NotebookConverter,
         Profile: ProfileConverter_1.ProfileConverter,
         Promotion: PromotionConverter_1.PromotionConverter,
-        SavedSearch: SavedSearchConverter_1.SavedSearchConverter,
+        SavedSearch: activateLESMode ? null : SavedSearchConverter_1.SavedSearchConverter,
         Shortcut: ShortcutConverter_1.ShortcutConverter,
         Stack: StackConverter_1.StackConverter,
         Tag: TagConverter_1.TagConverter,

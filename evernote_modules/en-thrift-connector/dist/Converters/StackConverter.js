@@ -41,6 +41,7 @@ class StackConverterClass {
             outputs: {
                 notebooks: {},
                 shortcut: {},
+                localState: {},
             },
         };
         await params.graphTransaction.replaceNodeAndEdges(trc, conduit_core_1.PERSONAL_USER_CONTEXT, stack);

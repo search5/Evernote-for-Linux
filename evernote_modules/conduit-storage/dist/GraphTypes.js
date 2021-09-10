@@ -22,6 +22,7 @@ var SyncSource;
     SyncSource[SyncSource["THRIFT"] = 1] = "THRIFT";
     SyncSource[SyncSource["NSYNC"] = 2] = "NSYNC";
     SyncSource[SyncSource["LOCAL"] = 3] = "LOCAL";
+    SyncSource[SyncSource["HYBRID"] = 4] = "HYBRID";
 })(SyncSource = exports.SyncSource || (exports.SyncSource = {}));
 var EdgeConstraint;
 (function (EdgeConstraint) {

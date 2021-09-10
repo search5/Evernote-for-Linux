@@ -22,7 +22,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.conduitDIProxy = exports.ConduitCore = exports.ResourceManager = exports.RemoteMutationExecutor = exports.SyncEngine = void 0;
+exports.conduitDIProxy = exports.ConduitCore = exports.RemoteMutationExecutor = exports.SyncEngine = void 0;
 const conduit_storage_1 = require("conduit-storage");
 const conduit_utils_1 = require("conduit-utils");
 const conduit_view_types_1 = require("conduit-view-types");
@@ -44,43 +44,6 @@ exports.SyncEngine = SyncEngine;
 class RemoteMutationExecutor {
 }
 exports.RemoteMutationExecutor = RemoteMutationExecutor;
-class ResourceManager {
-    constructor(di) {
-        this.di = di;
-    }
-    async getResourceUrl(trc, res) {
-        if (!this.di.urlEncoder) {
-            return res.remoteUrl;
-        }
-        const activeUserID = await this.di.getCurrentUserID(trc, null);
-        if (activeUserID === null) {
-            throw new conduit_utils_1.NoUserError('Missing current user');
-        }
-        return this.di.urlEncoder(res.parentID, res.hash, res.remoteUrl, conduit_utils_1.keyStringForUserID(activeUserID));
-    }
-    constructFileRemoteURL(authHost, path) {
-        return `${this.di.getFileServiceHost(authHost)}${path}`;
-    }
-    async getFallbackPath(trc) {
-        const fallbackPath = this.di.resourceUploadFailFallbackPath;
-        if (fallbackPath) {
-            const resp = await conduit_utils_1.withError(this.di.getCurrentUsername(trc));
-            if (resp.err || !resp.data) {
-                conduit_utils_1.logger.error('ResourceManager getCurrentUsername failed ', resp.err);
-                return null;
-            }
-            return [fallbackPath, resp.data];
-        }
-        return null;
-    }
-    async copyResourceToFallbackPath(trc, params) {
-        const fallbackPath = await this.getFallbackPath(trc);
-        if (fallbackPath) {
-            return await this.copyResourceToPath(trc, params, [...fallbackPath, params.destFilename]);
-        }
-    }
-}
-exports.ResourceManager = ResourceManager;
 class ConduitCore {
     constructor(di, config) {
         this.di = di;
@@ -379,11 +342,17 @@ class ConduitCore {
         }
         return (_a = this.userCore.nodeTypeToNSyncType[type]) !== null && _a !== void 0 ? _a : null;
     }
-    getNsyncConverters() {
+    getNSyncEdgeDefiners() {
         if (!this.userCore) {
             throw new Error('Conduit not initialized');
         }
-        return this.userCore.nsyncConverters;
+        return this.userCore.nsyncEdgeDefiners;
+    }
+    getNSyncExtraNodesAndEdges() {
+        if (!this.userCore) {
+            throw new Error('Conduit not initialized');
+        }
+        return this.userCore.nsyncExtraNodesAndEdges;
     }
     getNodeTypeDefs() {
         if (!this.userCore) {
@@ -453,7 +422,7 @@ class ConduitCore {
                 return await this.multiUserManager.cookieAuth(trc);
             }, isBusinessAccount: async (trc) => {
                 return await this.multiUserManager.isBusinessAccount(trc);
-            }, getFileUploaderOverride: parentType => { var _a, _b; return (_b = (_a = this.userCore) === null || _a === void 0 ? void 0 : _a.getFileUploaderOverride(parentType)) !== null && _b !== void 0 ? _b : null; }, getFileUploaderBlobDef: (parentType, blobRef) => { var _a, _b; return (_b = (_a = this.userCore) === null || _a === void 0 ? void 0 : _a.getFileUploaderBlobDef(parentType, blobRef)) !== null && _b !== void 0 ? _b : null; } }), userID, this.config.maxBackoffTimeout);
+            }, getFileUploaderOverride: parentType => { var _a, _b; return (_b = (_a = this.userCore) === null || _a === void 0 ? void 0 : _a.getFileUploaderOverride(parentType)) !== null && _b !== void 0 ? _b : null; }, getFileUploaderBlobDef: (parentType, blobRef) => { var _a, _b; return (_b = (_a = this.userCore) === null || _a === void 0 ? void 0 : _a.getFileUploaderBlobDef(parentType, blobRef)) !== null && _b !== void 0 ? _b : null; }, onBeforeLogout: async (trc, id, keepData) => await this.onBeforeLogout(trc, id, keepData) }), userID, this.config.maxBackoffTimeout);
         this.graph.addChangeHandler(this.watchTree);
         for (const plugin of this.config.plugins || []) {
             pluginManager_1.defineStorageAccess(plugin, this.di, this.graph);
@@ -477,6 +446,21 @@ class ConduitCore {
                 }
                 catch (e) {
                     conduit_utils_1.logger.error(`Encounter error while destroying plugin ${plugin.name}: `, e);
+                }
+            }
+        }
+    }
+    async onBeforeLogout(trc, id, keepData) {
+        if (!this.graph) {
+            throw new Error('Conduit not initialized');
+        }
+        for (const plugin of this.config.plugins || []) {
+            if (plugin && plugin.onBeforeLogout) {
+                try {
+                    await plugin.onBeforeLogout(trc, id, keepData);
+                }
+                catch (e) {
+                    conduit_utils_1.logger.error(`Encounter error in onBeforeLogout hook ${plugin.name}: `, e);
                 }
             }
         }
@@ -547,12 +531,19 @@ function conduitDIProxy(getConduit, eventCallback) {
             const conduit = getConduit();
             return (_a = conduit === null || conduit === void 0 ? void 0 : conduit.convertNodeTypeToNSyncType(type)) !== null && _a !== void 0 ? _a : null;
         },
-        getNsyncConverters: () => {
+        getNSyncEdgeDefiners: () => {
             const conduit = getConduit();
             if (!conduit) {
                 throw new Error('Conduit not initialized');
             }
-            return conduit.getNsyncConverters();
+            return conduit.getNSyncEdgeDefiners();
+        },
+        getNSyncExtraNodesAndEdges: () => {
+            const conduit = getConduit();
+            if (!conduit) {
+                throw new Error('Conduit not initialized');
+            }
+            return conduit.getNSyncExtraNodesAndEdges();
         },
         getNodeTypeDefs: () => {
             const conduit = getConduit();

@@ -13,10 +13,10 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.QuasarConnectorAndExecutor = exports.NSyncEventManager = exports.LAST_NSYNC_SYNC_STATE_PATH = exports.serviceResultsToMutationDeps = exports.CoreEntityNSyncConverters = void 0;
+exports.QuasarConnectorAndExecutor = exports.NSyncEventManager = exports.LAST_NSYNC_SYNC_STATE_PATH = exports.serviceResultsToMutationDeps = void 0;
 __exportStar(require("./Converters/BaseConverter"), exports);
+__exportStar(require("./Converters/EdgeConverters"), exports);
 var NSyncEntityConverter_1 = require("./NSyncEntityConverter");
-Object.defineProperty(exports, "CoreEntityNSyncConverters", { enumerable: true, get: function () { return NSyncEntityConverter_1.CoreEntityNSyncConverters; } });
 Object.defineProperty(exports, "serviceResultsToMutationDeps", { enumerable: true, get: function () { return NSyncEntityConverter_1.serviceResultsToMutationDeps; } });
 var NSyncEventManager_1 = require("./NSyncEventManager");
 Object.defineProperty(exports, "LAST_NSYNC_SYNC_STATE_PATH", { enumerable: true, get: function () { return NSyncEventManager_1.LAST_NSYNC_SYNC_STATE_PATH; } });

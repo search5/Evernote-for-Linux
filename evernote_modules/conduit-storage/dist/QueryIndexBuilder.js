@@ -11,14 +11,12 @@ const IndexResolverFactories_1 = require("./IndexResolverFactories");
 const QueryDefs_1 = require("./QueryDefs");
 function extractCommonSortFields(paramConfig) {
     const fieldCount = {};
-    let sortCount = 0;
     for (const key in paramConfig.sort) {
-        sortCount++;
         for (const s of paramConfig.sort[key]) {
             fieldCount[s.field] = (fieldCount[s.field] || 0) + 1;
         }
     }
-    return Object.keys(fieldCount).filter(f => fieldCount[f] === sortCount);
+    return Object.keys(fieldCount);
 }
 function getCommonFieldsForQuery(query) {
     const indexedFields = new Set();
@@ -333,6 +331,7 @@ function buildNodeIndexConfiguration(nodeTypeDef, params) {
             traversalToDst: propagatedFrom.traversalToDst,
             dstField,
             srcField: propagatedFrom.srcField,
+            transform: propagatedFrom.transform,
         };
     }
     const denormalizeQueries = (def) => {

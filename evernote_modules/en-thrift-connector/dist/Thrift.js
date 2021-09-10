@@ -116,7 +116,8 @@ class AsyncNoteStore {
             return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'getNote', this.noteStore, this.noteStore.getNote, authenticationToken, guid, withContent, withResourcesData, withResourcesRecognition, withResourcesAlternateData);
         };
         this.getNoteWithResultSpec = (trc, authenticationToken, guid, specs) => {
-            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'getNoteWithResultSpec', this.noteStore, this.noteStore.getNoteWithResultSpec, authenticationToken, guid, specs);
+            const traceArgs = { guid };
+            return ThriftRpc_1.wrapThriftCallWithTraceArgs(trc, authenticationToken, 'getNoteWithResultSpec', this.noteStore, this.noteStore.getNoteWithResultSpec, traceArgs, authenticationToken, guid, specs);
         };
         this.getNoteContent = (trc, authenticationToken, guid) => {
             return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'getNoteContent', this.noteStore, this.noteStore.getNoteContent, authenticationToken, guid);
@@ -125,7 +126,11 @@ class AsyncNoteStore {
             return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'getNoteSnippetsV2', this.noteStore, this.noteStore.getNoteSnippetsV2, authenticationToken, guids, maxSnippetLength);
         };
         this.createNote = (trc, authenticationToken, note) => {
-            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'createNote', this.noteStore, this.noteStore.createNote, authenticationToken, note);
+            const traceArgs = {
+                guid: note.guid,
+                notebookGuid: note.notebookGuid,
+            };
+            return ThriftRpc_1.wrapThriftCallWithTraceArgs(trc, authenticationToken, 'createNote', this.noteStore, this.noteStore.createNote, traceArgs, authenticationToken, note);
         };
         this.copyNote = (trc, authenticationToken, noteGuid, toNotebookGuid) => {
             return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'copyNote', this.noteStore, this.noteStore.copyNote, authenticationToken, noteGuid, toNotebookGuid);
@@ -355,7 +360,19 @@ class AsyncUtilityStore {
             return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'addResource', this.utilityStore, this.utilityStore.addResource, authenticationToken, resource);
         };
         this.updateNoteIfUsnMatches = (trc, authenticationToken, note, resourcesUpdateRequest) => {
-            return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'updateNoteIfUsnMatches', this.utilityStore, this.utilityStore.updateNoteIfUsnMatches, authenticationToken, note, resourcesUpdateRequest);
+            const traceArgs = {
+                note: {
+                    guid: note.guid,
+                    updateSequenceNum: note.updateSequenceNum,
+                    contentHash: note.contentHash,
+                    contentLength: note.contentLength,
+                },
+                resourceUpdateRequest: {
+                    activateResourcesWithBodyHashes: resourcesUpdateRequest.activateResourcesWithBodyHashes,
+                    deactivateResourcesWithBodyHashes: resourcesUpdateRequest.deactivateResourcesWithBodyHashes,
+                },
+            };
+            return ThriftRpc_1.wrapThriftCallWithTraceArgs(trc, authenticationToken, 'updateNoteIfUsnMatches', this.utilityStore, this.utilityStore.updateNoteIfUsnMatches, traceArgs, authenticationToken, note, resourcesUpdateRequest);
         };
         this.getCrossPromotionInfo = (trc, authenticationToken) => {
             return ThriftRpc_1.wrapThriftCall(trc, authenticationToken, 'getCrossPromotionInfo', this.utilityStore, this.utilityStore.getCrossPromotionInfo, authenticationToken);

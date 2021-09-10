@@ -1,6 +1,6 @@
 {
   "name": "en-conduit-plugin-nsvc-authz-token",
-  "version": "1.38.1",
+  "version": "1.39.1",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -10,12 +10,12 @@
     "dist"
   ],
   "dependencies": {
-    "conduit-core": "1.38.1",
-    "conduit-utils": "1.38.1",
-    "en-conduit-sync": "1.38.1",
-    "en-conduit-sync-types": "1.38.1",
-    "en-core-entity-types": "1.38.1",
-    "en-thrift-connector": "1.38.1"
+    "conduit-core": "1.39.1",
+    "conduit-utils": "1.39.1",
+    "en-conduit-sync": "1.39.1",
+    "en-conduit-sync-types": "1.39.1",
+    "en-core-entity-types": "1.39.1",
+    "en-thrift-connector": "1.39.1"
   },
   "peerDependencies": {
     "graphql": "^14.0.2"

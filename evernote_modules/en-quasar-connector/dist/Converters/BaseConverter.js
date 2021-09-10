@@ -15,17 +15,10 @@ function mergeNodesAndEdges(object1, object2) {
     return { nodes: { nodesToDelete, nodesToUpsert }, edges: { edgesToDelete, edgesToCreate } };
 }
 exports.mergeNodesAndEdges = mergeNodesAndEdges;
-function convertNsyncEntityToNode(instance, context) {
-    var _a;
+function convertNsyncEntityToNode(typeDef, instance, context) {
+    var _a, _b;
+    const edges = [];
     if (instance.version === undefined || instance.version === null) {
-        return null;
-    }
-    const type = context.di.convertNsyncTypeToNodeType(instance.ref.type);
-    if (conduit_utils_1.isNullish(type)) {
-        return null;
-    }
-    const typeDef = context.di.getNodeTypeDefs()[type];
-    if (!typeDef) {
         return null;
     }
     const node = {
@@ -38,7 +31,7 @@ function convertNsyncEntityToNode(instance, context) {
         deleted: instance.deleted ?? null,
         */
         id: instance.ref.id,
-        type,
+        type: typeDef.name,
         version: instance.version,
         // creator: instanceAttr.creator as UserID,
         // lastEditor: instanceAttr.lastEditor as UserID,
@@ -61,12 +54,54 @@ function convertNsyncEntityToNode(instance, context) {
             node.NodeFields[key] = instance[key];
         }
     }
+    if (typeDef.edges) {
+        for (const edgeName in typeDef.edges) {
+            const resolveEdgeFn = (_b = context.edgeDefiners[typeDef.name]) === null || _b === void 0 ? void 0 : _b[edgeName];
+            const edgeDef = typeDef.edges[edgeName];
+            const edgeRef = resolveEdgeFn && resolveEdgeFn(instance, context, typeDef, edgeName);
+            if (!edgeRef) {
+                continue;
+            }
+            if ('to' in edgeDef) {
+                let dstPort = null;
+                if (typeof edgeDef.to === 'object' && 'denormalize' in edgeDef.to) {
+                    if (edgeDef.to.denormalize && typeof edgeDef.to.denormalize === 'string') {
+                        dstPort = edgeDef.to.denormalize;
+                    }
+                }
+                edges.push({
+                    dstID: edgeRef.id,
+                    dstType: edgeRef.type,
+                    dstPort,
+                    srcID: instance.ref.id,
+                    srcType: typeDef.name,
+                    srcPort: edgeName,
+                });
+            }
+            if ('from' in edgeDef) {
+                let srcPort = null;
+                if (typeof edgeDef.from === 'object' && 'denormalize' in edgeDef.from) {
+                    if (edgeDef.from.denormalize && typeof edgeDef.from.denormalize === 'string') {
+                        srcPort = edgeDef.from.denormalize;
+                    }
+                }
+                edges.push({
+                    srcID: edgeRef.id,
+                    srcType: edgeRef.type,
+                    srcPort,
+                    dstID: instance.ref.id,
+                    dstType: typeDef.name,
+                    dstPort: edgeName,
+                });
+            }
+        }
+    }
     // TODO: update after https://evernote.jira.com/browse/TK-1732 and after DataStore cleanup
     if (node.NodeFields.deleted === 0) {
         node.NodeFields.deleted = null;
     }
     node.NodeFields = conduit_utils_1.validateSchemaAndPopulateDefaults(node.NodeFields, typeDef.schema);
-    return node;
+    return { node: node, edges };
 }
 exports.convertNsyncEntityToNode = convertNsyncEntityToNode;
 //# sourceMappingURL=BaseConverter.js.map

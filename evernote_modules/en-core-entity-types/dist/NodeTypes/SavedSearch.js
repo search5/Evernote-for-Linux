@@ -8,7 +8,8 @@ const conduit_storage_1 = require("conduit-storage");
 const EntityConstants_1 = require("../EntityConstants");
 exports.savedSearchTypeDef = {
     name: EntityConstants_1.CoreEntityTypes.SavedSearch,
-    syncSource: conduit_storage_1.SyncSource.THRIFT,
+    syncSource: conduit_storage_1.SyncSource.HYBRID,
+    nsyncFeatureGroup: 'LES',
     schema: {
         query: 'string',
     },

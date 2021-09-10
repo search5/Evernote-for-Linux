@@ -19,12 +19,9 @@ const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_calendar_data_model_1 = require("en-calendar-data-model");
 const en_data_model_1 = require("en-data-model");
+const en_quasar_connector_1 = require("en-quasar-connector");
 const CalendarConstants_1 = require("./CalendarConstants");
 const CalendarServiceType_1 = require("./CalendarServiceType");
-const CalendarAccountConverters_1 = require("./Converters/CalendarAccountConverters");
-const CalendarEventConverter_1 = require("./Converters/CalendarEventConverter");
-const CalendarSettingsConverter_1 = require("./Converters/CalendarSettingsConverter");
-const UserCalendarSettingsConverter_1 = require("./Converters/UserCalendarSettingsConverter");
 const CalendarAccount_1 = require("./EntityTypes/CalendarAccount");
 const CalendarEvent_1 = require("./EntityTypes/CalendarEvent");
 const CalendarSettings_1 = require("./EntityTypes/CalendarSettings");
@@ -396,19 +393,24 @@ function getCalendarServicePlugin(httpClient) {
             const entityTypes = {
                 [en_data_model_1.EntityTypes.CalendarSettings]: {
                     typeDef: CalendarSettings_1.calendarSettingsTypeDef,
-                    nsyncConverters: { [NSyncEntityType.CALENDAR_SETTINGS]: CalendarSettingsConverter_1.getCalendarSettingsNode },
+                    nsyncType: NSyncEntityType.CALENDAR_SETTINGS,
                 },
                 [en_data_model_1.EntityTypes.CalendarEvent]: {
                     typeDef: CalendarEvent_1.calendarEventTypeDef,
-                    nsyncConverters: { [NSyncEntityType.CALENDAR_EVENT]: CalendarEventConverter_1.getCalendarEventNode },
+                    nsyncType: NSyncEntityType.CALENDAR_EVENT,
                 },
                 [en_data_model_1.EntityTypes.CalendarAccount]: {
                     typeDef: CalendarAccount_1.calendarAccountTypeDef,
-                    nsyncConverters: { [NSyncEntityType.CALENDAR_ACCOUNT]: CalendarAccountConverters_1.getCalendarAccountNodeAndEdges },
+                    nsyncType: NSyncEntityType.CALENDAR_ACCOUNT,
                 },
                 [en_data_model_1.EntityTypes.UserCalendarSettings]: {
                     typeDef: UserCalendarSettings_1.userCalendarSettingsTypeDef,
-                    nsyncConverters: { [NSyncEntityType.USER_CALENDAR_SETTINGS]: UserCalendarSettingsConverter_1.getUserCalendarSettingsNodeAndEdges },
+                    nsyncType: NSyncEntityType.USER_CALENDAR_SETTINGS,
+                    edgeDefiners: {
+                        [NSyncEntityType.USER_CALENDAR_SETTINGS]: {
+                            parent: en_quasar_connector_1.convertEdgeFromEntityRef('parentEntity'),
+                        },
+                    },
                 },
             };
             return entityTypes;

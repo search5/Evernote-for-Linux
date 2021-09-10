@@ -99,6 +99,21 @@
     },
     "lookups": []
   },
+  "EntityLocalState": {
+    "indexes": {
+      "8f6be171da8e884b3e4353bed53d91c2": {
+        "index": [
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      }
+    },
+    "lookups": []
+  },
   "GamificationGoal": {
     "indexes": {
       "8f6be171da8e884b3e4353bed53d91c2": {
@@ -146,6 +161,46 @@
   },
   "Invitation": {
     "indexes": {
+      "01740de77f159c1ae39643c947943763": {
+        "index": [
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "created",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      },
+      "18c94d139b96ba402cd0aff084b2ff90": {
+        "index": [
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      },
       "created": {
         "index": [
           {
@@ -181,8 +236,18 @@
   },
   "Membership": {
     "indexes": {
-      "12d349ca88fd94d3b246d3bfce627112": {
+      "2588d126b779deab2cb5faca59d79b8a": {
         "index": [
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "invitedTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
           {
             "field": "label",
             "order": "ASC",
@@ -201,11 +266,16 @@
           }
         ]
       },
-      "2fddb69dbbb407761c59d16a72e45dfe": {
+      "3128e8e93917a99f68a5b5dc976b4697": {
         "index": [
           {
-            "field": "created",
+            "field": "invitedTime",
             "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "created",
+            "order": "ASC",
             "type": "timestamp"
           },
           {
@@ -256,7 +326,7 @@
           }
         ]
       },
-      "4e22d29cf98e941a11e28057cad516e1": {
+      "5c461b342012335cfb0a446595b1d892": {
         "index": [
           {
             "field": "parent",
@@ -269,6 +339,11 @@
             "type": "string"
           },
           {
+            "field": "created",
+            "order": "ASC",
+            "type": "timestamp"
+          },
+          {
             "field": "id",
             "order": "ASC",
             "type": "ID"
@@ -276,17 +351,22 @@
         ],
         "indexCondition": []
       },
-      "66a5692159e6b2ca937ec172f9e7a038": {
+      "6c092fb2b3c1ed3fb937dc7460c228c5": {
         "index": [
-          {
-            "field": "invitedTime",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
           {
             "field": "label",
             "order": "ASC",
             "type": "string"
+          },
+          {
+            "field": "invitedTime",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "created",
+            "order": "ASC",
+            "type": "timestamp"
           },
           {
             "field": "id",
@@ -301,7 +381,7 @@
           }
         ]
       },
-      "a248e49768a44464250cabc2e229b41e": {
+      "b0b5cfb5484a1f65424a0d6dc5e1d98f": {
         "index": [
           {
             "field": "parent",
@@ -312,6 +392,11 @@
             "field": "label",
             "order": "ASC",
             "type": "string"
+          },
+          {
+            "field": "created",
+            "order": "ASC",
+            "type": "timestamp"
           },
           {
             "field": "id",
@@ -1027,65 +1112,6 @@
           }
         ]
       },
-      "218a94e7abeefbd41dac308dd8afe81a": {
-        "index": [
-          {
-            "field": "parent",
-            "order": "ASC",
-            "type": "EntityRef?"
-          },
-          {
-            "field": "reminderIsDone",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "reminderTime",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "reminderOrder",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "reminderDoneTime",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "created",
-            "order": "ASC",
-            "type": "timestamp"
-          },
-          {
-            "field": "updated",
-            "order": "ASC",
-            "type": "timestamp"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "hasReminder",
-            "value": true
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
       "233d4e77382837b7ede2704249167089": {
         "index": [
           {
@@ -1388,41 +1414,6 @@
           {
             "field": "inTrash",
             "value": false
-          }
-        ]
-      },
-      "2c6183f771ca629549b7bbd13d419d58": {
-        "index": [
-          {
-            "field": "created",
-            "order": "DESC",
-            "type": "timestamp"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "updated",
-            "order": "DESC",
-            "type": "timestamp"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": true
           }
         ]
       },
@@ -1738,6 +1729,46 @@
           {
             "field": "inTrash",
             "value": false
+          }
+        ]
+      },
+      "44cee2638cf61fa5fbb52cb76f9e4b9e": {
+        "index": [
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "deleted",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": true
           }
         ]
       },
@@ -2159,6 +2190,46 @@
           }
         ]
       },
+      "6199db93f40ecf1fd5c5d65d7ffb1e12": {
+        "index": [
+          {
+            "field": "deleted",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "updated",
+            "order": "ASC",
+            "type": "timestamp"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": true
+          }
+        ]
+      },
       "624d46b274f8d5ade2a74ed7741c4435": {
         "index": [
           {
@@ -2547,6 +2618,65 @@
           }
         ]
       },
+      "7fc08caa0e01a4012fca6645188ad306": {
+        "index": [
+          {
+            "field": "reminderIsDone",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "reminderTime",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderOrder",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderDoneTime",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "ASC",
+            "type": "timestamp"
+          },
+          {
+            "field": "created",
+            "order": "ASC",
+            "type": "timestamp"
+          },
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "EntityRef?"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "hasReminder",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
       "8798252409fbe0155a4b43de2f17c2e7": {
         "index": [
           {
@@ -2598,41 +2728,6 @@
           {
             "field": "inTrash",
             "value": false
-          }
-        ]
-      },
-      "8be1b45c9c68047f1890b355414e3aaf": {
-        "index": [
-          {
-            "field": "updated",
-            "order": "DESC",
-            "type": "timestamp"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "created",
-            "order": "DESC",
-            "type": "timestamp"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": true
           }
         ]
       },
@@ -2796,6 +2891,46 @@
           {
             "field": "inTrash",
             "value": false
+          }
+        ]
+      },
+      "9276dfc2252352d3b62f22980e532e5d": {
+        "index": [
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "deleted",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": true
           }
         ]
       },
@@ -3022,41 +3157,6 @@
           {
             "field": "inTrash",
             "value": false
-          }
-        ]
-      },
-      "a298b87e70fdd8bd89fda81ee98b7d80": {
-        "index": [
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "updated",
-            "order": "DESC",
-            "type": "timestamp"
-          },
-          {
-            "field": "created",
-            "order": "DESC",
-            "type": "timestamp"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": true
           }
         ]
       },
@@ -3861,65 +3961,6 @@
           }
         ]
       },
-      "bd3e2518ee59edb66e7a987b18e5da77": {
-        "index": [
-          {
-            "field": "reminderIsDone",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "reminderTime",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "reminderOrder",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "reminderDoneTime",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "created",
-            "order": "ASC",
-            "type": "timestamp"
-          },
-          {
-            "field": "updated",
-            "order": "ASC",
-            "type": "timestamp"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "parent",
-            "order": "ASC",
-            "type": "EntityRef?"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "hasReminder",
-            "value": true
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
       "c0c68e35b839a3f111e8677eb0caf4a6": {
         "index": [
           {
@@ -4035,6 +4076,46 @@
           {
             "field": "inTrash",
             "value": false
+          }
+        ]
+      },
+      "c5b8a2f765ecb3865b86411e63b72032": {
+        "index": [
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "created",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "deleted",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": true
           }
         ]
       },
@@ -4506,6 +4587,65 @@
           }
         ]
       },
+      "dfe4dc1855c10ac833fab5d31316cdf0": {
+        "index": [
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "EntityRef?"
+          },
+          {
+            "field": "reminderIsDone",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "reminderTime",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderOrder",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "reminderDoneTime",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "ASC",
+            "type": "timestamp"
+          },
+          {
+            "field": "created",
+            "order": "ASC",
+            "type": "timestamp"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "hasReminder",
+            "value": true
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
       "e2141798fc391bd79ad15e60656b3dda": {
         "index": [
           {
@@ -4944,7 +5084,7 @@
   },
   "Notebook": {
     "indexes": {
-      "12824109a7d0c2ba9f470d72939b844a": {
+      "28445443134497d3011b34d98c9fd938": {
         "index": [
           {
             "field": "parent",
@@ -4952,14 +5092,19 @@
             "type": "ID?"
           },
           {
-            "field": "created",
-            "order": "ASC",
+            "field": "updated",
+            "order": "DESC",
             "type": "timestamp"
           },
           {
             "field": "label",
             "order": "ASC",
             "type": "string"
+          },
+          {
+            "field": "created",
+            "order": "ASC",
+            "type": "timestamp"
           },
           {
             "field": "childrenCount",
@@ -5015,6 +5160,41 @@
             "field": "childrenCount",
             "order": "ASC",
             "type": "int"
+          }
+        ],
+        "indexCondition": []
+      },
+      "56907b304f5fa3f0b8d131fba35ad2af": {
+        "index": [
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "created",
+            "order": "ASC",
+            "type": "timestamp"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "ASC",
+            "type": "timestamp"
+          },
+          {
+            "field": "childrenCount",
+            "order": "ASC",
+            "type": "int"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
           }
         ],
         "indexCondition": []
@@ -5123,6 +5303,41 @@
           }
         ]
       },
+      "cc190391a758993265294db56454c0e9": {
+        "index": [
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "updated",
+            "order": "DESC",
+            "type": "timestamp"
+          },
+          {
+            "field": "created",
+            "order": "ASC",
+            "type": "timestamp"
+          },
+          {
+            "field": "childrenCount",
+            "order": "ASC",
+            "type": "int"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      },
       "creator": {
         "index": [
           {
@@ -5188,36 +5403,6 @@
           }
         ]
       },
-      "e347612a163d6ababc364002e3f058bd": {
-        "index": [
-          {
-            "field": "parent",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "updated",
-            "order": "DESC",
-            "type": "timestamp"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "childrenCount",
-            "order": "ASC",
-            "type": "int"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": []
-      },
       "f498b0499ba27728705cd29ee3f76edd": {
         "index": [
           {
@@ -5242,36 +5427,6 @@
             "value": false
           }
         ]
-      },
-      "fcbbca2d4748fee41a7cf9df89cd8a06": {
-        "index": [
-          {
-            "field": "parent",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "updated",
-            "order": "DESC",
-            "type": "timestamp"
-          },
-          {
-            "field": "childrenCount",
-            "order": "ASC",
-            "type": "int"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": []
       },
       "label": {
         "index": [
@@ -5928,21 +6083,11 @@
           }
         ]
       },
-      "07fb3b79c98980099d453797eda9a236": {
+      "0317d867219b322decdf53f377f39c42": {
         "index": [
           {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
             "field": "status",
-            "order": "DESC",
+            "order": "ASC",
             "type": [
               "open",
               "completed"
@@ -5954,12 +6099,30 @@
             "type": "timestamp?"
           },
           {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
             "field": "label",
             "order": "ASC",
             "type": "string"
           },
           {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
             "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
             "order": "ASC",
             "type": "ID?"
           },
@@ -5985,6 +6148,135 @@
           }
         ],
         "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "052909585e907cf20a76019671f64cd5": {
+        "index": [
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "05ff81f91ed4c7f74fcdc896afa93591": {
+        "index": [
+          {
+            "field": "dueDate",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "contentInfo",
+            "order": "DESC",
+            "type": "ID"
+          },
+          {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "assignedToMe",
+            "value": true
+          },
+          {
+            "field": "hasNote",
+            "value": false
+          },
           {
             "field": "inTrash",
             "value": false
@@ -6062,7 +6354,7 @@
           }
         ]
       },
-      "08e46f4607be3ee46f409af02feb6874": {
+      "09409d7ae9babb9a2e6b01830765d3f3": {
         "index": [
           {
             "field": "creator",
@@ -6070,83 +6362,17 @@
             "type": "ID"
           },
           {
-            "field": "contentInfo",
-            "order": "DESC",
-            "type": "ID"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "DESC",
-            "type": "string"
-          },
-          {
-            "field": "sortWeight",
-            "order": "DESC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
+            "field": "status",
             "order": "ASC",
-            "type": "ID?"
+            "type": [
+              "open",
+              "completed"
+            ]
           },
           {
             "field": "dueDate",
             "order": "ASC",
             "type": "timestamp?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "assignedToMe",
-            "value": true
-          },
-          {
-            "field": "hasNote",
-            "value": false
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "0904a3e81b34d0cd7d7beaa4b9f490ee": {
-        "index": [
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
           },
           {
             "field": "contentInfo",
@@ -6172,24 +6398,19 @@
             "type": "string"
           },
           {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
             "field": "assignedBy",
             "order": "ASC",
             "type": "ID?"
           },
           {
-            "field": "dueDate",
-            "order": "ASC",
-            "type": "timestamp?"
-          },
-          {
             "field": "hasReminder",
             "order": "ASC",
             "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
           },
           {
             "field": "id",
@@ -6288,86 +6509,12 @@
           }
         ]
       },
-      "0b8372e2230655ef36b69bced04aa660": {
+      "0c22ffd71bcf67765eff04ff131c5ce3": {
         "index": [
           {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "contentInfo",
-            "order": "DESC",
-            "type": "ID"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "DESC",
-            "type": "string"
-          },
-          {
-            "field": "sortWeight",
-            "order": "DESC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
+            "field": "parent",
             "order": "ASC",
             "type": "ID?"
-          },
-          {
-            "field": "dueDate",
-            "order": "ASC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "assignedToMe",
-            "value": true
-          },
-          {
-            "field": "hasNote",
-            "value": false
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "0fcb4ad9ace0ed3d06011f759df73b6a": {
-        "index": [
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
           },
           {
             "field": "dueDate",
@@ -6390,7 +6537,20 @@
             "type": "string"
           },
           {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
             "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
             "order": "ASC",
             "type": "ID?"
           },
@@ -6410,22 +6570,9 @@
             "type": "ID"
           }
         ],
-        "indexCondition": [
-          {
-            "field": "assignedToMe",
-            "value": true
-          },
-          {
-            "field": "hasNote",
-            "value": false
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
+        "indexCondition": []
       },
-      "12744a948275112edaa1263dfbca56ce": {
+      "0cf1bfec4e5ee4f3fee3a131892edcde": {
         "index": [
           {
             "field": "creator",
@@ -6433,9 +6580,12 @@
             "type": "ID"
           },
           {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
           },
           {
             "field": "status",
@@ -6446,9 +6596,19 @@
             ]
           },
           {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
             "field": "label",
             "order": "ASC",
             "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
           },
           {
             "field": "assignedBy",
@@ -6482,6 +6642,327 @@
           }
         ],
         "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "0e08aa2948a63c80f4c8effe5d2a7027": {
+        "index": [
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "contentInfo",
+            "order": "DESC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "dueDate",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "assignedToMe",
+            "value": true
+          },
+          {
+            "field": "hasNote",
+            "value": false
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "1063be2a0b401ba0bf5ad24823887a87": {
+        "index": [
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "11e4e0f661cc9586db9d5aad4f8d43e3": {
+        "index": [
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "11f6763ffc42026664cca9b3c3d8ddd3": {
+        "index": [
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "143ac912cb8fff39819a5a86a106d5ad": {
+        "index": [
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "contentInfo",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "assignedToMe",
+            "value": true
+          },
+          {
+            "field": "hasNote",
+            "value": false
+          },
           {
             "field": "inTrash",
             "value": false
@@ -6556,6 +7037,69 @@
           }
         ]
       },
+      "15474f0997a6640a699231715cb3c2dd": {
+        "index": [
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "contentInfo",
+            "order": "DESC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "dueDate",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      },
       "1592dd3f47e1518b817a048288584eb1": {
         "index": [
           {
@@ -6624,204 +7168,8 @@
           }
         ]
       },
-      "1a939ef26394c777bc02452e969a84e3": {
+      "15dab5ff10d1ef737f322df6a4ece3c4": {
         "index": [
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "1b1654a2914a74e401d75a7865dc30b2": {
-        "index": [
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "assignedToMe",
-            "value": true
-          },
-          {
-            "field": "hasNote",
-            "value": false
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "1c3cbc32a08ce8fe782fb1cea80cb85e": {
-        "index": [
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "assignedToMe",
-            "value": true
-          },
-          {
-            "field": "hasNote",
-            "value": false
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "1d811e8d1847eddffe8e1f458b44a8ac": {
-        "index": [
-          {
-            "field": "dueDate",
-            "order": "ASC",
-            "type": "timestamp?"
-          },
           {
             "field": "contentInfo",
             "order": "DESC",
@@ -6838,14 +7186,9 @@
             "type": "string"
           },
           {
-            "field": "assignedBy",
+            "field": "dueDate",
             "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
+            "type": "timestamp?"
           },
           {
             "field": "label",
@@ -6859,6 +7202,16 @@
               "open",
               "completed"
             ]
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
           },
           {
             "field": "id",
@@ -7015,12 +7368,178 @@
           }
         ]
       },
-      "264c2c9d4464148810dc08420471325a": {
+      "21dd2fea9728cd112cad27c6b65075b3": {
         "index": [
           {
             "field": "creator",
             "order": "ASC",
             "type": "ID"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "contentInfo",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "assignedToMe",
+            "value": true
+          },
+          {
+            "field": "hasNote",
+            "value": false
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "248be0ee02902c09407740d3f259f753": {
+        "index": [
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "contentInfo",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "assignedToMe",
+            "value": true
+          },
+          {
+            "field": "hasNote",
+            "value": false
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "24da839bc2e71da1db43c7dedfbd6245": {
+        "index": [
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
           },
           {
             "field": "contentInfo",
@@ -7046,24 +7565,24 @@
             "type": "string"
           },
           {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
             "field": "dueDate",
             "order": "ASC",
             "type": "timestamp?"
           },
           {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
             "field": "label",
             "order": "ASC",
             "type": "string"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
           },
           {
             "field": "id",
@@ -7086,13 +7605,8 @@
           }
         ]
       },
-      "2742230bc7683a0de24e6aebba37f22b": {
+      "272a0378b773186b8fdcf9a35f0f9d94": {
         "index": [
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
           {
             "field": "dueDate",
             "order": "DESC",
@@ -7110,79 +7624,20 @@
             "field": "label",
             "order": "ASC",
             "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "assignedToMe",
-            "value": true
-          },
-          {
-            "field": "hasNote",
-            "value": false
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "2db28f1273ce3ab8a854609f9b22ffff": {
-        "index": [
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "dueDate",
-            "order": "ASC",
-            "type": "timestamp?"
           },
           {
             "field": "contentInfo",
-            "order": "DESC",
+            "order": "ASC",
             "type": "ID"
           },
           {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
             "field": "taskGroupNoteLevelID",
-            "order": "DESC",
+            "order": "ASC",
             "type": "string"
           },
           {
             "field": "sortWeight",
-            "order": "DESC",
+            "order": "ASC",
             "type": "string"
           },
           {
@@ -7194,11 +7649,6 @@
             "field": "hasReminder",
             "order": "ASC",
             "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
           },
           {
             "field": "id",
@@ -7221,75 +7671,12 @@
           }
         ]
       },
-      "34d1d647dfacba8cd971f6fbc34de15d": {
+      "293f42b2508af842037343162aafa735": {
         "index": [
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
           {
             "field": "creator",
             "order": "ASC",
             "type": "ID"
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "388499ab41d61c96d4a1a5f9a580bae6": {
-        "index": [
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
           },
           {
             "field": "dueDate",
@@ -7307,6 +7694,155 @@
             "type": "string"
           },
           {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "2c729de93fa66440e4c1502c562e5fa6": {
+        "index": [
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "2ebee6dfe8958b82cc5c6613f02634c4": {
+        "index": [
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "flag",
+            "order": "DESC",
+            "type": "boolean"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
             "field": "assignedBy",
             "order": "ASC",
             "type": "ID?"
@@ -7322,12 +7858,285 @@
             "type": "boolean"
           },
           {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "2fc1588a7bf34dd6d46558a8576d0720": {
+        "index": [
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
             "field": "status",
             "order": "ASC",
             "type": [
               "open",
               "completed"
             ]
+          },
+          {
+            "field": "contentInfo",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "assignedToMe",
+            "value": true
+          },
+          {
+            "field": "hasNote",
+            "value": false
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "30d4730b8295dcceb5301bb986a5e1be": {
+        "index": [
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "contentInfo",
+            "order": "DESC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "dueDate",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "assignedToMe",
+            "value": true
+          },
+          {
+            "field": "hasNote",
+            "value": false
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "353cc74babd7b00aa080efea038e4ac7": {
+        "index": [
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "dueDate",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "contentInfo",
+            "order": "DESC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      },
+      "390b21531f2542c975d0af85304e9d1c": {
+        "index": [
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
           },
           {
             "field": "taskGroupNoteLevelID",
@@ -7341,6 +8150,77 @@
           }
         ],
         "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "3aa0799dd2ba2e76daf4aa7a5d299076": {
+        "index": [
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "contentInfo",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "assignedToMe",
+            "value": true
+          },
+          {
+            "field": "hasNote",
+            "value": false
+          },
           {
             "field": "inTrash",
             "value": false
@@ -7415,212 +8295,12 @@
           }
         ]
       },
-      "40e9c2b023d9b73e5e1e14675888341d": {
+      "3d145378e8828a1c7a4d3d4a66b058c5": {
         "index": [
           {
             "field": "creator",
             "order": "ASC",
             "type": "ID"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "41bbf7f4cd2171f184bd5044c0b30a47": {
-        "index": [
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "flag",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "445d654c8f83834ec55303a9c335766a": {
-        "index": [
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "4497f217b48d0d0f48bbe0507f7f8cc5": {
-        "index": [
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
           },
           {
             "field": "dueDate",
@@ -7633,6 +8313,14 @@
             "type": "ID"
           },
           {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
             "field": "taskGroupNoteLevelID",
             "order": "DESC",
             "type": "string"
@@ -7640,6 +8328,11 @@
           {
             "field": "sortWeight",
             "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
             "type": "string"
           },
           {
@@ -7651,11 +8344,6 @@
             "field": "hasReminder",
             "order": "ASC",
             "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
           },
           {
             "field": "id",
@@ -7672,6 +8360,219 @@
             "field": "hasNote",
             "value": false
           },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "3d73c55b131612c8f89dfea9097a2091": {
+        "index": [
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "3f093b427f76daa8e2ad411d64948b32": {
+        "index": [
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "contentInfo",
+            "order": "DESC",
+            "type": "ID"
+          },
+          {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "dueDate",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "assignedToMe",
+            "value": true
+          },
+          {
+            "field": "hasNote",
+            "value": false
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "4441432081090aafff0570011c76f3ba": {
+        "index": [
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
           {
             "field": "inTrash",
             "value": false
@@ -7754,15 +8655,17 @@
         ],
         "indexCondition": []
       },
-      "53cc154093c209bf51a5c783b46a10f7": {
+      "54193e2264adf940a6fb1f630a8c3891": {
         "index": [
           {
-            "field": "status",
+            "field": "assignee",
             "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
+            "type": "ID?"
+          },
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
           },
           {
             "field": "dueDate",
@@ -7770,22 +8673,32 @@
             "type": "timestamp?"
           },
           {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
             "field": "status",
-            "order": "DESC",
+            "order": "ASC",
             "type": [
               "open",
               "completed"
             ]
           },
           {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
             "field": "assignedBy",
             "order": "ASC",
             "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
           },
           {
             "field": "hasReminder",
@@ -7805,6 +8718,64 @@
         ],
         "indexCondition": [
           {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "5703a8a1f5c14e89881c2e3069f0460e": {
+        "index": [
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "contentInfo",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
             "field": "assignedToMe",
             "value": true
           },
@@ -7812,6 +8783,203 @@
             "field": "hasNote",
             "value": false
           },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "5c869749e67d7ef0a1c7db443691ec3a": {
+        "index": [
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "dueDate",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "contentInfo",
+            "order": "DESC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "assignedToMe",
+            "value": true
+          },
+          {
+            "field": "hasNote",
+            "value": false
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "5cdda70d43c74c8d2bde41b876035cbe": {
+        "index": [
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "5d3611d1c1b170f829caf9c3c80a5e63": {
+        "index": [
+          {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
           {
             "field": "inTrash",
             "value": false
@@ -7952,67 +9120,6 @@
           }
         ]
       },
-      "61e4ab820571871e49e9f74d8b8efcde": {
-        "index": [
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "assignedToMe",
-            "value": true
-          },
-          {
-            "field": "hasNote",
-            "value": false
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
       "62c5a238ed0700fafda4dcdbbd9dd8ca": {
         "index": [
           {
@@ -8089,6 +9196,142 @@
         ],
         "indexCondition": []
       },
+      "637483175aafd25e18ba92535e403f6d": {
+        "index": [
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "638582e94eb65f342cdd10811ebb176e": {
+        "index": [
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
       "659ce06b805893c6cb5a4fc14d94564e": {
         "index": [
           {
@@ -8141,268 +9384,6 @@
             "field": "hasReminder",
             "order": "ASC",
             "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "669f64b71157e3bcf47fe65ffc150a2d": {
-        "index": [
-          {
-            "field": "parent",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "contentInfo",
-            "order": "DESC",
-            "type": "ID"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "DESC",
-            "type": "string"
-          },
-          {
-            "field": "sortWeight",
-            "order": "DESC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "dueDate",
-            "order": "ASC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": []
-      },
-      "6849d58618b7ec46f91cc3473e65eebf": {
-        "index": [
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "flag",
-            "order": "DESC",
-            "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "69a7e622e83e8c10c0fe18dd70a296f7": {
-        "index": [
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "6a18d36b260a52ebef61d079313bd7ed": {
-        "index": [
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "flag",
-            "order": "DESC",
-            "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
           },
           {
             "field": "taskGroupNoteLevelID",
@@ -8626,13 +9607,8 @@
           }
         ]
       },
-      "7636df80f02b487bc2bc39ec8a837872": {
+      "70ccb52589a02558c77062ec5b09444c": {
         "index": [
-          {
-            "field": "parent",
-            "order": "ASC",
-            "type": "ID?"
-          },
           {
             "field": "creator",
             "order": "ASC",
@@ -8640,22 +9616,35 @@
           },
           {
             "field": "dueDate",
-            "order": "ASC",
+            "order": "DESC",
             "type": "timestamp?"
           },
           {
-            "field": "contentInfo",
+            "field": "status",
             "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "contentInfo",
+            "order": "ASC",
             "type": "ID"
           },
           {
             "field": "taskGroupNoteLevelID",
-            "order": "DESC",
+            "order": "ASC",
             "type": "string"
           },
           {
             "field": "sortWeight",
-            "order": "DESC",
+            "order": "ASC",
             "type": "string"
           },
           {
@@ -8664,80 +9653,9 @@
             "type": "ID?"
           },
           {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
             "field": "hasReminder",
             "order": "ASC",
             "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": []
-      },
-      "767e498ff80e2784ca210a6421689a6b": {
-        "index": [
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "contentInfo",
-            "order": "DESC",
-            "type": "ID"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "DESC",
-            "type": "string"
-          },
-          {
-            "field": "sortWeight",
-            "order": "DESC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "dueDate",
-            "order": "ASC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
           },
           {
             "field": "id",
@@ -9037,154 +9955,17 @@
           }
         ]
       },
-      "7ae46b9d9526e91d01d4e83ae27ce206": {
+      "7b33f7eb43880f2c1262d28432904c8e": {
         "index": [
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "dueDate",
-            "order": "ASC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "contentInfo",
-            "order": "DESC",
-            "type": "ID"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "DESC",
-            "type": "string"
-          },
-          {
-            "field": "sortWeight",
-            "order": "DESC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "assignedToMe",
-            "value": true
-          },
-          {
-            "field": "hasNote",
-            "value": false
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "7b76383b1c4b7ef035cc2c790b383bbe": {
-        "index": [
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
           {
             "field": "assignee",
             "order": "ASC",
             "type": "ID?"
           },
           {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "7e739fbbdcbf07c7864cb2e0958b67af": {
-        "index": [
-          {
             "field": "creator",
             "order": "ASC",
             "type": "ID"
-          },
-          {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
           },
           {
             "field": "dueDate",
@@ -9192,14 +9973,32 @@
             "type": "timestamp?"
           },
           {
+            "field": "flag",
+            "order": "DESC",
+            "type": "boolean"
+          },
+          {
             "field": "label",
             "order": "ASC",
             "type": "string"
           },
           {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
             "field": "assignedBy",
             "order": "ASC",
             "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
           },
           {
             "field": "hasReminder",
@@ -9218,14 +10017,6 @@
           }
         ],
         "indexCondition": [
-          {
-            "field": "assignedToMe",
-            "value": true
-          },
-          {
-            "field": "hasNote",
-            "value": false
-          },
           {
             "field": "inTrash",
             "value": false
@@ -9376,17 +10167,20 @@
           }
         ]
       },
-      "84e535e377726baff872da7eded07a17": {
+      "85bbd2ff6faf1726418470096f615d62": {
         "index": [
-          {
-            "field": "parent",
-            "order": "ASC",
-            "type": "ID?"
-          },
           {
             "field": "contentInfo",
             "order": "DESC",
             "type": "ID"
+          },
+          {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
           },
           {
             "field": "taskGroupNoteLevelID",
@@ -9399,319 +10193,8 @@
             "type": "string"
           },
           {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
             "field": "dueDate",
             "order": "ASC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": []
-      },
-      "873ad1b437a9e1faa6acd1770f3da030": {
-        "index": [
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "flag",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "89018a89edeeb2194866033033e37dd1": {
-        "index": [
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "flag",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "89ab792c918fd1156ad2de3004e2ac19": {
-        "index": [
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "8ab81d01734fa839f449824e6b9bab02": {
-        "index": [
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "8cae8cf5db7081e6ee099edbd2976aa7": {
-        "index": [
-          {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
             "type": "timestamp?"
           },
           {
@@ -9728,11 +10211,6 @@
             "field": "hasReminder",
             "order": "ASC",
             "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
           },
           {
             "field": "id",
@@ -9755,96 +10233,30 @@
           }
         ]
       },
-      "8d881b88875dbcc8399318b8ba0a6643": {
+      "8a9060d019b4f56287ce35e7a7145d17": {
         "index": [
           {
-            "field": "flag",
+            "field": "creator",
             "order": "ASC",
-            "type": "boolean"
+            "type": "ID"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
           },
           {
             "field": "dueDate",
-            "order": "DESC",
+            "order": "ASC",
             "type": "timestamp?"
-          },
-          {
-            "field": "flag",
-            "order": "DESC",
-            "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "91f2bc69ba783f6c6815d8c01b10d8ce": {
-        "index": [
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
           },
           {
             "field": "contentInfo",
             "order": "DESC",
             "type": "ID"
-          },
-          {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
           },
           {
             "field": "taskGroupNoteLevelID",
@@ -9857,24 +10269,19 @@
             "type": "string"
           },
           {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
             "field": "assignedBy",
             "order": "ASC",
             "type": "ID?"
           },
           {
-            "field": "dueDate",
-            "order": "ASC",
-            "type": "timestamp?"
-          },
-          {
             "field": "hasReminder",
             "order": "ASC",
             "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
           },
           {
             "field": "id",
@@ -9897,32 +10304,40 @@
           }
         ]
       },
-      "930e8cdc0cfe823777b0e3dd7bd5363d": {
+      "8d8be970548aef57ae4c3a4bfe7118ee": {
         "index": [
           {
-            "field": "parent",
+            "field": "assignee",
             "order": "ASC",
             "type": "ID?"
           },
           {
-            "field": "dueDate",
+            "field": "creator",
             "order": "ASC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "contentInfo",
-            "order": "DESC",
             "type": "ID"
           },
           {
-            "field": "taskGroupNoteLevelID",
+            "field": "status",
             "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
             "type": "string"
           },
           {
-            "field": "sortWeight",
-            "order": "DESC",
-            "type": "string"
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
           },
           {
             "field": "assignedBy",
@@ -9930,7 +10345,75 @@
             "type": "ID?"
           },
           {
-            "field": "assignee",
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "94da62111362dea1ee32c2a738a7d244": {
+        "index": [
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "contentInfo",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "assignedBy",
             "order": "ASC",
             "type": "ID?"
           },
@@ -9940,9 +10423,37 @@
             "type": "boolean"
           },
           {
-            "field": "label",
+            "field": "id",
             "order": "ASC",
-            "type": "string"
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "assignedToMe",
+            "value": true
+          },
+          {
+            "field": "hasNote",
+            "value": false
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "95edc057c4f5780f13c9712e9521b23a": {
+        "index": [
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
           },
           {
             "field": "status",
@@ -9953,12 +10464,60 @@
             ]
           },
           {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
             "field": "id",
             "order": "ASC",
             "type": "ID"
           }
         ],
-        "indexCondition": []
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
       },
       "993be310bace5840ad7ba5782654ee3a": {
         "index": [
@@ -10028,37 +10587,32 @@
         ],
         "indexCondition": []
       },
-      "9dc0b3b02496d72c14ef8a5fa797667a": {
+      "9a029f5a90f8713cb0379d5f7f5d55ef": {
         "index": [
           {
             "field": "dueDate",
-            "order": "DESC",
+            "order": "ASC",
             "type": "timestamp?"
+          },
+          {
+            "field": "contentInfo",
+            "order": "DESC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "DESC",
+            "type": "string"
           },
           {
             "field": "label",
             "order": "ASC",
             "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
           },
           {
             "field": "status",
@@ -10069,9 +10623,14 @@
             ]
           },
           {
-            "field": "taskGroupNoteLevelID",
+            "field": "assignedBy",
             "order": "ASC",
-            "type": "string"
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
           },
           {
             "field": "id",
@@ -10080,22 +10639,25 @@
           }
         ],
         "indexCondition": [
+          {
+            "field": "assignedToMe",
+            "value": true
+          },
+          {
+            "field": "hasNote",
+            "value": false
+          },
           {
             "field": "inTrash",
             "value": false
           }
         ]
       },
-      "a71ef47880be05bcb649f73c802c04de": {
+      "a30e3a35b9de73ed376c7f7c34d100f3": {
         "index": [
           {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
             "field": "status",
-            "order": "ASC",
+            "order": "DESC",
             "type": [
               "open",
               "completed"
@@ -10107,15 +10669,22 @@
             "type": "timestamp?"
           },
           {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
           },
           {
-            "field": "label",
+            "field": "contentInfo",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
             "order": "ASC",
             "type": "string"
           },
@@ -10125,24 +10694,9 @@
             "type": "ID?"
           },
           {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
             "field": "hasReminder",
             "order": "ASC",
             "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
           },
           {
             "field": "id",
@@ -10151,6 +10705,14 @@
           }
         ],
         "indexCondition": [
+          {
+            "field": "assignedToMe",
+            "value": true
+          },
+          {
+            "field": "hasNote",
+            "value": false
+          },
           {
             "field": "inTrash",
             "value": false
@@ -10293,6 +10855,69 @@
         ],
         "indexCondition": []
       },
+      "a9522ae65bd105d2272095fec087e074": {
+        "index": [
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
       "aad423ab46507ada9a6c92928204d43d": {
         "index": [
           {
@@ -10419,11 +11044,19 @@
           }
         ]
       },
-      "ac78638bcf82d61137e944668b2d2e8b": {
+      "ac9ca2e1b32e09604c0685d0e0c30a03": {
         "index": [
           {
             "field": "status",
             "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "status",
+            "order": "DESC",
             "type": [
               "open",
               "completed"
@@ -10436,6 +11069,21 @@
           },
           {
             "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "contentInfo",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
             "order": "ASC",
             "type": "string"
           },
@@ -10445,24 +11093,9 @@
             "type": "ID?"
           },
           {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
             "field": "hasReminder",
             "order": "ASC",
             "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
           },
           {
             "field": "id",
@@ -10472,12 +11105,20 @@
         ],
         "indexCondition": [
           {
+            "field": "assignedToMe",
+            "value": true
+          },
+          {
+            "field": "hasNote",
+            "value": false
+          },
+          {
             "field": "inTrash",
             "value": false
           }
         ]
       },
-      "ad137bf3fd9d4c3f561b49bc15d64259": {
+      "ad6cd1762b25ce90b8bb9bec30df371d": {
         "index": [
           {
             "field": "assignee",
@@ -10485,22 +11126,37 @@
             "type": "ID?"
           },
           {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
             "field": "dueDate",
             "order": "DESC",
             "type": "timestamp?"
           },
           {
-            "field": "status",
+            "field": "flag",
             "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
+            "type": "boolean"
           },
           {
             "field": "label",
             "order": "ASC",
             "type": "string"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
           },
           {
             "field": "assignedBy",
@@ -10606,12 +11262,88 @@
           }
         ]
       },
-      "b0113c4b5aa7fbf35ec730c5899d9212": {
+      "b244202733fefefc595c555ffadbaaaa": {
+        "index": [
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "contentInfo",
+            "order": "DESC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "dueDate",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "assignedToMe",
+            "value": true
+          },
+          {
+            "field": "hasNote",
+            "value": false
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "b2a8d60317ec132721a5803b26ba4607": {
         "index": [
           {
             "field": "assignee",
             "order": "ASC",
             "type": "ID?"
+          },
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
           },
           {
             "field": "status",
@@ -10627,17 +11359,14 @@
             "type": "timestamp?"
           },
           {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
             "field": "label",
             "order": "ASC",
             "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
           },
           {
             "field": "assignedBy",
@@ -10740,74 +11469,6 @@
           }
         ]
       },
-      "b3af917e8da9b73397734b7cb4731ab0": {
-        "index": [
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "flag",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "flag",
-            "order": "DESC",
-            "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
       "b3c10f2ad226e289c7201288d169500c": {
         "index": [
           {
@@ -10871,7 +11532,7 @@
         ],
         "indexCondition": []
       },
-      "b7053bece5d0abe1ae7ccc7ca12a0872": {
+      "b7dd5eef2fb702bfa18c6ca2eb442f7d": {
         "index": [
           {
             "field": "assignee",
@@ -10884,6 +11545,14 @@
             "type": "ID"
           },
           {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
             "field": "dueDate",
             "order": "DESC",
             "type": "timestamp?"
@@ -10900,6 +11569,11 @@
             "field": "label",
             "order": "ASC",
             "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
           },
           {
             "field": "assignedBy",
@@ -10934,8 +11608,21 @@
           }
         ]
       },
-      "ba322fa7a5cfeb6cef720d4c40a0007d": {
+      "bb800909efcac8df93bcb607a5856400": {
         "index": [
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
           {
             "field": "dueDate",
             "order": "DESC",
@@ -10955,9 +11642,19 @@
             "type": "string"
           },
           {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
             "field": "assignedBy",
             "order": "ASC",
             "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
           },
           {
             "field": "hasReminder",
@@ -10976,80 +11673,6 @@
           }
         ],
         "indexCondition": [
-          {
-            "field": "assignedToMe",
-            "value": true
-          },
-          {
-            "field": "hasNote",
-            "value": false
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "bae43bfb2dcccbd3ac9adb18e09b3500": {
-        "index": [
-          {
-            "field": "contentInfo",
-            "order": "DESC",
-            "type": "ID"
-          },
-          {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "DESC",
-            "type": "string"
-          },
-          {
-            "field": "sortWeight",
-            "order": "DESC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "dueDate",
-            "order": "ASC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "assignedToMe",
-            "value": true
-          },
-          {
-            "field": "hasNote",
-            "value": false
-          },
           {
             "field": "inTrash",
             "value": false
@@ -11132,208 +11755,6 @@
           }
         ]
       },
-      "bfa9de6b377a61e64918b5cb90bf7384": {
-        "index": [
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "dueDate",
-            "order": "ASC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "contentInfo",
-            "order": "DESC",
-            "type": "ID"
-          },
-          {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "DESC",
-            "type": "string"
-          },
-          {
-            "field": "sortWeight",
-            "order": "DESC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "assignedToMe",
-            "value": true
-          },
-          {
-            "field": "hasNote",
-            "value": false
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "c0ce30eec46a01d3c0c3e1fbae1e281f": {
-        "index": [
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "flag",
-            "order": "DESC",
-            "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "c0f0613b5bd5b275372125efcd8db24f": {
-        "index": [
-          {
-            "field": "flag",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
       "c3fedf0681ba402b05eb3deec201e6e6": {
         "index": [
           {
@@ -11368,6 +11789,74 @@
             "field": "sortWeight",
             "order": "DESC",
             "type": "string"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "dueDate",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": []
+      },
+      "cd8efa9394d156adb8694dbc8f1972c2": {
+        "index": [
+          {
+            "field": "parent",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "contentInfo",
+            "order": "DESC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
           },
           {
             "field": "assignedBy",
@@ -11465,13 +11954,270 @@
         ],
         "indexCondition": []
       },
-      "d0e25c004ac4278f315550d91f2b1f9c": {
+      "d840451f731a718692308e414689fd52": {
+        "index": [
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "d8adbec7763d2dafc8b4377be40c9df7": {
+        "index": [
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "flag",
+            "order": "DESC",
+            "type": "boolean"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "db7e375df76cae5d585de3446361b0bb": {
         "index": [
           {
             "field": "assignee",
             "order": "ASC",
             "type": "ID?"
           },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "e3960e0bdfde29c820f6456d0fb3e17a": {
+        "index": [
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "flag",
+            "order": "DESC",
+            "type": "boolean"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "e4466ed033c9a484ba4f44db54fea441": {
+        "index": [
           {
             "field": "creator",
             "order": "ASC",
@@ -11498,136 +12244,12 @@
             "type": "string"
           },
           {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
             "field": "status",
             "order": "ASC",
             "type": [
               "open",
               "completed"
             ]
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "d78b6f9a5a84b31671837d119ab1e822": {
-        "index": [
-          {
-            "field": "dueDate",
-            "order": "ASC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "contentInfo",
-            "order": "DESC",
-            "type": "ID"
-          },
-          {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "DESC",
-            "type": "string"
-          },
-          {
-            "field": "sortWeight",
-            "order": "DESC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "assignedToMe",
-            "value": true
-          },
-          {
-            "field": "hasNote",
-            "value": false
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "da3ce2bfdc42dc40c87bcf4c2bfc5849": {
-        "index": [
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
           },
           {
             "field": "assignedBy",
@@ -11636,262 +12258,6 @@
           },
           {
             "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "db821648164ec5f6610a75b5c952b0c9": {
-        "index": [
-          {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "dcc8bea26aa32de97138db9f4c4f8c64": {
-        "index": [
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "assignedToMe",
-            "value": true
-          },
-          {
-            "field": "hasNote",
-            "value": false
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "df60aaad47c02ee5c1d2e99e264651f5": {
-        "index": [
-          {
-            "field": "contentInfo",
-            "order": "DESC",
-            "type": "ID"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "DESC",
-            "type": "string"
-          },
-          {
-            "field": "sortWeight",
-            "order": "DESC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "dueDate",
-            "order": "ASC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "assignedToMe",
-            "value": true
-          },
-          {
-            "field": "hasNote",
-            "value": false
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "e13a09e5cfb0505330e6e0fdfb4d68f7": {
-        "index": [
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
             "order": "ASC",
             "type": "ID?"
           },
@@ -11986,6 +12352,80 @@
           }
         ]
       },
+      "e4d77b12312f2364eba5f0ccd0cfd9d6": {
+        "index": [
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "contentInfo",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "assignedToMe",
+            "value": true
+          },
+          {
+            "field": "hasNote",
+            "value": false
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
       "e4eb300d985cbfa388d5d786b2b878a7": {
         "index": [
           {
@@ -12048,62 +12488,6 @@
           }
         ],
         "indexCondition": []
-      },
-      "e5c89d5a3af43750898916f4e8006291": {
-        "index": [
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "assignedToMe",
-            "value": true
-          },
-          {
-            "field": "hasNote",
-            "value": false
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
       },
       "e5cc14e7894e63dff631b587c863ee31": {
         "index": [
@@ -12173,7 +12557,7 @@
         ],
         "indexCondition": []
       },
-      "e76b3198d31483348f3e2d83cfac02d5": {
+      "e7c7ff78fd826169eee5ea8a814ab83a": {
         "index": [
           {
             "field": "assignee",
@@ -12186,30 +12570,27 @@
             "type": "ID"
           },
           {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
             "field": "dueDate",
             "order": "DESC",
             "type": "timestamp?"
           },
           {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
             "field": "label",
             "order": "ASC",
             "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
           },
           {
             "field": "assignedBy",
@@ -12238,6 +12619,77 @@
           }
         ],
         "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "e85cc5917c1baed4bb2b091187c08640": {
+        "index": [
+          {
+            "field": "creator",
+            "order": "ASC",
+            "type": "ID"
+          },
+          {
+            "field": "contentInfo",
+            "order": "DESC",
+            "type": "ID"
+          },
+          {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "dueDate",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "assignedToMe",
+            "value": true
+          },
+          {
+            "field": "hasNote",
+            "value": false
+          },
           {
             "field": "inTrash",
             "value": false
@@ -12315,69 +12767,6 @@
         ],
         "indexCondition": []
       },
-      "e9f6d131f7796daddfb1582b0fb6a89c": {
-        "index": [
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
       "ec3670bcef44f4e9a4e4d6efbbff7897": {
         "index": [
           {
@@ -12441,13 +12830,213 @@
           }
         ]
       },
-      "ec49441a3eccdd88b29a06ad6ca254ed": {
+      "ed11bd4d0f1ace9d6407692bc0d84426": {
+        "index": [
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "status",
+            "order": "DESC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "ed7b7716539b65be89d127e6ea38a5f7": {
         "index": [
           {
             "field": "creator",
             "order": "ASC",
             "type": "ID"
           },
+          {
+            "field": "dueDate",
+            "order": "ASC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "contentInfo",
+            "order": "DESC",
+            "type": "ID"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "sortWeight",
+            "order": "DESC",
+            "type": "string"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "assignedToMe",
+            "value": true
+          },
+          {
+            "field": "hasNote",
+            "value": false
+          },
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "f124eae558e7319a6f3e8785fec7c10b": {
+        "index": [
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "flag",
+            "order": "DESC",
+            "type": "boolean"
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "taskGroupNoteLevelID",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "f1735e8a42d1801ea855bff71e87e122": {
+        "index": [
           {
             "field": "status",
             "order": "ASC",
@@ -12485,123 +13074,6 @@
             "type": "string"
           },
           {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "assignedToMe",
-            "value": true
-          },
-          {
-            "field": "hasNote",
-            "value": false
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "ee94516ff598460c5191b72a04885225": {
-        "index": [
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "efcd5e9457ac024531b5e0a1867312eb": {
-        "index": [
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
             "field": "label",
             "order": "ASC",
             "type": "string"
@@ -12615,11 +13087,6 @@
             "field": "hasReminder",
             "order": "ASC",
             "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
           },
           {
             "field": "id",
@@ -12705,75 +13172,6 @@
           }
         ]
       },
-      "f39ffc0c0be2728181e50daa23135631": {
-        "index": [
-          {
-            "field": "creator",
-            "order": "ASC",
-            "type": "ID"
-          },
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "assignedToMe",
-            "value": true
-          },
-          {
-            "field": "hasNote",
-            "value": false
-          },
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
       "f3cf78d224e5a593af0cbfc71a147957": {
         "index": [
           {
@@ -12837,20 +13235,25 @@
           }
         ]
       },
-      "f4f3a0d3a2239564f7bec55e9062ed06": {
+      "f87885ea43c57c8679d9aeb77fdfa310": {
         "index": [
           {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
           },
           {
             "field": "status",
-            "order": "DESC",
+            "order": "ASC",
             "type": [
               "open",
               "completed"
             ]
+          },
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
           },
           {
             "field": "label",
@@ -12858,12 +13261,12 @@
             "type": "string"
           },
           {
-            "field": "assignedBy",
+            "field": "flag",
             "order": "ASC",
-            "type": "ID?"
+            "type": "boolean"
           },
           {
-            "field": "assignee",
+            "field": "assignedBy",
             "order": "ASC",
             "type": "ID?"
           },
@@ -12895,73 +13298,7 @@
           }
         ]
       },
-      "f8460796c3fda9dbd868533810f1be26": {
-        "index": [
-          {
-            "field": "status",
-            "order": "ASC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "dueDate",
-            "order": "DESC",
-            "type": "timestamp?"
-          },
-          {
-            "field": "status",
-            "order": "DESC",
-            "type": [
-              "open",
-              "completed"
-            ]
-          },
-          {
-            "field": "label",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "assignedBy",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "assignee",
-            "order": "ASC",
-            "type": "ID?"
-          },
-          {
-            "field": "hasNote",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "hasReminder",
-            "order": "ASC",
-            "type": "boolean"
-          },
-          {
-            "field": "taskGroupNoteLevelID",
-            "order": "ASC",
-            "type": "string"
-          },
-          {
-            "field": "id",
-            "order": "ASC",
-            "type": "ID"
-          }
-        ],
-        "indexCondition": [
-          {
-            "field": "inTrash",
-            "value": false
-          }
-        ]
-      },
-      "fcf1cce15da9b7076c4d5abd8b4bf177": {
+      "fbc7c844fc5418bfa6dd1123a0f45dc9": {
         "index": [
           {
             "field": "creator",
@@ -12979,14 +13316,17 @@
             "type": "timestamp?"
           },
           {
-            "field": "flag",
-            "order": "DESC",
-            "type": "boolean"
-          },
-          {
             "field": "label",
             "order": "ASC",
             "type": "string"
+          },
+          {
+            "field": "status",
+            "order": "ASC",
+            "type": [
+              "open",
+              "completed"
+            ]
           },
           {
             "field": "assignedBy",
@@ -13009,12 +13349,67 @@
             "type": "boolean"
           },
           {
-            "field": "status",
+            "field": "taskGroupNoteLevelID",
             "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "id",
+            "order": "ASC",
+            "type": "ID"
+          }
+        ],
+        "indexCondition": [
+          {
+            "field": "inTrash",
+            "value": false
+          }
+        ]
+      },
+      "ff65b10d159e6793fba63aa7e21e2647": {
+        "index": [
+          {
+            "field": "dueDate",
+            "order": "DESC",
+            "type": "timestamp?"
+          },
+          {
+            "field": "status",
+            "order": "DESC",
             "type": [
               "open",
               "completed"
             ]
+          },
+          {
+            "field": "label",
+            "order": "ASC",
+            "type": "string"
+          },
+          {
+            "field": "flag",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "assignedBy",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "assignee",
+            "order": "ASC",
+            "type": "ID?"
+          },
+          {
+            "field": "hasNote",
+            "order": "ASC",
+            "type": "boolean"
+          },
+          {
+            "field": "hasReminder",
+            "order": "ASC",
+            "type": "boolean"
           },
           {
             "field": "taskGroupNoteLevelID",
@@ -13180,7 +13575,7 @@
           }
         ]
       },
-      "c91e9f1b070d127cc7bc4c7e4899d7d4": {
+      "c016f371ba92e0f00f81c9ceee319ab7": {
         "index": [
           {
             "field": "parent",
@@ -13191,6 +13586,11 @@
             "field": "created",
             "order": "DESC",
             "type": "timestamp"
+          },
+          {
+            "field": "mobile_sortWeight",
+            "order": "ASC",
+            "type": "string"
           },
           {
             "field": "widgetType",
@@ -13243,11 +13643,6 @@
             "field": "contentProvider",
             "order": "ASC",
             "type": "ID?"
-          },
-          {
-            "field": "mobile_sortWeight",
-            "order": "ASC",
-            "type": "string"
           },
           {
             "field": "id",

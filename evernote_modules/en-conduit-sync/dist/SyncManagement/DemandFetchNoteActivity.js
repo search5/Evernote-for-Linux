@@ -260,7 +260,7 @@ class DemandFetchNoteActivity extends ENSyncActivity_1.ENSyncActivity {
                             if (suggestion.id === serviceNoteID && suggestion.type === 'note_filter') {
                                 if (serverSuggestion.type === 'note_filter' && suggestion.isShared) {
                                     searchShareMetadata = {
-                                        shareName: suggestion.label,
+                                        shareName: suggestion.containerId,
                                         shardId: `s${suggestion.shardId}`,
                                         nbGuid: suggestion.containerId,
                                     };

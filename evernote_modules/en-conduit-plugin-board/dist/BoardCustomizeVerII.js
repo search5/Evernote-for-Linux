@@ -15,6 +15,7 @@ const createBoardCustomizeVerIIDefinition = () => {
                 widget: 'ID',
                 associations: types_1.WidgetCustomizeAssociationsInput,
                 fields: types_1.WidgetCustomizeFieldsInput,
+                bi: types_1.WidgetBiCustomizeFieldsInput,
             }, 'WidgetCustomizeVerIIParams')),
         }),
         type: conduit_core_1.GenericMutationResult,

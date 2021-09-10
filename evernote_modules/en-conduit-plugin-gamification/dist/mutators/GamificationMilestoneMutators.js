@@ -6,6 +6,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createMilestoneMutators = void 0;
 const conduit_core_1 = require("conduit-core");
+const conduit_utils_1 = require("conduit-utils");
+const en_gamification_data_model_1 = require("en-gamification-data-model");
 const GamificationMilestoneHelpers_1 = require("../helpers/GamificationMilestoneHelpers");
 ;
 ;
@@ -15,7 +17,11 @@ const gamificationMilestoneMarkComplete = {
         milestoneKey: 'number',
     },
     execute: async (trc, ctx, params) => {
-        const { milestoneKey, } = params;
+        const { milestoneKey: milestoneKeyUnsafe, } = params;
+        if (!Object.values(en_gamification_data_model_1.GamificationMilestoneKeys).includes(milestoneKeyUnsafe)) {
+            throw new conduit_utils_1.MalformedDataError('Invalid MilestoneKey! Only values from the GamificationMilestoneKeys enumuration are accepted.');
+        }
+        const milestoneKey = milestoneKeyUnsafe;
         const plan = {
             results: {
                 result: null,
@@ -32,7 +38,11 @@ const gamificationMilestoneMarkIncement = {
         milestoneKey: 'number',
     },
     execute: async (trc, ctx, params) => {
-        const { milestoneKey, } = params;
+        const { milestoneKey: milestoneKeyUnsafe, } = params;
+        if (!Object.values(en_gamification_data_model_1.GamificationMilestoneKeys).includes(milestoneKeyUnsafe)) {
+            throw new conduit_utils_1.MalformedDataError('Invalid MilestoneKey! Only values from the GamificationMilestoneKeys enumuration are accepted.');
+        }
+        const milestoneKey = milestoneKeyUnsafe;
         const plan = {
             results: {},
             ops: [],

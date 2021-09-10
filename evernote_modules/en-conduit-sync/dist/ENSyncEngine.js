@@ -338,6 +338,7 @@ class ENSyncEngine extends conduit_core_1.SyncEngine {
                 return await this.revalidateSyncContextAuth(trc, syncContext, metadata, allMetadata, err, tx);
             }
         }
+        conduit_utils_1.logger.warn('Unable to revalidate auth token associated to an AuthError');
         return null;
     }
     async revalidateSyncContextAuth(trc, syncContext, metadata, allMetadata, origErr, tx) {

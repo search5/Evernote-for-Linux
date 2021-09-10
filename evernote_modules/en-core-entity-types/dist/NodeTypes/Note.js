@@ -145,6 +145,7 @@ exports.noteIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
         created: conduit_storage_1.getIndexByResolverForPrimitives(exports.noteTypeDef, ['NodeFields', 'created']),
         updated: conduit_storage_1.getIndexByResolverForPrimitives(exports.noteTypeDef, ['NodeFields', 'updated']),
         label: conduit_storage_1.getIndexByResolverForPrimitives(exports.noteTypeDef, ['label']),
+        deleted: conduit_storage_1.getIndexByResolverForPrimitives(exports.noteTypeDef, ['NodeFields', 'deleted']),
         reminderOrder: conduit_storage_1.getIndexByResolverForPrimitives(exports.noteTypeDef, ['NodeFields', 'Attributes', 'Reminder', 'reminderOrder']),
         reminderTime: conduit_storage_1.getIndexByResolverForPrimitives(exports.noteTypeDef, ['NodeFields', 'Attributes', 'Reminder', 'reminderTime']),
         reminderDoneTime: conduit_storage_1.getIndexByResolverForPrimitives(exports.noteTypeDef, ['NodeFields', 'Attributes', 'Reminder', 'reminderDoneTime']),
@@ -610,7 +611,7 @@ exports.noteIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
                     },
                 },
             },
-            includeFields: ['hasCompletedAllTasks', 'isDefaultTaskNote', 'isShared', 'tasksCount'],
+            includeFields: ['isShared', 'tasksCount'],
         },
         TaskNotesCompletedInSession: {
             filter: [{
@@ -663,7 +664,7 @@ exports.noteIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
                     },
                 },
             },
-            includeFields: ['created', 'updated', 'label', 'reminderTime', 'reminderOrder', 'reminderDoneTime', 'parent'],
+            includeFields: ['parent'],
         },
         NotesInTrash: {
             filter: [{
@@ -676,6 +677,7 @@ exports.noteIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
                         label: [{ field: 'label', order: 'ASC' }, { field: 'updated', order: 'DESC' }, { field: 'created', order: 'DESC' }],
                         created: [{ field: 'created', order: 'DESC' }, { field: 'label', order: 'ASC' }, { field: 'updated', order: 'DESC' }],
                         updated: [{ field: 'updated', order: 'DESC' }, { field: 'label', order: 'ASC' }, { field: 'created', order: 'DESC' }],
+                        deleted: [{ field: 'deleted', order: 'DESC' }, { field: 'label', order: 'ASC' }, { field: 'created', order: 'DESC' }],
                     },
                 },
             },
@@ -739,7 +741,6 @@ exports.noteIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
                     match: { field: 'source' },
                 },
             },
-            includeFields: ['created'],
         },
         NoteConflicts: {
             traversalName: 'conflictBackups',

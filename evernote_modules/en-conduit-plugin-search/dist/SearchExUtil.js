@@ -3,7 +3,7 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OnlineSearchExError = exports.getLocalSearchMode = exports.getSearchString = exports.emptyResultGroup = exports.emptySearchExResult = exports.combineResults = exports.isFullBooleanSearch = exports.findResultSpec = exports.selectResultGroup = exports.selectResultGroups = exports.setDefaults = exports.composeSearchFilterString = exports.escapeLabel = exports.objectIDToServiceGuid = exports.serviceGuidToObjectID = void 0;
+exports.getTelemetryMetric = exports.getSearchExCustomDimensionsForError = exports.OnlineSearchExError = exports.getLocalSearchMode = exports.getSearchString = exports.emptyResultGroup = exports.emptySearchExResult = exports.combineResults = exports.isFullBooleanSearch = exports.findResultSpec = exports.selectResultGroup = exports.selectResultGroups = exports.setDefaults = exports.composeSearchFilterString = exports.escapeLabel = exports.objectIDToServiceGuid = exports.serviceGuidToObjectID = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_thrift_connector_1 = require("en-thrift-connector");
@@ -205,4 +205,28 @@ class OnlineSearchExError extends Error {
     }
 }
 exports.OnlineSearchExError = OnlineSearchExError;
+function getSearchExCustomDimensions() {
+    const customDimensions = {};
+    customDimensions.team = 'search';
+    return customDimensions;
+}
+async function getSearchExCustomDimensionsForError(context, err, methodName) {
+    var _a;
+    const customDimensions = getSearchExCustomDimensions();
+    const userID = await ((_a = context.db) === null || _a === void 0 ? void 0 : _a.getCurrentUserID(context));
+    if (!conduit_utils_1.isNullish(userID)) {
+        customDimensions.userId = userID.toString(10);
+    }
+    customDimensions.errorKind = err.name;
+    customDimensions.loggerMethodName = methodName;
+    customDimensions.errorMessage = err.message;
+    customDimensions.errorStack = err.stack;
+    customDimensions.status = 'error';
+    return customDimensions;
+}
+exports.getSearchExCustomDimensionsForError = getSearchExCustomDimensionsForError;
+function getTelemetryMetric(customDimensions) {
+    return Object.assign({ name: 'telemetry', date: Date.now(), duration: 0 }, customDimensions);
+}
+exports.getTelemetryMetric = getTelemetryMetric;
 //# sourceMappingURL=SearchExUtil.js.map

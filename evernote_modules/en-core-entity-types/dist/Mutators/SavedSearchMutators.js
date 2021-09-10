@@ -10,7 +10,7 @@ const AccountLimits_1 = require("../AccountLimits");
 const EntityConstants_1 = require("../EntityConstants");
 const MutatorHelpers_1 = require("./MutatorHelpers");
 exports.savedSearchCreate = {
-    type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
+    type: conduit_core_1.MutatorRemoteExecutorType.Hybrid,
     params: {
         label: 'string',
         query: 'string',
@@ -56,7 +56,7 @@ exports.savedSearchCreate = {
     },
 };
 exports.savedSearchSetLabel = {
-    type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
+    type: conduit_core_1.MutatorRemoteExecutorType.Hybrid,
     params: {
         search: 'ID',
         label: 'string',
@@ -82,7 +82,7 @@ exports.savedSearchSetLabel = {
     },
 };
 exports.savedSearchSetQuery = {
-    type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
+    type: conduit_core_1.MutatorRemoteExecutorType.Hybrid,
     params: {
         search: 'ID',
         query: 'string',
@@ -108,7 +108,7 @@ exports.savedSearchSetQuery = {
     },
 };
 exports.savedSearchDelete = {
-    type: conduit_core_1.MutatorRemoteExecutorType.Thrift,
+    type: conduit_core_1.MutatorRemoteExecutorType.Hybrid,
     params: {
         search: 'ID',
         eventLabel: conduit_utils_1.NullableString,

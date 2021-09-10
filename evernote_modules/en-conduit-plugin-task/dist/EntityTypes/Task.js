@@ -110,7 +110,7 @@ exports.taskIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
         },
         hasNote: {
             schemaType: 'boolean',
-            version: 3,
+            version: 4,
             resolver: async (trc, node, nodeFieldLookup) => {
                 conduit_utils_1.traceEventStart(trc, 'hasNote');
                 const noteEdge = conduit_utils_1.firstStashEntry(node.inputs.parent);
@@ -125,6 +125,15 @@ exports.taskIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
             },
             graphqlPath: ['hasNote'],
             isUnSyncedField: true,
+            propagatedFrom: {
+                srcType: en_data_model_1.EntityTypes.Note,
+                srcField: 'created',
+                traversalToDst: [{ edge: ['outputs', 'tasks'], type: en_data_model_1.EntityTypes.Task }],
+                transform: values => {
+                    // Transforms created timestamp into boolean before propagating hasNote to child Tasks
+                    return values.map(e => Boolean(e));
+                },
+            },
         },
     },
     indexes: {},
@@ -163,7 +172,7 @@ exports.taskIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
                     },
                 },
             },
-            includeFields: ['assignedBy', 'assignee', 'dueDate', 'hasNote', 'hasReminder', 'label', 'status', 'taskGroupNoteLevelID'],
+            includeFields: ['assignedBy', 'assignee', 'hasNote', 'hasReminder', 'taskGroupNoteLevelID'],
         },
         TasksInNote: {
             traversalName: 'descendentTasks',
@@ -195,7 +204,7 @@ exports.taskIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
                     },
                 },
             },
-            includeFields: ['assignedBy', 'assignee', 'dueDate', 'hasReminder', 'label', 'status', 'taskGroupNoteLevelID'],
+            includeFields: ['assignedBy', 'assignee', 'dueDate', 'hasReminder', 'label'],
         },
         TasksWithoutNote: {
             filter: [{
@@ -235,7 +244,7 @@ exports.taskIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(exports.
                     },
                 },
             },
-            includeFields: ['assignedBy', 'dueDate', 'hasReminder', 'label', 'status', 'taskGroupNoteLevelID'],
+            includeFields: ['assignedBy', 'hasReminder'],
         },
     },
     lookups: ['status'],

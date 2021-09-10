@@ -178,6 +178,8 @@ type AttachmentsInNoteResultFields {
 }
 
 type AttachmentsInNoteResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -227,6 +229,7 @@ type AuthRemoteHost {
 
 type AuthState {
   authState: AuthStateEnum!
+  token: String
 }
 
 enum AuthStateEnum {
@@ -309,6 +312,8 @@ type BetaFeaturesResultFields {
 }
 
 type BetaFeaturesResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -530,16 +535,18 @@ type BoardPlatformWidgetsResultFields {
   type: String!
   unindexed: Widget!
   parent: Board!
+  mobile_sortWeight: String!
   created: Float!
   widgetType: WidgetType!
   mutableWidgetType: BoardMutableWidgetTypes
   isEnabled: Boolean!
   selectedTab: WidgetTabs
   contentProvider: Note
-  mobile_sortWeight: String!
 }
 
 type BoardPlatformWidgetsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [BoardPlatformWidgetsResultFields!]!
 }
@@ -893,6 +900,8 @@ type ContentConflictsInWidgetResultFields {
 }
 
 type ContentConflictsInWidgetResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -933,6 +942,68 @@ type DebugNodeSchema {
 type DebugSyncContextSchema {
   id: String!
   userID: Int
+}
+
+type EntityLocalState {
+  type: String!
+  id: String!
+  label: String!
+  localChangeTimestamp: Float!
+  expandedFields: [String!]!
+  container: NotebookOrStack
+}
+
+input EntityLocalStateFilter {
+  field: EntityLocalStateFilterField!
+  isSet: Boolean
+  min: IndexRange
+  max: IndexRange
+  match: IndexMatch
+  prefix: String
+}
+
+enum EntityLocalStateFilterField {
+  id
+  expandedFields
+  label
+}
+
+type EntityLocalStateListResults {
+  count: Int!
+  indexUsed: [String!]!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [EntityLocalState!]!
+}
+
+input EntityLocalStateSort {
+  field: EntityLocalStateSortField!
+  order: IndexOrderType!
+}
+
+enum EntityLocalStateSortField {
+  id
+  expandedFields
+  label
+}
+
+type EntityLocalStatesResultFields {
+  id: String!
+  type: String!
+  unindexed: EntityLocalState!
+}
+
+type EntityLocalStatesResults {
+  indexUsed: String!
+  indexCondition: String!
+  count: Int!
+  prevPageKey: String
+  nextPageKey: String
+  numPriorItems: Float
+  numRemainingItems: Float
+  list: [EntityLocalStatesResultFields!]!
 }
 
 input EntityRef {
@@ -994,12 +1065,16 @@ type ForceDownsyncResult {
   mutationCount: Float!
 }
 
+type GamificationCurrentGoalResult {
+  goal: GamificationGoal
+}
+
 type GamificationGoal {
   type: String!
   id: String!
   label: String!
   localChangeTimestamp: Float!
-  goal: Float!
+  goalType: Float!
   level: Float!
   created: Float!
   updated: Float!
@@ -1016,7 +1091,7 @@ input GamificationGoalFilter {
 
 enum GamificationGoalFilterField {
   id
-  goal
+  goalType
   level
   created
   updated
@@ -1040,7 +1115,7 @@ input GamificationGoalSort {
 
 enum GamificationGoalSortField {
   id
-  goal
+  goalType
   level
   created
   updated
@@ -1054,6 +1129,8 @@ type GamificationGoalsResultFields {
 }
 
 type GamificationGoalsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -1125,6 +1202,8 @@ type GamificationMilestonesResultFields {
 }
 
 type GamificationMilestonesResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -1140,6 +1219,8 @@ type GamificationSummariesResultFields {
 }
 
 type GamificationSummariesResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -1153,7 +1234,7 @@ type GamificationSummary {
   id: String!
   label: String!
   localChangeTimestamp: Float!
-  selectedGoal: Float!
+  selectedGoalType: Float!
   created: Float!
   updated: Float!
 }
@@ -1169,7 +1250,7 @@ input GamificationSummaryFilter {
 
 enum GamificationSummaryFilterField {
   id
-  selectedGoal
+  selectedGoalType
   created
   updated
   label
@@ -1192,7 +1273,7 @@ input GamificationSummarySort {
 
 enum GamificationSummarySortField {
   id
-  selectedGoal
+  selectedGoalType
   created
   updated
   label
@@ -1270,6 +1351,8 @@ type HomeBoardsResultFields {
 }
 
 type HomeBoardsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -1348,9 +1431,13 @@ type InvitationsForMeResultFields {
   id: String!
   type: String!
   unindexed: Invitation!
+  created: Float
+  label: String!
 }
 
 type InvitationsForMeResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -1537,10 +1624,13 @@ type MembershipsForMeInParentResultFields {
   type: String!
   unindexed: Membership!
   parent: NoteOrNotebookOrTaskOrWorkspace!
+  created: Float!
   label: String!
 }
 
 type MembershipsForMeInParentResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -1559,10 +1649,14 @@ type MembershipsForMeResultFields {
   id: String!
   type: String!
   unindexed: Membership!
+  invitedTime: Float
+  created: Float!
   label: String!
 }
 
 type MembershipsForMeResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -1581,10 +1675,13 @@ type MembershipsInParentResultFields {
   type: String!
   unindexed: Membership!
   parent: NoteOrNotebookOrTaskOrWorkspace!
+  created: Float!
   label: String!
 }
 
 type MembershipsInParentResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -1666,6 +1763,8 @@ type MessagesInThreadResultFields {
 }
 
 type MessagesInThreadResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -1797,10 +1896,13 @@ type NoteAllMembershipsResultFields {
   type: String!
   unindexed: Membership!
   parent: NoteOrNotebookOrTaskOrWorkspace!
+  created: Float!
   label: String!
 }
 
 type NoteAllMembershipsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [NoteAllMembershipsResultFields!]!
 }
@@ -1869,6 +1971,7 @@ type Notebook {
   childrenInTrashCount: Int!
   creator: Profile
   shortcut: Shortcut
+  localState: EntityLocalState
   parent: Workspace
   stack: Stack
   userForDefaultNotebook: User
@@ -1901,10 +2004,13 @@ type NotebookAllMembershipsResultFields {
   type: String!
   unindexed: Membership!
   parent: NoteOrNotebookOrTaskOrWorkspace!
+  created: Float!
   label: String!
 }
 
 type NotebookAllMembershipsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [NotebookAllMembershipsResultFields!]!
 }
@@ -1928,6 +2034,8 @@ type NotebookChildNotesResultFields {
 }
 
 type NotebookChildNotesResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [NotebookChildNotesResultFields!]!
 }
@@ -1971,6 +2079,8 @@ type NotebookListResults {
   list: [Notebook!]!
 }
 
+union NotebookOrStack = Notebook | Stack
+
 union NotebookOrWorkspace = Notebook | Workspace
 
 enum NotebookOwnMembershipsOrderBy {
@@ -1983,10 +2093,13 @@ type NotebookOwnMembershipsResultFields {
   type: String!
   unindexed: Membership!
   parent: NoteOrNotebookOrTaskOrWorkspace!
+  created: Float!
   label: String!
 }
 
 type NotebookOwnMembershipsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [NotebookOwnMembershipsResultFields!]!
 }
@@ -2008,16 +2121,18 @@ type NotebookReminderNotesResultFields {
   type: String!
   unindexed: Note!
   reminderIsDone: Boolean!
-  created: Float!
-  updated: Float!
-  label: String!
   reminderTime: Float
   reminderOrder: Float
   reminderDoneTime: Float
+  label: String!
+  updated: Float!
+  created: Float!
   parent: NotebookOrWorkspace
 }
 
 type NotebookReminderNotesResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [NotebookReminderNotesResultFields!]!
 }
@@ -2032,6 +2147,8 @@ type NotebooksInStackResultFields {
 }
 
 type NotebooksInStackResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2052,10 +2169,14 @@ type NotebooksInWorkspaceResultFields {
   unindexed: Notebook!
   parent: Workspace
   label: String!
+  updated: Float!
+  created: Float!
   childrenCount: Int!
 }
 
 type NotebooksInWorkspaceResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2073,6 +2194,8 @@ type NotebooksMarkedForOfflineResultFields {
 }
 
 type NotebooksMarkedForOfflineResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2120,6 +2243,8 @@ type NotebooksParentsResultFields {
 }
 
 type NotebooksParentsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2138,6 +2263,8 @@ type NotebooksResultFields {
 }
 
 type NotebooksResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2155,6 +2282,8 @@ type NotebooksStacksResultFields {
 }
 
 type NotebooksStacksResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2171,6 +2300,8 @@ type NotebooksWithLabelResultFields {
 }
 
 type NotebooksWithLabelResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2188,6 +2319,8 @@ type NotebooksWithoutStackAndParentResultFields {
 }
 
 type NotebooksWithoutStackAndParentResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2205,6 +2338,8 @@ type NotebooksWithoutStackResultFields {
 }
 
 type NotebooksWithoutStackResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2228,6 +2363,8 @@ type NoteChildAttachmentsResultFields {
 }
 
 type NoteChildAttachmentsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [NoteChildAttachmentsResultFields!]!
 }
@@ -2260,6 +2397,8 @@ type NoteConflictBackupsResultFields {
 }
 
 type NoteConflictBackupsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [NoteConflictBackupsResultFields!]!
 }
@@ -2275,6 +2414,8 @@ type NoteConflictsResultFields {
 }
 
 type NoteConflictsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2313,6 +2454,8 @@ type NoteContentInfoAllResultFields {
 }
 
 type NoteContentInfoAllResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2385,15 +2528,17 @@ type NoteDescendentTasksResultFields {
   contentInfo: String!
   taskGroupNoteLevelID: String!
   sortWeight: String!
+  status: TaskStatus!
   assignedBy: Profile
   assignee: Profile
   dueDate: Float
   hasReminder: Boolean!
   label: String!
-  status: TaskStatus!
 }
 
 type NoteDescendentTasksResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [NoteDescendentTasksResultFields!]!
 }
@@ -2411,6 +2556,7 @@ enum NoteFilterField {
   created
   updated
   label
+  deleted
   reminderOrder
   reminderTime
   reminderDoneTime
@@ -2432,7 +2578,6 @@ enum NoteFilterField {
   id
   isMetadata
   isUntitled
-  deleted
   isExternal
   content_localChangeTimestamp
   content_hash
@@ -2531,10 +2676,13 @@ type NoteOwnMembershipsResultFields {
   type: String!
   unindexed: Membership!
   parent: NoteOrNotebookOrTaskOrWorkspace!
+  created: Float!
   label: String!
 }
 
 type NoteOwnMembershipsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [NoteOwnMembershipsResultFields!]!
 }
@@ -2570,6 +2718,8 @@ type NotesInParentResultFields {
 }
 
 type NotesInParentResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2591,6 +2741,8 @@ type NotesInStackResultFields {
 }
 
 type NotesInStackResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2603,6 +2755,7 @@ enum NotesInTrashOrderBy {
   label
   created
   updated
+  deleted
 }
 
 type NotesInTrashResultFields {
@@ -2612,10 +2765,13 @@ type NotesInTrashResultFields {
   label: String!
   updated: Float!
   created: Float!
+  deleted: Float
   hasReminder: Boolean!
 }
 
 type NotesInTrashResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2643,6 +2799,8 @@ type NotesInWorkspaceResultFields {
 }
 
 type NotesInWorkspaceResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2668,6 +2826,8 @@ type NotesNotInTrashResultFields {
 }
 
 type NotesNotInTrashResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2685,6 +2845,7 @@ enum NoteSortField {
   created
   updated
   label
+  deleted
   reminderOrder
   reminderTime
   reminderDoneTime
@@ -2706,7 +2867,6 @@ enum NoteSortField {
   id
   isMetadata
   isUntitled
-  deleted
   isExternal
   content_localChangeTimestamp
   content_hash
@@ -2745,6 +2905,8 @@ type NotesParentsResultFields {
 }
 
 type NotesParentsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2770,16 +2932,18 @@ type NotesWithRemindersResultFields {
   type: String!
   unindexed: Note!
   reminderIsDone: Boolean!
-  created: Float!
-  updated: Float!
-  label: String!
   reminderTime: Float
   reminderOrder: Float
   reminderDoneTime: Float
+  label: String!
+  updated: Float!
+  created: Float!
   parent: NotebookOrWorkspace
 }
 
 type NotesWithRemindersResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2798,6 +2962,8 @@ type NotesWithSourceResultFields {
 }
 
 type NotesWithSourceResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -2896,15 +3062,17 @@ type ProfileDescendentTasksResultFields {
   contentInfo: String!
   taskGroupNoteLevelID: String!
   sortWeight: String!
+  status: TaskStatus!
   assignedBy: Profile
   assignee: Profile
   dueDate: Float
   hasReminder: Boolean!
   label: String!
-  status: TaskStatus!
 }
 
 type ProfileDescendentTasksResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [ProfileDescendentTasksResultFields!]!
 }
@@ -2975,6 +3143,8 @@ type ProfilesResultFields {
 }
 
 type ProfilesResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -3005,15 +3175,18 @@ type ProfileTasksResultFields {
   unindexed: Task!
   dueDate: Float
   label: String!
+  flag: Boolean!
+  status: TaskStatus!
   assignedBy: Profile
   assignee: Profile
   hasNote: Boolean!
   hasReminder: Boolean!
-  status: TaskStatus!
   taskGroupNoteLevelID: String!
 }
 
 type ProfileTasksResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [ProfileTasksResultFields!]!
 }
@@ -3034,15 +3207,19 @@ type ProfileTasksWithoutNoteResultFields {
   id: String!
   type: String!
   unindexed: Task!
-  assignedBy: Profile
   dueDate: Float
-  hasReminder: Boolean!
   label: String!
   status: TaskStatus!
+  contentInfo: String!
   taskGroupNoteLevelID: String!
+  sortWeight: String!
+  assignedBy: Profile
+  hasReminder: Boolean!
 }
 
 type ProfileTasksWithoutNoteResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [ProfileTasksWithoutNoteResultFields!]!
 }
@@ -3106,6 +3283,8 @@ type PromotionsResultFields {
 }
 
 type PromotionsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -3256,6 +3435,8 @@ type RemindersResultFields {
 }
 
 type RemindersResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -3331,10 +3512,10 @@ type RootMutationType {
 
   """fill the support ticket"""
   fileSupportTicket(subject: String!, body: String!, logUri: String, applicationVersion: String, carrierInfo: String, osInfo: String, connectionInfo: String, contactEmail: String, deviceInfo: String, tags: [String!]): GenericMutationResult!
-  gamificationInitialize(goal: Float!): AutoMutatorRes!
+  gamificationInitialize(goalType: Float!): AutoMutatorRes!
   gamificationMilestoneMarkComplete(milestoneKey: Float!): AutoMutatorRes!
   gamificationMilestoneMarkIncement(milestoneKey: Float!): AutoMutatorRes!
-  gamificationSelectGoal(goal: Float!): AutoMutatorRes!
+  gamificationSelectGoal(goalType: Float!): AutoMutatorRes!
   inNoteTaskApplyChanges(noteID: String!, taskGroupList: [TaskGroupInput!]!, loadedTaskGroupList: [TaskGroupInput!]!, sourceOfChange: String): GenericMutationResult!
   invitationAccept(invitation: String!): AutoMutatorRes!
   membershipDelete(membership: String!): AutoMutatorRes!
@@ -3381,6 +3562,7 @@ type RootMutationType {
   notebookInvite(notebook: String!, privilege: MembershipPrivilege!, emails: [String!], userIDs: [String!], profileIDs: [String!], message: String): AutoMutatorRes!
   notebookJoin(notebook: String!): AutoMutatorRes!
   notebookLeave(notebook: String!): AutoMutatorRes!
+  notebookLocalStateSetExpanded(notebookId: String!, view: String!, expanded: Boolean!): AutoMutatorRes!
   notebookMoveToWorkspace(notebook: String!, workspace: String!): AutoMutatorRes!
   notebookPublish(notebook: String!, description: String!, privilege: MembershipPrivilege!, recommended: Boolean): AutoMutatorRes!
   notebookRemoveFromWorkspace(notebook: String!, workspace: String): AutoMutatorRes!
@@ -3417,6 +3599,7 @@ type RootMutationType {
   stackAddNotebook(stack: String!, notebook: String!, eventLabel: String): AutoMutatorRes!
   stackCreate(name: String!, notebook: String!, eventLabel: String): AutoMutatorRes!
   stackDelete(stack: String!, eventLabel: String): AutoMutatorRes!
+  stackLocalStateSetExpanded(stackId: String!, view: String!, expanded: Boolean!): AutoMutatorRes!
   stackRemoveNotebook(notebook: String!, stack: String, eventLabel: String): AutoMutatorRes!
   stackRename(stack: String!, name: String!): AutoMutatorRes!
   systemSettingsClear: GenericMutationResult!
@@ -3462,9 +3645,9 @@ type RootMutationType {
   verifyAndroidPostPurchase(developerPayload: String!, offer: String!, sku: String!, signedData: String!, signature: String!): String
   verifyApplePostPurchase(currency: String!, offer: String!, price: String!, productId: String!, receiptData: String!, transactionId: String!, layout: String, extend: Boolean, receiptOnly: String, transactionState: String, verifyReceiptOnly: String, version: Int): String
   widgetCustomize(widget: String!, isEnabled: Boolean, desktopSortWeight: String, desktopWidth: Float, mobileSortWeight: String, noteToUnpin: String, noteToPin: String, mutableWidgetType: BoardMutableWidgetTypes, filteredNotesQueryString: String, label: String, lightBGColor: String, darkBGColor: String): AutoMutatorRes!
-  widgetCustomizeVerII(widget: String!, associations: WidgetCustomizeAssociationsInput, fields: WidgetCustomizeFieldsInput): AutoMutatorRes!
+  widgetCustomizeVerII(widget: String!, associations: WidgetCustomizeAssociationsInput, fields: WidgetCustomizeFieldsInput, bi: WidgetBiCustomizeFieldsInput): AutoMutatorRes!
   widgetDelete(widget: String!): AutoMutatorRes!
-  widgetFeatureTrialEnable(widget: String!): AutoMutatorRes!
+  widgetFeatureTrialEnable(widget: String!, bi: WidgetBiCustomizeFieldsInput): AutoMutatorRes!
   widgetResolveConflict(conflict: String!, conflictHash: String!): AutoMutatorRes!
   widgetRestore(widget: String!): AutoMutatorRes!
   widgetScratchPadSetContent(widget: String!, scratchPadContent: String!, previousContentHash: String): AutoMutatorRes!
@@ -3500,6 +3683,11 @@ type RootQueryType {
   CrossPromotionsInfo: CrossPromotionInfo!
   DashboardsData: DashboardsData!
   DataForQualtrics: DataForQualtrics!
+  EntityLocalState(id: String!): EntityLocalState
+  EntityLocalStates(reverseOrder: Boolean, pageInfo: PageInfo): EntityLocalStatesResults!
+
+  """Get the Gamification goal the user currently has selected."""
+  GamificationCurrentGoal: GamificationCurrentGoalResult
   GamificationGoal(id: String!): GamificationGoal
   GamificationGoals(reverseOrder: Boolean, pageInfo: PageInfo): GamificationGoalsResults!
   GamificationMilestone(id: String!): GamificationMilestone
@@ -3543,7 +3731,7 @@ type RootQueryType {
   NotesParents(reverseOrder: Boolean, pageInfo: PageInfo): NotesParentsResults!
   NotesWithReminders(parent: EntityRef, doneReminders: Boolean, reminderTimeRange: NotesWithRemindersReminderTimeRange, orderBy: NotesWithRemindersOrderBy, reverseOrder: Boolean, pageInfo: PageInfo): NotesWithRemindersResults!
   NotesWithSource(source: String!, reverseOrder: Boolean, pageInfo: PageInfo): NotesWithSourceResults!
-  NsvcAuthzToken(tokenType: String): NsvcAuthzToken
+  NsvcAuthzToken(tokenType: TokenTypeString!): NsvcAuthzToken
   Profile(id: String!): Profile
   Profiles(reverseOrder: Boolean, pageInfo: PageInfo): ProfilesResults!
   Promotion(id: String!): Promotion
@@ -3639,17 +3827,17 @@ type RootQueryType {
 
   """Scan data from business card's image"""
   processCardImage(imageUri: String!, locale: String, imageType: String): BusinessCardInfo!
-  systemSettingsGetBoolean(key: String!): Boolean
-  systemSettingsGetInt(key: String!): Int
-  systemSettingsGetNumber(key: String!): Float
-  systemSettingsGetString(key: String!): String
+  systemSettingsGetBoolean(key: String!, allowEmpty: Boolean): Boolean
+  systemSettingsGetInt(key: String!, allowEmpty: Boolean): Int
+  systemSettingsGetNumber(key: String!, allowEmpty: Boolean): Float
+  systemSettingsGetString(key: String!, allowEmpty: Boolean): String
   twoFactorAuthMaskedPhoneNumbers(serviceHost: String!, token: String!): TwoFactorAuthMaskedPhoneNumbers!
   userGetTsdEligibility(numSessionsLast7Days: Int, numSessionsLast30Days: Int, numDaysActiveLast7Days: Int, numDaysActiveLast30Days: Int): TierSelectionDisplayResult!
   userInfoList: [UserInfo!]!
-  userSettingsGetBoolean(key: String!, userID: String): Boolean
-  userSettingsGetInt(key: String!, userID: String): Int
-  userSettingsGetNumber(key: String!, userID: String): Float
-  userSettingsGetString(key: String!, userID: String): String
+  userSettingsGetBoolean(key: String!, allowEmpty: Boolean, userID: String): Boolean
+  userSettingsGetInt(key: String!, allowEmpty: Boolean, userID: String): Int
+  userSettingsGetNumber(key: String!, allowEmpty: Boolean, userID: String): Float
+  userSettingsGetString(key: String!, allowEmpty: Boolean, userID: String): String
   webNoteLink(note: String!): String!
   workspacePublicList(includeDiscoverableWorkspaces: Boolean, includeOpenWorkspaces: Boolean): WorkspacePublicList!
 }
@@ -3671,6 +3859,8 @@ type SavedSearchesResultFields {
 }
 
 type SavedSearchesResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -3810,6 +4000,8 @@ type ScheduledNotificationsResultFields {
 }
 
 type ScheduledNotificationsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -4070,6 +4262,8 @@ type ShortcutsResultFields {
 }
 
 type ShortcutsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -4096,6 +4290,7 @@ type Stack {
   notebooks: [Notebook!]!
   notebooksCount: Int!
   shortcut: Shortcut
+  localState: EntityLocalState
   descendentNotes(reverseOrder: Boolean, pageInfo: PageInfo): StackDescendentNotesResults!
   childNotebooks(reverseOrder: Boolean, pageInfo: PageInfo): StackChildNotebooksResults!
 
@@ -4115,6 +4310,8 @@ type StackChildNotebooksResultFields {
 }
 
 type StackChildNotebooksResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [StackChildNotebooksResultFields!]!
 }
@@ -4132,6 +4329,8 @@ type StackDescendentNotesResultFields {
 }
 
 type StackDescendentNotesResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [StackDescendentNotesResultFields!]!
 }
@@ -4217,6 +4416,8 @@ type StacksResultFields {
 }
 
 type StacksResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -4303,6 +4504,8 @@ type TagChildTagsResultFields {
 }
 
 type TagChildTagsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [TagChildTagsResultFields!]!
 }
@@ -4420,6 +4623,8 @@ type TagsResultFields {
 }
 
 type TagsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -4476,10 +4681,13 @@ type TaskAllMembershipsResultFields {
   type: String!
   unindexed: Membership!
   parent: NoteOrNotebookOrTaskOrWorkspace!
+  created: Float!
   label: String!
 }
 
 type TaskAllMembershipsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [TaskAllMembershipsResultFields!]!
 }
@@ -4587,6 +4795,8 @@ type TaskNotesCompletedInSessionResultFields {
 }
 
 type TaskNotesCompletedInSessionResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -4629,6 +4839,8 @@ type TaskNotesNotInTrashResultFields {
 }
 
 type TaskNotesNotInTrashResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -4653,10 +4865,13 @@ type TaskOwnMembershipsResultFields {
   type: String!
   unindexed: Membership!
   parent: NoteOrNotebookOrTaskOrWorkspace!
+  created: Float!
   label: String!
 }
 
 type TaskOwnMembershipsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [TaskOwnMembershipsResultFields!]!
 }
@@ -4707,15 +4922,17 @@ type TasksInNoteResultFields {
   contentInfo: String!
   taskGroupNoteLevelID: String!
   sortWeight: String!
+  status: TaskStatus!
   assignedBy: Profile
   assignee: Profile
   dueDate: Float
   hasReminder: Boolean!
   label: String!
-  status: TaskStatus!
 }
 
 type TasksInNoteResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -4770,15 +4987,18 @@ type TasksResultFields {
   unindexed: Task!
   dueDate: Float
   label: String!
+  flag: Boolean!
+  status: TaskStatus!
   assignedBy: Profile
   assignee: Profile
   hasNote: Boolean!
   hasReminder: Boolean!
-  status: TaskStatus!
   taskGroupNoteLevelID: String!
 }
 
 type TasksResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -4808,15 +5028,19 @@ type TasksWithoutNoteResultFields {
   id: String!
   type: String!
   unindexed: Task!
-  assignedBy: Profile
   dueDate: Float
-  hasReminder: Boolean!
   label: String!
   status: TaskStatus!
+  contentInfo: String!
   taskGroupNoteLevelID: String!
+  sortWeight: String!
+  assignedBy: Profile
+  hasReminder: Boolean!
 }
 
 type TasksWithoutNoteResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -4915,6 +5139,8 @@ type ThreadChildMessagesResultFields {
 }
 
 type ThreadChildMessagesResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [ThreadChildMessagesResultFields!]!
 }
@@ -4973,6 +5199,8 @@ type ThreadsResultFields {
 }
 
 type ThreadsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -4985,6 +5213,20 @@ type TierSelectionDisplayResult {
   shouldShowTsd: Boolean!
   tsdType: TsdType
   tsdVariation: TsdVariation
+}
+
+enum TokenTypeString {
+  IN_APP_BORON_LINUX
+  IN_APP_BORON_MAC
+  IN_APP_BORON_WIN
+  IN_APP_ION
+  MOBILE_DEFAULT
+  MOBILE_NEUTRON_ANDROID
+  MOBILE_NEUTRON_IOS
+  PUSH_BORON_LINUX
+  PUSH_BORON_MAC
+  PUSH_BORON_WIN
+  PUSH_ION
 }
 
 enum TsdType {
@@ -5331,6 +5573,8 @@ type UsersResultFields {
 }
 
 type UsersResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -5382,6 +5626,11 @@ type Widget {
 type WidgetBackgroundColor {
   light: String!
   dark: String!
+}
+
+input WidgetBiCustomizeFieldsInput {
+  entryPointType: WidgetCustomizeEntryPointTypesInput
+  relatedEntity: WidgetCustomizeEntityTypesInput
 }
 
 type WidgetContentConflict {
@@ -5463,6 +5712,8 @@ type WidgetContentConflictsResultFields {
 }
 
 type WidgetContentConflictsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [WidgetContentConflictsResultFields!]!
 }
@@ -5470,6 +5721,52 @@ type WidgetContentConflictsResults {
 input WidgetCustomizeAssociationsInput {
   noteToUnpin: String
   noteToPin: String
+}
+
+enum WidgetCustomizeEntityTypesInput {
+  Note
+  Notebook
+  Workspace
+  Attachment
+  Tag
+  SavedSearch
+  Shortcut
+  Board
+  Widget
+  WidgetContentConflict
+  ScheduledNotification
+  NoteContentInfo
+  Reminder
+  Task
+  TaskUserSettings
+  GamificationSummary
+  GamificationMilestone
+  GamificationGoal
+  CalendarSettings
+  CalendarAccount
+  UserCalendarSettings
+  CalendarEvent
+  ExampleParent
+  Example
+}
+
+enum WidgetCustomizeEntryPointTypesInput {
+  BANNER_NEW_FEATURE
+  BANNER_OTHER
+  CREATE
+  CUSTOMIZE
+  EDITOR
+  SEARCH
+  FEATURE_TRIAL
+  RESET_LAYOUT
+  MENU_CONTEXT
+  MENU_EDITOR
+  MENU_NAV
+  MENU_OTHER
+  MENU_OVERFLOW
+  MODAL_HOME
+  MODAL_OTHER
+  UNKNOWN
 }
 
 input WidgetCustomizeFieldsInput {
@@ -5510,6 +5807,7 @@ input WidgetCustomizeVerIIParams {
   widget: String!
   associations: WidgetCustomizeAssociationsInput
   fields: WidgetCustomizeFieldsInput
+  bi: WidgetBiCustomizeFieldsInput
 }
 
 input WidgetFilter {
@@ -5632,16 +5930,18 @@ type WidgetsInBoardResultFields {
   type: String!
   unindexed: Widget!
   parent: Board!
+  mobile_sortWeight: String!
   created: Float!
   widgetType: WidgetType!
   mutableWidgetType: BoardMutableWidgetTypes
   isEnabled: Boolean!
   selectedTab: WidgetTabs
   contentProvider: Note
-  mobile_sortWeight: String!
 }
 
 type WidgetsInBoardResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String
@@ -5798,10 +6098,13 @@ type WorkspaceAllMembershipsResultFields {
   type: String!
   unindexed: Membership!
   parent: NoteOrNotebookOrTaskOrWorkspace!
+  created: Float!
   label: String!
 }
 
 type WorkspaceAllMembershipsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [WorkspaceAllMembershipsResultFields!]!
 }
@@ -5818,10 +6121,14 @@ type WorkspaceChildNotebooksResultFields {
   unindexed: Notebook!
   parent: Workspace
   label: String!
+  updated: Float!
+  created: Float!
   childrenCount: Int!
 }
 
 type WorkspaceChildNotebooksResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [WorkspaceChildNotebooksResultFields!]!
 }
@@ -5845,6 +6152,8 @@ type WorkspaceChildNotesResultFields {
 }
 
 type WorkspaceChildNotesResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [WorkspaceChildNotesResultFields!]!
 }
@@ -5868,6 +6177,8 @@ type WorkspaceDescendentNotesResultFields {
 }
 
 type WorkspaceDescendentNotesResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [WorkspaceDescendentNotesResultFields!]!
 }
@@ -5944,10 +6255,13 @@ type WorkspaceOwnMembershipsResultFields {
   type: String!
   unindexed: Membership!
   parent: NoteOrNotebookOrTaskOrWorkspace!
+  created: Float!
   label: String!
 }
 
 type WorkspaceOwnMembershipsResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [WorkspaceOwnMembershipsResultFields!]!
 }
@@ -5983,16 +6297,18 @@ type WorkspaceReminderNotesResultFields {
   type: String!
   unindexed: Note!
   reminderIsDone: Boolean!
-  created: Float!
-  updated: Float!
-  label: String!
   reminderTime: Float
   reminderOrder: Float
   reminderDoneTime: Float
+  label: String!
+  updated: Float!
+  created: Float!
   parent: NotebookOrWorkspace
 }
 
 type WorkspaceReminderNotesResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   list: [WorkspaceReminderNotesResultFields!]!
 }
@@ -6025,6 +6341,8 @@ type WorkspacesResultFields {
 }
 
 type WorkspacesResults {
+  indexUsed: String!
+  indexCondition: String!
   count: Int!
   prevPageKey: String
   nextPageKey: String

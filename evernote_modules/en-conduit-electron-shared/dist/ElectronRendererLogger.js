@@ -5,19 +5,19 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ElectronRendererLogger = void 0;
 const conduit_utils_1 = require("conduit-utils");
-const electron_1 = require("electron");
 const _1 = require("./");
 /* eslint-disable no-console */
 class ElectronRendererLogger {
-    constructor(name, sendToConsole, parentArgs = []) {
+    constructor(name, sendToConsole, ipcRenderer, parentArgs = []) {
         this.name = name;
         this.sendToConsole = sendToConsole;
+        this.ipcRenderer = ipcRenderer;
         this.parentArgs = parentArgs;
     }
     createChildLogger(topic) {
-        const logger = new ElectronRendererLogger(this.name, this.sendToConsole);
+        const logger = new ElectronRendererLogger(this.name, this.sendToConsole, this.ipcRenderer);
         logger.topicName = topic;
-        electron_1.ipcRenderer.send(_1.ElectronLogChannel, { type: 'CREATE_CHILD_LOGGER', topic, data: {} });
+        this.ipcRenderer.send(_1.ElectronLogChannel, { type: 'CREATE_CHILD_LOGGER', topic, data: {} });
         return logger;
     }
     trace(...args) {
@@ -69,7 +69,7 @@ class ElectronRendererLogger {
     }
     sendLog(logLevel, ...args) {
         const message = this.getMessage(args);
-        electron_1.ipcRenderer.send(_1.ElectronLogChannel, { type: logLevel, topic: this.topicName, logData: message });
+        this.ipcRenderer.send(_1.ElectronLogChannel, { type: logLevel, topic: this.topicName, logData: message });
     }
 }
 exports.ElectronRendererLogger = ElectronRendererLogger;

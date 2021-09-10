@@ -27,12 +27,10 @@ const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
 const en_data_model_1 = require("en-data-model");
 const en_home_data_model_1 = require("en-home-data-model");
+const en_quasar_connector_1 = require("en-quasar-connector");
 const BoardBootstrap_1 = require("./BoardBootstrap");
 const BoardCustomize_1 = require("./BoardCustomize");
 const BoardCustomizeVerII_1 = require("./BoardCustomizeVerII");
-const BoardConverter_1 = require("./Converters/BoardConverter");
-const WidgetContentConflictConverter_1 = require("./Converters/WidgetContentConflictConverter");
-const WidgetConverter_1 = require("./Converters/WidgetConverter");
 const Board_1 = require("./EntityTypes/Board");
 const Widget_1 = require("./EntityTypes/Widget");
 const WidgetContentConflict_1 = require("./EntityTypes/WidgetContentConflict");
@@ -81,7 +79,7 @@ function getENBoardPlugin() {
                 [en_data_model_1.EntityTypes.Board]: {
                     typeDef: Board_1.boardTypeDef,
                     indexConfig: Board_1.boardIndexConfig,
-                    nsyncConverters: { [en_data_model_1.NSyncEntityType.BOARD]: BoardConverter_1.getBoardNode },
+                    nsyncType: en_data_model_1.NSyncEntityType.BOARD,
                     blobUploadDefs: {
                         headerBG: {
                             customCommandName: 'boardSetHeaderBG',
@@ -104,12 +102,22 @@ function getENBoardPlugin() {
                 [en_data_model_1.EntityTypes.Widget]: {
                     typeDef: Widget_1.widgetTypeDef,
                     indexConfig: Widget_1.createWidgetIndexConfig(),
-                    nsyncConverters: { [en_data_model_1.NSyncEntityType.WIDGET]: WidgetConverter_1.getWidgetNode },
+                    nsyncType: en_data_model_1.NSyncEntityType.WIDGET,
+                    edgeDefiners: {
+                        [en_data_model_1.EntityTypes.Widget]: {
+                            parent: en_quasar_connector_1.convertEdgeFromEntityRef('parentEntity'),
+                        },
+                    },
                 },
                 [en_data_model_1.EntityTypes.WidgetContentConflict]: {
                     typeDef: WidgetContentConflict_1.widgetContentConflictTypeDef,
                     indexConfig: WidgetContentConflict_1.widgetContentConflictIndexConfig,
-                    nsyncConverters: { [en_data_model_1.NSyncEntityType.WIDGET_CONTENT_CONFLICT]: WidgetContentConflictConverter_1.getWidgetContentConflictNodeAndEdges },
+                    nsyncType: en_data_model_1.NSyncEntityType.WIDGET_CONTENT_CONFLICT,
+                    edgeDefiners: {
+                        [en_data_model_1.EntityTypes.WidgetContentConflict]: {
+                            parent: en_quasar_connector_1.convertEdgeFromEntityRef('parentEntity'),
+                        },
+                    },
                 },
             };
             return entityTypes;

@@ -95,14 +95,8 @@ function getENSearchPlugin(provideSearchEngine, di, offlineSearchIndexingConfig)
             throw err;
         }
     }
-    async function promiseWithTimeout(promise, ms) {
-        const timeoutPromise = new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => {
-                clearTimeout(timeout);
-                return reject(new SearchExUtil_1.OnlineSearchExError(`SearchEx took longer than ${ms} ms`));
-            }, ms);
-        });
-        return Promise.race([promise, timeoutPromise]);
+    async function onlineModeSearchExWithTimeout(args, context, authData, ms) {
+        return conduit_utils_1.timeboxExecution(onlineModeSearchEx(args, context, authData), ms, new SearchExUtil_1.OnlineSearchExError(`SearchEx took longer than ${ms} ms`));
     }
     ;
     async function searchExResolver(parent, args, context) {
@@ -126,13 +120,15 @@ function getENSearchPlugin(provideSearchEngine, di, offlineSearchIndexingConfig)
         else { // prefer online
             try {
                 conduit_utils_1.logger.debug(`searchExResolver: onlineModeSearchEx call.`);
-                const onlineSearchExPromise = onlineModeSearchEx(args, context, authData);
-                return await promiseWithTimeout(onlineSearchExPromise, SEARCH_EX_PROMISE_TIMEOUT);
+                return await onlineModeSearchExWithTimeout(args, context, authData, SEARCH_EX_PROMISE_TIMEOUT);
             }
             catch (err) { // AIS is unavailable or the response is slow
-                // TODO: send cec event if err instanceof OnlineSearchExError
                 if (err instanceof conduit_utils_1.RetryError || err instanceof conduit_utils_1.ServiceError || err instanceof SearchExUtil_1.OnlineSearchExError) {
                     conduit_utils_1.logger.debug(`searchExResolver: There was an error: ${err.message}, call offlineModeSearchEx instead.`);
+                    if (err instanceof SearchExUtil_1.OnlineSearchExError || err instanceof conduit_utils_1.ServiceError) {
+                        const customDimenstions = await SearchExUtil_1.getSearchExCustomDimensionsForError(context, err, 'searchExResolver');
+                        conduit_utils_1.recordMetric(SearchExUtil_1.getTelemetryMetric(customDimenstions));
+                    }
                     // TODO: search by local cache if gSearcher is unavailable as well
                     return gSearcher ? await offlineModeSearchEx(args, authData) : SearchExUtil_1.emptySearchExResult();
                 }

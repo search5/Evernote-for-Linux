@@ -90,7 +90,6 @@ exports.membershipIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(ex
                     },
                 },
             },
-            includeFields: ['label'],
         },
         MembershipsInParent: {
             // TODO this will replace the memberships denormalization some day
@@ -106,7 +105,6 @@ exports.membershipIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(ex
                     },
                 },
             },
-            includeFields: ['label'],
         },
         MembershipsForMeInParent: {
             traversalName: 'ownMemberships',
@@ -125,7 +123,6 @@ exports.membershipIndexConfig = conduit_storage_1.buildNodeIndexConfiguration(ex
                     },
                 },
             },
-            includeFields: ['label'],
         },
     },
 });

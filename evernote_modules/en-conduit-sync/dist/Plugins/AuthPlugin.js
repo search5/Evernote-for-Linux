@@ -56,7 +56,7 @@ async function authStateResolver(_1, _2, context) {
         throw new Error('Context not correctly setup: MultiUserProvider missing');
     }
     const auth = await context.multiUserProvider.getAuthTokenAndState(context.trc, context.watcher);
-    return { authState: auth ? auth.state : conduit_view_types_1.AuthState.NoAuth };
+    return { authState: auth ? auth.state : conduit_view_types_1.AuthState.NoAuth, token: auth === null || auth === void 0 ? void 0 : auth.token };
 }
 async function authRemoteHostResolver(_1, _2, context) {
     conduit_core_1.validateDB(context);
@@ -372,6 +372,7 @@ function getAuthPlugin(httpClient, tokenRefreshManager, deviceIdentifier) {
                 await context.multiUserProvider.setCurrentUser(context.trc, null);
                 return;
             }
+            await context.db.onBeforeLogout(context.trc, currentUserID, args.keepData || false);
             const currentAuth = await context.db.getAuthTokenAndState(context.trc, null);
             const nextUserID = args.nextUserID ? conduit_utils_1.userIDForKeyString(args.nextUserID) : null;
             let newUserID = !args.all && nextUserID && await context.multiUserProvider.hasUser(context.trc, nextUserID) ?
@@ -597,6 +598,7 @@ function getAuthPlugin(httpClient, tokenRefreshManager, deviceIdentifier) {
                     args: conduit_core_1.schemaToGraphQLArgs({}),
                     type: conduit_core_1.schemaToGraphQLType(conduit_utils_1.NullableStruct({
                         authState: AuthStateSchema,
+                        token: conduit_utils_1.NullableString,
                     }, 'AuthState')),
                     resolve: authStateResolver,
                 },

@@ -286,6 +286,7 @@ class MutationManager {
                     conduit_utils_1.logger.error('Mutation should still be in optimistic list. This should never happen');
                 }
                 const res = mutationResults[m.mutationID];
+                let analyticEvents = m.analyticEvents; // take analytic events from initial optimistic run of mutation.
                 if (GraphMutationTypes_1.isMutationUpsyncSuccess(res)) {
                     const deps = res.deps;
                     await db.setValue(trc, MUTATION_RESULTS_TABLE, m.mutationID, {
@@ -296,7 +297,13 @@ class MutationManager {
                         await this.addMutationDeps(trc, m.mutationID, deps, db);
                         conduit_utils_1.logger[VERBOSE_LEVEL]('addMutationDeps', m.mutationID, m.name, deps);
                     }
+                    // in case remote mutation execution returned events use them as fresher.
+                    // remote mutation execution does not return analyticEvents in case CommandService mutations, so we use events from optimistic run.
+                    if (res.analyticEvents) {
+                        analyticEvents = res.analyticEvents;
+                    }
                 }
+                this.sendMutationsAnalytic(analyticEvents);
             }
             for (const m of (failedMutations || [])) {
                 const rolledUpIDs = await this.removeMutationRollupMap(trc, db, m.mutationID);
@@ -311,6 +318,7 @@ class MutationManager {
                 if (oIdx >= 0) {
                     this.optimisticMutations.splice(oIdx, 1);
                 }
+                this.sendMutationsAnalytic(m.analyticEvents);
             }
             if (retryMutations && retryMutations.length) {
                 // mutation may have been run by the server successfully but interrupted on response,
@@ -324,6 +332,17 @@ class MutationManager {
             failedMutations,
             successMutations,
         };
+    }
+    sendMutationsAnalytic(mutationAnalyticEvents) {
+        if (!this.di.sendMutationMetrics) {
+            return;
+        }
+        if (mutationAnalyticEvents) {
+            for (const key in mutationAnalyticEvents) {
+                const event = mutationAnalyticEvents[key];
+                this.di.recordEvent(event);
+            }
+        }
     }
     async removeMutationRollupMap(trc, tx, mutationID) {
         const rolledUpIDs = await tx.getValidatedValue(trc, null, MUTATION_ROLLUP_TABLE, mutationID, validateIsMutationIDArray) || [];

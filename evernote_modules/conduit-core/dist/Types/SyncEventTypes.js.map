@@ -1,1 +1,1 @@
-{"version":3,"file":"SyncEventTypes.js","sourceRoot":"","sources":["../../src/Types/SyncEventTypes.ts"],"names":[],"mappings":";AAAA;;GAEG;;;AAqEH,MAAsB,gBAAgB;IACpC,YAA4B,EAAsB;QAAtB,OAAE,GAAF,EAAE,CAAoB;IAAG,CAAC;CAsBvD;AAvBD,4CAuBC"}
+{"version":3,"file":"SyncEventTypes.js","sourceRoot":"","sources":["../../src/Types/SyncEventTypes.ts"],"names":[],"mappings":";AAAA;;GAEG;;;AA8EH,MAAsB,gBAAgB;IACpC,YAA4B,EAAsB;QAAtB,OAAE,GAAF,EAAE,CAAoB;IAAG,CAAC;CAsBvD;AAvBD,4CAuBC"}

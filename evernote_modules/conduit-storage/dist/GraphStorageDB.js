@@ -919,8 +919,9 @@ class GraphTransactionContext extends GraphStorageBase {
         const indexResolvers = (_a = this.config.indexer.config[nodeType]) === null || _a === void 0 ? void 0 : _a.indexResolvers;
         if (indexResolvers) {
             for (const field in indexResolvers) {
-                if (indexResolvers[field].propagatedFrom) {
-                    propagatedFields[field] = [conduit_utils_1.getSchemaTypeDefaultValue(indexResolvers[field].schemaType)];
+                const resolver = indexResolvers[field];
+                if (resolver.propagatedFrom) {
+                    propagatedFields[field] = [conduit_utils_1.getSchemaTypeDefaultValue(resolver.schemaType)];
                 }
             }
         }
@@ -1464,31 +1465,69 @@ class GraphTransactionContext extends GraphStorageBase {
     }
     // PRIVATE METHODS:
     async replaceEdgesInternal(trc, edgesToDelete, edgesToCreate, timestamp, excludeNode) {
+        // Tracks when we delete and create the same edge
         const newEdgeLookup = {};
         for (const edge of edgesToCreate) {
             newEdgeLookup[edgeToString(edge)] = edge;
         }
-        const affectedNodes = new Set();
+        const toReindex = {};
+        async function getFreshOrModifiedNodes(self, edge) {
+            // Get modified nodes from toReindex cache or fetch from storage if not yet modified
+            const dstNodeRef = { id: edge.dstID, type: edge.dstType };
+            const dst = nodeRefsEqual(dstNodeRef, excludeNode) ?
+                null :
+                toReindex.hasOwnProperty(edge.dstID) ?
+                    toReindex[edge.dstID].modified :
+                    await self.getNodeInternal(trc, dstNodeRef);
+            const srcNodeRef = { id: edge.srcID, type: edge.srcType };
+            const src = nodeRefsEqual(srcNodeRef, excludeNode) ?
+                null :
+                toReindex.hasOwnProperty(edge.srcID) ?
+                    toReindex[edge.srcID].modified :
+                    await self.getNodeInternal(trc, srcNodeRef);
+            return { dst, src };
+        }
+        function updateModificationCache(edge, original, update) {
+            if (GraphTypes_1.isGraphNode(update.dst) && (GraphTypes_1.isGraphNode(original.dst) || !isNodeReal(update.dst))) {
+                if (toReindex.hasOwnProperty(edge.dstID)) {
+                    toReindex[edge.dstID].modified = update.dst;
+                }
+                else {
+                    toReindex[edge.dstID] = { original: original.dst, modified: update.dst };
+                }
+            }
+            if (GraphTypes_1.isGraphNode(update.src) && (GraphTypes_1.isGraphNode(original.src) || !isNodeReal(update.src))) {
+                if (toReindex.hasOwnProperty(edge.srcID)) {
+                    toReindex[edge.srcID].modified = update.src;
+                }
+                else {
+                    toReindex[edge.srcID] = { original: original.src, modified: update.src };
+                }
+            }
+        }
         for (const filter of edgesToDelete) {
             // find matching edges and delete them if they are not also in edgesToCreate (uses newEdgeLookup for better perf)
             const matchingEdges = await this.findEdgesInternal(trc, filter, { searchDummy: true });
             for (const edge of matchingEdges) {
                 if (!newEdgeLookup.hasOwnProperty(edgeToString(edge))) {
-                    const updated = await this.removeEdge(trc, edge, timestamp, excludeNode);
-                    for (const ref of updated) {
-                        affectedNodes.add(ref);
-                    }
+                    const { dst, src } = await getFreshOrModifiedNodes(this, edge);
+                    // Remove the edge from the nodes then cache the newly modified nodes
+                    const update = await this.removeEdge(edge, dst, src, timestamp);
+                    updateModificationCache(edge, { dst, src }, update);
                 }
             }
         }
         for (const edge of edgesToCreate) {
-            const updated = await this.addEdge(trc, edge, timestamp, excludeNode);
-            for (const ref of updated) {
-                affectedNodes.add(ref);
-            }
+            const { dst, src } = await getFreshOrModifiedNodes(this, edge);
+            // Add the edge to the nodes then cache the newly modified nodes
+            const update = await this.addEdge(edge, dst, src, timestamp);
+            updateModificationCache(edge, { dst, src }, update);
         }
-        for (const nodeRef of affectedNodes.values()) {
-            await this.checkAndApplyAutoDelete(trc, nodeRef);
+        for (const modification of Object.values(toReindex)) {
+            const { original, modified } = modification;
+            const propagatedFields = await this.reindexNode(trc, original, modified);
+            await this._setNode(trc, original, modified, undefined, propagatedFields);
+            await this.checkAndApplyAutoDelete(trc, modified);
         }
     }
     async checkAndApplyAutoDelete(trc, nodeRef, fallbackNode) {
@@ -1595,61 +1634,65 @@ class GraphTransactionContext extends GraphStorageBase {
             // Propagated values should never need any async operations to resolve from the source node, hence we're not passing the nodeFieldLookup func
             if (origNode) {
                 const origValue = await this.config.indexer.resolveField(trc, origNode, byPort.srcField, null, {}, {});
-                origPropagatedFields[byPort.dstField] = origValue;
+                origPropagatedFields[byPort.dstField] = byPort.transform ? byPort.transform(origValue) : origValue;
             }
-            const newValue = newNode ? await this.config.indexer.resolveField(trc, newNode, byPort.srcField, null, {}, {}) : [null];
-            newPropagatedFields[byPort.dstField] = newValue;
+            if (!newNode) {
+                const resolver = this.config.indexer.config[byPort.dstType].indexResolvers[byPort.dstField];
+                newPropagatedFields[byPort.dstField] = [conduit_utils_1.getSchemaTypeDefaultValue(resolver.schemaType)];
+            }
+            else {
+                const newValue = await this.config.indexer.resolveField(trc, newNode, byPort.srcField, null, {}, {});
+                newPropagatedFields[byPort.dstField] = byPort.transform ? byPort.transform(newValue) : newValue;
+            }
         }
         if (conduit_utils_1.isEqual(origPropagatedFields, newPropagatedFields)) {
             return;
         }
         for (const dstPort in edgesToPropagateToByType) {
             const byPort = edgesToPropagateToByType[dstPort];
-            for (const dstNodeType in byPort) {
-                if (dstNodeType === 'dstField' || dstNodeType === 'srcField') {
-                    continue;
+            const byType = byPort[byPort.dstType];
+            for (const srcPort in byType) {
+                const targetEdgeTraverses = (_a = byType[srcPort]) !== null && _a !== void 0 ? _a : [];
+                let nodeRefAndEdges;
+                if (!newNode) {
+                    nodeRefAndEdges = await this.traverseGraph(trc, null, origNode, targetEdgeTraverses);
                 }
-                const byType = byPort[dstNodeType];
-                for (const srcPort in byType) {
-                    const targetEdgeTraverses = (_a = byType[srcPort]) !== null && _a !== void 0 ? _a : [];
-                    let nodeRefAndEdges;
-                    if (!newNode) {
-                        nodeRefAndEdges = await this.traverseGraph(trc, null, origNode, targetEdgeTraverses);
+                else {
+                    nodeRefAndEdges = await this.traverseGraph(trc, null, newNode, targetEdgeTraverses);
+                }
+                for (const ref of nodeRefAndEdges) {
+                    if (!this.pendingPropagatedFields[ref.type]) {
+                        this.pendingPropagatedFields[ref.type] = {};
+                    }
+                    if (!this.pendingPropagatedFields[ref.type][ref.id]) {
+                        this.pendingPropagatedFields[ref.type][ref.id] = newPropagatedFields;
                     }
                     else {
-                        nodeRefAndEdges = await this.traverseGraph(trc, null, newNode, targetEdgeTraverses);
-                    }
-                    for (const ref of nodeRefAndEdges) {
-                        if (!this.pendingPropagatedFields[ref.type]) {
-                            this.pendingPropagatedFields[ref.type] = {};
-                        }
-                        if (!this.pendingPropagatedFields[ref.type][ref.id]) {
-                            this.pendingPropagatedFields[ref.type][ref.id] = newPropagatedFields;
-                        }
-                        else {
-                            this.pendingPropagatedFields[ref.type][ref.id] = SimplyImmutable.deepUpdateImmutable(this.pendingPropagatedFields[ref.type][ref.id], newPropagatedFields);
-                        }
+                        this.pendingPropagatedFields[ref.type][ref.id] = SimplyImmutable.deepUpdateImmutable(this.pendingPropagatedFields[ref.type][ref.id], newPropagatedFields);
                     }
                 }
             }
         }
     }
+    async reindexItems(trc, toReindex, type) {
+        const chunks = conduit_utils_1.chunkArray(toReindex, INDEX_TRAVERSALS_CHUNK_SIZE);
+        for (const chunk of chunks) {
+            const targetNodes = await this.batchGetNodes(trc, null, type, chunk);
+            const ps = [];
+            for (const targetNode of targetNodes) {
+                if (targetNode) {
+                    // Reindex node will pull and delete the pending propagated fields
+                    const propagatedFields = await this.reindexNode(trc, targetNode, targetNode);
+                    ps.push(this._setNode(trc, targetNode, targetNode, undefined, propagatedFields));
+                }
+            }
+            await conduit_utils_1.allSettled(ps);
+        }
+    }
     async finalizeIndexPropagation(trc) {
         for (const type in this.pendingPropagatedFields) {
             const toReindex = Object.keys(this.pendingPropagatedFields[type]);
-            const chunks = conduit_utils_1.chunkArray(toReindex, INDEX_TRAVERSALS_CHUNK_SIZE);
-            for (const chunk of chunks) {
-                const targetNodes = await this.batchGetNodes(trc, null, type, chunk);
-                const ps = [];
-                for (const targetNode of targetNodes) {
-                    if (targetNode) {
-                        // Reindex node will pull and delete the pending propagated fields
-                        const propagatedFields = await this.reindexNode(trc, targetNode, targetNode);
-                        ps.push(this._setNode(trc, targetNode, targetNode, undefined, propagatedFields));
-                    }
-                }
-                await conduit_utils_1.allSettled(ps);
-            }
+            await this.reindexItems(trc, toReindex, type);
         }
     }
     async reindexNode(trc, origNode, node) {
@@ -1663,6 +1706,7 @@ class GraphTransactionContext extends GraphStorageBase {
         if (!(await this.hasIndexesConfigured(trc))) {
             return {};
         }
+        conduit_utils_1.traceTestCounts(trc, { [`reindexNode.${nodeRef.type}`]: 1 });
         const pending = this.pendingPropagatedFields[nodeRef.type] && this.pendingPropagatedFields[nodeRef.type][nodeRef.id];
         const propagatedFields = pending ? SimplyImmutable.cloneMutable(pending) : {};
         const origResolvedFields = origNode ? await this.config.indexer.resolveAllFields(trc, origNode, this.nodeFieldLookup, origNode.PropagatedFields || {}) : {};
@@ -1784,80 +1828,62 @@ class GraphTransactionContext extends GraphStorageBase {
         }
         return node;
     }
-    async addEdge(trc, edge, timestamp, excludeNode) {
-        const updated = [];
+    async addEdge(edge, dstNode, srcNode, timestamp) {
+        const update = { dst: dstNode, src: srcNode };
         if (edge.srcPort) {
-            const srcNodeRef = { id: edge.srcID, type: edge.srcType };
-            const srcNode = nodeRefsEqual(srcNodeRef, excludeNode) ? null : await this.getNodeInternal(trc, srcNodeRef);
             const srcTerminus = GraphTypes_1.getEdgeTerminusName(edge.dstID, edge.dstPort);
             if (isNodeReal(srcNode)) {
-                let updatedNode = SimplyImmutable.updateImmutable(srcNode, ['outputs', edge.srcPort, srcTerminus], edge);
-                updatedNode = SimplyImmutable.updateImmutable(updatedNode, ['localChangeTimestamp'], timestamp !== null && timestamp !== void 0 ? timestamp : 0);
-                const propagatedFields = await this.reindexNode(trc, srcNode, updatedNode);
-                await this._setNode(trc, srcNode, updatedNode, undefined, propagatedFields);
-                updated.push(srcNodeRef);
+                const updatedNode = SimplyImmutable.updateImmutable(srcNode, ['outputs', edge.srcPort, srcTerminus], edge);
+                update.src = SimplyImmutable.updateImmutable(updatedNode, ['localChangeTimestamp'], timestamp !== null && timestamp !== void 0 ? timestamp : 0);
             }
             else {
                 // Add a dummy node to retain the edge.
                 const edgeStructure = this.nodeDefaultEdgeStructure(edge.srcType);
-                await this._setNode(trc, srcNode, SimplyImmutable.updateImmutable(Object.assign(Object.assign({}, (srcNode || edgeStructure)), { id: edge.srcID, type: edge.srcType, version: 0 }), ['outputs', edge.srcPort, srcTerminus], edge), { dummy: true });
+                update.src = SimplyImmutable.updateImmutable(Object.assign(Object.assign({}, (srcNode || edgeStructure)), { id: edge.srcID, type: edge.srcType, version: 0, dummy: true }), ['outputs', edge.srcPort, srcTerminus], edge);
             }
         }
         if (edge.dstPort) {
-            const dstNodeRef = { id: edge.dstID, type: edge.dstType };
-            const dstNode = nodeRefsEqual(dstNodeRef, excludeNode) ? null : await this.getNodeInternal(trc, dstNodeRef);
             const dstTerminus = GraphTypes_1.getEdgeTerminusName(edge.srcID, edge.srcPort);
             if (isNodeReal(dstNode)) {
-                let updatedNode = SimplyImmutable.updateImmutable(dstNode, ['inputs', edge.dstPort, dstTerminus], edge);
-                updatedNode = SimplyImmutable.updateImmutable(updatedNode, ['localChangeTimestamp'], timestamp !== null && timestamp !== void 0 ? timestamp : 0);
-                const propagatedFields = await this.reindexNode(trc, dstNode, updatedNode);
-                await this._setNode(trc, dstNode, updatedNode, undefined, propagatedFields);
-                updated.push(dstNodeRef);
+                const updatedNode = SimplyImmutable.updateImmutable(dstNode, ['inputs', edge.dstPort, dstTerminus], edge);
+                update.dst = SimplyImmutable.updateImmutable(updatedNode, ['localChangeTimestamp'], timestamp !== null && timestamp !== void 0 ? timestamp : 0);
             }
             else {
                 // Add a dummy node to retain the edge.
                 const edgeStructure = this.nodeDefaultEdgeStructure(edge.dstType);
-                await this._setNode(trc, dstNode, SimplyImmutable.updateImmutable(Object.assign(Object.assign({}, (dstNode || edgeStructure)), { id: edge.dstID, type: edge.dstType, version: 0 }), ['inputs', edge.dstPort, dstTerminus], edge), { dummy: true });
+                update.dst = SimplyImmutable.updateImmutable(Object.assign(Object.assign({}, (dstNode || edgeStructure)), { id: edge.dstID, type: edge.dstType, version: 0, dummy: true }), ['inputs', edge.dstPort, dstTerminus], edge);
             }
         }
-        return updated;
+        return update;
     }
-    async removeEdge(trc, edge, timestamp, excludeNode) {
-        const srcNodeRef = { id: edge.srcID, type: edge.srcType };
-        const srcNode = nodeRefsEqual(srcNodeRef, excludeNode) ? null : await this.getNodeInternal(trc, srcNodeRef);
-        const dstNodeRef = { id: edge.dstID, type: edge.dstType };
-        const dstNode = nodeRefsEqual(dstNodeRef, excludeNode) ? null : await this.getNodeInternal(trc, dstNodeRef);
+    async removeEdge(edge, dstNode, srcNode, timestamp) {
+        const update = { dst: dstNode, src: srcNode };
         if (!srcNode && !dstNode) {
-            return [];
+            return update;
         }
-        const updated = [];
         if (edge.srcPort) {
             const srcTerminus = GraphTypes_1.getEdgeTerminusName(edge.dstID, edge.dstPort);
             if (isNodeReal(srcNode)) {
-                let updatedNode = SimplyImmutable.deleteImmutable(srcNode, ['outputs', edge.srcPort, srcTerminus]);
-                updatedNode = SimplyImmutable.updateImmutable(updatedNode, ['localChangeTimestamp'], timestamp !== null && timestamp !== void 0 ? timestamp : 0);
-                const propagatedFields = await this.reindexNode(trc, srcNode, updatedNode);
-                await this._setNode(trc, srcNode, updatedNode, undefined, propagatedFields);
-                updated.push(srcNodeRef);
+                const updatedNode = SimplyImmutable.deleteImmutable(srcNode, ['outputs', edge.srcPort, srcTerminus]);
+                update.src = SimplyImmutable.updateImmutable(updatedNode, ['localChangeTimestamp'], timestamp !== null && timestamp !== void 0 ? timestamp : 0);
             }
-            else if (srcNode) {
-                await this._setNode(trc, srcNode, SimplyImmutable.deleteImmutable(srcNode, ['outputs', edge.srcPort, srcTerminus]), { dummy: true });
+            else {
+                const edgeStructure = this.nodeDefaultEdgeStructure(edge.srcType);
+                update.src = SimplyImmutable.deleteImmutable(Object.assign(Object.assign({}, (srcNode || edgeStructure)), { id: edge.srcID, type: edge.srcType, version: 0, dummy: true }), ['outputs', edge.srcPort, srcTerminus]);
             }
         }
         if (edge.dstPort) {
             const dstTerminus = GraphTypes_1.getEdgeTerminusName(edge.srcID, edge.srcPort);
             if (isNodeReal(dstNode)) {
-                let updatedNode = SimplyImmutable.deleteImmutable(dstNode, ['inputs', edge.dstPort, dstTerminus]);
-                updatedNode = SimplyImmutable.updateImmutable(updatedNode, ['localChangeTimestamp'], timestamp !== null && timestamp !== void 0 ? timestamp : 0);
-                const propagatedFields = await this.reindexNode(trc, dstNode, updatedNode);
-                await this._setNode(trc, dstNode, updatedNode, undefined, propagatedFields);
-                updated.push(dstNodeRef);
+                const updatedNode = SimplyImmutable.deleteImmutable(dstNode, ['inputs', edge.dstPort, dstTerminus]);
+                update.dst = SimplyImmutable.updateImmutable(updatedNode, ['localChangeTimestamp'], timestamp !== null && timestamp !== void 0 ? timestamp : 0);
             }
-            else if (dstNode) {
-                await this._setNode(trc, dstNode, SimplyImmutable.deleteImmutable(dstNode, ['inputs', edge.dstPort, dstTerminus]), { dummy: true });
+            else {
+                const edgeStructure = this.nodeDefaultEdgeStructure(edge.dstType);
+                update.dst = SimplyImmutable.deleteImmutable(Object.assign(Object.assign({}, (srcNode || edgeStructure)), { id: edge.dstID, type: edge.dstType, version: 0, dummy: true }), ['outputs', edge.dstPort, dstTerminus]);
             }
         }
-        return updated;
+        return update;
     }
     async applyNodePendingChanges(trc, nodeRef, node, getDummy) {
         if (!node && !getDummy) {

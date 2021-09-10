@@ -3,7 +3,7 @@
  * Copyright 2019 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.convertMessageSyncChunk = exports.convertSyncChunk = exports.processSyncUpdates = exports.fetchAndCacheSnippets = void 0;
+exports.convertMessageSyncChunk = exports.convertSyncChunk = exports.processSyncUpdates = exports.fetchAndCacheSnippets = exports.removeLESEntityConverters = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
@@ -19,6 +19,10 @@ const CHUNK_CONVERTERS = [
     { converter: en_thrift_connector_1.NoteConverter, expunged: 'expungedNotes', updated: 'notes' },
     { converter: en_thrift_connector_1.ResourceConverter, expunged: null, updated: 'resources' },
 ];
+function removeLESEntityConverters() {
+    CHUNK_CONVERTERS.splice(3, 1); // SavedSearchConverter
+}
+exports.removeLESEntityConverters = removeLESEntityConverters;
 async function fetchAndCacheSnippets(trc, thriftComm, auth, guids, transact, setProgress) {
     if (!guids.length) {
         setProgress && await setProgress(trc, 1);

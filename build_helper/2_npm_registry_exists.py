@@ -26,8 +26,10 @@ for entry in files:
 
     if r.status_code != 404:
         shutil.rmtree(entry)
-        print('삭제함', entry)
+        #print('삭제함', entry)
         #pass
+    else:
+        print(entry)
 
 # print(private_registry)
 #open("output_log.txt", "w").writelines(private_registry)

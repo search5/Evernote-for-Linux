@@ -8,11 +8,11 @@ const conduit_utils_1 = require("conduit-utils");
 const conduit_view_1 = require("conduit-view");
 const en_conduit_electron_shared_1 = require("en-conduit-electron-shared");
 let gConduitIPC;
-function init(noFreezeImmutable) {
+function init(ipcRenderer, noFreezeImmutable) {
     if (gConduitIPC) {
         throw new Error('en-conduit-electron-renderer already initialized');
     }
-    gConduitIPC = new en_conduit_electron_shared_1.ConduitRendererIPC();
+    gConduitIPC = new en_conduit_electron_shared_1.ConduitRendererIPC(ipcRenderer);
     conduit_utils_1.applyTelemetryDestination(conduit_view_1.eventsOverIPCDestination);
     conduit_view_1.connector.init(gConduitIPC, noFreezeImmutable);
 }

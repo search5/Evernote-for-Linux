@@ -22,7 +22,7 @@ function generateCustomID(nodeType, fields, parent) {
 }
 exports.generateCustomID = generateCustomID;
 class ThriftRemoteMutationExecutor extends conduit_core_1.RemoteMutationExecutor {
-    constructor(di, graphStorage, thriftComm, sendMutationMetrics, localSettings, offlineContentStrategy, stagedBlobManager, syncEngine, dispatchCustomCommand) {
+    constructor(di, graphStorage, thriftComm, localSettings, offlineContentStrategy, stagedBlobManager, syncEngine, dispatchCustomCommand) {
         super();
         this.di = di;
         this.graph = new ThriftGraphInterface_1.ThriftGraphInterface(di, {
@@ -34,7 +34,7 @@ class ThriftRemoteMutationExecutor extends conduit_core_1.RemoteMutationExecutor
             vaultUserProvider: syncEngine,
             dispatchCustomCommand,
         });
-        this.mutationEngine = di.MutationEngine(sendMutationMetrics);
+        this.mutationEngine = di.MutationEngine();
     }
     isAvailable() {
         return true;

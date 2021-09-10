@@ -3,19 +3,12 @@
  * Copyright 2020 Evernote Corporation. All rights reserved.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.serviceResultsToMutationDeps = exports.membershipRefToDepKey = exports.associationRefToDepKey = exports.entityRefToDepKey = exports.getEdge = exports.getMembership = exports.getEntityAndEdges = exports.CoreEntityNSyncConverters = exports.generateMembershipID = exports.generateInvitationID = exports.generateProfileID = void 0;
+exports.serviceResultsToMutationDeps = exports.membershipRefToDepKey = exports.associationRefToDepKey = exports.entityRefToDepKey = exports.getEdge = exports.getMembership = exports.getEntityAndEdges = exports.getEntityAndEdgesBySchema = exports.generateMembershipID = exports.generateInvitationID = exports.generateProfileID = void 0;
 const conduit_utils_1 = require("conduit-utils");
 const en_conduit_sync_types_1 = require("en-conduit-sync-types");
 const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
-const AttachmentConverter_1 = require("./Converters/AttachmentConverter");
-const NotebookConverter_1 = require("./Converters/NotebookConverter");
-const NoteConverter_1 = require("./Converters/NoteConverter");
-const RecipientSettingsConverter_1 = require("./Converters/RecipientSettingsConverter");
-const SavedSearchConverter_1 = require("./Converters/SavedSearchConverter");
-const ShortcutConverter_1 = require("./Converters/ShortcutConverter");
-const TagConverter_1 = require("./Converters/TagConverter");
-const WorkspaceConverter_1 = require("./Converters/WorkspaceConverter");
+const BaseConverter_1 = require("./Converters/BaseConverter");
 const EXPUNGE_VERSION = Number.MAX_SAFE_INTEGER - 1; // the "- 1" is for safety
 // May want to move this out eventually
 function generateProfileID(source, id) {
@@ -30,64 +23,90 @@ function generateMembershipID(ref) {
     return `Membership:${ref.dst.type}_${ref.dst.id}:${ref.src.type}_${ref.src.id}`;
 }
 exports.generateMembershipID = generateMembershipID;
-const shouldNotImplement = async (trc, instance) => {
-    conduit_utils_1.logger.error(`Clients should not receive type ${instance.ref && instance.ref.type}`);
-    return null;
-};
-/*
-const yetToImplement = async (trc: TracingContext, instance: ClientNSyncTypes.EntityInstance): Promise<Maybe<NodesAndEdges>> => {
-  logger.warn(`Yet to implement NSync type ${instance.ref && instance.ref.type}`);
-  return null;
-};
-*/
-exports.CoreEntityNSyncConverters = {
-    // Core, V1 Entity Types
-    [en_data_model_1.EntityTypes.Attachment]: { [en_data_model_1.NSyncEntityType.ATTACHMENT]: AttachmentConverter_1.getAttachmentNodeAndEdges },
-    [en_data_model_1.EntityTypes.Note]: {
-        [en_data_model_1.NSyncEntityType.NOTE]: NoteConverter_1.getNoteNodeAndEdges,
-        [en_data_model_1.NSyncEntityType.NOTE_ATTACHMENTS]: shouldNotImplement,
-        [en_data_model_1.NSyncEntityType.NOTE_TAGS]: shouldNotImplement,
-    },
-    [en_data_model_1.EntityTypes.Notebook]: {
-        [en_data_model_1.NSyncEntityType.NOTEBOOK]: NotebookConverter_1.getNotebookNodesAndEdges,
-        [en_data_model_1.NSyncEntityType.RECIPIENT_SETTINGS]: RecipientSettingsConverter_1.getRecipientSettingsNodesAndEdges,
-    },
-    [en_data_model_1.EntityTypes.SavedSearch]: { [en_data_model_1.NSyncEntityType.SAVED_SEARCH]: SavedSearchConverter_1.getSavedSearchNodesAndEdges },
-    [en_data_model_1.EntityTypes.Shortcut]: { [en_data_model_1.NSyncEntityType.SHORTCUT]: ShortcutConverter_1.getShortcutNodesAndEdges },
-    [en_data_model_1.EntityTypes.Tag]: { [en_data_model_1.NSyncEntityType.TAG]: TagConverter_1.getTagNodesAndEdges },
-    [en_data_model_1.EntityTypes.Workspace]: { [en_data_model_1.NSyncEntityType.WORKSPACE]: WorkspaceConverter_1.getWorkspaceNodesAndEdges },
-};
-/*
-export async function getEntityAndEdgesBySchema<SyncContextMetadata>(
-  trc: TracingContext,
-  instance: ClientNSyncTypes.EntityInstance,
-  context: NSyncConverterContext<SyncContextMetadata>,
-): Promise<Maybe<NodesAndEdges>> {
-  const node = convertNsyncEntityToNode<GraphNode>(instance, context);
-  if (!node) {
-    return null;
-  }
-
-  const nodesToUpsert: GraphNode[] = [];
-  const edgesToCreate: GraphEdge[] = [];
-  const edgesToDelete: GraphEdgeFilter[] = [];
-
-  nodesToUpsert.push(node);
-
-  // TODO autoconvert embedded associations
-
-  return {
-    nodes: {
-      nodesToUpsert,
-      nodesToDelete: [],
-    },
-    edges: {
-      edgesToCreate,
-      edgesToDelete,
-    },
-  };
+function graphEdgeMatch(element) {
+    return element.dstID === this.dstID
+        && element.dstPort === this.dstPort
+        && element.dstType === this.dstType
+        && element.srcID === this.srcID
+        && element.srcType === this.srcType
+        && element.srcPort === this.srcPort;
 }
-*/
+async function getEntityAndEdgesBySchema(trc, instance, context) {
+    var _a, _b;
+    const type = context.di.convertNsyncTypeToNodeType(instance.ref.type);
+    if (conduit_utils_1.isNullish(type)) {
+        return null;
+    }
+    const typeDef = context.di.getNodeTypeDefs()[type];
+    if (!typeDef) {
+        return null;
+    }
+    const nodeAndEdges = BaseConverter_1.convertNsyncEntityToNode(typeDef, instance, context);
+    if (!nodeAndEdges || !nodeAndEdges.node) {
+        return null;
+    }
+    const nodesToUpsert = [];
+    const edgesToCreate = nodeAndEdges.edges;
+    const edgesToDelete = [];
+    const node = nodeAndEdges.node;
+    nodesToUpsert.push(node);
+    const existingNode = await context.tx.getNode(trc, null, { type: node.type, id: node.id });
+    if (existingNode && typeDef.edges) {
+        for (const port in existingNode.inputs) {
+            if (!typeDef.edges[port] || !((_a = context.edgeDefiners[typeDef.name]) === null || _a === void 0 ? void 0 : _a[port])) {
+                continue;
+            }
+            for (const edgeID in existingNode.inputs[port]) {
+                const edge = existingNode.inputs[port][edgeID];
+                const index = edgesToCreate.findIndex(graphEdgeMatch, edge);
+                if (index === -1) {
+                    edgesToDelete.push(edge);
+                }
+                else {
+                    // Already exists, don't recreate the edge
+                    edgesToCreate.splice(index, 1);
+                }
+            }
+        }
+        for (const port in existingNode.outputs) {
+            if (!typeDef.edges[port] || !((_b = context.edgeDefiners[typeDef.name]) === null || _b === void 0 ? void 0 : _b[port])) {
+                continue;
+            }
+            for (const edgeID in existingNode.outputs[port]) {
+                const edge = existingNode.outputs[port][edgeID];
+                const index = edgesToCreate.findIndex(graphEdgeMatch, edge);
+                if (index === -1) {
+                    edgesToDelete.push(edge);
+                }
+                else {
+                    // Already exists, don't recreate the edge
+                    edgesToCreate.splice(index, 1);
+                }
+            }
+        }
+    }
+    let out = {
+        nodes: {
+            nodesToUpsert,
+            nodesToDelete: [],
+        },
+        edges: {
+            edgesToCreate,
+            edgesToDelete,
+        },
+    };
+    const extras = context.di.getNSyncExtraNodesAndEdges()[node.type];
+    if (extras && extras.length) {
+        for (const fn of extras) {
+            const res = await fn(trc, node, instance, context);
+            if (res) {
+                out = BaseConverter_1.mergeNodesAndEdges(out, res);
+            }
+        }
+    }
+    return out;
+}
+exports.getEntityAndEdgesBySchema = getEntityAndEdgesBySchema;
 async function getEntityAndEdges(trc, instance, currentUserID, eventManager, tx) {
     if (!instance.ref) {
         conduit_utils_1.logger.info('NSync eventSrc doc missing instance or entity');
@@ -96,16 +115,13 @@ async function getEntityAndEdges(trc, instance, currentUserID, eventManager, tx)
     const context = {
         currentUserID,
         eventManager,
-        converters: eventManager.di.getNsyncConverters(),
+        edgeDefiners: eventManager.di.getNSyncEdgeDefiners(),
         tx,
         di: eventManager.di,
         getLocalSettings: eventManager.di.getLocalSettings,
     };
-    if (!context.converters[instance.ref.type]) {
-        conduit_utils_1.logger.warn(`NSync type ${instance.ref.type} not supported`);
-        return null;
-    }
-    return context.converters[instance.ref.type](trc, instance, context);
+    const nodesAndEdges = await getEntityAndEdgesBySchema(trc, instance, context);
+    return nodesAndEdges;
 }
 exports.getEntityAndEdges = getEntityAndEdges;
 function getInvitationNode(instance, params, out) {

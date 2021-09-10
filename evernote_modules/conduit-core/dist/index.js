@@ -52,7 +52,9 @@ Object.defineProperty(exports, "resolveUnindexedPaths", { enumerable: true, get:
 var GraphQLFields_2 = require("./GraphDB/GraphQLFields");
 Object.defineProperty(exports, "responsePathToSelectionPath", { enumerable: true, get: function () { return GraphQLFields_2.responsePathToSelectionPath; } });
 __exportStar(require("./ConduitCore"), exports);
+__exportStar(require("./FileSystemManager"), exports);
 __exportStar(require("./GuidGenerator"), exports);
+__exportStar(require("./ResourceManager"), exports);
 var SyncActivity_1 = require("./SyncActivity");
 Object.defineProperty(exports, "SyncActivity", { enumerable: true, get: function () { return SyncActivity_1.SyncActivity; } });
 var SyncManager_1 = require("./SyncManager");

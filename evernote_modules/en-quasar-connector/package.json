@@ -1,6 +1,6 @@
 {
   "name": "en-quasar-connector",
-  "version": "1.38.1",
+  "version": "1.39.1",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -19,15 +19,14 @@
     "ts-sinon": "^1.0.21"
   },
   "dependencies": {
-    "conduit-auth-shared": "1.38.1",
-    "conduit-core": "1.38.1",
-    "conduit-storage": "1.38.1",
-    "conduit-utils": "1.38.1",
-    "conduit-view-types": "1.38.1",
-    "en-conduit-sync-types": "1.38.1",
-    "en-core-data-model": "^3.10.0",
-    "en-core-entity-types": "1.38.1",
-    "en-data-model": "^3.10.0",
+    "conduit-auth-shared": "1.39.1",
+    "conduit-core": "1.39.1",
+    "conduit-storage": "1.39.1",
+    "conduit-utils": "1.39.1",
+    "conduit-view-types": "1.39.1",
+    "en-conduit-sync-types": "1.39.1",
+    "en-core-entity-types": "1.39.1",
+    "en-data-model": "^3.11.2",
     "en-graph-types": "2.0.0"
   }
 }

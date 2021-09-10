@@ -113,12 +113,12 @@ function bytesToUuid(bytes) {
 exports.bytesToUuid = bytesToUuid;
 // Only allow sort weights of length 50 or less.
 exports.DefaultWidgetRanker = new en_ts_utils_1.LexoRankHandler(50);
-async function throwRetryErrorAfter(after, msg, timeout) {
+async function throwErrorAfter(after, error) {
     await en_ts_utils_1.sleep(after);
-    throw new en_ts_utils_1.RetryError(msg, timeout);
+    throw error;
 }
-async function timeboxExecution(p, timebox, msg, timeout) {
-    return await Promise.race([throwRetryErrorAfter(timebox, msg, timeout), p]);
+async function timeboxExecution(p, timebox, error) {
+    return await Promise.race([throwErrorAfter(timebox, error), p]);
 }
 exports.timeboxExecution = timeboxExecution;
 function memoize(debugName, f, key, lifetime = 1000, maxWait = 10000) {
@@ -130,7 +130,7 @@ function memoize(debugName, f, key, lifetime = 1000, maxWait = 10000) {
         }
         const { promise, resolve, reject } = en_ts_utils_1.allocPromise();
         store[k] = promise;
-        const res = await en_ts_utils_1.withError(timeboxExecution(f(...args), maxWait, `Memoized function "${debugName}" runs too long`, 500));
+        const res = await en_ts_utils_1.withError(timeboxExecution(f(...args), maxWait, new en_ts_utils_1.RetryError(`Memoized function "${debugName}" runs too long`, 500)));
         if (res.err) {
             reject(res.err);
             delete store[k];

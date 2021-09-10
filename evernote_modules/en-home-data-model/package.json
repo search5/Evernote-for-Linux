@@ -1,6 +1,6 @@
 {
   "name": "en-home-data-model",
-  "version": "3.10.1",
+  "version": "3.11.2",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -9,7 +9,7 @@
   ],
   "main": "dist/index",
   "dependencies": {
-    "en-data-model": "3.10.1",
+    "en-data-model": "3.11.2",
     "en-ts-utils": "^5.1.0"
   },
   "devDependencies": {

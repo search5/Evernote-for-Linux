@@ -13,7 +13,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OfflineContentStrategy = exports.FeatureFlags = exports.CONDUIT_VERSION = exports.AuthState = exports.BoardSchemaWidgetType = exports.BoardSchema = exports.AdjustedServiceLevelV2 = exports.getServiceLevelV2Summary = exports.DataWatcher = exports.recordSession = exports.eventsOverIPCDestination = void 0;
+exports.OfflineContentStrategy = exports.FeatureFlags = exports.CONDUIT_VERSION = exports.AuthState = exports.milestoneData = exports.GamificaitonLevelsMilestones = exports.GamificationMilestoneKeys = exports.GamificaitonLevels = exports.GamificationGoalTypes = exports.BoardSchemaWidgetType = exports.BoardSchema = exports.AdjustedServiceLevelV2 = exports.getServiceLevelV2Summary = exports.DataWatcher = exports.recordSession = exports.eventsOverIPCDestination = void 0;
 __exportStar(require("./Connector"), exports);
 __exportStar(require("./Hooks"), exports);
 __exportStar(require("./Observable"), exports);
@@ -33,6 +33,12 @@ Object.defineProperty(exports, "AdjustedServiceLevelV2", { enumerable: true, get
 var en_home_data_model_1 = require("en-home-data-model");
 Object.defineProperty(exports, "BoardSchema", { enumerable: true, get: function () { return en_home_data_model_1.BoardSchema; } });
 Object.defineProperty(exports, "BoardSchemaWidgetType", { enumerable: true, get: function () { return en_home_data_model_1.WidgetType; } });
+var en_gamification_data_model_1 = require("en-gamification-data-model");
+Object.defineProperty(exports, "GamificationGoalTypes", { enumerable: true, get: function () { return en_gamification_data_model_1.GamificationGoalTypes; } });
+Object.defineProperty(exports, "GamificaitonLevels", { enumerable: true, get: function () { return en_gamification_data_model_1.GamificaitonLevels; } });
+Object.defineProperty(exports, "GamificationMilestoneKeys", { enumerable: true, get: function () { return en_gamification_data_model_1.GamificationMilestoneKeys; } });
+Object.defineProperty(exports, "GamificaitonLevelsMilestones", { enumerable: true, get: function () { return en_gamification_data_model_1.GamificaitonLevelsMilestones; } });
+Object.defineProperty(exports, "milestoneData", { enumerable: true, get: function () { return en_gamification_data_model_1.milestoneData; } });
 var conduit_view_types_1 = require("conduit-view-types");
 Object.defineProperty(exports, "AuthState", { enumerable: true, get: function () { return conduit_view_types_1.AuthState; } });
 Object.defineProperty(exports, "CONDUIT_VERSION", { enumerable: true, get: function () { return conduit_view_types_1.CONDUIT_VERSION; } });

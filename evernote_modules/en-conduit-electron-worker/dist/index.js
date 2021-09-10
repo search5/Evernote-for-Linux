@@ -41,7 +41,9 @@ const event_source_polyfill_1 = require("event-source-polyfill");
 const evernote_thrift_1 = require("evernote-thrift");
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const ElectronNotificationManager_1 = require("./conduit-electron-notifications/ElectronNotificationManager");
+const ElectronFSManager_1 = require("./ElectronFSManager");
 const ElectronWorkerSecureStorage_1 = require("./ElectronWorkerSecureStorage");
+const MiscWorkerIPC_1 = require("./MiscWorkerIPC");
 const setupElectronPlugins_1 = require("./setupElectronPlugins");
 const setupMainToWorkerBridge_1 = require("./setupMainToWorkerBridge");
 const WorkerResourceProxy_1 = require("./WorkerResourceProxy");
@@ -70,18 +72,22 @@ async function fetchPrebuiltDBElectron(trc, cookieStr, url, fetchProgressCB) {
 function generateUUID() {
     return conduit_utils_1.uuid();
 }
+async function cleanupTempFile(trc, filename) {
+    await conduit_utils_1.withError(fs_extra_1.default.unlink(filename));
+}
 async function init(config) {
     if (gConduitCore) {
         throw new Error('en-conduit-electron-worker already initialized');
     }
-    const { backgroundNoteContentSyncConfig, backgroundNoteMetadataSyncConfig, cachePolicy, clientCredentials, customHeaders, dbPath, downsyncConfig, iconPath, loadingScreenConfig, noFreezeImmutable, offlineSearchIndexingConfig, sendMutationMetrics, servicesConfig, resourceUploadFailFallbackPath, } = config.params;
+    const { backgroundNoteContentSyncConfig, backgroundNoteMetadataSyncConfig, cachePolicy, clientCredentials, customHeaders, dbPath, downsyncConfig, iconPath, loadingScreenConfig, noFreezeImmutable, offlineSearchIndexingConfig, sendMutationMetrics, servicesConfig, resourceUploadFailFallbackPath, conduitFsStoragePath, enableVerboseTracing, } = config.params;
+    setupMainToWorkerBridge_1.setVerboseTracing(enableVerboseTracing || false);
     // Use render logger
     conduit_utils_1.logger.configure({
         name: 'conduit-electron-worker',
         console: {
             level: conduit_utils_1.LogLevel.INFO,
         },
-    }, c => new en_conduit_electron_shared_1.ElectronRendererLogger(c.name, true));
+    }, c => new en_conduit_electron_shared_1.ElectronRendererLogger(c.name, true, electron_1.ipcRenderer));
     const headers = Object.assign({}, customHeaders);
     headers['X-Feature-Version'] = conduit_view_types_1.FEATURE_VERSION;
     const emitEvent = (event, data) => {
@@ -92,15 +98,15 @@ async function init(config) {
             const transportOptions = { noCredentials: true, headers };
             const transport = new evernote_thrift_1.BinaryFetchHttpTransport(serviceHost, transportOptions);
             return new evernote_thrift_1.BinaryProtocol(transport);
-        }, getResourceProxyType: () => en_conduit_sync_types_1.ResourceProxyType.NativeLayerCache, getHttpTransport: () => new en_conduit_electron_shared_1.ElectronRendererHttpClient(), ResourceManager: (rmDI) => new WorkerResourceProxy_1.ElectronResourceManager(rmDI), getOfflineContentStrategy: () => config.params.offlineContentStrategy || conduit_view_types_1.OfflineContentStrategy.NONE, newEventSource: (url, esHeaders) => {
+        }, getResourceProxyType: () => en_conduit_sync_types_1.ResourceProxyType.NativeLayerCache, getHttpTransport: () => new en_conduit_electron_shared_1.ElectronRendererHttpClient(), ResourceManager: (rmDI) => new WorkerResourceProxy_1.ElectronResourceManager(rmDI), FSManager: (fsDI) => new ElectronFSManager_1.ElectronFSManager(fsDI, conduitFsStoragePath), getOfflineContentStrategy: () => config.params.offlineContentStrategy || conduit_view_types_1.OfflineContentStrategy.NONE, newEventSource: (url, esHeaders) => {
             // TODO: unsure if this will work with electron
             return new event_source_polyfill_1.EventSourcePolyfill(url, {
                 withCredentials: true,
                 headers: Object.assign(Object.assign({}, customHeaders), esHeaders),
             });
         }, getSystemLocale: () => {
-            return en_conduit_electron_shared_1.getLocale();
-        }, getTestEventTracker: () => null, fetchPrebuiltDatabase: (downsyncConfig === null || downsyncConfig === void 0 ? void 0 : downsyncConfig.noPrebuiltDB) ? null : fetchPrebuiltDBElectron, cleanupTempFile: (trc, filename) => en_conduit_electron_shared_1.cleanupTempFile(trc, filename, fs_extra_1.default), getSearchShareAcceptMetadata: en_conduit_plugin_search_1.getShareAcceptMetadataForNote, uuid: generateUUID, backgroundNoteContentSyncConfig: backgroundNoteContentSyncConfig || {}, backgroundNoteMetadataSyncConfig: backgroundNoteMetadataSyncConfig || {}, downsyncConfig: downsyncConfig || { downsyncMode: conduit_view_types_1.DownsyncMode.HYBRID }, loadingScreenConfig: loadingScreenConfig || {}, offlineSearchIndexingConfig: offlineSearchIndexingConfig || {}, clientCredentials, isNSyncEnabled: true, realtimeMode: true, nSyncEntityFilter: config.params.nSyncEntityFilter, hostDefaults: config.params.hostDefaults, hostResolverUrl: config.params.overrideHostResolverUrl, overrideFileServiceUrl: config.params.overrideFileServiceUrl, customHeaders, serviceAvailabilityOverrideUrl: config.params.serviceAvailabilityOverrideUrl, featureRolloutClientType: en_conduit_sync_types_1.FeatureRolloutClientTypes.Desktop, resourceUploadFailFallbackPath }), { maxBackoffTimeout: servicesConfig === null || servicesConfig === void 0 ? void 0 : servicesConfig.maxBackoffTimeout });
+            return MiscWorkerIPC_1.getLocale();
+        }, getTestEventTracker: () => null, fetchPrebuiltDatabase: (downsyncConfig === null || downsyncConfig === void 0 ? void 0 : downsyncConfig.noPrebuiltDB) ? null : fetchPrebuiltDBElectron, cleanupTempFile, getSearchShareAcceptMetadata: en_conduit_plugin_search_1.getShareAcceptMetadataForNote, uuid: generateUUID, backgroundNoteContentSyncConfig: backgroundNoteContentSyncConfig || {}, backgroundNoteMetadataSyncConfig: backgroundNoteMetadataSyncConfig || {}, downsyncConfig: downsyncConfig || { downsyncMode: conduit_view_types_1.DownsyncMode.HYBRID }, loadingScreenConfig: loadingScreenConfig || {}, offlineSearchIndexingConfig: offlineSearchIndexingConfig || {}, clientCredentials, isNSyncEnabled: true, realtimeMode: true, nSyncEntityFilter: config.params.nSyncEntityFilter, hostDefaults: config.params.hostDefaults, hostResolverUrl: config.params.overrideHostResolverUrl, overrideFileServiceUrl: config.params.overrideFileServiceUrl, customHeaders, serviceAvailabilityOverrideUrl: config.params.serviceAvailabilityOverrideUrl, featureRolloutClientType: en_conduit_sync_types_1.FeatureRolloutClientTypes.Desktop, resourceUploadFailFallbackPath }), { maxBackoffTimeout: servicesConfig === null || servicesConfig === void 0 ? void 0 : servicesConfig.maxBackoffTimeout });
     const di = Object.assign(Object.assign({}, conduitConfig.di), { featureFlags: servicesConfig === null || servicesConfig === void 0 ? void 0 : servicesConfig.featureFlags, SecureStorage: () => ElectronWorkerSecureStorage_1.workerSecureStorage, KeyValStorage: async (trc, name) => {
             const db = new conduit_storage_better_sqlite3_1.ConduitSQLiteStorage(dbPath, name, cachePolicy, () => {
                 emitEvent(conduit_view_types_1.ConduitEvent.FATAL_ERROR);

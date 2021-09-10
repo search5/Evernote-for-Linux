@@ -114,6 +114,7 @@ class MutationBatchBroker {
                 timestamp: batchStartTime,
                 deps: await NSyncEntityConverter_1.serviceResultsToMutationDeps(trc, this.di, this.storage, mutationResponse.data.result),
                 results: null,
+                analyticEvents: null,
             };
             if (!mutationResponse.wasSuccessful && mutationResponse.data.error) {
                 let err = mutationResponse.data.error;

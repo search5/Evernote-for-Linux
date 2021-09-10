@@ -94,7 +94,7 @@ function graphQLQueryResolver(query, nodeDef, traversal) {
         }
         const results = await context.indexer.getList(context.trc, context.watcher, tree, query.type, nodeDef, params, false);
         if (constraint === conduit_storage_1.EdgeConstraint.MANY) {
-            return Object.assign({ list: results.list, count: results.list.length }, results.clientPageInfo);
+            return Object.assign({ list: results.list, indexUsed: conduit_utils_1.safeStringify(params.indexUsed.index), indexCondition: conduit_utils_1.safeStringify(params.indexUsed.indexCondition), count: results.list.length }, results.clientPageInfo);
         }
         return (_a = results.list[0]) !== null && _a !== void 0 ? _a : null;
     };
@@ -104,6 +104,8 @@ function buildGraphQLQuery(autoResolverData, queryName, query, indexResolvers, d
         type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLObjectType({
             name: conduit_utils_1.toPascalCase([queryName, 'Results']),
             fields: {
+                indexUsed: { type: DataSchemaGQL_1.schemaToGraphQLType('string') },
+                indexCondition: { type: DataSchemaGQL_1.schemaToGraphQLType('string') },
                 count: { type: DataSchemaGQL_1.schemaToGraphQLType('int') },
                 prevPageKey: { type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.NullableString) },
                 nextPageKey: { type: DataSchemaGQL_1.schemaToGraphQLType(conduit_utils_1.NullableString) },
@@ -129,6 +131,8 @@ function buildTraversalGraphQLQuery(autoResolverData, fields, fieldName, travers
             type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLObjectType({
                 name: conduit_utils_1.toPascalCase([traversal.srcType, fieldName, 'Results']),
                 fields: {
+                    indexUsed: { type: DataSchemaGQL_1.schemaToGraphQLType('string') },
+                    indexCondition: { type: DataSchemaGQL_1.schemaToGraphQLType('string') },
                     count: { type: DataSchemaGQL_1.schemaToGraphQLType('int') },
                     list: {
                         type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(new graphql_1.GraphQLNonNull(resType))),

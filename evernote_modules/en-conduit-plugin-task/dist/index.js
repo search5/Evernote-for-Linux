@@ -22,14 +22,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getENTaskPlugin = exports.genScheduledNotificationId = exports.TasksExportDataSchema = exports.parseAndValidateTasksExportData = exports.getTaskUserSettingsIdByUserId = exports.getTasksExportData = exports.genTasksDataCreateOps = exports.getNoteContentInfoIDByNoteID = void 0;
+exports.getENTaskPlugin = exports.convertEdgeFromAssigneeID = exports.genScheduledNotificationId = exports.TasksExportDataSchema = exports.parseAndValidateTasksExportData = exports.getTaskUserSettingsIdByUserId = exports.getTasksExportData = exports.genTasksDataCreateOps = exports.getNoteContentInfoIDByNoteID = void 0;
 const conduit_core_1 = require("conduit-core");
 const conduit_utils_1 = require("conduit-utils");
+const en_core_entity_types_1 = require("en-core-entity-types");
 const en_data_model_1 = require("en-data-model");
-const NoteContentInfoConverter_1 = require("./Converters/NoteContentInfoConverter");
-const ReminderConverter_1 = require("./Converters/ReminderConverter");
-const TaskConverter_1 = require("./Converters/TaskConverter");
-const TaskUserSettingsConverter_1 = require("./Converters/TaskUserSettingsConverter");
+const en_quasar_connector_1 = require("en-quasar-connector");
+const ScheduledNotificationConverter_1 = require("./Converters/ScheduledNotificationConverter");
 const NoteContentInfoDataResolver_1 = require("./DataResolvers/NoteContentInfoDataResolver");
 const NoteContentInfo_1 = require("./EntityTypes/NoteContentInfo");
 const Reminder_1 = require("./EntityTypes/Reminder");
@@ -58,6 +57,27 @@ Object.defineProperty(exports, "parseAndValidateTasksExportData", { enumerable: 
 Object.defineProperty(exports, "TasksExportDataSchema", { enumerable: true, get: function () { return TaskUtils_1.TasksExportDataSchema; } });
 var ScheduledNotificationUtils_1 = require("./ScheduledNotifications/ScheduledNotificationUtils");
 Object.defineProperty(exports, "genScheduledNotificationId", { enumerable: true, get: function () { return ScheduledNotificationUtils_1.genScheduledNotificationId; } });
+function convertEdgeFromAssigneeID(instance, _context, typeDef, _edgeName) {
+    if (!typeDef.edges) {
+        return null;
+    }
+    if (instance.assigneeUserID) {
+        const profileID = en_quasar_connector_1.convertProfileGuidFromService(en_core_entity_types_1.PROFILE_SOURCE.User, Number(instance.assigneeUserID));
+        return {
+            id: profileID,
+            type: 'Profile',
+        };
+    }
+    else if (instance.assigneeIdentityID) {
+        const profileID = en_quasar_connector_1.convertProfileGuidFromService(en_core_entity_types_1.PROFILE_SOURCE.Identity, Number(instance.assigneeIdentityID));
+        return {
+            id: profileID,
+            type: 'Profile',
+        };
+    }
+    return null;
+}
+exports.convertEdgeFromAssigneeID = convertEdgeFromAssigneeID;
 function getENTaskPlugin() {
     return {
         name: 'ENTask',
@@ -98,23 +118,53 @@ function getENTaskPlugin() {
                 [en_data_model_1.EntityTypes.NoteContentInfo]: {
                     typeDef: NoteContentInfo_1.noteContentInfoTypeDef,
                     indexConfig: NoteContentInfo_1.noteContentInfoIndexConfig,
+                    nsyncType: en_data_model_1.NSyncEntityType.NOTE_CONTENT_INFO,
                     dataResolver: NoteContentInfoDataResolver_1.NoteContentInfoDataResolver,
-                    nsyncConverters: { [en_data_model_1.NSyncEntityType.NOTE_CONTENT_INFO]: NoteContentInfoConverter_1.getNoteContentInfoNodeAndEdges },
+                    edgeDefiners: {
+                        NoteContentInfo: {
+                            parent: en_quasar_connector_1.convertEdgeFromEntityRef('parentEntity'),
+                        },
+                    },
                 },
                 [en_data_model_1.EntityTypes.Reminder]: {
                     typeDef: Reminder_1.reminderTypeDef,
                     indexConfig: Reminder_1.reminderIndexConfig,
-                    nsyncConverters: { [en_data_model_1.NSyncEntityType.REMINDER]: ReminderConverter_1.getReminderNodeAndEdges },
+                    nsyncType: en_data_model_1.NSyncEntityType.REMINDER,
+                    nsyncExtraNodesAndEdges: {
+                        [en_data_model_1.EntityTypes.Reminder]: [ScheduledNotificationConverter_1.getSnNodeAndEdgesForReminder],
+                    },
+                    edgeDefiners: {
+                        Reminder: {
+                            source: en_quasar_connector_1.convertEdgeFromEntityRef('parentEntity'),
+                        },
+                    },
                 },
                 [en_data_model_1.EntityTypes.Task]: {
                     typeDef: Task_1.taskTypeDef,
                     indexConfig: Task_1.taskIndexConfig,
-                    nsyncConverters: { [en_data_model_1.NSyncEntityType.TASK]: TaskConverter_1.getTaskNodeAndEdges },
+                    nsyncType: en_data_model_1.NSyncEntityType.TASK,
+                    nsyncExtraNodesAndEdges: {
+                        [en_data_model_1.EntityTypes.Task]: [ScheduledNotificationConverter_1.getSnNodeAndEdgesForTask],
+                    },
+                    edgeDefiners: {
+                        Task: {
+                            creator: en_quasar_connector_1.convertEdgeFromUserID('creator'),
+                            lastEditor: en_quasar_connector_1.convertEdgeFromUserID('lastEditor'),
+                            assignedBy: en_quasar_connector_1.convertEdgeFromUserID('assignedByUserID'),
+                            assignee: convertEdgeFromAssigneeID,
+                            parent: en_quasar_connector_1.convertEdgeFromEntityRef('parentEntity'),
+                        },
+                    },
                 },
                 [en_data_model_1.EntityTypes.TaskUserSettings]: {
                     typeDef: TaskUserSettings_1.taskUserSettingsDef,
                     indexConfig: TaskUserSettings_1.taskUserSettingsIndexConfig,
-                    nsyncConverters: { [en_data_model_1.NSyncEntityType.TASK_USER_SETTINGS]: TaskUserSettingsConverter_1.getTaskUserSettingsNodeAndEdges },
+                    nsyncType: en_data_model_1.NSyncEntityType.TASK_USER_SETTINGS,
+                    edgeDefiners: {
+                        [en_data_model_1.EntityTypes.TaskUserSettings]: {
+                            defaultTaskNote: en_quasar_connector_1.convertEdgeFromEntityID(en_data_model_1.EntityTypes.Note, 'defaultTaskNoteID'),
+                        },
+                    },
                 },
             };
             return entityTypes;

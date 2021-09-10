@@ -6,7 +6,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendConduitEvent = exports.setupMainToWorkerBridge = void 0;
+exports.sendConduitEvent = exports.setupMainToWorkerBridge = exports.setVerboseTracing = void 0;
 const conduit_ipc_messages_1 = require("conduit-ipc-messages");
 const conduit_utils_1 = require("conduit-utils");
 const electron_1 = require("electron");
@@ -17,6 +17,10 @@ const logger = conduit_utils_1.createLogger('conduit: mainIPC');
 const NO_RESPONSE = Symbol('NO_RESPONSE');
 const windowToWatcherMap = {};
 const windowToRecorderMap = {};
+function setVerboseTracing(val) {
+    TraceController === null || TraceController === void 0 ? void 0 : TraceController.setVerboseTracing(val);
+}
+exports.setVerboseTracing = setVerboseTracing;
 class ElectronTraceController extends conduit_utils_1.EventTraceControllerBase {
     openWriteStream(filename) {
         const filePath = path_1.default.join(electron_1.remote.app.getPath('downloads'), filename);

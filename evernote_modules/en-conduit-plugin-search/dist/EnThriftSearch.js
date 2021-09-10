@@ -351,7 +351,7 @@ async function onlineSearchEx(trc, thriftComm, authData, args, setSearchShareMet
             if (resultType === SearchSchemaTypes_1.SearchExResultType.NOTE && suggestion.isShared) {
                 if (suggestion.label && suggestion.shardId && suggestion.containerId) {
                     setSearchShareMetadata(suggestion.id, {
-                        shareName: suggestion.label,
+                        shareName: suggestion.containerId,
                         shardId: `s${suggestion.shardId}`,
                         nbGuid: suggestion.containerId,
                     });

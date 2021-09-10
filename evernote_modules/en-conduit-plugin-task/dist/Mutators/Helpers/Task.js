@@ -24,6 +24,9 @@ async function taskCreatePlan(trc, ctx, params) {
         }
         await Permission_1.checkNoteEditPermissionByNoteId(trc, ctx, containerRef.id);
     }
+    if (params.label && params.label.length > en_tasks_data_model_1.TASK_TITLE_MAX_LENGTH) {
+        throw new conduit_utils_1.InvalidParameterError(`task length must be less than ${en_tasks_data_model_1.TASK_TITLE_MAX_LENGTH}`);
+    }
     // if the Note container is available, it will be used to resolve the actual ownerID
     const owner = params.copyOwnerRef || containerRef || ctx.vaultUserID || ctx.userID;
     const taskGenID = await ctx.generateID(trc, owner, en_data_model_1.EntityTypes.Task, params.key);
