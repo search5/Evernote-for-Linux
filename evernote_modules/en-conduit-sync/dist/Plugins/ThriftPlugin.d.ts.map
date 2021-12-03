@@ -1,1 +1,0 @@
-{"version":3,"file":"ThriftPlugin.d.ts","sourceRoot":"","sources":["../../src/Plugins/ThriftPlugin.ts"],"names":[],"mappings":"AAAA;;GAEG;AAEH,OAAO,EAAE,iBAAiB,EAAiB,eAAe,EAAE,MAAM,cAAc,CAAC;AACjF,OAAO,EAAE,KAAK,EAAE,MAAM,eAAe,CAAC;AACtC,OAAO,EAAE,sBAAsB,EAAE,MAAM,oBAAoB,CAAC;AAS5D,wBAAgB,eAAe,CAC7B,eAAe,EAAE,KAAK,CAAC,eAAe,CAAC,EACvC,sBAAsB,EAAE,sBAAsB,GAC7C,iBAAiB,CAwBnB"}

@@ -1,1 +1,0 @@
-{"version":3,"file":"ExponentialBackoffManager.d.ts","sourceRoot":"","sources":["../src/ExponentialBackoffManager.ts"],"names":[],"mappings":"AAMA,qBAAa,yBAAyB;IACpC,OAAO,CAAC,UAAU,CAAS;IAC3B,OAAO,CAAC,UAAU,CAGhB;gBAEU,UAAU,GAAE,MAAc;IAI/B,gBAAgB;IAOhB,aAAa;IAiBb,UAAU;CAIlB"}

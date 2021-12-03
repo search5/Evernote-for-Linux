@@ -1,1 +1,0 @@
-{"version":3,"file":"ShortcutEntity.js","sourceRoot":"","sources":["../src/ShortcutEntity.ts"],"names":[],"mappings":";AAAA;;GAEG;;;AASU,QAAA,oBAAoB,GAAuC;IACtE,MAAM,EAAE;QACN,SAAS,EAAE,QAAQ;QACnB,MAAM,EAAE,WAAW;KACpB;IACD,oBAAoB,EAAE;QACpB,MAAM,EAAE;YACN,WAAW,EAAE,IAAI;YACjB,UAAU,EAAE,IAAI;YAChB,aAAa,EAAE,KAAK;SACrB;KACF;CACF,CAAC"}

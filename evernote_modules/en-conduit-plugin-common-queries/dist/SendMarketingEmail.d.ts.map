@@ -1,1 +1,0 @@
-{"version":3,"file":"SendMarketingEmail.d.ts","sourceRoot":"","sources":["../src/SendMarketingEmail.ts"],"names":[],"mappings":"AAAA;;GAEG;AAGH,OAAO,EAA+B,KAAK,EAAE,MAAM,eAAe,CAAC;AACnE,OAAO,EAAE,sBAAsB,EAAE,MAAM,iBAAiB,CAAC;AAIzD,iBAAe,0BAA0B,CAAC,MAAM,EAAE,OAAO,EAAE,IAAI,EAAE,KAAK,EAAE,OAAO,EAAE,sBAAsB;;GAUtG;AAED,eAAO,MAAM,wBAAwB;;;;;;CAUpC,CAAC"}

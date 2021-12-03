@@ -1,1 +1,0 @@
-{"version":3,"file":"AttachmentConverter.d.ts","sourceRoot":"","sources":["../../src/Converters/AttachmentConverter.ts"],"names":[],"mappings":"AAAA;;GAEG;AAEH,OAAO,EAAiB,cAAc,EAAE,MAAM,cAAc,CAAC;AAE7D,OAAO,EAAE,oBAAoB,EAAE,MAAM,oBAAoB,CAAC;AAC1D,OAAO,EAAE,UAAU,EAAE,MAAM,sBAAsB,CAAC;AAElD,eAAO,MAAM,yBAAyB,EAAE,cAAc,CAAC,oBAAoB,EAAE,UAAU,EAAE,GAAG,CAGzF,CAAC"}

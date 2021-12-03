@@ -1,1 +1,0 @@
-{"version":3,"file":"MessageSync.d.ts","sourceRoot":"","sources":["../../src/SyncFunctions/MessageSync.ts"],"names":[],"mappings":"AAIA,OAAO,EAAiB,cAAc,EAAE,MAAM,eAAe,CAAC;AAI9D,OAAO,EAA0D,gBAAgB,EAAE,MAAM,eAAe,CAAC;AAEzG,wBAAsB,YAAY,CAAC,GAAG,EAAE,cAAc,EAAE,MAAM,EAAE,gBAAgB,iBA2C/E"}

@@ -1,1 +1,0 @@
-{"version":3,"file":"ElectronFSManager.d.ts","sourceRoot":"","sources":["../src/ElectronFSManager.ts"],"names":[],"mappings":"AAIA,OAAO,EAAE,iBAAiB,EAAE,MAAM,cAAc,CAAC;AACjD,OAAO,EAAE,cAAc,EAAE,MAAM,eAAe,CAAC;AAI/C,qBAAa,iBAAkB,SAAQ,iBAAiB;IAC/C,QAAQ,CAAC,GAAG,EAAE,cAAc,EAAE,KAAK,EAAE,MAAM,EAAE;IAIvC,cAAc,CAAC,GAAG,EAAE,cAAc,EAAE,IAAI,EAAE,MAAM;CAG9D"}

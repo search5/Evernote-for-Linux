@@ -1,1 +1,0 @@
-{"version":3,"file":"calendar.js","sourceRoot":"","sources":["../../src/Schema/calendar.ts"],"names":[],"mappings":";AAAA;;GAEG;;;AAEH,2DAAgD;AAInC,QAAA,yBAAyB,GAAyC;IAC7E,mBAAmB,EAAE,GAAiB,EAAE;QACtC,OAAQ,CAAC,+BAAU,CAAC,QAAQ,CAAC,CAAC;IAChC,CAAC;IACD,sBAAsB,EAAE,KAAK,IAAwC,EAAE;QACrE,OAAO,EAAE,CAAC;IACZ,CAAC;CACF,CAAC"}
