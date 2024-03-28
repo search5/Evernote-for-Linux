@@ -1,6 +1,6 @@
 # Evernote for Linux
 
-Vendingspoon, the company that acquired Evernote, removed all compilable source code and Linux support that had been added to the Evernote for Windows binaries.
+Bendingspoon, the company that acquired Evernote, removed all compilable source code and Linux support that had been added to the Evernote for Windows binaries.
 
 With version 10.60.4 officially locked down, it's now virtually impossible to repackage, even if I were to provide the community with the build scripts I've been using.
 
