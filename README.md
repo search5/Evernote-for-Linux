@@ -1,5 +1,17 @@
 # Evernote for Linux
 
+Vendingspoon, the company that acquired Evernote, removed all compilable source code and Linux support that had been added to the Evernote for Windows binaries.
+
+With version 10.60.4 officially locked down, it's now virtually impossible to repackage, even if I were to provide the community with the build scripts I've been using.
+
+This was a project that I personally took on without permission from Evernote when I first saw the notion-for-linux project and was inspired by it, and it seems clear that Bendingspoon no longer intends to support Linux.
+If I were to recommend an alternative to Evernote to anyone who came to this project, I would recommend going to notion, obsidian, etc. and if you still need to use Evernote for the time being, I would recommend installing a program called webcatalog to use the web version of Evernote.
+We apologize that we are no longer able to maintain the project.
+
+2024-03-29 build notice update
+- After a certain version of Evernote, I was concerned that I could be sued for reverse engineering the Evernote program, so I kept the build script to myself and no longer updated it.
+
+
 ## Setup Requirements
 * Debian 9 or Ubuntu Linux 18.04
 * Python3
